@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Financeiro - Comércio</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Fluxo de Caixa</h1>
+        
+        <div class="form-group no-print">
+            <div class="form-control">
+                <label>Descrição</label>
+                <input type="text" id="descricao" placeholder="Ex: Fornecedor">
+            </div>
+            <div class="form-control">
+                <label>Valor (R$)</label>
+                <input type="number" id="valor" step="0.01" placeholder="0.00">
+            </div>
+            <div class="form-control">
+                <label>Doc/NF/Boleto</label>
+                <input type="text" id="documento" placeholder="Nº documento">
+            </div>
+            <div class="form-control">
+                <label>Mês de Referência</label>
+                <input type="month" id="mes_referencia">
+            </div>
+            <div class="form-control">
+                <label>Tipo de Operação</label>
+                <select id="tipo">
+                    <option value="receber">A Receber (Entrada)</option>
+                    <option value="pagar">A Pagar (Saída)</option>
+                </select>
+            </div>
+            <button id="btn-adicionar" onclick="adicionarConta()">Adicionar Lançamento</button>
+        </div>
+
+        <div class="acoes-topo no-print">
+            <div class="filtro-container">
+                <label>Filtrar por Mês:</label>
+                <input type="month" id="filtro_mes" onchange="atualizarInterface()">
+                <button onclick="limparFiltro()">Ver Todos</button>
+            </div>
+            <button id="btn-imprimir" onclick="imprimirRelatorio()">🖨️ Gerar PDF / Imprimir</button>
+        </div>
+
+        <div class="resumo">
+            <div class="card card-anterior" onclick="reativarInput()">
+                <small>Saldo Anterior (Enter)</small>
+                <input type="text" id="saldo-anterior-manual" placeholder="0.00" onkeydown="verificarEnter(event)" oninput="atualizarInterface()">
+            </div>
+            <div class="card card-receber">
+                <small>Total a Receber</small>
+                <div id="total-receber">R$ 0,00</div>
+            </div>
+            <div class="card card-pagar">
+                <small>Total a Pagar</small>
+                <div id="total-pagar">R$ 0,00</div>
+            </div>
+            <div class="card card-saldo">
+                <small>Saldo do Período</small>
+                <div id="saldo-total">R$ 0,00</div>
+            </div>
+        </div>
+
+        <div class="tabela-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Mês/Ref</th>
+                        <th>Descrição</th>
+                        <th>Doc/NF</th>
+                        <th>Valor</th>
+                        <th>Tipo</th>
+                        <th class="coluna-acoes">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="lista-corpo"></tbody>
+            </table>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

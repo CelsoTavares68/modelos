@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SCC - Gestão Clínica</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+
+    <div class="monitor-chamada no-print">
+        <div id="relogioMonitor">00:00:00</div>
+        <div id="nomeChamado" class="nome-grande">PAINEL DE SENHAS</div>
+        <div id="salaChamada">Aguardando chamada...</div>
+        
+        <div class="container-historico-painel">
+            <div class="titulo-historico">ÚLTIMOS CHAMADOS</div>
+            <div id="listaHistoricoPainel" class="lista-historico-grid"></div>
+            <button onclick="limparHistoricoPainel()" class="btn-limpar-discreto">Limpar Histórico</button>
+        </div>
+    </div>
+
+    <div class="container no-print">
+        <div class="area-agendamento">
+            <h2>📝 Novo Agendamento</h2>
+            <div class="linha-principal">
+                <div class="campo-agendamento">
+                    <label>Nome do Paciente</label>
+                    <input type="text" id="nome" placeholder="Nome completo">
+                </div>
+                <div class="campo-agendamento">
+                    <label>Especialidade</label>
+                    <select id="especialidade">
+                        <option value="Cardiologia">Cardiologia</option>
+                        <option value="Clínico Geral">Clínico Geral</option>
+                        <option value="Dermatologia">Dermatologia</option>
+                        <option value="Endocrinologia">Endocrinologia</option>
+                        <option value="Fisioterapia">Fisioterapia</option>
+                        <option value="Ginecologia">Ginecologia</option>
+                        <option value="Neurologia">Neurologia</option>
+                        <option value="Nutrição">Nutrição</option>
+                        <option value="Odontologia">Odontologia</option>
+                        <option value="Oftalmologia">Oftalmologia</option>
+                        <option value="Ortopedia">Ortopedia</option>
+                        <option value="Otorrinolaringologia">Otorrinolaringologia</option>
+                        <option value="Pediatria">Pediatria</option>
+                        <option value="Psicologia">Psicologia</option>
+                        <option value="Psiquiatria">Psiquiatria</option>
+                        <option value="Urologia">Urologia</option>
+                    </select>
+                </div>
+            </div>
+            <div class="linha-sub">
+                <div style="flex: 1;"><label>Data</label><input type="date" id="data"></div>
+                <div style="flex: 1;"><label>Hora</label><input type="time" id="hora"></div>
+                <button id="btnAgendar" onclick="agendar()">Confirmar Agendamento</button>
+            </div>
+        </div>
+
+        <div class="grid-sistema">
+            <div class="coluna">
+                <h3>📅 Recepção</h3>
+                <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+                    <input type="date" id="dataConsulta" onchange="carregarTabelas()" style="flex: 1;">
+                    <select id="filtroEspecialidadeRecepcao" onchange="carregarTabelas()" style="flex: 1;">
+                        <option value="Todos">Todas Especialidades</option>
+                        <option value="Cardiologia">Cardiologia</option>
+                        <option value="Clínico Geral">Clínico Geral</option>
+                        </select>
+                </div>
+                <div class="tabela-scroll"><table><tbody id="listaAgendamentos"></tbody></table></div>
+                
+                <h3>📂 Prontuários Recebidos</h3>
+                <div class="tabela-scroll"><table><tbody id="listaArquivamento"></tbody></table></div>
+                <button onclick="limparArquivos()" class="btn-limpar-painel">Limpar Lista de Arquivos</button>
+            </div>
+
+            <div class="coluna">
+                <h3>🏥 Triagem (Enfermagem)</h3>
+                <div class="tabela-scroll"><table><tbody id="listaTriagem"></tbody></table></div>
+            </div>
+
+            <div class="coluna">
+                <h3>🩺 Médico</h3>
+                <div id="areaRechamar" style="display:none; margin-bottom:10px;">
+                    <div style="display:flex; gap:5px;">
+                        <button onclick="repetirUltimaChamada()" style="flex:1;">Rechamar</button>
+                        <button onclick="abrirProntuarioNovo()" style="background:#4a90e2; color:white; flex:1;">📝 Atender</button>
+                    </div>
+                </div>
+                <select id="filtroEspecialidade" onchange="carregarTabelas()" style="width:100%; margin-bottom: 10px;">
+                    <option value="Todos">Todas Especialidades</option>
+                    </select>
+                <div class="tabela-scroll"><table><tbody id="listaEspera"></tbody></table></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalProntuario" class="modal-overlay">
+        <div class="modal-content">
+            <div id="folha-prontuario" style="background: white; padding: 50px; color: black; font-family: Arial; width: 210mm; min-height: 297mm; margin: auto; position: absolute; left: -9999px;">
+                <h1 style="text-align: center; border-bottom: 2px solid #000;">PRONTUÁRIO MÉDICO</h1>
+                <p><strong>PACIENTE:</strong> <span id="pdf_nome"></span></p>
+                <p><strong>NASCIMENTO:</strong> <span id="pdf_nasc"></span></p>
+                <p><strong>PESO:</strong> <span id="pdf_peso_val"></span> | <strong>ALTURA:</strong> <span id="pdf_altura_val"></span> | <strong>PA:</strong> <span id="pdf_pa_val"></span></p>
+                <hr>
+                <h4>ANAMNESE / TRIAGEM:</h4>
+                <div id="pdf_anamnese_val" style="white-space: pre-wrap; min-height: 100px;"></div>
+                <h4>PRESCRIÇÃO:</h4>
+                <div id="pdf_prescricao_val" style="white-space: pre-wrap; min-height: 100px;"></div>
+                <p style="margin-top: 50px; text-align: right;"><strong>Assinatura:</strong> <span id="pdf_medico_val"></span></p>
+            </div>
+
+            <div class="no-print" style="padding: 20px;">
+                <h2 id="tituloModal">Atendimento</h2>
+                <form id="formProntuario">
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                        <input type="text" id="p_nome" placeholder="Paciente" style="flex: 2;">
+                        <input type="date" id="p_nasc" style="flex: 1;">
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                        <input type="text" id="p_peso" placeholder="Peso">
+                        <input type="text" id="p_altura" placeholder="Altura">
+                        <input type="text" id="p_pa" placeholder="Pressão">
+                    </div>
+                    <textarea id="p_anamnese" placeholder="Anamnese / Triagem" style="width: 100%; height: 80px; margin-bottom: 10px;"></textarea>
+                    <textarea id="p_prescricao" placeholder="Prescrição" style="width: 100%; height: 80px; margin-bottom: 10px;"></textarea>
+                    <input type="text" id="p_medico" placeholder="Responsável" style="width: 100%; margin-bottom: 15px;">
+                </form>
+                <div style="display: flex; gap: 10px;">
+                    <button id="btnAcaoModal" style="background: #6c5ce7; color: white; flex: 1;">Salvar</button>
+                    <button onclick="gerarPDFReal()" style="background: #27ae60; color: white; flex: 1;">📥 PDF</button>
+                    <button onclick="fecharProntuario()" style="background: #e74c3c; color: white; flex: 0.5;">Sair</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
