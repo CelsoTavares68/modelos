@@ -39,7 +39,7 @@ function carregarDados() {
     dados.forEach(item => adicionarLinhaATabela(item));
 }
 
-function adicionarLinhaATabela(obj) {
+ function adicionarLinhaATabela(obj) {
     const tabela = document.getElementById('corpo-tabela');
     const novaLinha = tabela.insertRow();
 
@@ -50,11 +50,12 @@ function adicionarLinhaATabela(obj) {
         <td>${obj.volante}</td>
         <td>${obj.leitor}</td>
         <td>${obj.audioVideo}</td>
-        <td class="no-print"><button class="btn-editar">Editar</button></td>
+        <td class="no-print">
+            <button class="btn-editar"><i class="fa-solid fa-pen-to-square"></i> Editar</button>
+        </td>
     `;
 
     novaLinha.querySelector('.btn-editar').addEventListener('click', function() {
-        // Preenche os inputs com os dados da linha
         document.getElementById('data').value = reverterDataParaInput(obj.data);
         document.getElementById('entrada').value = obj.entrada;
         document.getElementById('auditorio').value = obj.auditorio;
@@ -62,17 +63,19 @@ function adicionarLinhaATabela(obj) {
         document.getElementById('leitor').value = obj.leitor;
         document.getElementById('audioVideo').value = obj.audioVideo;
 
-        // Guarda a referência da linha que está sendo editada
         linhaEmEdicao = novaLinha;
         
-        // Altera o visual do botão e da linha para indicar edição
-        btnAdicionar.innerText = "Salvar Alteração";
+        // Atualiza o botão principal com ícone de salvar
+        btnAdicionar.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Salvar Alteração';
         btnAdicionar.style.backgroundColor = "#f39c12";
         novaLinha.style.backgroundColor = "#fff3cd"; 
         
         window.scrollTo(0, 0);
     });
 }
+
+// No evento btnAdicionar.addEventListener, mude a linha do reset do botão:
+// btnAdicionar.innerHTML = '<i class="fa-solid fa-plus"></i> Adicionar à Lista';
 
 btnAdicionar.addEventListener('click', function() {
     const dataRaw = document.getElementById('data').value;
@@ -122,18 +125,40 @@ btnLimpar.addEventListener('click', function() {
     }
 });
 
-btnPDF.addEventListener('click', function () {
+ btnPDF.addEventListener('click', function () {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF('l', 'mm', 'a4');
 
+    // Configuração do Título no PDF
     doc.setFontSize(22);
-    doc.text("Designações", 14, 20);
+    doc.setTextColor(44, 62, 80); // Cor azul escuro combinando com o cabeçalho
+    
+    // Centralizando o título "Quadro de Designações"
+    const textoTitulo = "Quadro de Designações";
+    const larguraPagina = doc.internal.pageSize.getWidth();
+    const larguraTexto = doc.getTextWidth(textoTitulo);
+    const x = (larguraPagina - larguraTexto) / 2;
+    
+    doc.text(textoTitulo, x, 20);
+
+    // Linha decorativa abaixo do título
+    doc.setDrawColor(44, 62, 80);
+    doc.line(14, 25, larguraPagina - 14, 25);
 
     doc.autoTable({
         html: '#tabela-designacoes',
-        startY: 30,
+        startY: 35, // Começa um pouco mais baixo por causa da linha decorativa
         theme: 'grid',
-        headStyles: { fillColor: [44, 62, 80] },
+        headStyles: { 
+            fillColor: [44, 62, 80], 
+            halign: 'center',
+            fontSize: 11
+        },
+        styles: { 
+            halign: 'center', 
+            fontSize: 10,
+            cellPadding: 4
+        },
         columns: [
             { header: 'Data', dataKey: '0' },
             { header: 'Indicador Entrada', dataKey: '1' },
@@ -144,5 +169,5 @@ btnPDF.addEventListener('click', function () {
         ]
     });
 
-    doc.save('designacoes.pdf');
+    doc.save('quadro_de_designacoes.pdf');
 });

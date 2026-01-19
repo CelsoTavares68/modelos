@@ -124,6 +124,20 @@ tr:nth-child(even) {
     cursor: pointer;
 }
 
+button i {
+    margin-right: 8px; /* Espaço entre o ícone e o texto */
+}
+
+h1 i {
+    color: #3498db;
+    margin-right: 10px;
+}
+
+/* Deixando o botão de editar com ícone também (configurado via JS abaixo) */
+.btn-editar i {
+    margin-right: 5px;
+}
+
 /* Ajustes para telas muito pequenas (Celulares) */
 @media (max-width: 600px) {
     .container {

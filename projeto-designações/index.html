@@ -1,9 +1,10 @@
-  <!DOCTYPE html>
+   <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Designações Profissionais</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -11,7 +12,7 @@
 <body>
 
     <div class="container">
-        <h1>Gerenciador de Designações</h1>
+        <h1><i class="fa-solid fa-calendar-check"></i> Quadro de Designações</h1>
 
         <div class="form-container">
             <input type="date" id="data">
@@ -20,29 +21,35 @@
             <input type="text" id="volante" placeholder="Volante-Palco">
             <input type="text" id="leitor" placeholder="Leitor">
             <input type="text" id="audioVideo" placeholder="Áudio e Vídeo">
-            <button id="btn-adicionar">Adicionar à Lista</button>
+            <button id="btn-adicionar">
+                <i class="fa-solid fa-plus"></i> Adicionar à Lista
+            </button>
         </div>
         
-         <div class="table-responsive">
-    <table id="tabela-designacoes">
-        <thead>
-            <tr>
-                <th>Data</th>
-                <th>Indicador Entrada</th>
-                <th>Indicador Auditório</th>
-                <th>Volante-Palco</th>
-                <th>Leitor</th>
-                <th>Áudio e Vídeo</th>
-                <th class="no-print">Editar</th>
-            </tr>
-        </thead>
-        <tbody id="corpo-tabela"></tbody>
-    </table>
-</div>
+        <div class="table-responsive">
+            <table id="tabela-designacoes">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Indicador Entrada</th>
+                        <th>Indicador Auditório</th>
+                        <th>Volante-Palco</th>
+                        <th>Leitor</th>
+                        <th>Áudio e Vídeo</th>
+                        <th class="no-print">Editar</th>
+                    </tr>
+                </thead>
+                <tbody id="corpo-tabela"></tbody>
+            </table>
+        </div>
 
         <div class="footer-buttons">
-            <button id="btn-gerar-pdf" class="btn-pdf">Gerar PDF Final</button>
-            <button id="btn-limpar-tudo" class="btn-limpar">Limpar Tudo</button>
+            <button id="btn-gerar-pdf" class="btn-pdf">
+                <i class="fa-solid fa-file-pdf"></i> Gerar PDF Final
+            </button>
+            <button id="btn-limpar-tudo" class="btn-limpar">
+                <i class="fa-solid fa-trash-can"></i> Limpar Tudo
+            </button>
         </div>
     </div>
 
