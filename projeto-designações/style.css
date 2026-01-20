@@ -25,7 +25,7 @@ h1 {
 /* Formulário Responsivo */
 .form-container {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Ajusta colunas automaticamente */
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
     gap: 15px;
     margin-bottom: 30px;
     background: #f8f9fa;
@@ -38,7 +38,7 @@ input {
     padding: 12px;
     border: 1px solid #ced4da;
     border-radius: 6px;
-    font-size: 16px; /* Evita zoom automático no iOS */
+    font-size: 16px; 
     width: 100%;
     box-sizing: border-box;
 }
@@ -61,7 +61,7 @@ input {
 
 /* Tabela e Rolagem Lateral para Mobile */
 .table-responsive {
-    overflow-x: auto; /* Cria barra de rolagem se a tabela for larga */
+    overflow-x: auto; 
     margin-bottom: 20px;
     border-radius: 8px;
     border: 1px solid #dee2e6;
@@ -70,7 +70,7 @@ input {
 table {
     width: 100%;
     border-collapse: collapse;
-    min-width: 800px; /* Garante que a tabela não "esprema" demais os nomes */
+    min-width: 800px; 
 }
 
 th, td {
@@ -94,7 +94,7 @@ tr:nth-child(even) {
 /* Botões Inferiores */
 .footer-buttons {
     display: flex;
-    flex-wrap: wrap; /* Faz os botões empilharem se não houver espaço */
+    flex-wrap: wrap; 
     gap: 15px;
     justify-content: center;
     margin-top: 20px;
@@ -107,13 +107,18 @@ tr:nth-child(even) {
     color: white;
     font-weight: bold;
     cursor: pointer;
-    flex: 1; /* Faz os botões crescerem igualmente */
+    flex: 1; 
     min-width: 150px;
     max-width: 300px;
 }
 
-.btn-pdf { background-color: #27ae60; }
-.btn-limpar { background-color: #e74c3c; }
+.btn-pdf { 
+    background-color: #27ae60; 
+}
+
+.btn-limpar { 
+    background-color: #e74c3c; 
+}
 
 .btn-editar {
     background-color: #f39c12;
@@ -125,7 +130,7 @@ tr:nth-child(even) {
 }
 
 button i {
-    margin-right: 8px; /* Espaço entre o ícone e o texto */
+    margin-right: 8px; 
 }
 
 h1 i {
@@ -133,7 +138,6 @@ h1 i {
     margin-right: 10px;
 }
 
-/* Deixando o botão de editar com ícone também (configurado via JS abaixo) */
 .btn-editar i {
     margin-right: 5px;
 }

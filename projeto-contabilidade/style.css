@@ -1,0 +1,114 @@
+:root { 
+    --primaria: #2c3e50; 
+    --secundaria: #3498db; 
+    --sucesso: #27ae60; 
+    --perigo: #e74c3c; 
+    --fundo: #f4f7f6; 
+}
+
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            background: var(--fundo); 
+            padding: 20px; 
+        }
+
+        .container { 
+            max-width: 1100px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 25px; 
+            border-radius: 12px; 
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1); 
+        }
+        
+        /* Cards e Formulários */
+        .card { 
+            background: #fff; 
+            border: 1px solid #e1e8ed; padding: 20px; 
+            border-radius: 8px; 
+            margin-bottom: 20px; 
+        }
+
+        .form-row { 
+            display: flex; 
+            gap: 10px; 
+            margin-bottom: 12px; 
+            flex-wrap: wrap; 
+            align-items: center; 
+        }
+
+        input, select { 
+            padding: 10px; 
+            border: 1px solid #ccc; border-radius: 5px; 
+            font-size: 14px; 
+        }
+
+        input:focus { 
+            border-color: var(--secundaria); outline: none; 
+        }
+
+
+        /* Botões */
+        .btn { 
+            cursor: pointer; 
+            border: none; 
+            padding: 10px 18px; 
+            border-radius: 5px; 
+            font-weight: bold; 
+            transition: 0.2s; 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 5px; 
+        }
+
+        .btn-salvar { 
+            background: var(--sucesso); 
+            color: white; 
+        }
+
+        .btn-tab { 
+            background: #eee; 
+            color: #555; 
+            margin-right: 5px; 
+        }
+
+        .btn-tab.active { 
+            background: var(--secundaria); color: white;
+         }
+        .btn:hover { 
+            opacity: 0.9; 
+            cursor: pointer; 
+        }
+
+        /* Tabelas */
+        table { 
+            width: 100%; 
+            border-collapse: collapse; margin-top: 15px; 
+        }
+
+        th { 
+            background: #f8f9fa; 
+            color: var(--primaria); 
+            padding: 12px; 
+            text-align: left; 
+            border-bottom: 2px solid #dee2e6; font-size: 12px; 
+            text-transform: uppercase; 
+        }
+
+        td { 
+            padding: 10px; 
+            border-bottom: 1px solid #eee; font-size: 14px; 
+        }
+
+        .valor { 
+            text-align: right; 
+            font-family: 'Courier New', monospace; 
+            font-weight: bold; 
+        }
+        
+        /* Inputs de Código (Sua Sugestão) */
+        .input-cod { 
+            max-width: 70px; 
+            font-weight: bold; 
+            background: #fffde7; border-color: #fdd835; text-align: center; 
+        }
