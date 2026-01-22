@@ -1,38 +1,35 @@
- <!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Logística Brasil - 80 Entregas</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Entregas Brasil Mobile</title>
     
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <header>
-        <h1>Painel de Entregas</h1>
-        <div class="stats">📦 <span id="count">0</span> / 80 Concluídas</div>
+        <h1>Logística 80+</h1>
+        <div id="status-gps">Aguardando GPS...</div>
     </header>
 
-    <main class="container">
-        <section class="sidebar">
-            <div id="reader"></div>
-            
-            <div class="controls">
-                <button onclick="obterLocalizacaoAtual()" class="btn-geo">📍 Atualizar Meu Local</button>
-                <button onclick="limparDados()" class="btn-danger">🗑️ Limpar Tudo</button>
-            </div>
+    <div id="reader"></div>
+    
+    <div class="stats-bar">
+        📦 Entregas: <span id="count">0</span> / 80
+        <button onclick="limparDados()" class="btn-clear">Limpar</button>
+    </div>
 
-            <div class="delivery-list" id="list">
-                </div>
-        </section>
+    <div id="map"></div>
 
-        <section id="map"></section>
-    </main>
+    <div class="delivery-list" id="list"></div>
 
     <script src="https://unpkg.com/html5-qrcode"></script>
-     <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

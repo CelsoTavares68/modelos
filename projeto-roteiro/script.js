@@ -1,133 +1,122 @@
- // 1. Variáveis Globais
+ // Variáveis de controle
 let entregas = JSON.parse(localStorage.getItem('entregas')) || [];
 let mapa;
 let minhaLocalizacao = null;
 let marcadorUsuario;
 let camadaMarcadores = L.layerGroup();
-let controleRota = null; // Guardará a linha da rota
+let controleRota = null;
 
-// 2. Inicialização ao carregar a página
-document.addEventListener('DOMContentLoaded', () => {
+// Inicialização segura
+window.onload = () => {
     initMapa();
     obterLocalizacaoAtual();
     initScanner();
     atualizarInterface();
-});
+};
 
-// 3. Configurar o Mapa
 function initMapa() {
-    // Inicia focado no Brasil
-    mapa = L.map('map').setView([-15.78, -47.92], 4);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap'
-    }).addTo(mapa);
+    // Foco inicial no Brasil
+    mapa = L.map('map', {
+        tap: false, // Melhora a interação em telas touch
+        zoomControl: false // Vamos colocar os botões em lugar melhor se precisar
+    }).setView([-15.78, -47.92], 4);
     
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapa);
     camadaMarcadores.addTo(mapa);
+    L.control.zoom({ position: 'topright' }).addTo(mapa);
 }
 
-// 4. Pegar Localização do Sistema (Brasil)
 function obterLocalizacaoAtual() {
     if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition((pos) => {
+        // watchPosition é melhor para quem está em movimento (entregadores)
+        navigator.geolocation.watchPosition((pos) => {
             minhaLocalizacao = [pos.coords.latitude, pos.coords.longitude];
             
             if (marcadorUsuario) mapa.removeLayer(marcadorUsuario);
             
-            // Marcador azul para sua posição
             marcadorUsuario = L.circleMarker(minhaLocalizacao, {
                 color: '#3498db',
-                radius: 10,
-                fillOpacity: 0.8
-            }).addTo(mapa).bindPopup("Você está aqui").openPopup();
+                fillColor: '#3498db',
+                fillOpacity: 0.9,
+                radius: 8
+            }).addTo(mapa).bindPopup("Sua posição");
+
+            // Só centraliza automaticamente na primeira vez para não irritar o usuário
+            if (!mapa.getBounds().contains(minhaLocalizacao)) {
+                mapa.setView(minhaLocalizacao, 15);
+            }
             
-            mapa.setView(minhaLocalizacao, 14);
-            atualizarInterface(); // Recalcula a rota a partir daqui
+            atualizarInterface();
         }, (err) => {
-            console.error("Erro GPS:", err);
-            alert("Por favor, ative o GPS para iniciar a rota.");
-        });
+            console.warn("Erro GPS:", err.message);
+        }, { enableHighAccuracy: true });
     }
 }
 
-// 5. Configurar o Scanner (Câmera Traseira)
 function initScanner() {
+    // Usamos a classe Html5Qrcode para ter mais controle no mobile
     const html5QrCode = new Html5Qrcode("reader");
-    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+    const config = { fps: 10, qrbox: { width: 200, height: 200 } };
 
     html5QrCode.start(
-        { facingMode: "environment" }, 
-        config, 
+        { facingMode: "environment" }, // Força câmera traseira
+        config,
         (decodedText) => {
+            // Lógica de captura
             const coords = decodedText.split(',').map(Number);
             if (coords.length === 2 && !isNaN(coords[0])) {
-                entregas.push(coords);
-                localStorage.setItem('entregas', JSON.stringify(entregas));
-                
-                if (navigator.vibrate) navigator.vibrate(100);
-                atualizarInterface();
+                // Evita duplicados (importante para 80 entregas)
+                const jaExiste = entregas.some(e => e[0] === coords[0] && e[1] === coords[1]);
+                if (!jaExiste) {
+                    entregas.push(coords);
+                    localStorage.setItem('entregas', JSON.stringify(entregas));
+                    if (navigator.vibrate) navigator.vibrate(100);
+                    atualizarInterface();
+                }
             }
         }
-    ).catch(err => console.error("Erro na câmara:", err));
+    ).catch(err => {
+        document.getElementById('reader').innerHTML = `<p style="color:red; padding:20px;">Erro na câmera: ${err}. Verifique as permissões.</p>`;
+    });
 }
 
-// 6. Atualizar Lista e Gerar Roteiro
 function atualizarInterface() {
-    // Atualizar contador
     document.getElementById('count').innerText = entregas.length;
-    
-    // Atualizar lista visual
     const lista = document.getElementById('list');
     lista.innerHTML = "";
     camadaMarcadores.clearLayers();
 
-    // Limpar rota anterior se existir
-    if (controleRota) {
-        mapa.removeControl(controleRota);
-    }
+    if (controleRota) mapa.removeControl(controleRota);
 
     let pontosParaRota = [];
+    if (minhaLocalizacao) pontosParaRota.push(L.latLng(minhaLocalizacao[0], minhaLocalizacao[1]));
 
-    // Adicionar ponto de partida (Sua Localização)
-    if (minhaLocalizacao) {
-        pontosParaRota.push(L.latLng(minhaLocalizacao[0], minhaLocalizacao[1]));
-    }
-
-    // Processar cada entrega
     entregas.forEach((c, i) => {
-        // HTML da lista
         const div = document.createElement('div');
         div.className = 'delivery-item';
-        div.innerHTML = `<strong>Entrega #${i+1}</strong><br>Lat: ${c[0].toFixed(4)} Lon: ${c[1].toFixed(4)}`;
+        div.innerHTML = `<strong>#${i+1}</strong> - Lat: ${c[0].toFixed(3)} | Lon: ${c[1].toFixed(3)}`;
         lista.appendChild(div);
 
-        // Marcador no mapa
-        L.marker([c[0], c[1]]).addTo(camadaMarcadores).bindPopup(`Entrega ${i+1}`);
-        
-        // Adicionar ao array do roteiro
+        L.marker([c[0], c[1]]).addTo(camadaMarcadores);
         pontosParaRota.push(L.latLng(c[0], c[1]));
     });
 
-    // Criar a rota pelas ruas (precisa de pelo menos 2 pontos)
     if (pontosParaRota.length >= 2) {
         controleRota = L.Routing.control({
             waypoints: pontosParaRota,
-            lineOptions: {
-                styles: [{ color: '#27ae60', weight: 6, opacity: 0.7 }]
-            },
+            lineOptions: { styles: [{ color: '#27ae60', weight: 5 }] },
             addWaypoints: false,
             draggableWaypoints: false,
-            show: false, // Esconde o painel de texto lateral para não poluir
+            show: false, // Essencial no mobile para não cobrir o mapa
             language: 'pt-BR'
         }).addTo(mapa);
     }
 }
 
-// 7. Limpar dados
 function limparDados() {
-    if (confirm("Deseja apagar todas as entregas?")) {
+    if (confirm("Limpar todas as entregas?")) {
         entregas = [];
         localStorage.clear();
-        if (controleRota) mapa.removeControl(controleRota);
-        atualizarInterface();
+        location.reload(); // Recarrega para limpar tudo do mapa
     }
 }
