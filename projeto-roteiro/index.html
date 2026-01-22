@@ -21,6 +21,10 @@
     <div class="stats-bar">
         📦 Entregas: <span id="count">0</span> / 80
         <button onclick="limparDados()" class="btn-clear">Limpar</button>
+        <section class="import-section">
+    <textarea id="dadosEntregas" placeholder="Cole aqui: Codigo, Endereço (Ex: BR123, Rua A, 10, SP)"></textarea>
+    <button onclick="importarLista()" class="btn-import">Carregar Lista do Dia</button>
+</section>
     </div>
 
     <div id="map"></div>
