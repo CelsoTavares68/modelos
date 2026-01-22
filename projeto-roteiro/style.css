@@ -1,0 +1,76 @@
+ :root {
+    --primary: #27ae60;
+    --danger: #c0392b;
+    --dark: #2c3e50;
+    --light: #ecf0f1;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    background-color: var(--light);
+}
+
+header {
+    background: var(--dark);
+    color: white;
+    padding: 15px;
+    text-align: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.container {
+    display: flex;
+    flex-wrap: wrap;
+    height: calc(100vh - 80px); /* Altura total menos o header */
+}
+
+.sidebar {
+    flex: 1;
+    min-width: 320px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    background: white;
+    overflow-y: auto;
+}
+
+#map {
+    flex: 2;
+    min-width: 320px;
+    height: 100%;
+}
+
+#reader {
+    border: 2px solid var(--primary);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.controls {
+    display: flex;
+    gap: 10px;
+}
+
+button {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    color: white;
+}
+
+.btn-geo { background-color: #3498db; }
+.btn-danger { background-color: var(--danger); }
+
+.delivery-item {
+    background: #f9f9f9;
+    padding: 10px;
+    margin-bottom: 5px;
+    border-left: 5px solid var(--primary);
+    border-radius: 3px;
+    font-size: 0.9rem;
+}
