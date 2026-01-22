@@ -47,7 +47,7 @@ function obterLocalizacaoAtual() {
     // 2. Configurações: Forçar câmara traseira e definir tamanho
     const config = { 
         fps: 10, 
-        qrbox: { width: 200, height: 200 } 
+        qrbox: { width: 250, height: 250 } 
     };
 
     // 3. Iniciar a câmara com facingMode "environment" (traseira)
