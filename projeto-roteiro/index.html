@@ -9,27 +9,33 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
-
+ <body>
     <header>
-        <h1>Logística 80+</h1>
-        <div id="status-gps">Aguardando GPS...</div>
+        <div class="stats">📦 <span id="count">0</span> / 80</div>
+        <div id="status-gps">📍 GPS OFF</div>
     </header>
 
     <div id="reader"></div>
-    
-    <div class="stats-bar">
-        📦 Entregas: <span id="count">0</span> / 80
-        <button onclick="limparDados()" class="btn-clear">Limpar</button>
-        <section class="import-section">
-    <textarea id="dadosEntregas" placeholder="Cole aqui: Codigo, Endereço (Ex: BR123, Rua A, 10, SP)"></textarea>
-    <button onclick="importarLista()" class="btn-import">Carregar Lista do Dia</button>
-</section>
-    </div>
 
-    <div id="map"></div>
+    <main id="map"></main>
 
-    <div class="delivery-list" id="list"></div>
+    <nav class="mobile-nav">
+        <button onclick="mostrarAba('mapa')">🗺️ Mapa</button>
+        <button onclick="mostrarAba('lista')">📋 Lista</button>
+        <button onclick="mostrarAba('config')">⚙️ Importar</button>
+    </nav>
+
+    <section id="aba-config" class="aba-content">
+        <h3>Importar Entregas do Dia</h3>
+        <textarea id="dadosEntregas" placeholder="Ex: BR123, Rua Augusta 100, SP"></textarea>
+        <button onclick="importarLista()" class="btn-primary">💾 Guardar Lista</button>
+        <button onclick="limparDados()" class="btn-danger">🗑️ Resetar App</button>
+    </section>
+
+    <section id="aba-lista" class="aba-content">
+        <h3>Próximas Paragens</h3>
+        <div id="list"></div>
+    </section>
 
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
