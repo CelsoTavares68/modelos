@@ -40,32 +40,38 @@ function obterLocalizacaoAtual() {
 
   let html5QrCode;
 
-function initScanner() {
-    html5QrCode = new Html5Qrcode("reader");
-
-    const qrCodeSuccessCallback = (decodedText, decodedResult) => {
-        const coords = decodedText.split(',').map(Number);
-        if (coords.length === 2 && !isNaN(coords[0])) {
-            entregas.push(coords);
-            localStorage.setItem('entregas', JSON.stringify(entregas));
-            atualizarInterface();
-            if (navigator.vibrate) navigator.vibrate(100);
-            alert("Entrega registrada!");
-        }
+ function initScanner() {
+    // 1. Criar a instância do scanner
+    const html5QrCode = new Html5Qrcode("reader");
+    
+    // 2. Configurações: Forçar câmara traseira e definir tamanho
+    const config = { 
+        fps: 10, 
+        qrbox: { width: 200, height: 200 } 
     };
 
-    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-
-    // Tenta iniciar diretamente pela câmara traseira ("environment")
+    // 3. Iniciar a câmara com facingMode "environment" (traseira)
     html5QrCode.start(
         { facingMode: "environment" }, 
         config, 
-        qrCodeSuccessCallback
-    ).catch((err) => {
-        console.error("Erro ao iniciar câmara traseira: ", err);
-        // Se falhar, tenta iniciar qualquer câmara disponível
-        html5QrCode.start({ facingMode: "user" }, config, qrCodeSuccessCallback);
+        (decodedText) => {
+            // Sucesso na leitura
+            processarEntrega(decodedText);
+            if (navigator.vibrate) navigator.vibrate(100);
+        }
+    ).catch(err => {
+        console.error("Erro ao iniciar câmara:", err);
+        alert("Erro na câmara: Verifique se está usando HTTPS ou localhost.");
     });
+}
+
+function processarEntrega(texto) {
+    const coords = texto.split(',').map(Number);
+    if (coords.length === 2 && !isNaN(coords[0])) {
+        entregas.push(coords);
+        localStorage.setItem('entregas', JSON.stringify(entregas));
+        atualizarInterface();
+    }
 }
 
 function atualizarInterface() {
