@@ -38,16 +38,32 @@ function obterLocalizacaoAtual() {
     }
 }
 
-function initScanner() {
-    const scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
+ function initScanner() {
+    // Configurações do scanner
+    const config = { 
+        fps: 10, 
+        qrbox: { width: 250, height: 250 },
+        // Esta linha é a chave: 'environment' força a câmara traseira
+        aspectRatio: 1.0 
+    };
+
+    const scanner = new Html5QrcodeScanner("reader", config, /* verbose= */ false);
+    
     scanner.render((text) => {
         const coords = text.split(',').map(Number);
         if (coords.length === 2 && !isNaN(coords[0])) {
             entregas.push(coords);
             localStorage.setItem('entregas', JSON.stringify(entregas));
             atualizarInterface();
+            
+            // Feedback tátil (vibração) se estiver no telemóvel
+            if (navigator.vibrate) navigator.vibrate(100);
+            
             alert("Entrega #" + entregas.length + " salva!");
         }
+    }, (error) => {
+        // Erros de leitura são normais enquanto a câmara procura o código
+        // Podemos ignorar para não encher o console
     });
 }
 
