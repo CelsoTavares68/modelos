@@ -38,32 +38,33 @@ function obterLocalizacaoAtual() {
     }
 }
 
- function initScanner() {
-    // Configurações do scanner
-    const config = { 
-        fps: 10, 
-        qrbox: { width: 250, height: 250 },
-        // Esta linha é a chave: 'environment' força a câmara traseira
-        aspectRatio: 1.0 
-    };
+  let html5QrCode;
 
-    const scanner = new Html5QrcodeScanner("reader", config, /* verbose= */ false);
-    
-    scanner.render((text) => {
-        const coords = text.split(',').map(Number);
+function initScanner() {
+    html5QrCode = new Html5Qrcode("reader");
+
+    const qrCodeSuccessCallback = (decodedText, decodedResult) => {
+        const coords = decodedText.split(',').map(Number);
         if (coords.length === 2 && !isNaN(coords[0])) {
             entregas.push(coords);
             localStorage.setItem('entregas', JSON.stringify(entregas));
             atualizarInterface();
-            
-            // Feedback tátil (vibração) se estiver no telemóvel
             if (navigator.vibrate) navigator.vibrate(100);
-            
-            alert("Entrega #" + entregas.length + " salva!");
+            alert("Entrega registrada!");
         }
-    }, (error) => {
-        // Erros de leitura são normais enquanto a câmara procura o código
-        // Podemos ignorar para não encher o console
+    };
+
+    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+    // Tenta iniciar diretamente pela câmara traseira ("environment")
+    html5QrCode.start(
+        { facingMode: "environment" }, 
+        config, 
+        qrCodeSuccessCallback
+    ).catch((err) => {
+        console.error("Erro ao iniciar câmara traseira: ", err);
+        // Se falhar, tenta iniciar qualquer câmara disponível
+        html5QrCode.start({ facingMode: "user" }, config, qrCodeSuccessCallback);
     });
 }
 
