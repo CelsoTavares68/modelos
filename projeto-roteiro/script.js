@@ -20,32 +20,30 @@ function mostrarAba(nome) {
     }
 }
 
-function configurarGPS() {
-    navigator.geolocation.watchPosition(p => {
-        minhaPos = [p.coords.latitude, p.coords.longitude];
-        document.getElementById('status-gps').innerText = "📍 GPS ON";
-        atualizarInterface();
-    }, null, { enableHighAccuracy: true });
-}
-
-async function processarLeitura(codigo) {
-    const endereco = dicionario[codigo];
-    if (!endereco) return alert("Cód: " + codigo + " não cadastrado!");
-
-    // Chamada para converter endereço em coordenadas (Brasil)
-    const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(endereco)}`);
-    const data = await resp.json();
-
-    if (data.length > 0) {
-        const novaCoord = [parseFloat(data[0].lat), parseFloat(data[0].lon)];
-        entregas.push(novaCoord);
-        localStorage.setItem('entregas', JSON.stringify(entregas));
-        if (navigator.vibrate) navigator.vibrate(100);
-        atualizarInterface();
-        alert("Destino Adicionado!");
-    } else {
-        alert("Endereço não localizado!");
-    }
+ function configurarGPS() {
+    // navigator.geolocation é a ferramenta que "fala" com o GPS do telemóvel
+    navigator.geolocation.watchPosition(
+        (pos) => {
+            // Sucesso: Guardamos a sua latitude e longitude
+            minhaPos = [pos.coords.latitude, pos.coords.longitude];
+            
+            // Atualizamos o texto no topo do app
+            document.getElementById('status-gps').innerText = "📍 GPS ON";
+            
+            // Movemos o mapa para onde você está
+            mapa.setView(minhaPos, 15);
+        },
+        (erro) => {
+            // Caso o GPS esteja desligado ou o utilizador recuse
+            console.error("Erro no GPS: ", erro.message);
+            document.getElementById('status-gps').innerText = "📍 GPS OFF";
+        },
+        {
+            enableHighAccuracy: true, // Força o uso do GPS (mais preciso que o Wi-Fi)
+            timeout: 5000,            // Espera até 5 segundos por um sinal
+            maximumAge: 0             // Não aceita localizações antigas (cache)
+        }
+    );
 }
 
 function atualizarInterface() {
