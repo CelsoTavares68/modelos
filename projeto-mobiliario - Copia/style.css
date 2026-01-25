@@ -184,38 +184,6 @@ input:focus { border-color: #1a73e8; }
     font-size: 0.9em;
 }
 
-.bmf-container {
-    margin-top: 30px;
-    padding: 20px;
-    background: #fff9e6; /* Tom amarelado para diferenciar */
-    border-radius: 12px;
-    border: 1px solid #ffeeba;
-}
-
-.titulo-bmf {
-    color: #856404;
-    margin-bottom: 15px;
-    font-size: 1.1em;
-    text-transform: uppercase;
-}
-
-.grid-bmf {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 15px;
-}
-
-.card-bmf {
-    background: white;
-    padding: 10px;
-    border-radius: 8px;
-    text-align: center;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-}
-
-.card-bmf b { font-size: 1.1em; display: block; }
-.card-bmf span { font-size: 0.8em; color: #666; }
-
 /* Estilos de Impressão */
 @media print {
     body { background: white; padding: 0; }

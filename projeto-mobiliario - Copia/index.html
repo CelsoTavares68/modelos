@@ -1,0 +1,51 @@
+    <!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consultoria Financeira Pro - B3</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Consultoria Financeira B3</h1>
+            <p id="data-atual"></p>
+        </header>
+
+        <section class="mercado">
+            <div class="chart-container">
+                <canvas id="graficoMercado"></canvas>
+            </div>
+            <button class="btn-primary" onclick="buscarDadosReais()">🔄 Atualizar Mercado</button>
+        </section>
+
+        <div class="grid-destaques">
+            <div class="coluna">
+                <h3 class="texto-alta">🚀 Top 15 Altas</h3>
+                <ul id="lista-altas" class="lista-acoes"></ul>
+            </div>
+            <div class="coluna">
+                <h3 class="texto-queda">📉 Top 15 Baixas</h3>
+                <ul id="lista-baixas" class="lista-acoes"></ul>
+            </div>
+        </div>
+
+        <hr>
+
+        <section class="renda-fixa">
+            <h3>💰 Comparador de Renda Fixa (CDB, RDB, LCI)</h3>
+            <div class="input-group">
+                <input type="number" id="valorInvestido" placeholder="Valor (R$)" value="1000">
+                <button class="btn-success" onclick="calcularRentabilidade()">Calcular</button>
+            </div>
+            <div id="tabela-rendimentos" class="resultado-container"></div>
+        </section>
+
+        <button class="btn-report" onclick="gerarRelatorio()">📄 Gerar Relatório para Impressão</button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

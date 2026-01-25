@@ -1,4 +1,4 @@
-   const API_TOKEN = 'SEU_TOKEN_AQUI'; 
+    const API_TOKEN = 'SEU_TOKEN_AQUI'; 
 let chartMercado;
 
 // Exibir data atual
@@ -45,47 +45,21 @@ function exibirListas(altas, baixas) {
         `<li>${b.stock}: <b class="texto-queda">${b.change.toFixed(2)}%</b></li>`).join('');
 }
 
- function calcularRentabilidadeCompleta() {
-    const valor = parseFloat(document.getElementById('valorInvestido').value);
-    const container = document.getElementById('tabela-rendimentos');
+function calcularRentabilidade() {
+    const valor = parseFloat(document.getElementById('valorInvestido').value) || 0;
+    const CDI = 11.15; // Exemplo de CDI atual
+    const taxaMes = (CDI / 100) / 12;
 
-    if (!valor || valor <= 0) {
-        alert("Insira um valor para calcular.");
-        return;
-    }
+    const res = {
+        cdb: (valor * taxaMes) * 0.775, // 100% CDI - 22.5% IR
+        lci: (valor * taxaMes * 0.9),  // 90% CDI Isento
+        poupanca: valor * 0.0055       // 0.5% + TR
+    };
 
-    // Taxas Atuais (Podem ser editadas conforme o COPOM)
-    const SELIC = 11.25; 
-    const CDI = SELIC - 0.10;
-    
-    // Fatores de Divisão
-    const diasUteisAno = 252;
-    const mesesAno = 12;
-
-    // Funções de Cálculo Líquido (Já com desconto de 22.5% de IR para CDB/RDB)
-    const calcCDB = (v, tempo) => (v * (CDI / 100 / tempo)) * 0.775;
-    const calcLCI = (v, tempo) => (v * ((CDI * 0.9) / 100 / tempo));
-    const calcPoup = (v, tempo) => (v * (0.0055 / (tempo === 252 ? 21 : 1))); // Estimativa 21 dias úteis/mês
-
-    container.innerHTML = `
-        <div class="card-investimento">
-            <h4>CDB / RDB (100% CDI)</h4>
-            <p>Diário: <strong class="texto-alta">R$ ${calcCDB(valor, diasUteisAno).toFixed(2)}</strong></p>
-            <p>Mensal: <strong>R$ ${calcCDB(valor, mesesAno).toFixed(2)}</strong></p>
-            <small>Líquido (Pós-IR)</small>
-        </div>
-        <div class="card-investimento">
-            <h4>LCI / LCA (90% CDI)</h4>
-            <p>Diário: <strong class="texto-alta">R$ ${calcLCI(valor, diasUteisAno).toFixed(2)}</strong></p>
-            <p>Mensal: <strong>R$ ${calcLCI(valor, mesesAno).toFixed(2)}</strong></p>
-            <small>Isento de Imposto</small>
-        </div>
-        <div class="card-investimento">
-            <h4>Poupança</h4>
-            <p>Diário: <strong class="texto-alta">R$ ${calcPoup(valor, diasUteisAno).toFixed(2)}</strong></p>
-            <p>Mensal: <strong>R$ ${calcPoup(valor, mesesAno).toFixed(2)}</strong></p>
-            <small>Referencial</small>
-        </div>
+    document.getElementById('tabela-rendimentos').innerHTML = `
+        <div class="card-investimento"><h4>CDB/RDB</h4><p class="valor-rendimento">R$ ${res.cdb.toFixed(2)}</p></div>
+        <div class="card-investimento"><h4>LCI/LCA</h4><p class="valor-rendimento">R$ ${res.lci.toFixed(2)}</p></div>
+        <div class="card-investimento"><h4>Poupança</h4><p class="valor-rendimento">R$ ${res.poupanca.toFixed(2)}</p></div>
     `;
 }
 
@@ -94,4 +68,70 @@ function gerarRelatorio() {
 }
 
 window.onload = buscarDadosReais;
-setInterval(buscarDadosReais, 300000);
+
+// Nova função para buscar BMF sem estragar as ações
+   async function carregarBMF() {
+    const contratos = 'WING26,WDOG26,CCMH26,SCFH26,ICFH26,WTHH26';
+    const areaFinanceira = document.getElementById('bmf-financeiro');
+    const areaAgro = document.getElementById('bmf-agro');
+
+    try {
+        const response = await fetch(`https://brapi.dev/api/quote/${contratos}?token=${API_TOKEN}`);
+        const data = await response.json();
+
+        if (data.results && data.results.length > 0) {
+            const criarCard = (item, nome) => {
+                const variacao = item.regularMarketChangePercent || 0;
+                const cor = variacao >= 0 ? 'texto-alta' : 'texto-queda';
+                return `
+                    <div style="background: white; padding: 10px; border-radius: 8px; flex: 1; min-width: 120px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #eee;">
+                        <small style="color: #666; font-weight: bold; display: block;">${nome}</small>
+                        <b class="${cor}" style="font-size: 1.1em;">${variacao >= 0 ? '+' : ''}${variacao.toFixed(2)}%</b>
+                        <div style="font-size: 0.6em; color: #aaa;">${item.symbol}</div>
+                    </div>
+                `;
+            };
+
+            // Nomes para exibição
+            const nomes = { 
+                'WIN': 'Mini Índice', 'WDO': 'Mini Dólar', 
+                'CCM': 'Milho', 'SCF': 'Soja', 'ICF': 'Café', 'WTH': 'Trigo' 
+            };
+
+            // Distribui Financeiro
+            areaFinanceira.innerHTML = data.results
+                .filter(i => i.symbol.startsWith('WIN') || i.symbol.startsWith('WDO'))
+                .map(i => criarCard(i, nomes[i.symbol.substring(0,3)])).join('');
+
+            // Distribui Agro
+            areaAgro.innerHTML = data.results
+                .filter(i => ['CCM', 'SCF', 'ICF', 'WTH'].includes(i.symbol.substring(0,3)))
+                .map(i => criarCard(i, nomes[i.symbol.substring(0,3)])).join('');
+
+            // Adiciona Frango/Porco fixo
+            areaAgro.innerHTML += `
+                <div style="background: white; padding: 10px; border-radius: 8px; flex: 1; min-width: 120px; text-align: center; border: 1px dashed #ccc;">
+                    <small style="color: #666; font-weight: bold; display: block;">Frango/Suíno</small>
+                    <div style="font-size: 0.7em; color: #aaa; margin-top: 5px;">Média CEPEA/PR</div>
+                </div>`;
+        }
+    } catch (e) {
+        console.log("Mercado fechado (Fim de semana). Estrutura mantida.");
+    }
+}
+
+// Vamos garantir que quando o site carregar, ele chame as Ações E a BMF
+const carregarTudo = window.onload;
+window.onload = function() {
+    if (carregarTudo) carregarTudo(); // Chama a função original das ações
+    carregarBMF();                   // Chama a função nova da BMF
+};
+
+function toggleTabela() {
+    const div = document.getElementById('tabela-vencimentos');
+    if (div.style.display === 'none') {
+        div.style.display = 'block';
+    } else {
+        div.style.display = 'none';
+    }
+}
