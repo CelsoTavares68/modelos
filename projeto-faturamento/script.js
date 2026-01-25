@@ -1,4 +1,4 @@
- let contas = JSON.parse(localStorage.getItem('contas_comercio')) || [];
+    let contas = JSON.parse(localStorage.getItem('contas_comercio')) || [];
 let idEmEdicao = null;
 
 atualizarInterface();
@@ -24,7 +24,7 @@ function adicionarConta() {
         contas.push({ id: Date.now(), descricao, valor, documento, mes, tipo });
     }
 
-    salvarESincronizar();
+      salvarESincronizar();
     limparFormulario();
 }
 
@@ -46,7 +46,7 @@ function atualizarInterface() {
     // Calcula saldos por mês (previousSaldo e periodSaldo)
     const saldosPorMes = computeSaldosPorMes(mesesUnicos, manualSaldos);
 
-    // Determina o saldo anterior a exibir no input
+      // Determina o saldo anterior a exibir no input
     let saldoAnterior;
     if (filtroMes) {
         if (saldosPorMes[filtroMes]) saldoAnterior = saldosPorMes[filtroMes].previousSaldo;
@@ -72,7 +72,7 @@ function atualizarInterface() {
     const contasFiltradas = filtroMes ? contas.filter(c => c.mes === filtroMes) : contas;
     contasFiltradas.sort((a, b) => a.mes.localeCompare(b.mes));
 
-    contasFiltradas.forEach(conta => {
+     contasFiltradas.forEach(conta => {
         const linha = document.createElement('tr');
         const classeCor = conta.tipo === 'receber' ? 'cor-receber' : 'cor-pagar';
         linha.innerHTML = `
@@ -170,7 +170,145 @@ function limparFormulario() {
     document.getElementById('documento').value = '';
 }
 
-function imprimirRelatorio() { window.print(); }
+// Nova versão: abre uma janela com apenas os saldos (do topo para baixo) + lista e chama print()
+// Sem cabeçalho, como você pediu.
+function imprimirRelatorio() {
+    const filtroMes = document.getElementById('filtro_mes').value;
+    const contasFiltradas = filtroMes ? contas.filter(c => c.mes === filtroMes) : contas.slice().sort((a, b) => a.mes.localeCompare(b.mes));
+
+    // Calcula saldos para o filtro atual
+    const manualSaldos = getManualSaldos();
+    const mesesUnicos = getUniqueMonthsIncluding(filtroMes);
+    const saldosPorMes = computeSaldosPorMes(mesesUnicos, manualSaldos);
+    let saldoAnterior = 0;
+    if (filtroMes) {
+        if (saldosPorMes[filtroMes]) saldoAnterior = saldosPorMes[filtroMes].previousSaldo;
+        else {
+            const sorted = Object.keys(saldosPorMes).sort();
+            saldoAnterior = sorted.length ? saldosPorMes[sorted[sorted.length - 1]].periodSaldo : (manualSaldos['initial'] || 0);
+        }
+    } else {
+        saldoAnterior = manualSaldos['initial'] !== undefined ? manualSaldos['initial'] : 0;
+    }
+    const receber = contasFiltradas.filter(c => c.tipo === 'receber').reduce((s, c) => s + Number(c.valor || 0), 0);
+    const pagar = contasFiltradas.filter(c => c.tipo === 'pagar').reduce((s, c) => s + Number(c.valor || 0), 0);
+    const saldoPeriodo = (saldoAnterior || 0) + receber - pagar;
+
+      // Estilos mínimos inline para a página de impressão
+    const styles = `
+    <style>
+      body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #222; padding: 20px; }
+      .resumo { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px; }
+      .card { flex:1; min-width:150px; padding:10px; border-radius:6px; color:white; text-align:center; }
+      .card small { display:block; font-size:12px; color:rgba(255,255,255,0.9); margin-bottom:6px; }
+      .card-1 { background:#7f8c8d } .card-2 { background:#2ecc71 } .card-3 { background:#e74c3c } .card-4 { background:#34495e }
+      table { width:100%; border-collapse:collapse; font-size:12px; margin-top:6px; }
+      th, td { padding:8px; border-bottom:1px solid #eee; text-align:left; }
+      td.valor { text-align:right; }
+      .muted { color:#666; font-size:11px; margin-top:10px; }
+      @media print { body { padding:10px } .no-print { display:none } }
+    </style>`;
+
+     // Monta HTML dos cards (apenas saldos)
+    const resumoHtml = `
+      <div class="resumo">
+        <div class="card card-1"><small>Saldo Anterior</small><div style="font-weight:bold">${formatCurrency(saldoAnterior)}</div></div>
+        <div class="card card-2"><small>Total a Receber</small><div style="font-weight:bold">${formatCurrency(receber)}</div></div>
+        <div class="card card-3"><small>Total a Pagar</small><div style="font-weight:bold">${formatCurrency(pagar)}</div></div>
+        <div class="card card-4"><small>Saldo do Período</small><div style="font-weight:bold">${formatCurrency(saldoPeriodo)}</div></div>
+      </div>`;
+
+    // Monta tabela (sem cabeçalho extra)
+    let rowsHtml = '';
+    contasFiltradas.forEach(conta => {
+        rowsHtml += `<tr>
+            <td>${formatarMes(conta.mes)}</td>
+            <td>${conta.descricao}</td>
+            <td>${conta.documento || '-'}</td>
+            <td class="valor">${formatCurrency(conta.valor)}</td>
+            <td>${conta.tipo === 'receber' ? 'Entrada' : 'Saída'}</td>
+        </tr>`;
+    });
+
+    const tableHtml = `
+      <table>
+        <thead>
+          <tr>
+            <th>Mês/Ref</th>
+            <th>Descrição</th>
+            <th>Doc/NF</th>
+            <th style="text-align:right">Valor</th>
+            <th>Tipo</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rowsHtml}
+        </tbody>
+      </table>`;
+
+    const footer = `<div class="muted">Relatório gerado em: ${new Date().toLocaleString('pt-BR')}</div>`;
+
+    const html = `<!doctype html><html><head><meta charset="utf-8"><title>Relatório</title>${styles}</head><body>${resumoHtml}${tableHtml}${footer}</body></html>`;
+
+        // Abre nova janela e imprime (usuário pode escolher "Salvar como PDF")
+    const win = window.open('', '_blank');
+    if (!win) {
+        alert('Não foi possível abrir a janela de impressão. Verifique bloqueadores de pop-up e tente novamente.');
+        return;
+    }
+    win.document.open();
+    win.document.write(html);
+    win.document.close();
+
+    // Dá tempo para o navegador renderizar antes de chamar print()
+    const tryPrint = () => {
+        try {
+            win.focus();
+            win.print();
+            // fecha a janela automaticamente após impressão (não garante em todos os navegadores)
+            setTimeout(() => { try { win.close(); } catch(e) {} }, 700);
+        } catch (e) {
+            console.error('Erro ao imprimir:', e);
+        }
+    };
+    // aguarda um pequeno intervalo
+    setTimeout(tryPrint, 500);
+}
+
+function loadScript(src, timeout = 10000) {
+    return new Promise((resolve, reject) => {
+        // já carregado?
+        if (document.querySelector(`script[src="${src}"]`)) {
+            // espera um ciclo para garantir o carregamento
+            return resolve();
+        }
+        const s = document.createElement('script');
+        s.src = src;
+        s.async = true;
+        let finished = false;
+        const timer = setTimeout(() => {
+            if (!finished) {
+                finished = true;
+                reject(new Error('Timeout ao carregar script ' + src));
+            }
+        }, timeout);
+        s.onload = () => {
+            if (!finished) {
+                finished = true;
+                clearTimeout(timer);
+                resolve();
+            }
+        };
+         s.onerror = (err) => {
+            if (!finished) {
+                finished = true;
+                clearTimeout(timer);
+                reject(err || new Error('Erro ao carregar script ' + src));
+            }
+        };
+        document.head.appendChild(s);
+    });
+}
 
 /* ----------------- Funções utilitárias para moeda e gestão de saldos por mês ----------------- */
 
@@ -218,7 +356,7 @@ function getUniqueMonthsIncluding(mesExtra) {
     return arr;
 }
 
-function computeSaldosPorMes(mesesArray, manualSaldos) {
+ function computeSaldosPorMes(mesesArray, manualSaldos) {
     // Retorna um objeto { '2026-01': { previousSaldo: X, periodSaldo: Y }, ... }
     const result = {};
     // carry representa o saldo que "vem de antes" (inicia com manual 'initial' ou 0)
