@@ -1,139 +1,132 @@
-// CHAVE ÚNICA DE PERSISTÊNCIA
-const DB_NAME = 'gestor_fiscal_br_vFinal';
+ let contas = JSON.parse(localStorage.getItem('contas_comercio')) || [];
+let idEmEdicao = null;
 
-// Carregar dados ou iniciar novo
-let dados = JSON.parse(localStorage.getItem(DB_NAME)) || {
-    classes: [
-        { nome: "ISS", taxa: 5 },
-        { nome: "ICMS", taxa: 18 }
-    ],
-    notas: []
-};
+atualizarInterface();
 
-document.addEventListener('DOMContentLoaded', () => {
+function adicionarConta() {
+    const descricao = document.getElementById('descricao').value;
+    const valor = parseFloat(document.getElementById('valor').value);
+    const documento = document.getElementById('documento').value;
+    const mes = document.getElementById('mes_referencia').value;
+    const tipo = document.getElementById('tipo').value;
+
+    if (!descricao || isNaN(valor) || !mes) {
+        alert("Preencha os campos obrigatórios!");
+        return;
+    }
+
+    if (idEmEdicao !== null) {
+        const index = contas.findIndex(c => c.id === idEmEdicao);
+        contas[index] = { ...contas[index], descricao, valor, documento, mes, tipo };
+        idEmEdicao = null;
+        document.getElementById('btn-adicionar').innerText = "Adicionar Lançamento";
+    } else {
+        contas.push({ id: Date.now(), descricao, valor, documento, mes, tipo });
+    }
+
+    salvarESincronizar();
+    limparFormulario();
+}
+
+function salvarESincronizar() {
+    localStorage.setItem('contas_comercio', JSON.stringify(contas));
     atualizarInterface();
-});
-
-// Funções de Sistema
-function salvar() {
-    localStorage.setItem(DB_NAME, JSON.stringify(dados));
-    atualizarInterface();
 }
 
-function alternarSecao(idAlvo) {
-    document.getElementById(idAlvo).classList.toggle('secao-oculta');
-}
-
-const formatar = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-
-// Lógica de Impostos
-function processarNota(e, tipo) {
-    e.preventDefault();
-    const entidade = tipo === 'SAIDA' ? document.getElementById('clienteSaida').value : document.getElementById('fornecedorEntrada').value;
-    const valorInput = parseFloat(tipo === 'SAIDA' ? document.getElementById('valorSaida').value : document.getElementById('valorEntrada').value);
-    
-    // Capturar checkboxes selecionados
-    const containerID = tipo === 'SAIDA' ? 'checkImpostosSaida' : 'checkImpostosEntrada';
-    const checks = document.querySelectorAll(`#${containerID} input:checked`);
-    
-    let taxaSomada = 0;
-    let nomes = [];
-
-    checks.forEach(c => {
-        const classe = dados.classes[c.value];
-        taxaSomada += classe.taxa;
-        nomes.push(classe.nome);
-    });
-
-    const vImposto = valorInput * (taxaSomada / 100);
-    const vTotal = tipo === 'SAIDA' ? valorInput + vImposto : valorInput;
-    const vBase = tipo === 'SAIDA' ? valorInput : valorInput - vImposto;
-
-    dados.notas.push({
-        id: Date.now(),
-        tipo,
-        entidade,
-        valorBase: vBase,
-        valorImposto: vImposto,
-        totalFinal: vTotal,
-        classe: nomes.length > 0 ? nomes.join(' + ') : 'Isento'
-    });
-
-    e.target.reset();
-    salvar();
-}
-
-// Eventos de Formulário
-document.getElementById('formClasse').addEventListener('submit', (e) => {
-    e.preventDefault();
-    dados.classes.push({ 
-        nome: document.getElementById('nomeClasse').value.toUpperCase(), 
-        taxa: parseFloat(document.getElementById('taxaClasse').value) 
-    });
-    e.target.reset();
-    salvar();
-});
-
-document.getElementById('formEmissao').addEventListener('submit', (e) => processarNota(e, 'SAIDA'));
-document.getElementById('formEntrada').addEventListener('submit', (e) => processarNota(e, 'ENTRADA'));
-
-// Renderização
 function atualizarInterface() {
-    let totR = 0, totP = 0, totI = 0;
-    dados.notas.forEach(n => {
-        if(n.tipo === 'SAIDA') { totR += n.totalFinal; totI += n.valorImposto; }
-        else { totP += n.totalFinal; }
+    const corpoTabela = document.getElementById('lista-corpo');
+    const filtroMes = document.getElementById('filtro_mes').value;
+    
+    // Lógica para pegar o valor do Saldo Anterior limpando o "R$"
+    const inputManual = document.getElementById('saldo-anterior-manual');
+    let valorLimpo = inputManual.value.replace('R$', '').replace(/\s/g, '').replace(',', '.');
+    const saldoAnterior = parseFloat(valorLimpo) || 0;
+
+    corpoTabela.innerHTML = '';
+    let receber = 0, pagar = 0;
+
+    const contasFiltradas = filtroMes ? contas.filter(c => c.mes === filtroMes) : contas;
+    contasFiltradas.sort((a, b) => a.mes.localeCompare(b.mes));
+
+    contasFiltradas.forEach(conta => {
+        const linha = document.createElement('tr');
+        const classeCor = conta.tipo === 'receber' ? 'cor-receber' : 'cor-pagar';
+        linha.innerHTML = `
+            <td>${formatarMes(conta.mes)}</td>
+            <td>${conta.descricao}</td>
+            <td>${conta.documento || '-'}</td>
+            <td class="${classeCor}">R$ ${conta.valor.toFixed(2)}</td>
+            <td>${conta.tipo === 'receber' ? 'Entrada' : 'Saída'}</td>
+            <td class="no-print">
+                <button onclick="prepararEdicao(${conta.id})">✏️</button>
+                <button onclick="excluirConta(${conta.id})">🗑️</button>
+            </td>
+        `;
+        corpoTabela.appendChild(linha);
+        if (conta.tipo === 'receber') receber += conta.valor; else pagar += conta.valor;
     });
 
-    // Dashboard
-    document.getElementById('dashRecebido').innerText = formatar(totR);
-    document.getElementById('dashPago').innerText = formatar(totP);
-    document.getElementById('dashImposto').innerText = formatar(totI);
-    document.getElementById('dashSaldo').innerText = formatar(totR - totP);
-
-    const perc = totR > 0 ? (totI / totR) * 100 : 0;
-    document.getElementById('barraImposto').style.width = Math.min(perc, 100) + "%";
-    document.getElementById('percentualImposto').innerText = perc.toFixed(1) + "% de carga tributária";
-
-    // Gerar Checkboxes
-    const htmlChecks = dados.classes.map((c, i) => `
-        <div class="check-item">
-            <input type="checkbox" value="${i}" id="cb${tipo = Math.random()}${i}">
-            <label>${c.nome} (${c.taxa}%)</label>
-        </div>
-    `).join('');
-    
-    // Atualizar os containers de check sem perder o reset
-    document.getElementById('checkImpostosSaida').innerHTML = dados.classes.map((c, i) => `
-        <div class="check-item"><input type="checkbox" value="${i}"> <label>${c.nome} (${c.taxa}%)</label></div>`).join('');
-    document.getElementById('checkImpostosEntrada').innerHTML = dados.classes.map((c, i) => `
-        <div class="check-item"><input type="checkbox" value="${i}"> <label>${c.nome} (${c.taxa}%)</label></div>`).join('');
-
-    // Listas e Tabelas
-    document.getElementById('listaClasses').innerHTML = dados.classes.map(c => `<li>${c.nome}: ${c.taxa}%</li>`).join('');
-    document.getElementById('corpoTabela').innerHTML = dados.notas.map(n => `
-        <tr>
-            <td class="tag-${n.tipo.toLowerCase()}">${n.tipo}</td>
-            <td>${n.entidade} <br><small>${n.classe}</small></td>
-            <td>${formatar(n.valorBase)}</td>
-            <td>${formatar(n.valorImposto)}</td>
-            <td><strong>${formatar(n.totalFinal)}</strong></td>
-            <td><button onclick="apagarNota(${n.id})" style="color:red; border:none; background:none; cursor:pointer; font-weight:bold;">X</button></td>
-        </tr>
-    `).join('');
+    document.getElementById('total-receber').innerText = `R$ ${receber.toFixed(2)}`;
+    document.getElementById('total-pagar').innerText = `R$ ${pagar.toFixed(2)}`;
+    document.getElementById('saldo-total').innerText = `R$ ${(saldoAnterior + receber - pagar).toFixed(2)}`;
 }
 
-function apagarNota(id) {
-    if(confirm("Deseja apagar este registo permanentemente?")) {
-        dados.notas = dados.notas.filter(n => n.id !== id);
-        salvar();
+// FUNÇÕES DO SALDO ANTERIOR (ENTER E TRAVA)
+function verificarEnter(event) {
+    if (event.key === "Enter") {
+        const input = document.getElementById('saldo-anterior-manual');
+        let valor = parseFloat(input.value.replace(',', '.')) || 0;
+        input.value = `R$ ${valor.toFixed(2).replace('.', ',')}`;
+        input.blur();
+        input.disabled = true;
+        atualizarInterface();
     }
 }
 
-document.getElementById('btnPDF').addEventListener('click', () => {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    doc.text("Relatório Fiscal Consolidado", 14, 20);
-    doc.autoTable({ html: '#tabelaFiscal', startY: 30, columnStyles: { 5: { display: 'none' } } });
-    doc.save("relatorio_fiscal.pdf");
-});
+function reativarInput() {
+    const input = document.getElementById('saldo-anterior-manual');
+    if (input.disabled) {
+        input.disabled = false;
+        let valorAtual = input.value.replace('R$', '').replace(/\s/g, '').replace(',', '.');
+        input.value = valorAtual;
+        input.focus();
+    }
+}
+
+function limparFiltro() {
+    document.getElementById('filtro_mes').value = '';
+    atualizarInterface();
+}
+
+function formatarMes(mesAno) {
+    if (!mesAno) return "";
+    const [ano, mes] = mesAno.split('-');
+    return `${mes}/${ano}`;
+}
+
+function excluirConta(id) {
+    if (confirm("Deseja excluir?")) {
+        contas = contas.filter(c => c.id !== id);
+        salvarESincronizar();
+    }
+}
+
+function prepararEdicao(id) {
+    const conta = contas.find(c => c.id === id);
+    document.getElementById('descricao').value = conta.descricao;
+    document.getElementById('valor').value = conta.valor;
+    document.getElementById('documento').value = conta.documento;
+    document.getElementById('mes_referencia').value = conta.mes;
+    document.getElementById('tipo').value = conta.tipo;
+    idEmEdicao = id;
+    document.getElementById('btn-adicionar').innerText = "Salvar Alterações";
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function limparFormulario() {
+    document.getElementById('descricao').value = '';
+    document.getElementById('valor').value = '';
+    document.getElementById('documento').value = '';
+}
+
+function imprimirRelatorio() { window.print(); }

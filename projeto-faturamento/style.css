@@ -1,201 +1,49 @@
-:root {
-    --verde: #27ae60; --azul: #2980b9; --vermelho: #e74c3c; 
-    --laranja: #f39c12; --dark: #2c3e50; --cinza: #f4f7f6;
+   body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; padding: 20px; color: #333; }
+.container { max-width: 1000px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+h1 { text-align: center; color: #2c3e50; }
+
+.form-group { display: flex; flex-wrap: wrap; gap: 15px; background: #f8f9fa; padding: 25px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #e9ecef; }
+.form-control { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 180px; }
+label { font-size: 0.85rem; font-weight: bold; color: #495057; }
+input, select { padding: 12px; border: 1px solid #ced4da; border-radius: 6px; }
+
+button#btn-adicionar { width: 100%; padding: 15px; background-color: #27ae60; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+
+.resumo { display: flex; gap: 15px; margin-bottom: 30px; flex-wrap: wrap; }
+.card { flex: 1; min-width: 180px; padding: 20px; border-radius: 8px; color: white; text-align: center; display: flex; flex-direction: column; justify-content: center; cursor: pointer; }
+
+.card-anterior { background-color: #7f8c8d; }
+.card-receber { background-color: #2ecc71; }
+.card-pagar { background-color: #e74c3c; }
+.card-saldo { background-color: #34495e; }
+
+.card-anterior input {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    text-align: center;
+    font-size: 1.1rem;
+    font-weight: bold;
+    width: 90%;
+    margin: 5px auto 0;
+    border-radius: 4px;
+    outline: none;
 }
 
-body { 
-    font-family: 'Segoe UI', Arial, sans-serif; 
-    background: var(--cinza); 
-    padding: 20px; 
-    color: #333; 
+.card-anterior input:disabled {
+    background: transparent;
+    border: none;
+    color: white;
+    opacity: 1;
+    cursor: pointer;
 }
 
-.container { 
-    max-width: 1100px; 
-    margin: auto; 
-}
+table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
+.cor-receber { color: #27ae60; font-weight: bold; }
+.cor-pagar { color: #c0392b; font-weight: bold; }
 
-/* Dashboard */
-.dashboard { 
-    display: grid; 
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
-    gap: 15px; 
-    margin-bottom: 25px; 
-}
+.acoes-topo { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; }
+#btn-imprimir { background-color: #34495e; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
 
-.card-dash { 
-    background: white; 
-    padding: 20px; 
-    border-radius: 10px; 
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-top: 4px solid var(--azul); 
-}
-
-.card-dash.highlight { 
-    border-top-color: var(--laranja); 
-}
-
-.card-dash h3 { 
-    font-size: 13px; 
-    color: #7f8c8d; 
-    margin: 0; 
-}
-
-.card-dash p { 
-    font-size: 22px; 
-    font-weight: bold; 
-    margin: 10px 0 0; 
-}
-
-.progresso-container { 
-    background: #eee; 
-    border-radius: 10px; 
-    height: 8px; 
-    margin: 12px 0; 
-    overflow: hidden; 
-}
-
-.progresso-barra { 
-    background: var(--vermelho); 
-    height: 100%; 
-    width: 0%; 
-    transition: width 0.6s ease; 
-}
-
-/* Menu */
-.menu-vertical { 
-    display: flex; 
-    flex-direction: column; 
-    gap: 12px; 
-    margin: 10px 0 25px 0; 
-}
-
-.menu-vertical button { 
-    width: 100%; 
-    padding: 15px; 
-    border: none; 
-    border-radius: 8px; 
-    color: white; 
-    font-size: 15px; 
-    font-weight: bold; 
-    cursor: pointer; 
-}
-
-.btn-config { 
-    background: var(--laranja); 
-}
-
-.btn-relatorio { 
-    background: var(--dark); 
-}
-
-/* Grid e Cards */
-.card { 
-    background: white; 
-    padding: 25px; 
-    border-radius: 10px; 
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 20px; 
-}
-
-.grid-forms { 
-    display: grid; 
-    grid-template-columns: 1fr 1fr; 
-    gap: 20px; 
-}
-
-.secao-oculta { 
-    display: none !important; 
-}
-
-form { 
-    display: flex; 
-    flex-direction: column; 
-    gap: 12px; 
-}
-
-input, select, button { 
-    padding: 12px; 
-    border: 1px solid #ddd; 
-    border-radius: 6px; 
-}
-
-/* Checkboxes de Impostos */
-.container-checks { 
-    background: #f9f9f9; 
-    padding: 12px; 
-    border-radius: 6px; 
-    border: 1px solid #ddd; 
-    max-height: 150px; 
-    overflow-y: auto; 
-}
-
-.check-item { 
-    display: flex; 
-    align-items: center; 
-    gap: 10px; 
-    margin-bottom: 8px; 
-    font-size: 14px; 
-}
-
-.check-item input { 
-    width: auto; 
-    margin: 0; 
-    cursor: pointer; 
-}
-
-/* Botões */
-.btn-sucesso { 
-    background: var(--verde); 
-    color: white; 
-    border: none; 
-    cursor: pointer; 
-}
-
-.btn-alerta { 
-    background: var(--vermelho); 
-    color: white; 
-    border: none; 
-    cursor: pointer; 
-}
-
-.btn-secundario { 
-    background: var(--azul); 
-    color: white; 
-    border: none; 
-    cursor: pointer; 
-}
-
-.btn-pdf { 
-    background: #444; 
-    color: white; 
-    border: none; 
-    padding: 8px 15px; 
-    border-radius: 4px; 
-    cursor: pointer; 
-}
-
-/* Tabela */
-table { 
-    width: 100%; 
-    border-collapse: collapse; 
-}
-
-th, td { 
-    padding: 14px; 
-    text-align: left; 
-    border-bottom: 1px solid #eee; 
-}
-
-.tag-saida { 
-    color: var(--verde); 
-    font-weight: bold; 
-}
-
-.tag-entrada { 
-    color: var(--vermelho); 
-    font-weight: bold; 
-}
-
-@media (max-width: 768px) { 
-    .grid-forms { 
-        grid-template-columns: 1fr;
-    } }
+@media print { .no-print { display: none; } }
