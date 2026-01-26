@@ -1,23 +1,37 @@
-    const API_TOKEN = 'SEU_TOKEN_AQUI'; 
+  const API_TOKEN = 'SEU_TOKEN_AQUI'; // <--- Verifique se o seu token está correto entre as aspas
 let chartMercado;
 
 // Exibir data atual
 document.getElementById('data-atual').innerText = new Date().toLocaleDateString('pt-BR');
 
-async function buscarDadosReais() {
+// Carregar tudo ao abrir
+window.onload = () => {
+    buscarDadosReais();
+    buscarMoedas();
+};
+
+ async function buscarDadosReais() {
     try {
         const response = await fetch(`https://brapi.dev/api/quote/list?token=${API_TOKEN}`);
+        
+        if (!response.ok) {
+            console.log("Limite de API atingido ou Token inválido.");
+            return;
+        }
+
         const data = await response.json();
         
-        // Filtro de Volume (> 1 milhão)
-        const filtradas = data.stocks.filter(a => a.volume > 1000000);
+        if (data.stocks) {
+            const filtradas = data.stocks.filter(a => a.volume > 1000000);
+            const topAltas = [...filtradas].sort((a,b) => b.change - a.change).slice(0, 15);
+            const topBaixas = [...filtradas].sort((a,b) => a.change - b.change).slice(0, 15);
 
-        const topAltas = [...filtradas].sort((a,b) => b.change - a.change).slice(0, 15);
-        const topBaixas = [...filtradas].sort((a,b) => a.change - b.change).slice(0, 15);
-
-        exibirListas(topAltas, topBaixas);
-        renderizarGraficoTop30([...topAltas, ...topBaixas]);
-    } catch (e) { alert("Erro ao carregar dados."); }
+            exibirListas(topAltas, topBaixas);
+            renderizarGraficoTop30([...topAltas, ...topBaixas]);
+        }
+    } catch (e) { 
+        console.error("Erro na conexão com a B3"); 
+    }
 }
 
 function renderizarGraficoTop30(acoes) {
@@ -69,69 +83,50 @@ function gerarRelatorio() {
 
 window.onload = buscarDadosReais;
 
-// Nova função para buscar BMF sem estragar as ações
-   async function carregarBMF() {
-    const contratos = 'WING26,WDOG26,CCMH26,SCFH26,ICFH26,WTHH26';
-    const areaFinanceira = document.getElementById('bmf-financeiro');
-    const areaAgro = document.getElementById('bmf-agro');
-
+   async function buscarMoedas() {
     try {
-        const response = await fetch(`https://brapi.dev/api/quote/${contratos}?token=${API_TOKEN}`);
+        // Buscamos os valores oficiais (Comercial)
+        const url = 'https://economia.awesomeapi.com.br/last/USD-BRL,EUR-BRL,BTC-BRL,ETH-BRL,XAU-BRL';
+        const response = await fetch(url);
         const data = await response.json();
 
-        if (data.results && data.results.length > 0) {
-            const criarCard = (item, nome) => {
-                const variacao = item.regularMarketChangePercent || 0;
-                const cor = variacao >= 0 ? 'texto-alta' : 'texto-queda';
-                return `
-                    <div style="background: white; padding: 10px; border-radius: 8px; flex: 1; min-width: 120px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #eee;">
-                        <small style="color: #666; font-weight: bold; display: block;">${nome}</small>
-                        <b class="${cor}" style="font-size: 1.1em;">${variacao >= 0 ? '+' : ''}${variacao.toFixed(2)}%</b>
-                        <div style="font-size: 0.6em; color: #aaa;">${item.symbol}</div>
-                    </div>
-                `;
-            };
+        if (data) {
+            // --- DÓLAR ---
+            if (data.USDBRL) {
+                const comercial = parseFloat(data.USDBRL.bid);
+                // Calculamos o paralelo com margem de 6.5% (média entre 5% e 8%)
+                const paralelo = comercial * 1.065; 
 
-            // Nomes para exibição
-            const nomes = { 
-                'WIN': 'Mini Índice', 'WDO': 'Mini Dólar', 
-                'CCM': 'Milho', 'SCF': 'Soja', 'ICF': 'Café', 'WTH': 'Trigo' 
-            };
+                document.getElementById('usd-comercial').innerText = `R$ ${comercial.toFixed(2)}`;
+                document.getElementById('usd-paralelo').innerText = `R$ ${paralelo.toFixed(2)}`;
+            }
 
-            // Distribui Financeiro
-            areaFinanceira.innerHTML = data.results
-                .filter(i => i.symbol.startsWith('WIN') || i.symbol.startsWith('WDO'))
-                .map(i => criarCard(i, nomes[i.symbol.substring(0,3)])).join('');
+            // --- EURO ---
+            if (data.EURBRL) {
+                const comercialEur = parseFloat(data.EURBRL.bid);
+                const paraleloEur = comercialEur * 1.065;
 
-            // Distribui Agro
-            areaAgro.innerHTML = data.results
-                .filter(i => ['CCM', 'SCF', 'ICF', 'WTH'].includes(i.symbol.substring(0,3)))
-                .map(i => criarCard(i, nomes[i.symbol.substring(0,3)])).join('');
+                document.getElementById('eur-comercial').innerText = `R$ ${comercialEur.toFixed(2)}`;
+                document.getElementById('eur-paralelo').innerText = `R$ ${paraleloEur.toFixed(2)}`;
+            }
 
-            // Adiciona Frango/Porco fixo
-            areaAgro.innerHTML += `
-                <div style="background: white; padding: 10px; border-radius: 8px; flex: 1; min-width: 120px; text-align: center; border: 1px dashed #ccc;">
-                    <small style="color: #666; font-weight: bold; display: block;">Frango/Suíno</small>
-                    <div style="font-size: 0.7em; color: #aaa; margin-top: 5px;">Média CEPEA/PR</div>
-                </div>`;
+            // --- CRIPTO ---
+            if (data.BTCBRL) {
+                document.getElementById('btc-val').innerText = parseFloat(data.BTCBRL.bid).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            }
+            if (data.ETHBRL) {
+                document.getElementById('eth-val').innerText = parseFloat(data.ETHBRL.bid).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            }
+
+            // --- OURO ---
+            if (data.XAUBRL) {
+                document.getElementById('gold-val').innerText = `R$ ${parseFloat(data.XAUBRL.bid).toFixed(2)}`;
+            }
         }
     } catch (e) {
-        console.log("Mercado fechado (Fim de semana). Estrutura mantida.");
+        console.error("Erro no carregamento:", e);
     }
 }
 
-// Vamos garantir que quando o site carregar, ele chame as Ações E a BMF
-const carregarTudo = window.onload;
-window.onload = function() {
-    if (carregarTudo) carregarTudo(); // Chama a função original das ações
-    carregarBMF();                   // Chama a função nova da BMF
-};
-
-function toggleTabela() {
-    const div = document.getElementById('tabela-vencimentos');
-    if (div.style.display === 'none') {
-        div.style.display = 'block';
-    } else {
-        div.style.display = 'none';
-    }
-}
+// Garante que carrega ao abrir a página
+window.addEventListener('load', buscarMoedas);

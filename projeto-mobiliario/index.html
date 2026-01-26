@@ -32,61 +32,6 @@
             </div>
         </div>
 
-          <div id="container-bmf" style="margin: 20px 0; display: block;">
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-        
-        <div style="padding: 15px; background: #e8f0fe; border-radius: 12px; border: 1px solid #c2d7fa;">
-            <h3 style="color: #1967d2; margin-bottom: 10px; font-size: 1.1em;">🏦 Mercado Financeiro</h3>
-            <div id="bmf-financeiro" style="display: flex; gap: 10px; flex-wrap: wrap;">
-                <p style="font-size: 0.8em; color: #666;">Aguardando mercado...</p>
-            </div>
-        </div>
-
-        <div style="padding: 15px; background: #fff9e6; border-radius: 12px; border: 1px solid #ffeeba;">
-            <h3 style="color: #856404; margin-bottom: 10px; font-size: 1.1em;">🌾 Agronegócio (Paraná)</h3>
-            <div id="bmf-agro" style="display: flex; gap: 10px; flex-wrap: wrap;">
-                <p style="font-size: 0.8em; color: #666;">Aguardando mercado...</p>
-            </div>
-        </div>
-
-    </div>
-</div>
-
- <section style="margin-top: 10px;">
-    <button onclick="toggleTabela()" style="background: none; border: none; color: #1a73e8; cursor: pointer; text-decoration: underline; font-size: 0.9em;">
-        📂 Ver Tabela de Vencimentos 2026 (Financeiro & Agro)
-    </button>
-    
-    <div id="tabela-vencimentos" style="display: none; margin-top: 15px; padding: 15px; background: #fff; border: 1px solid #ddd; border-radius: 8px; font-size: 0.8em;">
-        <h4 style="margin-bottom: 10px;">Calendário de Contratos 2026</h4>
-        <table style="width: 100%; border-collapse: collapse; text-align: left;">
-            <thead>
-                <tr style="border-bottom: 2px solid #eee; background: #f8f9fa;">
-                    <th style="padding: 5px;">Mês</th>
-                    <th>WDO (Dólar)</th>
-                    <th>WIN (Índice)</th>
-                    <th>AGRO (Letras principais)</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr><td>Jan</td><td>F26</td><td>-</td><td>Soja (F), Trigo (F)</td></tr>
-                <tr style="background: #fff9e6;"><td><b>Fev</b></td><td><b>G26</b></td><td><b>G26</b></td><td><b>Atual (Letra G)</b></td></tr>
-                <tr><td>Mar</td><td>H26</td><td>-</td><td>Milho, Soja, Café (H)</td></tr>
-                <tr><td>Abr</td><td>J26</td><td>J26</td><td>-</td></tr>
-                <tr><td>Mai</td><td>K26</td><td>-</td><td>Milho, Soja, Café (K)</td></tr>
-                <tr><td>Jun</td><td>M26</td><td>M26</td><td>-</td></tr>
-                <tr><td>Jul</td><td>N26</td><td>-</td><td>Trigo (N)</td></tr>
-                <tr><td>Ago</td><td>Q26</td><td>Q26</td><td>Soja (Q)</td></tr>
-                <tr><td>Set</td><td>U26</td><td>-</td><td>Milho, Café, Trigo (U)</td></tr>
-                <tr><td>Out</td><td>V26</td><td>V26</td><td>Boi Gordo (V)</td></tr>
-                <tr><td>Nov</td><td>X26</td><td>-</td><td>Milho, Soja (X)</td></tr>
-                <tr><td>Dez</td><td>Z26</td><td>Z26</td><td>Café, Boi (Z)</td></tr>
-            </tbody>
-        </table>
-        <p style="margin-top: 10px; font-size: 0.8em; color: #666;">* Nota: O Dólar muda mensalmente. O Índice muda meses pares.</p>
-    </div>
-</section>
-
         <hr>
 
         <section class="renda-fixa">
@@ -97,6 +42,43 @@
             </div>
             <div id="tabela-rendimentos" class="resultado-container"></div>
         </section>
+
+          <hr>
+    <section class="cambio" style="margin-top: 30px;">
+    <div class="resultado-container">
+        <div class="card-investimento" style="border-left-color: #fbbc04;">
+            <h4>🇺🇸 Dólar</h4>
+            <p>Comercial: <b id="usd-comercial">---</b></p>
+            <p>Turismo (Paralelo): <b id="usd-paralelo">---</b></p>
+        </div>
+        <div class="card-investimento" style="border-left-color: #1a73e8;">
+            <h4>🇪🇺 Euro</h4>
+            <p>Comercial: <b id="eur-comercial">---</b></p>
+            <p>Turismo (Paralelo): <b id="eur-paralelo">---</b></p>
+        </div>
+    </div>
+</section>
+
+<section class="outros-ativos" style="margin-top: 20px;">
+    <h3 style="text-align: center; color: #fbbc04; margin-bottom: 20px;">🪙 Cripto e Metais</h3>
+    <div class="resultado-container">
+        <div class="card-investimento" style="border-left-color: #f7931a;">
+            <h4>₿ Bitcoin</h4>
+            <p>Preço: <b id="btc-val">R$ 0,00</b></p>
+            <p style="font-size: 0.8em; color: #666;">Máxima 24h: <span id="btc-max">---</span></p>
+        </div>
+        <div class="card-investimento" style="border-left-color: #627eea;">
+            <h4>Ξ Ethereum</h4>
+            <p>Preço: <b id="eth-val">R$ 0,00</b></p>
+            <p style="font-size: 0.8em; color: #666;">Máxima 24h: <span id="eth-max">---</span></p>
+        </div>
+        <div class="card-investimento" style="border-left-color: #d4af37;">
+            <h4>🏆 Ouro (g)</h4>
+            <p>Preço: <b id="gold-val">R$ 0,00</b></p>
+            <p style="font-size: 0.8em; color: #666;">Ouro 24k Spot</p>
+        </div>
+    </div>
+</section>
 
         <button class="btn-report" onclick="gerarRelatorio()">📄 Gerar Relatório para Impressão</button>
     </div>
