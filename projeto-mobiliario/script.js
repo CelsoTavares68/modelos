@@ -52,11 +52,22 @@ function renderizarGraficoTop30(acoes) {
     });
 }
 
-function exibirListas(altas, baixas) {
-    document.getElementById('lista-altas').innerHTML = altas.map(a => 
-        `<li>${a.stock}: <b class="texto-alta">${a.change.toFixed(2)}%</b></li>`).join('');
-    document.getElementById('lista-baixas').innerHTML = baixas.map(b => 
-        `<li>${b.stock}: <b class="texto-queda">${b.change.toFixed(2)}%</b></li>`).join('');
+ function exibirListas(altas, baixas) {
+    // Renderiza as Altas com Preço e %
+    document.getElementById('lista-altas').innerHTML = altas.map(a => `
+        <li>
+            <span>${a.stock}</span>
+            <span>R$ ${a.close.toFixed(2)}</span>
+            <b class="texto-alta">${a.change.toFixed(2)}%</b>
+        </li>`).join('');
+
+    // Renderiza as Baixas com Preço e %
+    document.getElementById('lista-baixas').innerHTML = baixas.map(b => `
+        <li>
+            <span>${b.stock}</span>
+            <span>R$ ${b.close.toFixed(2)}</span>
+            <b class="texto-queda">${b.change.toFixed(2)}%</b>
+        </li>`).join('');
 }
 
  // Objeto central de taxas - Atualize aqui os valores do mercado
@@ -152,10 +163,14 @@ window.onload = buscarDadosReais;
                 document.getElementById('eth-val').innerText = parseFloat(data.ETHBRL.bid).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
             }
 
-            // --- OURO ---
-            if (data.XAUBRL) {
-                document.getElementById('gold-val').innerText = `R$ ${parseFloat(data.XAUBRL.bid).toFixed(2)}`;
-            }
+            // --- METAIS (OURO) ---
+if (data.XAUBRL) {
+    // Pegamos o valor da Onça-Troy e dividimos por 31.1 para ter o valor do GRAMA
+    const valorOnca = parseFloat(data.XAUBRL.bid);
+    const valorGrama = valorOnca / 31.1;
+
+    document.getElementById('gold-val').innerText = `R$ ${valorGrama.toFixed(2)}`;
+}
         }
     } catch (e) {
         console.error("Erro no carregamento:", e);
