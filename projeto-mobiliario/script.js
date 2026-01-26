@@ -59,21 +59,55 @@ function exibirListas(altas, baixas) {
         `<li>${b.stock}: <b class="texto-queda">${b.change.toFixed(2)}%</b></li>`).join('');
 }
 
-function calcularRentabilidade() {
-    const valor = parseFloat(document.getElementById('valorInvestido').value) || 0;
-    const CDI = 11.15; // Exemplo de CDI atual
-    const taxaMes = (CDI / 100) / 12;
+ // Objeto central de taxas - Atualize aqui os valores do mercado
+const taxasMercado = {
+    selic: 11.25,
+    cdi: 11.15,
+    poupancaMensal: 0.50, // 0.5% fixo + TR
+    trEstimada: 0.05      // Taxa Referencial estimada
+};
 
-    const res = {
-        cdb: (valor * taxaMes) * 0.775, // 100% CDI - 22.5% IR
-        lci: (valor * taxaMes * 0.9),  // 90% CDI Isento
-        poupanca: valor * 0.0055       // 0.5% + TR
-    };
+ function calcularRentabilidadeCompleta() {
+    const valor = parseFloat(document.getElementById('valorInvestido').value);
+    const container = document.getElementById('tabela-rendimentos');
 
-    document.getElementById('tabela-rendimentos').innerHTML = `
-        <div class="card-investimento"><h4>CDB/RDB</h4><p class="valor-rendimento">R$ ${res.cdb.toFixed(2)}</p></div>
-        <div class="card-investimento"><h4>LCI/LCA</h4><p class="valor-rendimento">R$ ${res.lci.toFixed(2)}</p></div>
-        <div class="card-investimento"><h4>Poupança</h4><p class="valor-rendimento">R$ ${res.poupanca.toFixed(2)}</p></div>
+    if (!valor || valor <= 0) {
+        alert("Insira um valor para calcular.");
+        return;
+    }
+
+    // Taxas Atuais (Podem ser editadas conforme o COPOM)
+    const SELIC = 11.25; 
+    const CDI = SELIC - 0.10;
+    
+    // Fatores de Divisão
+    const diasUteisAno = 252;
+    const mesesAno = 12;
+
+    // Funções de Cálculo Líquido (Já com desconto de 22.5% de IR para CDB/RDB)
+    const calcCDB = (v, tempo) => (v * (CDI / 100 / tempo)) * 0.775;
+    const calcLCI = (v, tempo) => (v * ((CDI * 0.9) / 100 / tempo));
+    const calcPoup = (v, tempo) => (v * (0.0055 / (tempo === 252 ? 21 : 1))); // Estimativa 21 dias úteis/mês
+
+    container.innerHTML = `
+        <div class="card-investimento">
+            <h4>CDB / RDB (100% CDI)</h4>
+            <p>Diário: <strong class="texto-alta">R$ ${calcCDB(valor, diasUteisAno).toFixed(2)}</strong></p>
+            <p>Mensal: <strong>R$ ${calcCDB(valor, mesesAno).toFixed(2)}</strong></p>
+            <small>Líquido (Pós-IR)</small>
+        </div>
+        <div class="card-investimento">
+            <h4>LCI / LCA (90% CDI)</h4>
+            <p>Diário: <strong class="texto-alta">R$ ${calcLCI(valor, diasUteisAno).toFixed(2)}</strong></p>
+            <p>Mensal: <strong>R$ ${calcLCI(valor, mesesAno).toFixed(2)}</strong></p>
+            <small>Isento de Imposto</small>
+        </div>
+        <div class="card-investimento">
+            <h4>Poupança</h4>
+            <p>Diário: <strong class="texto-alta">R$ ${calcPoup(valor, diasUteisAno).toFixed(2)}</strong></p>
+            <p>Mensal: <strong>R$ ${calcPoup(valor, mesesAno).toFixed(2)}</strong></p>
+            <small>Referencial</small>
+        </div>
     `;
 }
 
