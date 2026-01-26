@@ -5,23 +5,26 @@
     box-sizing: border-box;
 }
 
- body {
+  body {
     font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     background-color: #f4f7f9;
     color: #333;
     line-height: 1.6;
-    padding: 20px;
-    /* Removi o display flex daqui para o site não ficar na horizontal */
+    padding: 20px 20px 80px 20px; /* Adicionei 80px no fundo (bottom) */
+    min-height: 100vh; /* Garante que o fundo cubra a tela toda */
+    display: block; /* Garante que os elementos empilhem naturalmente */
+    overflow-y: auto; /* Garante que a barra de rolagem apareça se precisar */
 }
 
-.container {
+ .container {
     background-color: #ffffff;
     width: 100%;
     max-width: 900px;
     padding: 40px;
     border-radius: 15px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    margin: 0 auto; /* Centraliza o site na tela */
+    margin: 0 auto 40px auto; /* Adicionei 40px de margem embaixo */
+    height: auto; /* Nunca use height fixa aqui */
 }
 
 /* Cabeçalho */
