@@ -1,9 +1,9 @@
-<!DOCTYPE html>
-<html lang="pt">
+ <!DOCTYPE html>
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-     <title>Gestor Fiscal Pro - Versão Final</title>
+    <title>Gestor Fiscal Pro - Brasil</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
@@ -23,8 +23,7 @@
                 <h3>Carga Tributária</h3>
                 <div class="progresso-container"><div id="barraImposto" class="progresso-barra"></div></div>
                 <p id="percentualImposto">0% do faturamento</p>
-                <p style="margin-top:10px">Saldo Anterior: <span id="dashSaldoAnterior">R$ 0,00</span></p>
-                <h4 style="margin-top:6px">Saldo Líquido: <span id="dashSaldo">R$ 0,00</span></h4>
+                <h4 style="margin-top:10px">Saldo Líquido: <span id="dashSaldo">R$ 0,00</span></h4>
             </div>
         </section>
 
@@ -36,7 +35,7 @@
         <section id="secaoClasses" class="card secao-oculta">
             <h2>Configurar Classes de Impostos</h2>
             <form id="formClasse">
-                <input type="text" id="nomeClasse" placeholder="Ex: ISS SP, ICMS, IPI" required>
+                <input type="text" id="nomeClasse" placeholder="Ex: ISS SP, ICMS Venda" required>
                 <input type="number" id="taxaClasse" placeholder="Alíquota (%)" step="0.01" required>
                 <button type="submit" class="btn-secundario">Adicionar Classe</button>
             </form>
@@ -46,7 +45,7 @@
         <section id="secaoRelatorio" class="card secao-oculta">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h2>Histórico Fiscal</h2>
-                <button id="btnPDF" class="btn-pdf">Exportar para PDF</button>
+                <button id="btnPDF" class="btn-pdf">Exportar PDF</button>
             </div>
             <table id="tabelaFiscal">
                 <thead>
@@ -69,22 +68,19 @@
             <section class="card">
                 <h2>Emitir Venda (Saída)</h2>
                 <form id="formEmissao">
-                    <input type="text" id="clienteSaida" placeholder="Nome do Cliente" required>
-                    <input type="text" inputmode="decimal" id="valorSaida" placeholder="Valor Base (Produtos/Serviços)" required>
-                    <p style="margin-top:10px"><small>Selecione os impostos incidentes:</small></p>
-                    <div id="checkImpostosSaida" class="container-checks"></div>
-                    <button type="submit" class="btn-sucesso">Registar e Somar Impostos</button>
+                    <input type="text" id="clienteSaida" placeholder="Cliente" required>
+                    <input type="number" id="valorSaida" placeholder="Valor Base R$" step="0.01" required>
+                    <select id="selectClasseSaida" required></select>
+                    <button type="submit" class="btn-sucesso">Registar e Somar Imposto</button>
                 </form>
-
-                 </section>
+            </section>
 
             <section class="card">
                 <h2>Registar Compra (Entrada)</h2>
                 <form id="formEntrada">
-                    <input type="text" id="fornecedorEntrada" placeholder="Nome do Fornecedor" required>
-                    <input type="text" inputmode="decimal" id="valorEntrada" placeholder="Valor Total da Nota Recebida" required>
-                    <p style="margin-top:10px"><small>Selecione os impostos destacados:</small></p>
-                    <div id="checkImpostosEntrada" class="container-checks"></div>
+                    <input type="text" id="fornecedorEntrada" placeholder="Fornecedor" required>
+                    <input type="number" id="valorEntrada" placeholder="Valor Total R$" step="0.01" required>
+                    <select id="selectClasseEntrada" required></select>
                     <button type="submit" class="btn-alerta">Registar Entrada</button>
                 </form>
             </section>
