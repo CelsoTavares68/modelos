@@ -1,6 +1,10 @@
-  :root {
-    --verde: #27ae60; --azul: #2980b9; --vermelho: #e74c3c; 
-    --laranja: #f39c12; --dark: #2c3e50; --cinza: #f4f7f6;
+   :root {
+    --verde: #27ae60; 
+    --azul: #2980b9; 
+    --vermelho: #e74c3c; 
+    --laranja: #f39c12; 
+    --dark: #2c3e50; 
+    --cinza: #f4f7f6;
 }
 
 body { 
@@ -26,42 +30,16 @@ body {
 .card-dash { 
     background: white; 
     padding: 20px; 
-     border-radius: 10px; 
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-top: 4px solid var(--azul); 
+    border-radius: 10px; 
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
+    border-top: 4px solid var(--azul); 
 }
 
 .card-dash.highlight { 
     border-top-color: var(--laranja); 
 }
 
-.card-dash h3 { 
-    font-size: 13px; 
-    color: #7f8c8d; 
-    margin: 0; 
-}
-
-.card-dash p { 
-    font-size: 22px; 
-    font-weight: bold; 
-    margin: 10px 0 0; 
-}
-
-.progresso-container { 
-    background: #eee; 
-    border-radius: 10px; 
-    height: 8px; 
-    margin: 12px 0; 
-    overflow: hidden; 
-}
-
-.progresso-barra { 
-    background: var(--vermelho); 
-    height: 100%; 
-    width: 0%; 
-    transition: width 0.6s ease; 
-}
-
-/* Menu */
+/* Menu Vertical - GARANTINDO AS CORES */
 .menu-vertical { 
     display: flex; 
     flex-direction: column; 
@@ -74,26 +52,28 @@ body {
     padding: 15px; 
     border: none; 
     border-radius: 8px; 
-    color: white; 
+    color: white !important; /* Força o texto branco */
     font-size: 15px; 
     font-weight: bold; 
     cursor: pointer; 
+    transition: 0.2s;
 }
 
 .btn-config { 
-    background: var(--laranja); 
-    }
-
-.btn-relatorio { 
-    background: var(--dark); 
+    background-color: var(--laranja) !important; 
 }
 
-/* Grid e Cards */
+.btn-relatorio { 
+    background-color: var(--dark) !important; 
+}
+
+/* Cards e Forms */
 .card { 
     background: white; 
     padding: 25px; 
     border-radius: 10px; 
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 20px; 
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
+    margin-bottom: 20px; 
 }
 
 .grid-forms { 
@@ -106,27 +86,39 @@ body {
     display: none !important; 
 }
 
-form { 
-    display: flex; 
-    flex-direction: column; 
-    gap: 12px; 
+/* Estilo dos Botões de Ação */
+.btn-sucesso { 
+    background-color: var(--verde) !important; 
+    color: white; 
+    border: none; 
+    cursor: pointer; 
+    font-weight: bold;
 }
 
-input, select, button { 
-    padding: 12px; 
-    border: 1px solid #ddd; 
-    border-radius: 6px; 
+.btn-alerta { 
+    background-color: var(--vermelho) !important; 
+    color: white; 
+    border: none; 
+    cursor: pointer; 
+    font-weight: bold;
 }
 
-/* Checkboxes de Impostos */
- .container-checks {
+.btn-secundario { 
+    background-color: var(--azul) !important; 
+    color: white; 
+    border: none; 
+    cursor: pointer; 
+}
+
+/* Checkboxes */
+.container-checks {
     background: #f9f9f9;
     padding: 10px;
     border-radius: 6px;
     border: 1px solid #ddd;
     max-height: 120px;
     overflow-y: auto;
-    margin-bottom: 10px;
+    margin: 10px 0;
 }
 
 .check-item {
@@ -134,45 +126,6 @@ input, select, button {
     align-items: center;
     gap: 8px;
     margin-bottom: 5px;
-    font-size: 14px;
-}
-
-.check-item input {
-    width: auto;
-    padding: 0;
-    margin: 0;
-    cursor: pointer;
-}
-
-/* Botões */
-.btn-sucesso { 
-    background: var(--verde); 
-    color: white; 
-    border: none; 
-    cursor: pointer; 
-}
-
-.btn-alerta { 
-    background: var(--vermelho); 
-    color: white; 
-    border: none; 
-    cursor: pointer; 
-}
-
-.btn-secundario { 
-    background: var(--azul); 
-    color: white; 
-    border: none; 
-    cursor: pointer; 
-}
-
-.btn-pdf { 
-    background: #444; 
-    color: white; 
-    border: none; 
-    padding: 8px 15px; 
-    border-radius: 4px; 
-    cursor: pointer; 
 }
 
 /* Tabela */
@@ -187,17 +140,6 @@ th, td {
     border-bottom: 1px solid #eee; 
 }
 
-.tag-saida { 
-    color: var(--verde); 
-    font-weight: bold; 
-}
-
-.tag-entrada { 
-    color: var(--vermelho); 
-    font-weight: bold; 
-}
-
 @media (max-width: 768px) { 
-    .grid-forms { 
-        grid-template-columns: 1fr;
-    } }
+    .grid-forms { grid-template-columns: 1fr; } 
+}
