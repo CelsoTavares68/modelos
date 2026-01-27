@@ -1,0 +1,140 @@
+:root {
+    --primary: #3498db;
+    --secondary: #e67e22;
+    --success: #2ecc71;
+    --dark: #2c3e50;
+    --light: #ecf0f1;
+    --danger: #e74c3c;
+}
+
+body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #f4f7f6;
+    margin: 0;
+    color: var(--dark);
+}
+
+header {
+    background: var(--primary);
+    color: white;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.container { 
+    padding: 20px; 
+    max-width: 1200px; 
+    margin: auto; 
+}
+
+.card {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    margin-bottom: 20px;
+}
+
+h2, h3 { 
+    margin-top: 0; 
+    color: var(--primary); 
+}
+
+.form-group { 
+    display: flex; 
+    gap: 10px; 
+    margin-bottom: 15px; 
+    flex-wrap: wrap; 
+}
+
+input, select, textarea {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    flex: 1;
+}
+
+button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+.btn-salvar { 
+    background: var(--primary); 
+    color: white; 
+}
+
+.btn-acao { 
+    background: var(--success); 
+    color: white; 
+    width: 100%; 
+}
+
+.btn-secundario { 
+    background: var(--dark); 
+    color: white; 
+    margin-top: 10px; 
+}
+
+.btn-perigo { 
+    background: var(--danger); 
+    color: white; 
+    margin: 10px 0; 
+}
+
+.grid-atendimento, .grid-tabelas {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    margin-top: 10px; 
+}
+
+th, td { 
+    padding: 12px; 
+    text-align: left; 
+    border-bottom: 1px solid #eee; 
+}
+
+.historico-grid { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 10px; 
+}
+
+/* MODAL */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    width: 90%; max-width: 500px;
+    margin: 50px auto;
+    padding: 25px;
+    border-radius: 15px;
+}
+
+.botoes-modal { 
+    display: flex; 
+    gap: 10px; 
+    margin-top: 20px; 
+}

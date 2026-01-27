@@ -1,0 +1,111 @@
+  <!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pet Manager - Sistema de PetShop</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <h1>🐾 Pet Manager Pro</h1>
+        <div id="relogioMonitor">00:00:00</div>
+    </header>
+
+    <main class="container">
+        <section class="card">
+            <h2>🐶 Cadastro de Pet</h2>
+            <div class="form-group">
+                <input type="text" id="inome" placeholder="Nome do Pet">
+                <input type="text" id="documento" placeholder="Raça / Espécie">
+                <input type="text" id="endereco" placeholder="Idade (Ex: 2 anos)">
+                <button class="btn-salvar" onclick="salvarCadastro()">Cadastrar Pet</button>
+            </div>
+            
+            <button id="btnToggleLista" class="btn-secundario">👁️ Exibir/Ocultar Lista de Pets</button>
+            
+            <div id="containerListaPets" style="display: none; margin-top: 15px;">
+                <table class="tabela-membros">
+                    <thead>
+                        <tr><th>ID</th><th>Nome</th><th>Raça</th><th>Ações</th></tr>
+                    </thead>
+                    <tbody id="lista-corpo"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <div class="grid-atendimento">
+            <section class="card">
+                <h2>📅 Agendar Novo Serviço</h2>
+                <input type="text" id="nome" placeholder="Nome ou ID do Pet">
+                <input type="date" id="dataAgendamento">
+                <input type="time" id="hora" value="09:00">
+                <button class="btn-acao" onclick="agendar()">Agendar Serviço</button>
+            </section>
+
+            <section class="card">
+                <h2>⚙️ Painel do Profissional</h2>
+                <div class="filtros">
+                    <label>Ver Lista de Espera de:</label>
+                    <select id="especialidade" onchange="carregarTabelas()">
+                        <option value="Banho">Banho (R$ 50,00)</option>
+                        <option value="Tosa">Tosa (R$ 60,00)</option>
+                        <option value="Banho e Tosa">Banho e Tosa (R$ 100,00)</option>
+                        <option value="Veterinario">Veterinário (R$ 150,00)</option>
+                    </select>
+                    <input type="hidden" id="dataConsulta"> </div>
+            </section>
+        </div>
+
+        <div class="grid-tabelas">
+            <section class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <h3>🕒 Recepção (Lista do Dia)</h3>
+                    <input type="date" id="filtroDataAgenda" onchange="carregarTabelas()" style="width: auto;">
+                </div>
+                <table class="tabela-fluxo">
+                    <tbody id="listaAgendamentos"></tbody>
+                </table>
+            </section>
+
+            <section class="card">
+                <h3>✂️ Em Espera (Para Chamar)</h3>
+                <table class="tabela-fluxo">
+                    <tbody id="listaEspera"></tbody>
+                </table>
+            </section>
+
+            <section class="card monitor-mini">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h3>📢 Últimos Chamados</h3>
+        <button onclick="limparHistoricoPainel()" style="background: #95a5a6; color: white; font-size: 10px; padding: 2px 8px; border-radius: 4px; border: none; cursor: pointer;">Limpar Monitor</button>
+    </div>
+    <div id="historicoPainel" class="historico-grid"></div>
+</section>
+        </div>
+
+        <section class="card">
+            <h3>📂 Arquivo de Atendimentos Realizados</h3>
+            <button class="btn-perigo" onclick="limparArquivos()" style="font-size: 10px;">Limpar Tudo</button>
+            <table class="tabela-fluxo">
+                <tbody id="listaArquivamento"></tbody>
+            </table>
+        </section>
+    </main>
+
+    <div id="modalProntuario" class="modal">
+        <div class="modal-content">
+            <h2 id="tituloModal">📝 Prontuário / Ficha Clínica</h2>
+            <input type="text" id="p_nome" readonly style="background: #eee;">
+            <textarea id="p_prescricao" placeholder="Relatório do Serviço / Prescrição" rows="6"></textarea>
+            <div class="botoes-modal">
+                <button onclick="fecharProntuario()">Voltar / Sair</button>
+                <button id="btnAcaoModal" class="btn-acao">Finalizar e Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
