@@ -1,0 +1,64 @@
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: sans-serif; background: #f4f4f4; padding-bottom: 50px; }
+
+.navbar { background: #fff; padding: 15px; text-align: center; border-bottom: 4px solid #00b894; }
+.main-wrapper { display: flex; flex-wrap: wrap; gap: 20px; padding: 20px; max-width: 1300px; margin: auto; }
+.menu-container { flex: 3; }
+.comanda-container { flex: 1; min-width: 280px; }
+
+.categoria { margin-bottom: 30px; }
+.grid-produtos { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; }
+
+.produto-card { display: flex; flex-direction: column; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+.produto-card button:first-child { border: none; padding: 15px; background: #fff; cursor: pointer; font-weight: bold; font-size: 1rem; }
+.produto-card button:first-child:hover { background: #e8f5e9; }
+.btn-info { border: none; background: #f8f9fa; color: #666; padding: 8px; cursor: pointer; font-size: 0.8rem; border-top: 1px solid #eee; }
+.btn-info:hover { background: #eee; color: #000; }
+
+.comanda-card { background: #fff; padding: 20px; border-radius: 8px; position: sticky; top: 10px; }
+#mesa { width: 100%; padding: 10px; margin-bottom: 10px; }
+#lista-comanda { list-style: none; margin: 10px 0; border-top: 1px solid #eee; }
+.total-box { display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: bold; margin: 15px 0; }
+.btn-cozinha { width: 100%; background: #00b894; color: white; border: none; padding: 12px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+.btn-limpar { width: 100%; background: #ddd; border: none; padding: 8px; margin-top: 5px; border-radius: 5px; cursor: pointer; }
+
+.dashboard { display: flex; gap: 20px; padding: 20px; max-width: 1300px; margin: auto; }
+.painel { flex: 1; background: #fff; padding: 15px; border-radius: 8px; min-height: 200px; }
+.card-pedido { background: #fff9e6; border-left: 5px solid #f1c40f; padding: 10px; margin-bottom: 10px; }
+.btn-acao { width: 100%; background: #333; color: white; border: none; padding: 8px; margin-top: 10px; cursor: pointer; }
+
+/* MODAL */
+.modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); }
+.modal-conteudo { background: #fff; margin: 10% auto; padding: 30px; width: 90%; max-width: 500px; border-radius: 12px; position: relative; }
+.fechar { position: absolute; right: 20px; top: 10px; font-size: 30px; cursor: pointer; }
+
+/* IMPRESSÃO */
+#secao-impressao { display: none; }
+ @media print {
+    /* Esconde tudo que não deve ser impresso */
+    .no-print, .modal, .navbar, .main-wrapper, .dashboard { 
+        display: none !important; 
+    }
+
+    /* Força a seção de impressão a aparecer */
+    #secao-impressao { 
+        display: block !important; 
+        width: 80mm; 
+        margin: 0; 
+        padding: 0;
+    }
+
+    .ticket-bobina {
+        width: 100%; /* Ocupa os 80mm definidos acima */
+        padding: 5mm;
+        font-family: 'Courier New', Courier, monospace; /* Fonte típica de cupom */
+        font-size: 10pt;
+        line-height: 1.2;
+    }
+
+    /* Remove margens automáticas do navegador */
+    @page {
+        margin: 0;
+        size: auto;
+    }
+}

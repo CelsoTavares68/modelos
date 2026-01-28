@@ -1,0 +1,195 @@
+    <!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sabor & Arte - Sistema Profissional</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header class="navbar no-print">
+        <h1>Sabor & Arte</h1>
+        <p>Gestão de Pedidos & Cardápio Informativo</p>
+    </header>
+
+    <div class="main-wrapper no-print">
+        <main class="menu-container">
+            
+            <section class="categoria">
+                <h2>🥗 Entradas</h2>
+                <div class="grid-produtos">
+                    <div class="produto-card">
+                        <button onclick="adicionarItem('Carpaccio de Carne', 32.00)">Carpaccio - R$ 32,00</button>
+                        <button class="btn-info" onclick="abrirIngredientes('Carpaccio de Carne')">ℹ️ Ingredientes</button>
+                    </div>
+                    <div class="produto-card">
+                        <button onclick="adicionarItem('Dadinho de Tapioca', 24.00)">Dadinho - R$ 24,00</button>
+                        <button class="btn-info" onclick="abrirIngredientes('Dadinho de Tapioca')">ℹ️ Ingredientes</button>
+                    </div>
+                    <div class="produto-card">
+                        <button onclick="adicionarItem('Bruschetta Parma', 28.00)">Bruschetta - R$ 28,00</button>
+                        <button class="btn-info" onclick="abrirIngredientes('Bruschetta Parma')">ℹ️ Ingredientes</button>
+                    </div>
+                    <div class="produto-card">
+                        <button onclick="adicionarItem('Camarão Empanado', 45.00)">Camarão - R$ 45,00</button>
+                        <button class="btn-info" onclick="abrirIngredientes('Camarão Empanado')">ℹ️ Ingredientes</button>
+                    </div>
+                    <div class="produto-card">
+                        <button onclick="adicionarItem('Ceviche Clássico', 35.00)">Ceviche - R$ 35,00</button>
+                        <button class="btn-info" onclick="abrirIngredientes('Ceviche Clássico')">ℹ️ Ingredientes</button>
+                    </div>
+                    <div class="produto-card">
+                        <button onclick="adicionarItem('Burrata com Pesto', 48.00)">Burrata - R$ 48,00</button>
+                        <button class="btn-info" onclick="abrirIngredientes('Burrata com Pesto')">ℹ️ Ingredientes</button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="categoria">
+                <h2>🍝 Pratos Principais</h2>
+                <div class="grid-produtos">
+                    <div class="produto-card">
+                        <button onclick="adicionarItem('Picanha Premium', 85.00)">Picanha - R$ 85,00</button>
+                        <button class="btn-info" onclick="abrirIngredientes('Picanha Premium')">ℹ️ Ingredientes</button>
+                    </div>
+                    <div class="produto-card">
+                        <button onclick="adicionarItem('Risoto Al Mare', 72.00)">Risoto - R$ 72,00</button>
+                        <button class="btn-info" onclick="abrirIngredientes('Risoto Al Mare')">ℹ️ Ingredientes</button>
+                    </div>
+                    <div class="produto-card">
+                        <button onclick="adicionarItem('Salmão Grelhado', 68.00)">Salmão - R$ 68,00</button>
+                        <button class="btn-info" onclick="abrirIngredientes('Salmão Grelhado')">ℹ️ Ingredientes</button>
+                    </div>
+                    <div class="produto-card">
+                        <button onclick="adicionarItem('Filé Mignon', 78.00)">Mignon - R$ 78,00</button>
+                        <button class="btn-info" onclick="abrirIngredientes('Filé Mignon')">ℹ️ Ingredientes</button>
+                    </div>
+                    <div class="produto-card">
+                        <button onclick="adicionarItem('Nhoque Trufado', 55.00)">Nhoque - R$ 55,00</button>
+                        <button class="btn-info" onclick="abrirIngredientes('Nhoque Trufado')">ℹ️ Ingredientes</button>
+                    </div>
+                    <div class="produto-card">
+                        <button onclick="adicionarItem('Lagosta Grelhada', 120.00)">Lagosta - R$ 120,00</button>
+                        <button class="btn-info" onclick="abrirIngredientes('Lagosta Grelhada')">ℹ️ Ingredientes</button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="categoria">
+                <h2>🍰 Sobremesas</h2>
+                <div class="grid-produtos">
+                    <div class="produto-card">
+                        <button onclick="adicionarItem('Petit Gâteau', 26.00)">Petit Gâteau - R$ 26,00</button>
+                        <button class="btn-info" onclick="abrirIngredientes('Petit Gâteau')">ℹ️ Ingredientes</button>
+                    </div>
+                    <div class="produto-card">
+                        <button onclick="adicionarItem('Tiramisù', 28.00)">Tiramisù - R$ 28,00</button>
+                        <button class="btn-info" onclick="abrirIngredientes('Tiramisù')">ℹ️ Ingredientes</button>
+                    </div>
+                    <div class="produto-card">
+                        <button onclick="adicionarItem('Cheesecake', 24.00)">Cheesecake - R$ 24,00</button>
+                        <button class="btn-info" onclick="abrirIngredientes('Cheesecake')">ℹ️ Ingredientes</button>
+                    </div>
+                    <div class="produto-card">
+                        <button onclick="adicionarItem('Crème Brûlée', 25.00)">Brûlée - R$ 25,00</button>
+                        <button class="btn-info" onclick="abrirIngredientes('Crème Brûlée')">ℹ️ Ingredientes</button>
+                    </div>
+                    <div class="produto-card">
+                        <button onclick="adicionarItem('Brownie', 22.00)">Brownie - R$ 22,00</button>
+                        <button class="btn-info" onclick="abrirIngredientes('Brownie')">ℹ️ Ingredientes</button>
+                    </div>
+                    <div class="produto-card">
+                        <button onclick="adicionarItem('Frutas', 15.00)">Frutas - R$ 15,00</button>
+                        <button class="btn-info" onclick="abrirIngredientes('Frutas')">ℹ️ Ingredientes</button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="categoria">
+    <h2>🍹 Bebidas</h2>
+    <div class="grid-produtos">
+        <div class="produto-card">
+            <button onclick="abrirOpcoesBebida('Suco Especial', 12.00, ['Laranja', 'Abacaxi', 'Limão', 'Uva'])">Suco - R$ 12,00</button>
+            <button class="btn-info" onclick="abrirIngredientes('Suco Especial')">ℹ️ Info</button>
+        </div>
+        <div class="produto-card">
+            <button onclick="abrirOpcoesBebida('Vinho Taça', 25.00, ['Malbec', 'Cabernet', 'Chardonnay'])">Vinho - R$ 25,00</button>
+            <button class="btn-info" onclick="abrirIngredientes('Vinho Taça')">ℹ️ Info</button>
+        </div>
+        <div class="produto-card">
+            <button onclick="abrirOpcoesBebida('Cerveja Art.', 18.00, ['IPA', 'Weiss', 'Pilsen', 'Stout'])">Cerveja - R$ 18,00</button>
+            <button class="btn-info" onclick="abrirIngredientes('Cerveja Art.')">ℹ️ Info</button>
+        </div>
+        </div>
+</section>
+
+<div id="modal-bebidas" class="modal no-print">
+    <div class="modal-conteudo">
+        <h2 id="bebida-titulo">Selecione a Opção</h2>
+        <div id="lista-opcoes-bebida" style="display: grid; gap: 10px; margin-top: 20px;">
+            </div>
+        <br>
+        <button onclick="fecharModalBebida()" style="padding: 10px; width: 100%;">Cancelar</button>
+    </div>
+</div>
+
+<div id="modal-obs" class="modal no-print">
+    <div class="modal-conteudo">
+        <h2 id="obs-titulo">Observação do Item</h2>
+        <br>
+        <textarea id="campo-obs" rows="3" placeholder="Ex: Sem cebola, gelo e limão, ponto da carne..." style="width: 100%; padding: 10px; border-radius: 5px;"></textarea>
+        <br><br>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn-acao" style="background: #00b894;" onclick="confirmarComObs()">Adicionar</button>
+            <button class="btn-acao" style="background: #ccc;" onclick="fecharModalObs()">Cancelar</button>
+        </div>
+    </div>
+</div>
+        </main>
+
+        <aside class="comanda-container">
+            <div class="comanda-card">
+                <h3>Comanda Ativa</h3>
+                <input type="number" id="mesa" placeholder="Mesa">
+                <ul id="lista-comanda"></ul>
+                <div class="total-box">
+                    <span>Total:</span> <strong id="valor-total">R$ 0,00</strong>
+                </div>
+                <button class="btn-cozinha" onclick="enviarParaCozinha()">👨‍🍳 Enviar Cozinha</button>
+                <button class="btn-limpar" onclick="limparSelecao()">Limpar</button>
+            </div>
+        </aside>
+    </div>
+
+    <div class="dashboard no-print">
+        <section class="painel"><h2>👨‍🍳 Cozinha</h2><div id="pedidos-cozinha"></div></section>
+        <section class="painel"><h2>💰 Caixa</h2><div id="pedidos-caixa"></div></section>
+    </div>
+
+    <div id="modal-ingredientes" class="modal no-print">
+        <div class="modal-conteudo">
+            <span class="fechar" onclick="fecharModal()">&times;</span>
+            <h2 id="modal-titulo"></h2>
+            <hr><br>
+            <p id="modal-texto"></p>
+        </div>
+    </div>
+
+    <div id="secao-impressao">
+        <div class="ticket-bobina">
+            <h2 id="print-titulo">PEDIDO</h2>
+            <p>Data: <span id="print-data"></span></p>
+            <p>Hora: <span id="print-hora"></span></p>
+            <p><strong>MESA: <span id="print-mesa"></span></strong></p>
+            <p>--------------------------------</p>
+            <div id="print-itens"></div>
+            <p>--------------------------------</p>
+            <h3 id="print-total"></h3>
+            <p id="print-rodape"></p>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
