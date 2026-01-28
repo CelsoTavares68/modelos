@@ -1,5 +1,6 @@
  let petAtualAtendimento = null;
 let idPetEmEdicao = null;
+let fotoBase64 = ""; // Variável global para armazenar a foto temporariamente
 
 const TABELA_PRECOS = {
     "Banho": 50.00,
@@ -24,12 +25,29 @@ document.addEventListener('DOMContentLoaded', () => {
         btnToggle.onclick = function() {
             if (containerLista.style.display === 'none') {
                 containerLista.style.display = 'block';
-                atualizarTabelaMembros(); // Carrega os dados ao abrir
+                atualizarTabelaMembros();
             } else {
                 containerLista.style.display = 'none';
             }
         };
     }
+
+    // Escuta o comando de COLAR (Ctrl+V) na página para capturar fotos
+    document.addEventListener('paste', function (e) {
+        const itens = e.clipboardData.items;
+        for (let i = 0; i < itens.length; i++) {
+            if (itens[i].type.indexOf("image") !== -1) {
+                const blob = itens[i].getAsFile();
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                    fotoBase64 = event.target.result;
+                    const previa = document.getElementById('previaFoto');
+                    if(previa) previa.innerHTML = `<img src="${fotoBase64}" style="width: 100%; height: 100%; object-fit: cover;">`;
+                };
+                reader.readAsDataURL(blob);
+            }
+        }
+    });
 
     window.addEventListener('storage', () => {
         carregarTabelas();
@@ -47,6 +65,21 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ==========================================
+// TRATAMENTO DE FOTO
+// ==========================================
+function lerFoto(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            fotoBase64 = e.target.result;
+            const previa = document.getElementById('previaFoto');
+            if(previa) previa.innerHTML = `<img src="${fotoBase64}" style="width: 100%; height: 100%; object-fit: cover;">`;
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+// ==========================================
 // CADASTRO E EDIÇÃO
 // ==========================================
 function salvarCadastro() {
@@ -61,7 +94,7 @@ function salvarCadastro() {
     if (idPetEmEdicao) {
         const idx = pets.findIndex(p => p.id === idPetEmEdicao);
         if (idx !== -1) {
-            pets[idx] = { ...pets[idx], nome, raca, idade };
+            pets[idx] = { ...pets[idx], nome, raca, idade, foto: fotoBase64 || pets[idx].foto };
         }
         idPetEmEdicao = null;
         document.querySelector('.btn-salvar').innerText = "Cadastrar Pet";
@@ -69,14 +102,20 @@ function salvarCadastro() {
         pets.push({
             id: Math.floor(1000 + Math.random() * 9000),
             nome, raca, idade,
+            foto: fotoBase64,
             dataCadastro: new Date().toLocaleDateString()
         });
     }
 
     localStorage.setItem('pet_cadastros', JSON.stringify(pets));
+    
+    // Limpar campos e foto
     document.getElementById('inome').value = "";
     document.getElementById('documento').value = "";
     document.getElementById('endereco').value = "";
+    fotoBase64 = "";
+    const previa = document.getElementById('previaFoto');
+    if(previa) previa.innerHTML = '<span style="font-size: 10px; color: #999; text-align: center;">Sem Foto</span>';
     
     atualizarTabelaMembros();
     alert("Dados do Pet salvos!");
@@ -89,6 +128,11 @@ function prepararEdicao(id) {
         document.getElementById('inome').value = p.nome;
         document.getElementById('documento').value = p.raca;
         document.getElementById('endereco').value = p.idade;
+        fotoBase64 = p.foto || "";
+        const previa = document.getElementById('previaFoto');
+        if(previa) {
+            previa.innerHTML = p.foto ? `<img src="${p.foto}" style="width: 100%; height: 100%; object-fit: cover;">` : '<span style="font-size: 10px; color: #999; text-align: center;">Sem Foto</span>';
+        }
         idPetEmEdicao = id;
         document.querySelector('.btn-salvar').innerText = "Atualizar Cadastro";
         window.scrollTo(0,0);
@@ -105,8 +149,8 @@ function atualizarTabelaMembros() {
                 <td><b>${p.nome}</b></td>
                 <td>${p.raca}</td>
                 <td>
-                    <button onclick="gerarCarteirinha(${p.id})" style="background:#3498db; color:white;">🖨️</button>
-                    <button onclick="prepararEdicao(${p.id})" style="background:#f39c12; color:white;">Ed</button>
+                    <button onclick="gerarCarteirinha(${p.id})" style="background:#3498db; color:white; border:none; padding:5px; border-radius:4px; cursor:pointer;">🖨️</button>
+                    <button onclick="prepararEdicao(${p.id})" style="background:#f39c12; color:white; border:none; padding:5px; border-radius:4px; cursor:pointer;">Ed</button>
                 </td>
             </tr>`).join('');
     }
@@ -132,6 +176,7 @@ function agendar() {
         nome: pet ? pet.nome : busca,
         raca: pet ? pet.raca : "N/I",
         idade: pet ? pet.idade : "N/I",
+        foto: pet ? pet.foto : "",
         servico: servico,
         preco: TABELA_PRECOS[servico] || 0,
         data: data,
@@ -152,21 +197,18 @@ function carregarTabelas() {
     const es = JSON.parse(localStorage.getItem('pet_espera')) || [];
     const dc = JSON.parse(localStorage.getItem('pet_prontuarios')) || [];
 
-    // Recepção (Mostra todos os serviços do dia)
     const listaAg = document.getElementById('listaAgendamentos');
     const doDia = ag.filter(p => p.data === filtroData).sort((a,b) => a.hora.localeCompare(b.hora));
     
-    listaAg.innerHTML = doDia.length === 0 ? '<tr><td>Nenhum agendamento.</td></tr>' : 
+    listaAg.innerHTML = doDia.length === 0 ? '<tr><td colspan="2" style="text-align:center;">Nenhum agendamento para esta data.</td></tr>' : 
         doDia.map(p => `<tr><td><b>${p.hora}</b> - ${p.nome}<br><small>${p.servico}</small></td>
-        <td><button onclick="confirmarChegada(${p.id})" style="background:#2ecc71; color:white;">✔</button></td></tr>`).join('');
+        <td><button onclick="confirmarChegada(${p.id})" style="background:#2ecc71; color:white; border:none; padding:8px; border-radius:4px;">✔</button></td></tr>`).join('');
 
-    // Espera Profissional
     document.getElementById('listaEspera').innerHTML = es.filter(p => p.servico === servF)
-        .map(p => `<tr><td><b>${p.nome}</b></td><td><button onclick="chamar(${p.id})" style="background:#f39c12; color:white;">Chamar</button></td></tr>`).join('');
+        .map(p => `<tr><td><b>${p.nome}</b></td><td><button onclick="chamar(${p.id})" style="background:#f39c12; color:white; border:none; padding:8px; border-radius:4px;">Chamar</button></td></tr>`).join('');
 
-    // Arquivo
     document.getElementById('listaArquivamento').innerHTML = dc.map(p => `
-        <tr><td>${p.nome} (${p.data})</td><td><button onclick="verProntuario(${p.id})">VER</button></td></tr>`).join('');
+        <tr><td>${p.nome} (${p.data})</td><td><button onclick="verProntuario(${p.id})" style="padding:5px 10px;">VER</button></td></tr>`).join('');
 }
 
 // ==========================================
@@ -228,6 +270,14 @@ function atualizarHistoricoPainel() {
     }
 }
 
+function limparHistoricoPainel() {
+    if (confirm("Deseja limpar a lista de últimos chamados do monitor?")) {
+        localStorage.removeItem('pet_historico');
+        localStorage.removeItem('pet_chamada_monitor');
+        atualizarHistoricoPainel();
+    }
+}
+
 // ==========================================
 // IMPRESSÕES E MODAL
 // ==========================================
@@ -261,21 +311,27 @@ function gerarCarteirinha(id) {
     if (!p) return;
     const win = window.open('', '', 'width=500,height=650');
     win.document.write(`
-        <div style="width:400px; border:3px solid #3498db; padding:25px; border-radius:15px; font-family:sans-serif; background:white;">
-            <h2 style="color:#3498db; text-align:center; margin-top:0;">🐾 PET CARD</h2>
-            <div style="display:flex; gap:15px; align-items:center;">
-                <div style="width:110px; height:110px; border:2px dashed #3498db; border-radius:10px; display:flex; align-items:center; justify-content:center; color:#ccc; font-size:10px;">FOTO 3x4</div>
-                <div style="line-height:1.6;">
-                    <b>ID:</b> #${p.id}<br><b>NOME:</b> ${p.nome}<br><b>RAÇA:</b> ${p.raca}<br><b>IDADE:</b> ${p.idade}
+        <html>
+        <body style="display:flex; justify-content:center; padding:20px; font-family:sans-serif;">
+            <div style="width:400px; border:3px solid #3498db; padding:25px; border-radius:15px; background:white;">
+                <h2 style="color:#3498db; text-align:center; margin-top:0;">🐾 PET CARD</h2>
+                <div style="display:flex; gap:15px; align-items:center;">
+                    <div style="width:110px; height:110px; border:2px dashed #3498db; border-radius:10px; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+                        ${p.foto ? `<img src="${p.foto}" style="width:100%; height:100%; object-fit:cover;">` : '<span style="color:#ccc; font-size:10px;">FOTO 3x4</span>'}
+                    </div>
+                    <div style="line-height:1.6;">
+                        <b>ID:</b> #${p.id}<br><b>NOME:</b> ${p.nome}<br><b>RAÇA:</b> ${p.raca}<br><b>IDADE:</b> ${p.idade}
+                    </div>
                 </div>
+                <div style="margin-top:20px; border-top:2px solid #eee; padding-top:10px; background:#fcfcfc; padding:10px; border-radius:10px;">
+                    <b style="color:#e67e22; font-size:12px;">📅 CRONOGRAMA DE RETORNOS:</b><br><br>
+                    ${[1,2,3,4,5].map(i => `<div style="border-bottom:1px dashed #ccc; margin-bottom:10px; padding-bottom:5px; font-size:11px; color:#7f8c8d;">${i}º ____/____/____ Obs: ________________</div>`).join('')}
+                </div>
+                <p style="text-align:center; font-size:10px; color:#999; margin-top:15px;">Pet Manager Pro - Emissão: ${new Date().toLocaleDateString()}</p>
             </div>
-            <div style="margin-top:20px; border-top:2px solid #eee; padding-top:10px; background:#fcfcfc; padding:10px; border-radius:10px;">
-                <b style="color:#e67e22; font-size:12px;">📅 CRONOGRAMA DE RETORNOS:</b><br><br>
-                ${[1,2,3,4,5].map(i => `<div style="border-bottom:1px dashed #ccc; margin-bottom:10px; padding-bottom:5px; font-size:11px; color:#7f8c8d;">${i}º ____/____/____ Obs: ________________</div>`).join('')}
-            </div>
-            <p style="text-align:center; font-size:10px; color:#999; margin-top:15px;">Pet Manager Pro - "Cuidando com Carinho"</p>
-        </div>
-        <script>setTimeout(() => { window.print(); window.close(); }, 600);</script>
+            <script>setTimeout(() => { window.print(); window.close(); }, 700);</script>
+        </body>
+        </html>
     `);
 }
 
@@ -283,21 +339,6 @@ function fecharProntuario() {
     document.getElementById('modalProntuario').style.display = 'none';
     document.getElementById('p_prescricao').value = "";
     const b = document.getElementById('btnImprimirProntuario'); if(b) b.remove();
-}
-
-// Função para limpar apenas o histórico visual do monitor
-function limparHistoricoPainel() {
-    if (confirm("Deseja limpar a lista de últimos chamados do monitor?")) {
-        // Remove os dados do armazenamento local
-        localStorage.removeItem('pet_historico');
-        localStorage.removeItem('pet_chamada_monitor');
-        
-        // Atualiza a interface instantaneamente
-        atualizarHistoricoPainel();
-        
-        // Se houver um monitor aberto em outra aba, ele também será limpo via evento 'storage'
-        alert("Monitor limpo!");
-    }
 }
 
 function limparArquivos() { if(confirm("Deseja apagar os prontuários arquivados?")) { localStorage.removeItem('pet_prontuarios'); carregarTabelas(); } }

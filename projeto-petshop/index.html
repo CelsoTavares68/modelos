@@ -22,6 +22,14 @@
                 <input type="text" id="endereco" placeholder="Idade (Ex: 2 anos)">
                 <button class="btn-salvar" onclick="salvarCadastro()">Cadastrar Pet</button>
             </div>
+
+            <div class="form-group" style="align-items: center;">
+    <div id="previaFoto" style="width: 80px; height: 80px; border: 2px dashed #3498db; border-radius: 10px; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #f9f9f9;">
+        <span style="font-size: 10px; color: #999; text-align: center;">Sem Foto</span>
+    </div>
+    <input type="file" id="inputFoto" accept="image/*" style="display: none;" onchange="lerFoto(this)">
+    <button type="button" onclick="document.getElementById('inputFoto').click()" style="background: #34495e; font-size: 12px;">Selecionar/Colar Foto</button>
+</div>
             
             <button id="btnToggleLista" class="btn-secundario">👁️ Exibir/Ocultar Lista de Pets</button>
             
