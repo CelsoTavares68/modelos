@@ -1,4 +1,16 @@
-<!DOCTYPE html>
+    <!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SCC - Gestão Clínica Master</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+
+    <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
@@ -65,9 +77,24 @@
                 <div style="display: flex; gap: 5px; margin-bottom: 10px;">
                     <input type="date" id="dataConsulta" onchange="carregarTabelas()" style="flex: 1;">
                     <select id="filtroEspecialidadeRecepcao" onchange="carregarTabelas()" style="flex: 1;">
-                        <option value="Todos">Todas Especialidades</option>
+                         <label>Especialidade</label>
+                    
                         <option value="Cardiologia">Cardiologia</option>
                         <option value="Clínico Geral">Clínico Geral</option>
+                        <option value="Dermatologia">Dermatologia</option>
+                        <option value="Endocrinologia">Endocrinologia</option>
+                        <option value="Fisioterapia">Fisioterapia</option>
+                        <option value="Ginecologia">Ginecologia</option>
+                        <option value="Neurologia">Neurologia</option>
+                        <option value="Nutrição">Nutrição</option>
+                        <option value="Odontologia">Odontologia</option>
+                        <option value="Oftalmologia">Oftalmologia</option>
+                        <option value="Ortopedia">Ortopedia</option>
+                        <option value="Otorrinolaringologia">Otorrinolaringologia</option>
+                        <option value="Pediatria">Pediatria</option>
+                        <option value="Psicologia">Psicologia</option>
+                        <option value="Psiquiatria">Psiquiatria</option>
+                        <option value="Urologia">Urologia</option>
                         </select>
                 </div>
                 <div class="tabela-scroll"><table><tbody id="listaAgendamentos"></tbody></table></div>
@@ -91,7 +118,24 @@
                     </div>
                 </div>
                 <select id="filtroEspecialidade" onchange="carregarTabelas()" style="width:100%; margin-bottom: 10px;">
-                    <option value="Todos">Todas Especialidades</option>
+                     <label>Especialidade</label>
+                        <option value="Cardiologia">Cardiologia</option>
+                        <option value="Clínico Geral">Clínico Geral</option>
+                        <option value="Dermatologia">Dermatologia</option>
+                        <option value="Endocrinologia">Endocrinologia</option>
+                        <option value="Fisioterapia">Fisioterapia</option>
+                        <option value="Ginecologia">Ginecologia</option>
+                        <option value="Neurologia">Neurologia</option>
+                        <option value="Nutrição">Nutrição</option>
+                        <option value="Odontologia">Odontologia</option>
+                        <option value="Oftalmologia">Oftalmologia</option>
+                        <option value="Ortopedia">Ortopedia</option>
+                        <option value="Otorrinolaringologia">Otorrinolaringologia</option>
+                        <option value="Pediatria">Pediatria</option>
+                        <option value="Psicologia">Psicologia</option>
+                        <option value="Psiquiatria">Psiquiatria</option>
+                        <option value="Urologia">Urologia</option>
+                    
                     </select>
                 <div class="tabela-scroll"><table><tbody id="listaEspera"></tbody></table></div>
             </div>
@@ -137,6 +181,45 @@
             </div>
         </div>
     </div>
+<div class="container">
+    <h2>Novo Cadastro</h2>
+    <div class="form-group">
+        <input type="text" id="inome" class="input-full" placeholder="Nome Completo">
+        <input type="text" id="documento" placeholder="RG ou CPF">
+        <input type="text" id="endereco" class="input-full" placeholder="Endereço Completo">
+        <button class="btn-salvar" onclick="salvarCadastro()">Salvar e Gerar ID</button>
+    </div>
+<button id="btnToggleLista" class="btn-salvar" style="background: #34495e; margin-bottom: 15px;">👁️ Exibir / Ocultar Lista</button>
+    <h3>Lista de Cidadãos Cadastrados</h3>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>ID (8 dígitos)</th>
+                <th>Nome</th>
+                <th>Documento</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody id="lista-corpo">
+            </tbody>
+            
+    </table>
+</div>
+
+<div id="area-carteirinha">
+    <div class="carteirinha">
+        <div class="id-badge" id="res-id"></div>
+        <h2>CARTÃO DO CIDADÃO</h2>
+        <p><strong>NOME:</strong> <br><span id="res-nome"></span></p>
+        <p><strong>DOC:</strong> <span id="res-doc"></span></p>
+        <p><strong>ENDEREÇO:</strong> <br><small id="res-end"></small></p>
+    </div>
+    <div>
+        <button class="btn-imprimir-caixa" onclick="window.print()" style="background: #28a745; color: white; margin-top: 20px;">Imprimir PDF</button>
+        <button class="btn-fechar" onclick="fecharModal()">Fechar Visualização</button>
+    </div>
+</div>
 
     <script src="script.js"></script>
 </body>
