@@ -1,0 +1,79 @@
+   <!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terminal BMF 2026</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <header>
+        <div class="container">
+            <h1>Monitor BMF - Tempo Real</h1>
+            <p id="status-conexao">Conectando ao mercado...</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="card">
+            <h2>Performance das Commodities (%)</h2>
+            <div style="position: relative; height: 300px; width: 100%;">
+                <canvas id="graficoPerformance"></canvas>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>Mercado Futuro (BMF)</h2>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Símbolo</th>
+                            <th>Produto</th>
+                            <th>Preço Atual</th>
+                            <th>Variação</th>
+                            <th>Logo</th>
+                        </tr>
+                    </thead>
+                    <tbody id="corpo-cotacoes">
+                        <tr><td colspan="5">Carregando cotações...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <button class="btn-imprimir" onclick="window.print()" style="margin-top: 20px;">📄 Imprimir Relatório</button>
+        </section>
+
+        <section class="card">
+            <button id="btn-ajuda" onclick="toggleAjuda()">📂 Ver Tabela de Códigos (Referência)</button>
+            <div id="painel-ajuda" style="display: none; margin-top: 20px;">
+                <h3>Guia de Contratos 2026</h3>
+                <div style="overflow-x: auto;">
+                    <table class="tabela-referencia">
+                        <thead>
+                            <tr>
+                                <th>Mês/Letra</th>
+                                <th>Boi (BGI)</th>
+                                <th>Milho (CCM)</th>
+                                <th>Soja (SJW)</th>
+                                <th>Café (ICF)</th>
+                                <th>Trigo (WDO)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Jan (F)</td><td>BGIF26</td><td>CCMF26</td><td>SJWF26</td><td>ICFF26</td><td>WDOF26</td></tr>
+                            <tr><td>Mar (H)</td><td>BGIH26</td><td>CCMH26</td><td>SJWH26</td><td>ICFH26</td><td>WDOH26</td></tr>
+                            <tr><td>Mai (K)</td><td>BGIK26</td><td>CCMK26</td><td>SJWK26</td><td>ICFK26</td><td>WDOK26</td></tr>
+                            <tr><td>Set (U)</td><td>BGIU26</td><td>CCMU26</td><td>SJWU26</td><td>ICFU26</td><td>WDOU26</td></tr>
+                            <tr><td>Nov (X)</td><td>BGIX26</td><td>CCMX26</td><td>SJWX26</td><td>ICFX26</td><td>WDOX26</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
