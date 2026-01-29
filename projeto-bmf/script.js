@@ -1,4 +1,4 @@
-    const TOKEN = "8gRPKYrszFRi4JCDaARwuJ"; 
+const TOKEN = "8gRPKYrszFRi4JCDaARwuJ"; 
 const ATIVOS = "BGI,CCM,SJW,ICF,WDO,PETR4,WTI"; 
 let meuGrafico = null;
 
