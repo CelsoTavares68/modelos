@@ -216,8 +216,20 @@ input:focus { border-color: #1a73e8; }
     .card-investimento { border: 1px solid #ccc; }
 }
 
-/* Responsividade para Telemóvel/Celular */
+ /* Ajuste para a calculadora no celular */
 @media (max-width: 600px) {
-    .grid-destaques { grid-template-columns: 1fr; }
-    .container { padding: 15px; }
+    .renda-fixa .input-group {
+        flex-direction: column; /* Empilha o campo e o botão */
+        gap: 10px;
+    }
+
+    .renda-fixa input[type="number"] {
+        width: 100%; /* Campo ocupa a largura toda */
+    }
+
+    .renda-fixa button {
+        width: 100%; /* Botão ocupa a largura toda e fica embaixo */
+        margin-left: 0;
+        padding: 15px; /* Aumenta o clique no celular */
+    }
 }
