@@ -1,41 +1,63 @@
-  const API_TOKEN = 'SEU_TOKEN_AQUI'; // <--- Verifique se o seu token está correto entre as aspas
+    const API_TOKEN = 'o5vWfmTmmtZUdtAEe9fyMA'; 
 let chartMercado;
 
-// Exibir data atual
+// Configuração inicial ao carregar a página
 document.getElementById('data-atual').innerText = new Date().toLocaleDateString('pt-BR');
 
-// Carregar tudo ao abrir
 window.onload = () => {
     buscarDadosReais();
     buscarMoedas();
 };
 
- async function buscarDadosReais() {
+async function buscarDadosReais() {
     try {
-        const response = await fetch(`https://brapi.dev/api/quote/list?token=${API_TOKEN}`);
-        
-        if (!response.ok) {
-            console.log("Limite de API atingido ou Token inválido.");
-            return;
+        const url = `https://brapi.dev/api/v2/quote/list?sortOrder=desc&sortBy=change&token=${API_TOKEN}`;
+        const response = await fetch(url);
+        const contentType = response.headers.get("content-type");
+
+        // Se o token novo ainda não estiver ativo, ele cai aqui e não quebra o site
+        if (!response.ok || !contentType || !contentType.includes("application/json")) {
+            console.warn("Brapi processando novo token. Mostrando dados de espera...");
+            return; 
         }
 
         const data = await response.json();
-        
         if (data.stocks) {
-            const filtradas = data.stocks.filter(a => a.volume > 1000000);
-            const topAltas = [...filtradas].sort((a,b) => b.change - a.change).slice(0, 15);
-            const topBaixas = [...filtradas].sort((a,b) => a.change - b.change).slice(0, 15);
-
-            exibirListas(topAltas, topBaixas);
-            renderizarGraficoTop30([...topAltas, ...topBaixas]);
+            const acoes = data.stocks;
+            exibirListas(acoes.slice(0, 15), [...acoes].reverse().slice(0, 15));
+            renderizarGraficoTop30(acoes.slice(0, 30));
         }
-    } catch (e) { 
-        console.error("Erro na conexão com a B3"); 
+    } catch (e) {
+        console.error("Erro na conexão B3:", e);
+    }
+}
+
+function exibirListas(altas, baixas) {
+    const elAltas = document.getElementById('lista-altas');
+    const elBaixas = document.getElementById('lista-baixas');
+
+    if (elAltas) {
+        elAltas.innerHTML = altas.map(a => `
+            <li>
+                <span>${a.stock}</span>
+                <span>R$ ${a.close ? a.close.toFixed(2) : '---'}</span>
+                <b class="texto-alta">${a.change ? a.change.toFixed(2) : '0'}%</b>
+            </li>`).join('');
+    }
+    if (elBaixas) {
+        elBaixas.innerHTML = baixas.map(b => `
+            <li>
+                <span>${b.stock}</span>
+                <span>R$ ${b.close ? b.close.toFixed(2) : '---'}</span>
+                <b class="texto-queda">${b.change ? b.change.toFixed(2) : '0'}%</b>
+            </li>`).join('');
     }
 }
 
 function renderizarGraficoTop30(acoes) {
-    const ctx = document.getElementById('graficoMercado').getContext('2d');
+    const canvas = document.getElementById('graficoMercado');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
     if (chartMercado) chartMercado.destroy();
 
     chartMercado = new Chart(ctx, {
@@ -52,130 +74,56 @@ function renderizarGraficoTop30(acoes) {
     });
 }
 
- function exibirListas(altas, baixas) {
-    // Renderiza as Altas com Preço e %
-    document.getElementById('lista-altas').innerHTML = altas.map(a => `
-        <li>
-            <span>${a.stock}</span>
-            <span>R$ ${a.close.toFixed(2)}</span>
-            <b class="texto-alta">${a.change.toFixed(2)}%</b>
-        </li>`).join('');
+async function buscarMoedas() {
+    try {
+        const response = await fetch('https://economia.awesomeapi.com.br/last/USD-BRL,EUR-BRL,BTC-BRL,ETH-BRL,XAU-BRL');
+        const data = await response.json();
 
-    // Renderiza as Baixas com Preço e %
-    document.getElementById('lista-baixas').innerHTML = baixas.map(b => `
-        <li>
-            <span>${b.stock}</span>
-            <span>R$ ${b.close.toFixed(2)}</span>
-            <b class="texto-queda">${b.change.toFixed(2)}%</b>
-        </li>`).join('');
+        // Moedas (ID: usd-comercial, eur-comercial)
+        if (data.USDBRL) {
+            document.getElementById('usd-comercial').innerText = `R$ ${parseFloat(data.USDBRL.bid).toFixed(2)}`;
+            document.getElementById('usd-paralelo').innerText = `R$ ${(parseFloat(data.USDBRL.bid) * 1.05).toFixed(2)}`;
+        }
+        if (data.EURBRL) {
+            document.getElementById('eur-comercial').innerText = `R$ ${parseFloat(data.EURBRL.bid).toFixed(2)}`;
+            document.getElementById('eur-paralelo').innerText = `R$ ${(parseFloat(data.EURBRL.bid) * 1.065).toFixed(2)}`;
+        }
+
+        // Criptos (ID: btc-val, eth-val, btc-max, eth-max)
+        if (data.BTCBRL) {
+            document.getElementById('btc-val').innerText = parseFloat(data.BTCBRL.bid).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            document.getElementById('btc-max').innerText = `R$ ${parseFloat(data.BTCBRL.high).toFixed(2)}`;
+        }
+        if (data.ETHBRL) {
+            document.getElementById('eth-val').innerText = parseFloat(data.ETHBRL.bid).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            document.getElementById('eth-max').innerText = `R$ ${parseFloat(data.ETHBRL.high).toFixed(2)}`;
+        }
+        
+        // Ouro (ID: gold-val)
+        if (data.XAUBRL) {
+            const valorGrama = parseFloat(data.XAUBRL.bid) / 31.1035;
+            document.getElementById('gold-val').innerText = `R$ ${valorGrama.toFixed(2)}`;
+        }
+    } catch (e) { 
+        console.error("Erro ao carregar ativos externos:", e); 
+    }
 }
 
- // Objeto central de taxas - Atualize aqui os valores do mercado
-const taxasMercado = {
-    selic: 11.25,
-    cdi: 11.15,
-    poupancaMensal: 0.50, // 0.5% fixo + TR
-    trEstimada: 0.05      // Taxa Referencial estimada
-};
-
- function calcularRentabilidadeCompleta() {
+function calcularRentabilidadeCompleta() {
     const valor = parseFloat(document.getElementById('valorInvestido').value);
     const container = document.getElementById('tabela-rendimentos');
+    if (!valor || valor <= 0) return;
 
-    if (!valor || valor <= 0) {
-        alert("Insira um valor para calcular.");
-        return;
-    }
-
-    // Taxas Atuais (Podem ser editadas conforme o COPOM)
-    const SELIC = 11.25; 
-    const CDI = SELIC - 0.10;
-    
-    // Fatores de Divisão
-    const diasUteisAno = 252;
-    const mesesAno = 12;
-
-    // Funções de Cálculo Líquido (Já com desconto de 22.5% de IR para CDB/RDB)
-    const calcCDB = (v, tempo) => (v * (CDI / 100 / tempo)) * 0.775;
-    const calcLCI = (v, tempo) => (v * ((CDI * 0.9) / 100 / tempo));
-    const calcPoup = (v, tempo) => (v * (0.0055 / (tempo === 252 ? 21 : 1))); // Estimativa 21 dias úteis/mês
+    const CDI = 11.15;
+    const calcCDB = (v) => (v * (CDI / 100 / 12)) * 0.775;
+    const calcLCI = (v) => (v * ((CDI * 0.9) / 100 / 12));
 
     container.innerHTML = `
-        <div class="card-investimento">
-            <h4>CDB / RDB (100% CDI)</h4>
-            <p>Diário: <strong class="texto-alta">R$ ${calcCDB(valor, diasUteisAno).toFixed(2)}</strong></p>
-            <p>Mensal: <strong>R$ ${calcCDB(valor, mesesAno).toFixed(2)}</strong></p>
-            <small>Líquido (Pós-IR)</small>
-        </div>
-        <div class="card-investimento">
-            <h4>LCI / LCA (90% CDI)</h4>
-            <p>Diário: <strong class="texto-alta">R$ ${calcLCI(valor, diasUteisAno).toFixed(2)}</strong></p>
-            <p>Mensal: <strong>R$ ${calcLCI(valor, mesesAno).toFixed(2)}</strong></p>
-            <small>Isento de Imposto</small>
-        </div>
-        <div class="card-investimento">
-            <h4>Poupança</h4>
-            <p>Diário: <strong class="texto-alta">R$ ${calcPoup(valor, diasUteisAno).toFixed(2)}</strong></p>
-            <p>Mensal: <strong>R$ ${calcPoup(valor, mesesAno).toFixed(2)}</strong></p>
-            <small>Referencial</small>
-        </div>
+        <div class="card-investimento"><h4>CDB</h4><p>R$ ${calcCDB(valor).toFixed(2)}/mês</p></div>
+        <div class="card-investimento"><h4>LCI/LCA</h4><p>R$ ${calcLCI(valor).toFixed(2)}/mês</p></div>
     `;
 }
 
 function gerarRelatorio() {
-    window.print(); // Abre a janela de impressão do sistema
+    window.print();
 }
-
-window.onload = buscarDadosReais;
-
-   async function buscarMoedas() {
-    try {
-        // Buscamos os valores oficiais (Comercial)
-        const url = 'https://economia.awesomeapi.com.br/last/USD-BRL,EUR-BRL,BTC-BRL,ETH-BRL,XAU-BRL';
-        const response = await fetch(url);
-        const data = await response.json();
-
-        if (data) {
-            // --- DÓLAR ---
-            if (data.USDBRL) {
-                const comercial = parseFloat(data.USDBRL.bid);
-                // Calculamos o paralelo com margem de 6.5% (média entre 5% e 8%)
-                const paralelo = comercial * 1.065; 
-
-                document.getElementById('usd-comercial').innerText = `R$ ${comercial.toFixed(2)}`;
-                document.getElementById('usd-paralelo').innerText = `R$ ${paralelo.toFixed(2)}`;
-            }
-
-            // --- EURO ---
-            if (data.EURBRL) {
-                const comercialEur = parseFloat(data.EURBRL.bid);
-                const paraleloEur = comercialEur * 1.065;
-
-                document.getElementById('eur-comercial').innerText = `R$ ${comercialEur.toFixed(2)}`;
-                document.getElementById('eur-paralelo').innerText = `R$ ${paraleloEur.toFixed(2)}`;
-            }
-
-            // --- CRIPTO ---
-            if (data.BTCBRL) {
-                document.getElementById('btc-val').innerText = parseFloat(data.BTCBRL.bid).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-            }
-            if (data.ETHBRL) {
-                document.getElementById('eth-val').innerText = parseFloat(data.ETHBRL.bid).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-            }
-
-            // --- METAIS (OURO) ---
-if (data.XAUBRL) {
-    // Pegamos o valor da Onça-Troy e dividimos por 31.1 para ter o valor do GRAMA
-    const valorOnca = parseFloat(data.XAUBRL.bid);
-    const valorGrama = valorOnca / 31.1;
-
-    document.getElementById('gold-val').innerText = `R$ ${valorGrama.toFixed(2)}`;
-}
-        }
-    } catch (e) {
-        console.error("Erro no carregamento:", e);
-    }
-}
-
-// Garante que carrega ao abrir a página
-window.addEventListener('load', buscarMoedas);
