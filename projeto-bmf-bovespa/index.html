@@ -1,0 +1,85 @@
+       <!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Financeiro Consolidado</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Consultoria Financeira Integrada</h1>
+            <p id="data-atual"></p>
+            <div id="status-conexao" style="font-size: 0.8em; color: #666;">Iniciando sistema...</div>
+        </header>
+
+        <div class="resultado-container">
+            <div class="card-investimento" style="border-left-color: #28a745;">
+                <h4>💵 Dólar Comercial</h4>
+                <b id="usd-comercial">R$ 0,00</b>
+            </div>
+            <div class="card-investimento" style="border-left-color: #1a73e8;">
+                <h4>💶 Euro Comercial</h4>
+                <b id="eur-comercial">R$ 0,00</b>
+            </div>
+            <div class="card-investimento" style="border-left-color: #f7931a;">
+                <h4>₿ Bitcoin (BTC)</h4>
+                <b id="btc-val">R$ 0,00</b>
+            </div>
+            <div class="card-investimento" style="border-left-color: #627eea;">
+                <h4>Ξ Ethereum (ETH)</h4>
+                <b id="eth-val">R$ 0,00</b>
+            </div>
+        </div>
+
+        <div class="resultado-container" style="margin-top: 15px;">
+            <div class="card-investimento" style="border-left-color: #ff9800;">
+                <h4>✈️ Dólar Turismo</h4>
+                <b id="usd-turismo">R$ 0,00</b>
+            </div>
+            <div class="card-investimento" style="border-left-color: #03a9f4;">
+                <h4>✈️ Euro Turismo</h4>
+                <b id="eur-turismo">R$ 0,00</b>
+            </div>
+            <div class="card-investimento" style="border-left-color: #ffd700;">
+                <h4>📀 Ouro (grama)</h4>
+                <b id="gold-val">R$ 0,00</b>
+            </div>
+        </div>
+
+        <section style="margin-top: 30px;">
+            <h3>📌 Renda Fixa e Indicadores</h3>
+            <div class="resultado-container">
+                <div class="card-investimento"><h4>Selic</h4><b id="taxa-selic">---</b></div>
+                <div class="card-investimento"><h4>CDI</h4><b id="taxa-cdi">---</b></div>
+                <div class="card-investimento"><h4>IPCA</h4><b id="taxa-ipca">---</b></div>
+                <div class="card-investimento"><h4>IGP-M</h4><b id="taxa-igpm">---</b></div>
+            </div>
+        </section>
+
+        <section style="margin-top: 30px;">
+            <h3>🌾 Commodities e Futuros (BMF / Agro / Petróleo)</h3>
+            <div class="table-responsive">
+                <table>
+                    <thead><tr><th>Ativo</th><th>Preço</th><th>Variação</th></tr></thead>
+                    <tbody id="corpo-cotacoes"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <div class="grid-destaques" style="margin-top: 30px;">
+            <div class="coluna"><h3>🚀 Altas B3</h3><ul id="lista-altas" class="lista-acoes"></ul></div>
+            <div class="coluna"><h3>📉 Baixas B3</h3><ul id="lista-baixas" class="lista-acoes"></ul></div>
+        </div>
+
+        <div class="chart-container" style="margin-top: 30px;">
+            <canvas id="graficoMercado"></canvas>
+        </div>
+
+        <button class="btn-report" onclick="window.print()" style="margin-top: 40px; width: 100%;">📄 Gerar Relatório PDF</button>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

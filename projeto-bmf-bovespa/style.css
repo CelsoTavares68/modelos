@@ -1,0 +1,200 @@
+    * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: auto !important; /* Permite que o corpo cresça com o conteúdo */
+    min-height: 100vh;
+    overflow-y: auto !important; /* Força o scroll vertical */
+    overflow-x: hidden;
+    background-color: #f4f7f6;
+    color: #333;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+}
+
+.container {
+    width: 95%;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 20px 10px 100px 10px; /* Margem extra no fundo para o telemóvel */
+    height: auto !important;
+    display: block !important;
+}
+
+/* --- CABEÇALHO --- */
+header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #ddd;
+}
+
+header h1 {
+    font-size: 1.8rem;
+    color: #2c3e50;
+    margin-bottom: 5px;
+}
+
+#data-atual {
+    font-weight: bold;
+    color: #666;
+}
+
+#status-conexao {
+    font-size: 0.85rem;
+    margin-top: 10px;
+}
+
+/* --- CARTÕES DE INVESTIMENTO (MOEDAS E TAXAS) --- */
+.resultado-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.card-investimento {
+    background: #fff;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 5px solid #ccc;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    text-align: center;
+    transition: transform 0.2s;
+}
+
+.card-investimento:hover {
+    transform: translateY(-3px);
+}
+
+.card-investimento h4 {
+    font-size: 0.9rem;
+    color: #7f8c8d;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+}
+
+.card-investimento b {
+    font-size: 1.2rem;
+    color: #2c3e50;
+    display: block;
+}
+
+/* --- TABELAS RESPONSIVAS (BMF) --- */
+h3 {
+    margin: 25px 0 15px;
+    color: #2c3e50;
+    border-left: 4px solid #1a73e8;
+    padding-left: 10px;
+}
+
+.table-responsive {
+    width: 100%;
+    overflow-x: auto; /* Scroll horizontal apenas se a tabela for larga */
+    -webkit-overflow-scrolling: touch;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 400px; /* Garante que não esmague no telemóvel */
+}
+
+th, td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+}
+
+/* --- RANKING DE AÇÕES (ALTAS E BAIXAS) --- */
+.grid-destaques {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.coluna {
+    background: #fff;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.lista-acoes {
+    list-style: none;
+}
+
+.lista-acoes li {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #f1f1f1;
+    font-size: 0.95rem;
+}
+
+/* --- CORES DE VARIAÇÃO --- */
+.texto-alta { color: #27ae60; font-weight: bold; }
+.texto-queda { color: #e74c3c; font-weight: bold; }
+
+/* --- GRÁFICO --- */
+.chart-container {
+    position: relative;
+    height: 400px; /* Altura fixa para o gráfico */
+    width: 100%;
+    background: #fff;
+    margin-top: 30px;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+/* --- BOTÃO DE RELATÓRIO --- */
+.btn-report {
+    background-color: #1a73e8;
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    font-weight: bold;
+    margin-top: 30px;
+    transition: background 0.3s;
+}
+
+.btn-report:hover {
+    background-color: #1557b0;
+}
+
+/* --- AJUSTES PARA TELEMÓVEL (MOBILE) --- */
+@media (max-width: 600px) {
+    header h1 { font-size: 1.4rem; }
+    
+    .resultado-container {
+        grid-template-columns: 1fr 1fr; /* Duas colunas em ecrãs pequenos */
+    }
+
+    .card-investimento b { font-size: 1rem; }
+
+    .chart-container {
+        height: 300px; /* Gráfico um pouco menor em telemóveis */
+    }
+}
+
+/* Esconde o botão na impressão do PDF */
+@media print {
+    .btn-report, #status-conexao {
+        display: none;
+    }
+}
