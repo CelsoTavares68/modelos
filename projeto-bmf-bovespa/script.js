@@ -1,6 +1,7 @@
         const TOKEN_B3 = '8gRPKYrszFRi4JCDaARwuJ'; 
-const LISTA_30_ACOES = "PETR4,VALE3,ITUB4,BBDC4,ABEV3,BBAS3,ITSA4,SANB11,B3SA3,RENT3,LREN3,MGLU3,WEGE3,SUZB3,JBSS3,RAIL3,GGBR4,VIVT3,ELET3,BBSE3,EQTL3,RADL3,RDOR3,CSAN3,CPLE6,TOTS3,VBBR3,EMBR3,UGPA3,HAPV3";
+const LISTA_30_ACOES = "VALE3,ITUB4,BBDC4,ABEV3,BBAS3,ITSA4,SANB11,B3SA3,RENT3,LREN3,MGLU3,WEGE3,SUZB3,JBSS3,RAIL3,GGBR4,VIVT3,ELET3,BBSE3,EQTL3,RADL3,RDOR3,CSAN3,CPLE6,TOTS3,VBBR3,EMBR3,UGPA3,HAPV3";
 const LISTA_BMF = "BGI,CCM,SJW,ICF,WDO,WTI,PETR4"; 
+
 
 let chartMercado = null;
 
@@ -76,13 +77,13 @@ async function buscarApenasTaxas() {
     }
 }
 
-async function buscarMercadoB3eBMF() {
+ async function buscarMercadoB3eBMF() {
     try {
         const res = await fetch(`https://brapi.dev/api/quote/${LISTA_30_ACOES},${LISTA_BMF}?token=${TOKEN_B3}`);
         const data = await res.json();
         if(!data.results) return;
 
-        // Tabela BMF/Commodities/Ações Específicas
+        // Tabela BMF/Commodities
         const bmfAtivos = data.results.filter(i => LISTA_BMF.includes(i.symbol.substring(0,3)) || i.symbol === "PETR4");
         const tbody = document.getElementById("corpo-cotacoes");
         if(tbody) {
@@ -94,8 +95,11 @@ async function buscarMercadoB3eBMF() {
             });
         }
 
-        // Rankings B3 (O resto das 30 ações)
-        const acoesB3 = data.results.filter(i => !["BGI", "CCM", "SJW", "ICF", "WDO", "WTI"].some(s => i.symbol.includes(s)));
+        // Rankings B3 (Filtra apenas as ações da lista que NÃO são BMF)
+        const acoesB3 = data.results.filter(i => 
+            LISTA_30_ACOES.includes(i.symbol) && !["BGI", "CCM", "SJW", "ICF", "WDO", "WTI"].some(s => i.symbol.includes(s))
+        );
+        
         const ordenadas = [...acoesB3].sort((a, b) => (b.regularMarketChangePercent || 0) - (a.regularMarketChangePercent || 0));
         
         const formatLi = (a, c) => `<li><strong>${a.symbol}</strong> <span>R$ ${a.regularMarketPrice.toFixed(2)}</span> <b class="${c}">${(a.regularMarketChangePercent || 0).toFixed(2)}%</b></li>`;
@@ -103,27 +107,61 @@ async function buscarMercadoB3eBMF() {
         document.getElementById('lista-altas').innerHTML = ordenadas.slice(0, 15).map(a => formatLi(a, 'texto-alta')).join('');
         document.getElementById('lista-baixas').innerHTML = [...ordenadas].reverse().slice(0, 15).map(a => formatLi(a, 'texto-queda')).join('');
 
-        renderizarGrafico(ordenadas.slice(0, 5), [...ordenadas].reverse().slice(0, 5));
+        // CORREÇÃO AQUI: Chamamos a função apenas uma vez dentro do bloco try
+        renderizarGrafico(ordenadas);
+        
         document.getElementById('status-conexao').innerText = "✅ Atualizado: " + new Date().toLocaleTimeString();
-    } catch (e) { console.error("Erro B3/BMF", e); }
+    } catch (e) { 
+        console.error("Erro B3/BMF", e); 
+    }
 }
 
-function renderizarGrafico(altas, baixas) {
+function renderizarGrafico(listaCompleta) {
     const canvas = document.getElementById('graficoMercado');
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
+    
     if (chartMercado) chartMercado.destroy();
-    const dados = [...altas, ...baixas];
+
+    // Seleciona as 15 maiores altas e as 15 maiores baixas
+    const altas = listaCompleta.slice(0, 15);
+    const baixas = [...listaCompleta].reverse().slice(0, 15).reverse();
+    const dadosParaOGrafico = [...altas, ...baixas];
+
     chartMercado = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: dados.map(a => a.symbol),
+            labels: dadosParaOGrafico.map(a => a.symbol),
             datasets: [{
                 label: '% Variação',
-                data: dados.map(a => a.regularMarketChangePercent),
-                backgroundColor: dados.map(a => a.regularMarketChangePercent >= 0 ? '#008d47' : '#d93025')
+                data: dadosParaOGrafico.map(a => a.regularMarketChangePercent || 0),
+                backgroundColor: dadosParaOGrafico.map(a => (a.regularMarketChangePercent || 0) >= 0 ? '#27ae60' : '#e74c3c'),
+                borderRadius: 5
             }]
         },
-        options: { responsive: true, maintainAspectRatio: false }
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: { 
+                    ticks: { 
+                        callback: v => v.toFixed(1) + "%",
+                        font: { size: 12 }
+                    } 
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: {
+                        autoSkip: false,
+                        font: { size: 10, weight: 'bold' },
+                        maxRotation: 45,
+                        minRotation: 45
+                    }
+                }
+            }
+        }
     });
 }

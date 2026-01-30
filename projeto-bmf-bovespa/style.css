@@ -149,14 +149,22 @@ th {
 
 /* --- GRÁFICO --- */
 .chart-container {
-    position: relative;
-    height: 400px; /* Altura fixa para o gráfico */
     width: 100%;
+    height: 450px; /* Altura fixa para o gráfico */
     background: #fff;
-    margin-top: 30px;
     padding: 15px;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    
+    /* Ativa o scroll horizontal se o conteúdo interno for maior que a tela */
+    overflow-x: auto; 
+    overflow-y: hidden;
+}
+
+#graficoMercado {
+    /* Forçamos uma largura mínima para as 30 barras não virarem linhas finas */
+    min-width: 1000px !important; 
+    height: 400px !important;
 }
 
 /* --- BOTÃO DE RELATÓRIO --- */
@@ -178,7 +186,7 @@ th {
 }
 
 /* --- AJUSTES PARA TELEMÓVEL (MOBILE) --- */
-@media (max-width: 600px) {
+@media (max-width:768px) {
     header h1 { font-size: 1.4rem; }
     
     .resultado-container {
@@ -188,7 +196,12 @@ th {
     .card-investimento b { font-size: 1rem; }
 
     .chart-container {
-        height: 300px; /* Gráfico um pouco menor em telemóveis */
+        display: none !important;
+    }
+    
+    h3:has(+ .chart-container), 
+    h3:contains("Gráfico") { /* Opcional: esconde o título do gráfico também */
+        display: none;
     }
 }
 
