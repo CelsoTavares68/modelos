@@ -8,6 +8,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
+     <button class="btn-dark-toggle" onclick="toggleDarkMode()">🌓 Alternar Tema</button>
+
     <div class="container">
         <header>
             <h1>📊 Consultoria Financeira Integrada</h1>
@@ -61,7 +63,7 @@
 
         <section style="margin-top: 30px;">
             <h3>🌾 Commodities e Futuros (BMF / Agro / Petróleo)</h3>
-            <div class="table-responsive">
+            <div class="table-responsive" id="corpo-cotacoes-parent">
                 <table>
                     <thead><tr><th>Ativo</th><th>Preço</th><th>Variação</th></tr></thead>
                     <tbody id="corpo-cotacoes"></tbody>
@@ -69,16 +71,50 @@
             </div>
         </section>
 
-        <div class="grid-destaques" style="margin-top: 30px;">
-            <div class="coluna"><h3>🚀 Altas B3</h3><ul id="lista-altas" class="lista-acoes"></ul></div>
-            <div class="coluna"><h3>📉 Baixas B3</h3><ul id="lista-baixas" class="lista-acoes"></ul></div>
+        <div class="grid-destaques">
+            <div class="coluna">
+                <h3>📉 Maiores Baixas</h3>
+                <ul id="lista-baixas" class="lista-acoes"></ul>
+            </div>
+            <div class="coluna">
+                <h3>📈 Maiores Altas</h3>
+                <ul id="lista-altas" class="lista-acoes"></ul>
+            </div>
+        </div> 
+
+        <div class="chart-container">
+            <canvas id="graficoMercado"></canvas>
         </div>
 
-          <div class="chart-container" style="width: 100%; overflow-x: auto; background: #fff; padding: 15px; border-radius: 12px;">
-    <canvas id="graficoMercado" style="min-width: 1200px; height: 400px;"></canvas>
-</div>
+        <section class="card">
+            <button id="btn-ajuda" onclick="toggleAjuda()">📂 Ver Tabela de Códigos (Referência)</button>
+            <div id="painel-ajuda" style="display: none; margin-top: 20px;">
+                <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                    <h3 style="text-align: center;">Guia de Contratos 2026</h3>
+                    <table class="tabela-referencia">
+                        <thead>
+                            <tr>
+                                <th>Mês/Letra</th>
+                                <th>Boi (BGI)</th>
+                                <th>Milho (CCM)</th>
+                                <th>Soja (SJW)</th>
+                                <th>Café (ICF)</th>
+                                <th>Trigo (WDO)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Jan (F)</td><td>BGIF26</td><td>CCMF26</td><td>SJWH26</td><td>ICFF26</td><td>WDOF26</td></tr>
+                            <tr><td>Mar (H)</td><td>BGIH26</td><td>CCMH26</td><td>SJWH26</td><td>ICFH26</td><td>WDOH26</td></tr>
+                            <tr><td>Mai (K)</td><td>BGIK26</td><td>CCMK26</td><td>SJWK26</td><td>ICFK26</td><td>WDOK26</td></tr>
+                            <tr><td>Set (U)</td><td>BGIU26</td><td>CCMU26</td><td>SJWU26</td><td>ICFU26</td><td>WDOU26</td></tr>
+                            <tr><td>Nov (X)</td><td>BGIX26</td><td>CCMX26</td><td>SJWX26</td><td>ICFX26</td><td>WDOX26</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
 
-        <button class="btn-report" onclick="window.print()" style="margin-top: 40px; width: 100%;">📄 Gerar Relatório PDF</button>
+        <button class="btn-report" onclick="window.print()">📄 Gerar Relatório PDF</button>
     </div>
     <script src="script.js"></script>
 </body>
