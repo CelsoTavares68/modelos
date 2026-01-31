@@ -1,21 +1,101 @@
-   body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; padding: 20px; color: #333; }
-.container { max-width: 1000px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-h1 { text-align: center; color: #2c3e50; }
+   body { 
+    font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; 
+    padding: 20px; 
+    color: #333; 
+}
 
-.form-group { display: flex; flex-wrap: wrap; gap: 15px; background: #f8f9fa; padding: 25px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #e9ecef; }
-.form-control { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 180px; }
-label { font-size: 0.85rem; font-weight: bold; color: #495057; }
-input, select { padding: 12px; border: 1px solid #ced4da; border-radius: 6px; }
+.container { 
+    max-width: 1000px; 
+    margin: auto; 
+    background: white; 
+    padding: 30px; 
+    border-radius: 12px; 
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1); 
+}
 
-button#btn-adicionar { width: 100%; padding: 15px; background-color: #27ae60; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+h1 { 
+    text-align: center; 
+    color: #2c3e50; 
+}
 
-.resumo { display: flex; gap: 15px; margin-bottom: 30px; flex-wrap: wrap; }
-.card { flex: 1; min-width: 180px; padding: 20px; border-radius: 8px; color: white; text-align: center; display: flex; flex-direction: column; justify-content: center; cursor: pointer; }
+.form-group { 
+    display: flex; 
+    flex-wrap: wrap; 
+    gap: 15px; 
+    background: #f8f9fa; 
+    padding: 25px; 
+    border-radius: 10px; 
+    margin-bottom: 20px; 
+    border: 1px solid #e9ecef; 
+}
 
-.card-anterior { background-color: #7f8c8d; }
-.card-receber { background-color: #2ecc71; }
-.card-pagar { background-color: #e74c3c; }
-.card-saldo { background-color: #34495e; }
+.form-control { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 8px; 
+    flex: 1; 
+    min-width: 180px; 
+}
+
+label { 
+    font-size: 0.85rem; 
+    font-weight: bold; 
+    color: #495057; 
+}
+
+input, select { 
+    padding: 12px; 
+    border: 1px solid #ced4da; 
+    border-radius: 6px; 
+}
+
+button#btn-adicionar { 
+    width: 100%; 
+    padding: 15px; 
+    background-color: #27ae60; 
+    color: white; 
+    border: none; 
+    border-radius: 6px; 
+    font-weight: bold; 
+    cursor: pointer; 
+    margin-top: 10px; 
+}
+
+.resumo { 
+    display: flex; 
+    gap: 15px; 
+    margin-bottom: 30px; 
+    flex-wrap: wrap; 
+}
+
+.card { 
+    flex: 1; 
+    min-width: 180px; 
+    padding: 20px; 
+    border-radius: 8px; 
+    color: white; 
+    text-align: center; 
+    display: flex; 
+    flex-direction: column; 
+    justify-content: center; 
+    cursor: pointer; 
+}
+
+.card-anterior { 
+    background-color: #7f8c8d; 
+}
+
+.card-receber { 
+    background-color: #2ecc71; 
+}
+
+.card-pagar { 
+    background-color: #e74c3c; 
+}
+
+.card-saldo { 
+    background-color: #34495e; 
+}
 
 .card-anterior input {
     background: rgba(255, 255, 255, 0.2);
@@ -38,12 +118,44 @@ button#btn-adicionar { width: 100%; padding: 15px; background-color: #27ae60; co
     cursor: pointer;
 }
 
-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
-.cor-receber { color: #27ae60; font-weight: bold; }
-.cor-pagar { color: #c0392b; font-weight: bold; }
+table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    margin-top: 20px; 
+}
 
-.acoes-topo { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; }
-#btn-imprimir { background-color: #34495e; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+th, td { 
+    padding: 15px; 
+    text-align: left; 
+    border-bottom: 1px solid #eee; 
+}
 
-@media print { .no-print { display: none; } }
+.cor-receber { 
+    color: #27ae60; 
+    font-weight: bold; 
+}
+
+.cor-pagar { 
+    color: #c0392b; 
+    font-weight: bold; 
+}
+
+.acoes-topo { 
+    display: flex; 
+    justify-content: space-between; align-items: flex-end; 
+    margin-bottom: 20px; 
+}
+
+#btn-imprimir { 
+    background-color: #34495e; 
+    color: white; 
+    padding: 10px 20px; 
+    border: none; 
+    border-radius: 6px; 
+    cursor: pointer; 
+    font-weight: bold; 
+}
+
+@media print { .no-print { 
+    display: none; 
+} }
