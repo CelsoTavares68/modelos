@@ -10,7 +10,7 @@ html, body {
     overflow-y: auto !important;
     overflow-x: hidden;
     background-color: #f4f7f6;
-    color: #333;
+    color: #313131;
     font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     line-height: 1.6;
     transition: background-color 0.3s, color 0.3s;
@@ -35,7 +35,7 @@ header {
 
 header h1 {
     font-size: 1.8rem;
-    color: #2c3e50;
+    color: #527496;
     margin-bottom: 5px;
 }
 
@@ -64,7 +64,7 @@ header h1 {
 
 .card-investimento b {
     font-size: 1.4rem;
-    color: #2c3e50;
+    color: #5c8fc1;
 }
 
 /* --- TABELA DE COTAÇÕES (AGRO/PETR) --- */
@@ -93,9 +93,21 @@ th {
 }
 
 /* Alinhamento das 3 colunas principais */
-.col-ativo { text-align: left; width: 40%; }
-.col-preco { text-align: center; width: 30%; font-weight: bold; }
-.col-pct   { text-align: right; width: 30%; }
+.col-ativo { 
+    text-align: 
+    left; 
+    width: 40%; 
+}
+
+.col-preco { 
+    text-align: center; 
+    width: 30%; 
+    font-weight: bold; 
+}
+.col-pct   { 
+    text-align: right; 
+    width: 30%; 
+}
 
 .nome-empresa-agro {
     display: block;
@@ -222,7 +234,7 @@ body.dark-mode .table-responsive,
 body.dark-mode .chart-container,
 body.dark-mode #painel-ajuda > div {
     background-color: #2d2d2d !important; /* Força o fundo escuro nos cards */
-    color: #fff !important; /* Força a letra branca */
+    color: #666363 !important; /* Força a letra branca */
     border-color: #444;
 }
 
@@ -230,23 +242,24 @@ body.dark-mode #painel-ajuda > div {
 body.dark-mode .tabela-referencia,
 body.dark-mode .tabela-referencia th, 
 body.dark-mode .tabela-referencia td {
-    color: #ffffff !important; 
+    color: #717171 !important; 
     border-color: #444 !important;
 }
 
 body.dark-mode .tabela-referencia thead {
     background-color: #3d3d3d !important;
+    color: #fff;
 }
 
 /* Corrigindo bordas e nomes de empresas no modo escuro */
 body.dark-mode td, body.dark-mode th {
-    border-bottom-color: #444;
+    border-bottom-color: #727171;
 }
 
 body.dark-mode .nome-empresa-agro, 
 body.dark-mode .nome-empresa-pequeno,
 body.dark-mode small {
-    color: #bbb !important; /* Cinza claro para não sumir */
+    color: #938f8f !important; /* Cinza claro para não sumir */
 }
 
 /* Botão Flutuante */
