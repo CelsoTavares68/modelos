@@ -71,22 +71,7 @@
             </div>
         </section>
 
-        <div class="grid-destaques">
-            <div class="coluna">
-                <h3>📉 Maiores Baixas</h3>
-                <ul id="lista-baixas" class="lista-acoes"></ul>
-            </div>
-            <div class="coluna">
-                <h3>📈 Maiores Altas</h3>
-                <ul id="lista-altas" class="lista-acoes"></ul>
-            </div>
-        </div> 
-
-        <div class="chart-container">
-            <canvas id="graficoMercado"></canvas>
-        </div>
-
-        <section class="card">
+         <section class="card">
             <button id="btn-ajuda" onclick="toggleAjuda()">📂 Ver Tabela de Códigos (Referência)</button>
             <div id="painel-ajuda" style="display: none; margin-top: 20px;">
                 <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
@@ -113,6 +98,22 @@
                 </div>
             </div>
         </section>
+
+
+        <div class="grid-destaques">
+            <div class="coluna">
+                <h3>📉 Maiores Baixas</h3>
+                <ul id="lista-baixas" class="lista-acoes"></ul>
+            </div>
+            <div class="coluna">
+                <h3>📈 Maiores Altas</h3>
+                <ul id="lista-altas" class="lista-acoes"></ul>
+            </div>
+        </div> 
+
+        <div class="chart-container">
+            <canvas id="graficoMercado"></canvas>
+        </div>
 
         <button class="btn-report" onclick="window.print()">📄 Gerar Relatório PDF</button>
     </div>
