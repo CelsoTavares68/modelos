@@ -222,6 +222,66 @@ background-color: rgb(30, 69, 188);
     width: auto !important;
 }
 
+  .renda-fixa {
+    background-color: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    margin-top: 30px;
+}
+
+.renda-fixa h3 {
+    margin-bottom: 20px;
+    color: #2c3e50;
+    border-left: 5px solid #28a745;
+    padding-left: 15px;
+}
+
+/* Container que envolve o input e o botão */
+.renda-fixa div[style*="display: flex"] {
+    display: flex !important;
+    gap: 12px;
+    margin-bottom: 25px;
+    max-width: 500px;
+}
+
+.renda-fixa input[type="number"] {
+    flex: 2;
+    padding: 12px 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+.renda-fixa input[type="number"]:focus {
+    border-color: #28a745;
+}
+
+.renda-fixa button {
+    flex: 1;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s, background 0.3s;
+}
+
+.renda-fixa button:hover {
+    background-color: #218838;
+    transform: translateY(-1px);
+}
+
+/* Grid de resultados (onde o JS insere os cards) */
+#tabela-rendimentos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
  /* --- MODO ESCURO COMPLETO --- */
 body.dark-mode {
     background-color: #1a1a1a;
@@ -260,6 +320,22 @@ body.dark-mode .nome-empresa-agro,
 body.dark-mode .nome-empresa-pequeno,
 body.dark-mode small {
     color: #938f8f !important; /* Cinza claro para não sumir */
+}
+
+
+body.dark-mode .renda-fixa {
+    background-color: #2d2d2d;
+    color: #fff;
+}
+
+body.dark-mode .renda-fixa h3 {
+    color: #fff;
+}
+
+body.dark-mode .renda-fixa input {
+    background-color: #1a1a1a;
+    border-color: #444;
+    color: #fff;
 }
 
 /* Botão Flutuante */

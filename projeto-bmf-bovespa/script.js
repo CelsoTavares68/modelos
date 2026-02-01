@@ -164,3 +164,43 @@ function toggleAjuda() {
     const p = document.getElementById("painel-ajuda");
     p.style.display = p.style.display === "none" ? "block" : "none";
 }
+
+   function calcularRentabilidade() {
+    const valor = parseFloat(document.getElementById('valorInvestido').value);
+    const container = document.getElementById('tabela-rendimentos');
+
+    if (!valor || valor <= 0) {
+        alert("Insira um valor para calcular.");
+        return;
+    }
+
+    const SELIC = 11.25; 
+    const CDI = SELIC - 0.10;
+    const diasUteisAno = 252;
+    const mesesAno = 12;
+
+    const calcCDB = (v, tempo) => (v * (CDI / 100 / tempo)) * 0.775;
+    const calcLCI = (v, tempo) => (v * ((CDI * 0.9) / 100 / tempo));
+    const calcPoup = (v, tempo) => (v * (0.0055 / (tempo === 252 ? 21 : 1)));
+
+    container.innerHTML = `
+        <div class="card-investimento">
+            <h4>CDB / RDB (100% CDI)</h4>
+            <p>Diário: <strong class="texto-alta">R$ ${calcCDB(valor, diasUteisAno).toFixed(2)}</strong></p>
+            <p>Mensal: <strong>R$ ${calcCDB(valor, mesesAno).toFixed(2)}</strong></p>
+            <small>Líquido (Pós-IR)</small>
+        </div>
+        <div class="card-investimento">
+            <h4>LCI / LCA (90% CDI)</h4>
+            <p>Diário: <strong class="texto-alta">R$ ${calcLCI(valor, diasUteisAno).toFixed(2)}</strong></p>
+            <p>Mensal: <strong>R$ ${calcLCI(valor, mesesAno).toFixed(2)}</strong></p>
+            <small>Isento de Imposto</small>
+        </div>
+        <div class="card-investimento">
+            <h4>Poupança</h4>
+            <p>Diário: <strong class="texto-alta">R$ ${calcPoup(valor, diasUteisAno).toFixed(2)}</strong></p>
+            <p>Mensal: <strong>R$ ${calcPoup(valor, mesesAno).toFixed(2)}</strong></p>
+            <small>Referencial</small>
+        </div>
+    `;
+}
