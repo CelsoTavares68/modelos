@@ -204,3 +204,168 @@ function toggleAjuda() {
         </div>
     `;
 }
+
+  async function enviarOrdemParaServidor(tipo) {
+    const ativoInput = document.getElementById('order-symbol');
+    const qtdInput = document.getElementById('order-qty');
+    const precoInput = document.getElementById('order-price');
+
+    // Pegamos os valores
+    const ativo = ativoInput.value.toUpperCase();
+    const qtd = qtdInput.value;
+    const preco = precoInput.value;
+
+    // Teste de segurança: se algum estiver vazio, para aqui
+    if (!ativo || !qtd || !preco) {
+        alert("Preencha todos os campos: Ativo, Quantidade e Preço!");
+        return;
+    }
+
+    try {
+        const response = await fetch('http://localhost:3000/executar-ordem', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                ativo: ativo, 
+                quantidade: qtd, 
+                tipo: tipo, 
+                preco: preco 
+            })
+        });
+
+        const data = await response.json();
+        
+        // Limpa os campos para a próxima compra
+        ativoInput.value = "";
+        precoInput.value = "";
+        
+        // Atualiza a tabela imediatamente
+        carregarHistoricoServidor();
+        
+    } catch (err) {
+        alert("O servidor Node.js está desligado! Ligue-o no terminal.");
+    }
+}
+
+async function carregarHistorico() {
+    try {
+        const response = await fetch('http://localhost:3000/obter-ordens');
+        const data = await response.json();
+        const tabela = document.getElementById('minha-custodia');
+        
+        // Limpa e preenche a tabela com o que está no arquivo .txt
+        tabela.innerHTML = data.ordens.map(ordem => {
+            return `<tr><td colspan="3" style="font-size:0.8rem">${ordem}</td></tr>`;
+        }).join('');
+    } catch (err) {
+        console.log("Servidor offline, histórico não carregado.");
+    }
+}
+
+// Função para carregar o histórico do servidor Node.js
+ async function carregarHistoricoServidor() {
+    const response = await fetch('http://localhost:3000/obter-ordens');
+    const data = await response.json();
+    const tabelaCorpo = document.getElementById('minha-custodia');
+    tabelaCorpo.innerHTML = "";
+
+    // Objeto para agrupar as ações
+    const carteira = {};
+
+    data.ordens.forEach(linha => {
+        const [dataHora, tipo, ativo, qtd, preco] = linha.split('|');
+        const quantidade = parseInt(qtd);
+        const valorUnitario = parseFloat(preco);
+
+        if (!carteira[ativo]) {
+            carteira[ativo] = { quantidade: 0, precoMedio: 0, totalInvestido: 0 };
+        }
+
+        if (tipo === 'COMPRA') {
+            carteira[ativo].quantidade += quantidade;
+            carteira[ativo].totalInvestido += (quantidade * valorUnitario);
+        } else {
+            carteira[ativo].quantidade -= quantidade;
+            // Se vendeu tudo, removemos o custo base proporcionalmente
+            carteira[ativo].totalInvestido -= (quantidade * valorUnitario);
+        }
+    });
+
+    // Agora desenhamos apenas quem tem quantidade maior que zero
+    for (let ativo in carteira) {
+        const pos = carteira[ativo];
+        if (pos.quantidade <= 0) continue; // Se a quantidade for 0, não mostra na tabela!
+
+        // Busca preço atual para lucro
+        const precoAtual = buscarPrecoNoCard(ativo); 
+        const lucro = (precoAtual * pos.quantidade) - pos.totalInvestido;
+        const classeLucro = lucro >= 0 ? "texto-alta" : "texto-queda";
+
+        tabelaCorpo.innerHTML += `
+            <tr>
+                <td><b>${ativo}</b><br><small>${pos.quantidade} un</small></td>
+                <td>R$ ${(pos.totalInvestido / pos.quantidade).toFixed(2)}</td>
+                <td class="${classeLucro}">R$ ${lucro.toFixed(2)}</td>
+                <td><button onclick="venderPosicao('${ativo}', ${pos.quantidade})" class="btn-vender-tabela">Vender</button></td>
+            </tr>
+        `;
+    }
+}
+
+// Função auxiliar para pegar o preço do card
+function buscarPrecoNoCard(ativo) {
+    const cards = document.querySelectorAll('.card-b3');
+    let preco = 0;
+    cards.forEach(card => {
+        if (card.innerText.includes(ativo)) {
+            const texto = card.querySelector('b')?.innerText || "0";
+            preco = parseFloat(texto.replace("R$ ", "").replace(",", "."));
+        }
+    });
+    return preco;
+}
+
+// Modifique o seu window.onload atual para incluir a chamada:
+window.onload = () => {
+    document.getElementById('data-atual').innerText = new Date().toLocaleDateString('pt-BR');
+    inicializarApp();
+    carregarHistoricoServidor(); // <--- Adicione esta linha aqui
+};
+
+let saldoAtual = 10000.00; // Começamos com 10 mil reais fictícios
+
+async function venderPosicao(ativo, qtd, precoCompra) {
+    // 1. Pegar o preço atual do mercado
+    const cards = document.querySelectorAll('.card-b3');
+    let precoMercado = 0;
+    cards.forEach(card => {
+        if (card.innerText.includes(ativo)) {
+            const precoTexto = card.querySelector('b')?.innerText || "0";
+            precoMercado = parseFloat(precoTexto.replace("R$ ", "").replace(",", "."));
+        }
+    });
+
+    if (precoMercado === 0) return alert("Não é possível vender: Preço de mercado não encontrado.");
+
+    // 2. Calcular o valor da venda
+    const valorVenda = precoMercado * qtd;
+    saldoAtual += valorVenda;
+
+    // 3. Atualizar o saldo na tela
+    document.getElementById('saldo-valor').innerText = `R$ ${saldoAtual.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+
+    // 4. Registrar a venda no Node.js
+    await fetch('http://localhost:3000/executar-ordem', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+            ativo: ativo, 
+            quantidade: qtd, 
+            tipo: 'VENDA', 
+            preco: precoMercado 
+        })
+    });
+
+    alert(`Vendido! R$ ${valorVenda.toFixed(2)} adicionados ao saldo.`);
+    carregarHistoricoServidor();
+}

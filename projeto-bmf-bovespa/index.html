@@ -71,6 +71,44 @@
             <div id="tabela-rendimentos" class="resultado-container"></div>
         </section> 
     
+        <section class="terminal-negociacao">
+    <h3>⚡ Terminal de Execução (B3 / BMF)</h3>
+    <div class="layout-terminal">
+        <div class="input-row">
+    <input type="text" id="order-symbol" placeholder="ATIVO (Ex: PETR4)">
+    <input type="number" id="order-qty" placeholder="QTD" value="100">
+    <input type="number" id="order-price" placeholder="PREÇO R$" step="0.01">
+</div>
+<div class="button-row">
+    <button class="btn-buy" onclick="enviarOrdemParaServidor('COMPRA')">COMPRAR</button>
+    <button class="btn-sell" onclick="enviarOrdemParaServidor('VENDA')">VENDER</button>
+</div> 
+        </div>
+
+        <div id="area-financeira">
+    <h3>Saldo Disponível: <span id="saldo-valor">R$ 10.000,00</span></h3>
+</div>
+
+        <div class="portfolio-mini">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Posição</th>
+                        <th>Preço Médio</th>
+                        <th>Resultado</th>
+                    </tr>
+                </thead>
+                <tbody id="minha-custodia">
+                    <tr>
+                        <td>PETR4</td>
+                        <td>R$ 38.50</td>
+                        <td class="texto-alta">+R$ 120,00</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
 
         <section style="margin-top: 30px;">
             <h3>🌾 Commodities e Futuros (BMF / Agro / Petróleo)</h3>
