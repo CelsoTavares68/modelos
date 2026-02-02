@@ -1,6 +1,6 @@
   const TOKEN_B3 = '8gRPKYrszFRi4JCDaARwuJ'; 
   const LISTA_ACOES_TESTE = "VALE3,ITUB4,ABEV3,PETR4";
-const LISTA_AGRO_BMF = "BGIH26,CCMH26,SJWK26,ICFH26,WDOH26";
+const LISTA_AGRO_BMF = "BGIH26,CCMH26,SJWK26,ICFH26,WDOH26,CTPH26";
 
 // Criamos a lista final que a API vai usar, juntando as duas
 const LISTA_BUSCA_BMF = LISTA_AGRO_BMF + "," + LISTA_ACOES_TESTE;
@@ -96,7 +96,8 @@ async function buscarApenasTaxas() {
                 else if(ticker.includes("CCM")) nomeAmigavel = "Milho";
                 else if(ticker.includes("SJW")) nomeAmigavel = "Soja";
                 else if(ticker.includes("ICF")) nomeAmigavel = "Café Arábica";
-                else if(ticker.includes("WDO")) nomeAmigavel = "Dólar Futuro";
+                else if(ticker.includes("WDO")) nomeAmigavel = "Trigo Futuro";
+               else if(ticker.includes("CTP")) nomeAmigavel = "Algodão";      
                 else if(ticker === "PETR4") nomeAmigavel = "Petrobras";
                 else if(ticker === "VALE3") nomeAmigavel = "Vale S.A.";
                 else if(ticker === "ITUB4") nomeAmigavel = "Itaú Unibanco";
