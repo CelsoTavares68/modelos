@@ -116,6 +116,28 @@
             </div>
         </section>
 
+       <section class="card-carteira">
+    <h3>📋 Minha Carteira (Monitoramento)</h3>
+    <div class="input-group-carteira">
+        <input type="text" id="tickerCompra" placeholder="Ex: PETR4" style="text-transform:uppercase">
+        <input type="number" id="precoPago" placeholder="Preço Pago (R$)">
+        <button class="btn-success" onclick="adicionarAcaoCarteira()">Monitorar Ação</button>
+    </div>
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Ativo</th>
+                    <th>Preço Pago</th>
+                    <th>Atual</th>
+                    <th>Var. / Status</th>
+                </tr>
+            </thead>
+            <tbody id="corpo-carteira">
+                </tbody>
+        </table>
+    </div>
+</section>
 
         <div class="grid-destaques">
             <div class="coluna">

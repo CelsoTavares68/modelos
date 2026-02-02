@@ -1,11 +1,12 @@
   const TOKEN_B3 = '8gRPKYrszFRi4JCDaARwuJ'; 
-  const LISTA_ACOES_TESTE = "VALE3,ITUB4,ABEV3,PETR4";
+const LISTA_ACOES_TESTE = "VALE3,ITUB4,ABEV3,PETR4";
 const LISTA_AGRO_BMF = "BGIH26,CCMH26,SJWK26,ICFH26,WDOH26,CTPH26";
 
-// Criamos a lista final que a API vai usar, juntando as duas
 const LISTA_BUSCA_BMF = LISTA_AGRO_BMF + "," + LISTA_ACOES_TESTE;
 
 let chartMercado = null;
+// NOVO: Recupera a carteira do navegador
+let minhaCarteira = JSON.parse(localStorage.getItem('minhaCarteira')) || [];
 
 window.onload = () => {
     document.getElementById('data-atual').innerText = new Date().toLocaleDateString('pt-BR');
@@ -59,16 +60,17 @@ async function buscarApenasTaxas() {
     } catch (e) { console.error(e); }
 }
 
-   async function buscarMercadoB3eBMF() {
+async function buscarMercadoB3eBMF() {
     try {
+        // NOVO: Inclui os tickers da sua carteira na busca da API
+        const tickersPessoais = minhaCarteira.map(a => a.ticker).join(',');
+        const listaAPI = LISTA_BUSCA_BMF + (tickersPessoais ? ',' + tickersPessoais : '');
+
         const resRanking = await fetch(`https://brapi.dev/api/quote/list?sortBy=change&sortOrder=desc&token=${TOKEN_B3}`);
         const dataRanking = await resRanking.json();
 
-        const resBMF = await fetch(`https://brapi.dev/api/quote/${LISTA_BUSCA_BMF}?token=${TOKEN_B3}`);
+        const resBMF = await fetch(`https://brapi.dev/api/quote/${listaAPI}?token=${TOKEN_B3}`);
         const dataBMF = await resBMF.json();
-
-        console.log("--- DADOS CONSOLIDADOS (AGRO + TESTE) ---");
-        console.table(dataBMF.results);
 
         const tbody = document.getElementById("corpo-cotacoes");
         if (tbody) {
@@ -91,13 +93,12 @@ async function buscarApenasTaxas() {
                     classeCor = varPct >= 0 ? "texto-alta" : "texto-queda";
                 }
 
-                // Lógica de nomes amigáveis para o Agro
                 if(ticker.includes("BGI")) nomeAmigavel = "Boi Gordo";
                 else if(ticker.includes("CCM")) nomeAmigavel = "Milho";
                 else if(ticker.includes("SJW")) nomeAmigavel = "Soja";
                 else if(ticker.includes("ICF")) nomeAmigavel = "Café Arábica";
                 else if(ticker.includes("WDO")) nomeAmigavel = "Trigo Futuro";
-               else if(ticker.includes("CTP")) nomeAmigavel = "Algodão";      
+                else if(ticker.includes("CTP")) nomeAmigavel = "Algodão";      
                 else if(ticker === "PETR4") nomeAmigavel = "Petrobras";
                 else if(ticker === "VALE3") nomeAmigavel = "Vale S.A.";
                 else if(ticker === "ITUB4") nomeAmigavel = "Itaú Unibanco";
@@ -115,7 +116,9 @@ async function buscarApenasTaxas() {
             });
         }
 
-        // --- AS AÇÕES DA BOVESPA E O GRÁFICO CONTINUAM IGUAIS ABAIXO ---
+        // NOVO: Chama a atualização da tabela da sua carteira
+        atualizarPainelCarteira(dataBMF.results);
+
         if (dataRanking && dataRanking.stocks) {
             const apenasAcoes = dataRanking.stocks.filter(s => s.stock.length <= 6);
             const topAltas = apenasAcoes.slice(0, 15);
@@ -125,7 +128,6 @@ async function buscarApenasTaxas() {
                 <li>
                     <div style="flex: 1;">
                         <strong>${a.stock}</strong>
-                        <small class="nome-empresa" style="margin-top:0">${a.name || 'Empresa B3'}</small>
                     </div>
                     <span style="width: 80px; text-align: right; font-weight: 600;">R$ ${a.close.toFixed(2)}</span>
                     <b class="${c}" style="width: 70px; text-align: right;">${(a.change || 0).toFixed(2)}%</b>
@@ -134,22 +136,49 @@ async function buscarApenasTaxas() {
             document.getElementById('lista-altas').innerHTML = topAltas.map(a => formatLi(a, 'texto-alta')).join('');
             document.getElementById('lista-baixas').innerHTML = topBaixas.map(a => formatLi(a, 'texto-queda')).join('');
 
-            const dadosParaGrafico = [...topAltas, ...topBaixas].map(item => ({
-                symbol: item.stock,
-                change: item.change
-            }));
-            renderizarGrafico(dadosParaGrafico);
+            renderizarGrafico([...topAltas, ...topBaixas].map(item => ({ symbol: item.stock, change: item.change })));
         }
 
         document.getElementById('status-conexao').innerText = "✅ Atualizado: " + new Date().toLocaleTimeString();
-    } catch (e) { 
-        console.error("Erro Geral:", e); 
+    } catch (e) { console.error("Erro Geral:", e); }
+}
+
+// NOVAS FUNÇÕES: GESTÃO DA CARTEIRA
+function atualizarPainelCarteira(dadosApi) {
+    const tbody = document.getElementById('corpo-carteira');
+    if (!tbody) return;
+    tbody.innerHTML = "";
+    minhaCarteira.forEach((item, index) => {
+        const info = dadosApi ? dadosApi.find(res => res.symbol === item.ticker) : null;
+        const precoAtual = info ? (info.regularMarketPrice || info.price) : null;
+        const nomeEmpresa = info && info.longName ? info.longName : "Empresa B3";
+        let cor = ""; let pct = "---";
+        if (precoAtual) {
+            const varP = ((precoAtual - item.precoPago) / item.precoPago) * 100;
+            pct = (varP >= 0 ? '+' : '') + varP.toFixed(2) + "%";
+            cor = varP >= 0 ? "texto-alta" : "texto-queda";
+        }
+        tbody.innerHTML += `<tr class="${cor}"><td><b>${item.ticker}</b><br><small style="opacity:0.7">${nomeEmpresa}</small></td><td>R$ ${item.precoPago.toFixed(2)}</td><td>${precoAtual ? 'R$ ' + precoAtual.toFixed(2) : '---'}</td><td style="font-weight:bold">${pct}</td><td><button onclick="removerDaCarteira(${index})" style="border:none; background:none; cursor:pointer;">🗑️</button></td></tr>`;
+    });
+}
+
+function adicionarAcaoCarteira() {
+    const t = document.getElementById('tickerCompra').value.toUpperCase().trim();
+    const p = parseFloat(document.getElementById('precoPago').value);
+    if (t && !isNaN(p)) {
+        minhaCarteira.push({ ticker: t, precoPago: p });
+        localStorage.setItem('minhaCarteira', JSON.stringify(minhaCarteira));
+        buscarMercadoB3eBMF();
     }
 }
-// NOVA FUNÇÃO PARA ALTERNAR TEMA
-function toggleDarkMode() {
-    document.body.classList.toggle('dark-mode');
+
+function removerDaCarteira(index) {
+    minhaCarteira.splice(index, 1);
+    localStorage.setItem('minhaCarteira', JSON.stringify(minhaCarteira));
+    buscarMercadoB3eBMF();
 }
+
+function toggleDarkMode() { document.body.classList.toggle('dark-mode'); }
 
 function renderizarGrafico(dados) {
     if (!dados || window.innerWidth < 768) return;
@@ -159,28 +188,19 @@ function renderizarGrafico(dados) {
         type: 'bar',
         data: {
             labels: dados.map(a => a.symbol),
-            datasets: [{
-                label: '% Variação',
-                data: dados.map(a => a.change || 0),
-                backgroundColor: dados.map(a => (a.change || 0) >= 0 ? '#27ae60' : '#e74c3c'),
-                borderRadius: 5
-            }]
+            datasets: [{ label: '% Variação', data: dados.map(a => a.change || 0), backgroundColor: dados.map(a => (a.change || 0) >= 0 ? '#27ae60' : '#e74c3c'), borderRadius: 5 }]
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: { y: { ticks: { callback: v => v + "%" } } }
-        }
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
     });
 }
 
 function toggleAjuda() {
     const p = document.getElementById("painel-ajuda");
-    p.style.display = p.style.display === "none" ? "block" : "none";
+    p.style.display = (p.style.display === "none" || p.style.display === "") ? "block" : "none";
 }
 
-   function calcularRentabilidade() {
+// SUA FUNÇÃO ORIGINAL MANTIDA
+function calcularRentabilidade() {
     const valor = parseFloat(document.getElementById('valorInvestido').value);
     const container = document.getElementById('tabela-rendimentos');
 
