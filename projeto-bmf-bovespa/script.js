@@ -1,5 +1,9 @@
   const TOKEN_B3 = '8gRPKYrszFRi4JCDaARwuJ'; 
-const LISTA_BUSCA_BMF = "BGIG26,CCMH26,SJWH26,ICFH26,WDOG26,PETR4"; 
+  const LISTA_ACOES_TESTE = "VALE3,ITUB4,ABEV3,PETR4";
+const LISTA_AGRO_BMF = "BGIH26,CCMH26,SJWK26,ICFH26,WDOH26";
+
+// Criamos a lista final que a API vai usar, juntando as duas
+const LISTA_BUSCA_BMF = LISTA_AGRO_BMF + "," + LISTA_ACOES_TESTE;
 
 let chartMercado = null;
 
@@ -13,10 +17,6 @@ async function inicializarApp() {
     buscarApenasMoedas();
     buscarApenasTaxas();
     buscarMercadoB3eBMF();
-}
-
-function toggleDarkMode() {
-    document.body.classList.toggle('dark-mode');
 }
 
 async function buscarApenasMoedas() {
@@ -59,7 +59,7 @@ async function buscarApenasTaxas() {
     } catch (e) { console.error(e); }
 }
 
- async function buscarMercadoB3eBMF() {
+   async function buscarMercadoB3eBMF() {
     try {
         const resRanking = await fetch(`https://brapi.dev/api/quote/list?sortBy=change&sortOrder=desc&token=${TOKEN_B3}`);
         const dataRanking = await resRanking.json();
@@ -67,42 +67,54 @@ async function buscarApenasTaxas() {
         const resBMF = await fetch(`https://brapi.dev/api/quote/${LISTA_BUSCA_BMF}?token=${TOKEN_B3}`);
         const dataBMF = await resBMF.json();
 
+        console.log("--- DADOS CONSOLIDADOS (AGRO + TESTE) ---");
+        console.table(dataBMF.results);
+
         const tbody = document.getElementById("corpo-cotacoes");
         if (tbody) {
             tbody.innerHTML = ""; 
-            
-            if (dataBMF && dataBMF.results) {
-                dataBMF.results.forEach(item => {
-                    const precoRaw = item.regularMarketPrice || item.price || 0;
-                    const precoFormatado = precoRaw > 0 ? "R$ " + precoRaw.toFixed(2) : "---";
-                    const varPct = item.regularMarketChangePercent || 0;
-                    const cor = varPct >= 0 ? "texto-alta" : "texto-queda";
-                    
-                    // Lógica de Alerta: aplica animação se a queda for maior que 2%
-                    const classeAlerta = varPct <= -2.0 ? "alerta-queda-grave" : "";
+            const meusTickers = LISTA_BUSCA_BMF.split(',');
 
-                    let nomeAtivo = item.symbol;
-                    let nomeEmpresa = "BM&F Bovespa";
+            meusTickers.forEach(ticker => {
+                const itemApi = dataBMF.results ? dataBMF.results.find(res => res.symbol === ticker) : null;
 
-                    if(nomeAtivo.includes("BGI")) { nomeAtivo = "Boi Gordo"; }
-                    else if(nomeAtivo.includes("CCM")) { nomeAtivo = "Milho"; }
-                    else if(nomeAtivo.includes("SJW")) { nomeAtivo = "Soja"; nomeEmpresa = "CME Group"; }
-                    else if(nomeAtivo.includes("ICF")) { nomeAtivo = "Café Arábica"; }
-                    else if(nomeAtivo.includes("WDO")) { nomeAtivo = "Dólar Futuro"; nomeEmpresa = "Contrato Futuro"; }
-                    else if(nomeAtivo === "PETR4") { nomeAtivo = "PETR4"; nomeEmpresa = "Petrobras S.A."; }
+                let nomeAmigavel = ticker;
+                let precoExibicao = "---";
+                let pctExibicao = "0.00%";
+                let classeCor = "";
 
-                    tbody.innerHTML += `<tr class="${classeAlerta}">
+                if (itemApi && (itemApi.regularMarketPrice || itemApi.price)) {
+                    const precoRaw = itemApi.regularMarketPrice || itemApi.price;
+                    precoExibicao = "R$ " + precoRaw.toFixed(2);
+                    const varPct = itemApi.regularMarketChangePercent || 0;
+                    pctExibicao = (varPct >= 0 ? '+' : '') + varPct.toFixed(2) + "%";
+                    classeCor = varPct >= 0 ? "texto-alta" : "texto-queda";
+                }
+
+                // Lógica de nomes amigáveis para o Agro
+                if(ticker.includes("BGI")) nomeAmigavel = "Boi Gordo";
+                else if(ticker.includes("CCM")) nomeAmigavel = "Milho";
+                else if(ticker.includes("SJW")) nomeAmigavel = "Soja";
+                else if(ticker.includes("ICF")) nomeAmigavel = "Café Arábica";
+                else if(ticker.includes("WDO")) nomeAmigavel = "Dólar Futuro";
+                else if(ticker === "PETR4") nomeAmigavel = "Petrobras";
+                else if(ticker === "VALE3") nomeAmigavel = "Vale S.A.";
+                else if(ticker === "ITUB4") nomeAmigavel = "Itaú Unibanco";
+                else if(ticker === "ABEV3") nomeAmigavel = "Ambev S.A.";
+
+                tbody.innerHTML += `
+                    <tr>
                         <td class="col-ativo">
-                            <b>${nomeAtivo}</b>
-                            <span class="nome-empresa">${nomeEmpresa}</span>
+                            <b>${nomeAmigavel}</b>
+                            <span class="nome-empresa-agro">${ticker} | BMF</span>
                         </td>
-                        <td class="col-preco">${precoFormatado}</td>
-                        <td class="col-pct ${cor}">${varPct >= 0 ? '+' : ''}${varPct.toFixed(2)}%</td>
+                        <td class="col-preco">${precoExibicao}</td>
+                        <td class="col-pct ${classeCor}">${pctExibicao}</td>
                     </tr>`;
-                });
-            }
+            });
         }
 
+        // --- AS AÇÕES DA BOVESPA E O GRÁFICO CONTINUAM IGUAIS ABAIXO ---
         if (dataRanking && dataRanking.stocks) {
             const apenasAcoes = dataRanking.stocks.filter(s => s.stock.length <= 6);
             const topAltas = apenasAcoes.slice(0, 15);
@@ -127,10 +139,12 @@ async function buscarApenasTaxas() {
             }));
             renderizarGrafico(dadosParaGrafico);
         }
-        document.getElementById('status-conexao').innerText = "✅ Atualizado: " + new Date().toLocaleTimeString();
-    } catch (e) { console.error("Erro Geral:", e); }
-}
 
+        document.getElementById('status-conexao').innerText = "✅ Atualizado: " + new Date().toLocaleTimeString();
+    } catch (e) { 
+        console.error("Erro Geral:", e); 
+    }
+}
 // NOVA FUNÇÃO PARA ALTERNAR TEMA
 function toggleDarkMode() {
     document.body.classList.toggle('dark-mode');
@@ -203,169 +217,4 @@ function toggleAjuda() {
             <small>Referencial</small>
         </div>
     `;
-}
-
-  async function enviarOrdemParaServidor(tipo) {
-    const ativoInput = document.getElementById('order-symbol');
-    const qtdInput = document.getElementById('order-qty');
-    const precoInput = document.getElementById('order-price');
-
-    // Pegamos os valores
-    const ativo = ativoInput.value.toUpperCase();
-    const qtd = qtdInput.value;
-    const preco = precoInput.value;
-
-    // Teste de segurança: se algum estiver vazio, para aqui
-    if (!ativo || !qtd || !preco) {
-        alert("Preencha todos os campos: Ativo, Quantidade e Preço!");
-        return;
-    }
-
-    try {
-        const response = await fetch('http://localhost:3000/executar-ordem', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                ativo: ativo, 
-                quantidade: qtd, 
-                tipo: tipo, 
-                preco: preco 
-            })
-        });
-
-        const data = await response.json();
-        
-        // Limpa os campos para a próxima compra
-        ativoInput.value = "";
-        precoInput.value = "";
-        
-        // Atualiza a tabela imediatamente
-        carregarHistoricoServidor();
-        
-    } catch (err) {
-        alert("O servidor Node.js está desligado! Ligue-o no terminal.");
-    }
-}
-
-async function carregarHistorico() {
-    try {
-        const response = await fetch('http://localhost:3000/obter-ordens');
-        const data = await response.json();
-        const tabela = document.getElementById('minha-custodia');
-        
-        // Limpa e preenche a tabela com o que está no arquivo .txt
-        tabela.innerHTML = data.ordens.map(ordem => {
-            return `<tr><td colspan="3" style="font-size:0.8rem">${ordem}</td></tr>`;
-        }).join('');
-    } catch (err) {
-        console.log("Servidor offline, histórico não carregado.");
-    }
-}
-
-// Função para carregar o histórico do servidor Node.js
- async function carregarHistoricoServidor() {
-    const response = await fetch('http://localhost:3000/obter-ordens');
-    const data = await response.json();
-    const tabelaCorpo = document.getElementById('minha-custodia');
-    tabelaCorpo.innerHTML = "";
-
-    // Objeto para agrupar as ações
-    const carteira = {};
-
-    data.ordens.forEach(linha => {
-        const [dataHora, tipo, ativo, qtd, preco] = linha.split('|');
-        const quantidade = parseInt(qtd);
-        const valorUnitario = parseFloat(preco);
-
-        if (!carteira[ativo]) {
-            carteira[ativo] = { quantidade: 0, precoMedio: 0, totalInvestido: 0 };
-        }
-
-        if (tipo === 'COMPRA') {
-            carteira[ativo].quantidade += quantidade;
-            carteira[ativo].totalInvestido += (quantidade * valorUnitario);
-        } else {
-            carteira[ativo].quantidade -= quantidade;
-            // Se vendeu tudo, removemos o custo base proporcionalmente
-            carteira[ativo].totalInvestido -= (quantidade * valorUnitario);
-        }
-    });
-
-    // Agora desenhamos apenas quem tem quantidade maior que zero
-    for (let ativo in carteira) {
-        const pos = carteira[ativo];
-        if (pos.quantidade <= 0) continue; // Se a quantidade for 0, não mostra na tabela!
-
-        // Busca preço atual para lucro
-        const precoAtual = buscarPrecoNoCard(ativo); 
-        const lucro = (precoAtual * pos.quantidade) - pos.totalInvestido;
-        const classeLucro = lucro >= 0 ? "texto-alta" : "texto-queda";
-
-        tabelaCorpo.innerHTML += `
-            <tr>
-                <td><b>${ativo}</b><br><small>${pos.quantidade} un</small></td>
-                <td>R$ ${(pos.totalInvestido / pos.quantidade).toFixed(2)}</td>
-                <td class="${classeLucro}">R$ ${lucro.toFixed(2)}</td>
-                <td><button onclick="venderPosicao('${ativo}', ${pos.quantidade})" class="btn-vender-tabela">Vender</button></td>
-            </tr>
-        `;
-    }
-}
-
-// Função auxiliar para pegar o preço do card
-function buscarPrecoNoCard(ativo) {
-    const cards = document.querySelectorAll('.card-b3');
-    let preco = 0;
-    cards.forEach(card => {
-        if (card.innerText.includes(ativo)) {
-            const texto = card.querySelector('b')?.innerText || "0";
-            preco = parseFloat(texto.replace("R$ ", "").replace(",", "."));
-        }
-    });
-    return preco;
-}
-
-// Modifique o seu window.onload atual para incluir a chamada:
-window.onload = () => {
-    document.getElementById('data-atual').innerText = new Date().toLocaleDateString('pt-BR');
-    inicializarApp();
-    carregarHistoricoServidor(); // <--- Adicione esta linha aqui
-};
-
-let saldoAtual = 10000.00; // Começamos com 10 mil reais fictícios
-
-async function venderPosicao(ativo, qtd, precoCompra) {
-    // 1. Pegar o preço atual do mercado
-    const cards = document.querySelectorAll('.card-b3');
-    let precoMercado = 0;
-    cards.forEach(card => {
-        if (card.innerText.includes(ativo)) {
-            const precoTexto = card.querySelector('b')?.innerText || "0";
-            precoMercado = parseFloat(precoTexto.replace("R$ ", "").replace(",", "."));
-        }
-    });
-
-    if (precoMercado === 0) return alert("Não é possível vender: Preço de mercado não encontrado.");
-
-    // 2. Calcular o valor da venda
-    const valorVenda = precoMercado * qtd;
-    saldoAtual += valorVenda;
-
-    // 3. Atualizar o saldo na tela
-    document.getElementById('saldo-valor').innerText = `R$ ${saldoAtual.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-
-    // 4. Registrar a venda no Node.js
-    await fetch('http://localhost:3000/executar-ordem', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-            ativo: ativo, 
-            quantidade: qtd, 
-            tipo: 'VENDA', 
-            preco: precoMercado 
-        })
-    });
-
-    alert(`Vendido! R$ ${valorVenda.toFixed(2)} adicionados ao saldo.`);
-    carregarHistoricoServidor();
 }

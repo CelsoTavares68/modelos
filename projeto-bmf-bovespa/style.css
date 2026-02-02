@@ -282,105 +282,6 @@ background-color: rgb(30, 69, 188);
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 15px;
 }
-
-/* --- TERMINAL DE NEGOCIAÇÃO --- */
-.terminal-negociacao {
-    background: #f8f9fa;
-    padding: 20px;
-    border-radius: 12px;
-    border: 1px solid #ddd;
-    margin-top: 30px;
-}
-
-.layout-terminal {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-}
-
-/* Boleta */
-.boleta {
-    background: white;
-    padding: 15px;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.input-row {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 15px;
-}
-
-.input-row input {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-weight: bold;
-}
-
-.button-row {
-    display: flex;
-    gap: 10px;
-}
-
-.button-row button {
-    flex: 1;
-    padding: 15px;
-    border: none;
-    border-radius: 4px;
-    font-weight: bold;
-    color: white;
-    cursor: pointer;
-}
-
-.btn-buy { background: #27ae60; }
-.btn-sell { background: #e74c3c; }
-
-/* Portfólio Mini */
-.portfolio-mini {
-    background: white;
-    border-radius: 8px;
-    padding: 10px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.portfolio-mini table { width: 100%; font-size: 0.9rem; }
-
-.texto-alta { color: #28a745; font-weight: bold; }
-.texto-queda { color: #dc3545; font-weight: bold; }
-
-/* Estilo para queda severa (Stop Loss) */
-.alerta-stop { 
-    color: white !important; 
-    background-color: #ff4d4d; 
-    font-weight: bold;
-    animation: piscar 1s infinite;
-    border-radius: 4px;
-    padding: 2px;
-}
-
-@keyframes piscar {
-    0% { opacity: 1; }
-    50% { opacity: 0.6; }
-    100% { opacity: 1; }
-}
-
-.btn-vender-tabela {
-    background-color: #ffc107;
-    border: none;
-    padding: 5px 10px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.7rem;
-    font-weight: bold;
-}
-
-.btn-vender-tabela:hover {
-    background-color: #e0a800;
-}
-
  /* --- MODO ESCURO COMPLETO --- */
 body.dark-mode {
     background-color: #1a1a1a;
@@ -468,11 +369,6 @@ body.dark-mode .btn-dark-toggle {
     border-color: #f39c12;
 }
 
-/* Modo Escuro para o Terminal */
-body.dark-mode .terminal-negociacao { background: #222; border-color: #444; }
-body.dark-mode .boleta, body.dark-mode .portfolio-mini { background: #2d2d2d; color: white; }
-body.dark-mode .input-row input { background: #1a1a1a; color: white; border-color: #444; }
-
 /* --- ALERTA DE QUEDA GRAVE --- */
 @keyframes flash-red {
     0% { background-color: rgba(231, 76, 60, 0.3); }
@@ -486,12 +382,5 @@ body.dark-mode .input-row input { background: #1a1a1a; color: white; border-colo
 /* --- MEDIA QUERIES --- */
 @media (max-width:768px) {
     .grid-destaques { grid-template-columns: 1fr; }
-    .chart-container { 
-        display: none; 
-    }
-
-    .layout-terminal { grid-template-columns: 1fr; 
-    }
-
+    .chart-container { display: none; }
 }
-
