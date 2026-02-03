@@ -1,0 +1,59 @@
+  <!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mister Fragrance - Gestão de Caixa</title>
+    
+    <link rel="stylesheet" href="style.css">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+</head>
+<body onload="inicializar()">
+
+<div class="container">
+    <h2>Fluxo de Caixa Mensal</h2>
+
+    <div class="seletor-mes">
+        <strong>Mês de Referência:</strong>
+        <input type="month" id="mes-referencia" onchange="atualizarInterface()" style="width: auto; margin: 0;">
+    </div>
+
+    <div class="resumo">
+        Saldo do Mês: <span id="valor-total">R$ 0,00</span>
+    </div>
+
+    <input type="text" id="descricao" placeholder="Descrição (ex: Venda de produto)">
+    <input type="number" id="valor" step="0.01" placeholder="Valor (R$)">
+    <select id="tipo">
+        <option value="receita">Receita (+)</option>
+        <option value="despesa">Despesa (-)</option>
+    </select>
+    
+    <button class="btn-add" onclick="adicionarTransicao()">Registrar Lançamento</button>
+    <button class="btn-pdf" onclick="exportarPDF()">Gerar Extrato PDF</button>
+
+    <div class="filtros">
+        <button class="btn-filtro ativo" id="f-todos" onclick="filtrar('todos')">Tudo</button>
+        <button class="btn-filtro" id="f-receita" onclick="filtrar('receita')">Receitas</button>
+        <button class="btn-filtro" id="f-despesa" onclick="filtrar('despesa')">Despesas</button>
+    </div>
+
+    <table id="tabela-contas">
+        <thead>
+            <tr>
+                <th>Descrição</th>
+                <th>Valor</th>
+                <th>Tipo</th>
+                <th>Saldo</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+    <script src="script.js"></script>
+</body>
+</html>

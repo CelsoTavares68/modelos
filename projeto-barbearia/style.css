@@ -1,0 +1,148 @@
+ @charset "UTF-8";
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    list-style: none;
+    text-decoration: none;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background:  rgb(145, 142, 142);
+    color: aliceblue;
+    text-align: center;
+    list-style: none;
+    /* espaço para o header fixo ficar fora do conteúdo */
+    padding-top: 270px; /* ajuste se mudar a altura do header */
+}
+
+/* Header fixo */
+header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 250px;
+    background-color:  rgb(145, 142, 142);
+    border-bottom: 3px solid gold;
+    margin-top: 0px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    z-index: 100;
+}
+
+header img {
+    width: 150px;
+    height: 200px;
+    margin-left: 40px;
+}
+
+header h1 {
+    font-family: cursive;
+    text-align: center;
+    margin: 0;
+    font-size: 2em;
+    font-weight: bolder;
+    color: gold;
+}
+
+header p {
+    margin: 5px 0 0;
+    font-size: 1em;
+    font-weight: bolder;
+    color: #ccc;
+    text-align: center;
+}
+
+main {
+    margin: 20px;
+    padding: 10px;
+    background-color:   rgb(145, 142, 142);
+    border-radius: 10px;
+}
+
+ 
+
+/* Form e demais estilos mantidos */
+.formulario {
+    padding: 20px;
+    max-width: 500px;
+    margin: 20px auto;
+    background-color: #232323;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(255, 217, 0, 0.907);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-sizing: border-box;
+}
+
+.formulario h2 {
+    margin-bottom: 10px;
+    font-size: 2em;
+    color: gold;
+}
+
+input, select {
+    width: 100%;
+    padding: 12px 10px;
+    border-radius: 6px;
+    border: none;
+    background-color: #333;
+    color: #fff;
+    font-size: 1.2em;
+    box-sizing: border-box;
+    cursor: pointer;
+}
+
+button {
+    padding: 12px 0;
+    background-color: gold;
+    color: black;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 6px;
+    font-size: 1.2em;
+    transition: 0.4s;
+}
+
+button:hover {
+    background-color: rgb(191, 142, 17);
+}
+
+section.agendamentos {
+    margin: 30px;
+    max-width: 500px;
+    text-align: center;
+}
+
+.agendamento-card {
+    background-color: #222;
+    margin: 10px 0;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: left;
+    display: block;
+    box-shadow: 0 0 10px rgba(255, 217, 0, 0.929);
+}
+
+.agendamento-card strong {
+    color: gold;
+}
+
+/* Responsividade: alturas diferentes por breakpoint */
+@media (max-width: 600px) {
+    .list .slider-wrapper { height: 220px; }
+    header img { width: 110px; height: 110px; }
+    body { padding-top: 220px; }
+}
+@media (min-width: 1200px) {
+    .list .slider-wrapper { height: 420px; }
+    body { padding-top: 300px; }
+}

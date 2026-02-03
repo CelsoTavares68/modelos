@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mister Fragrance - Luxury Store</title>
+    <script src="https://kit.fontawesome.com/412e60f1e0.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="container-loja">
+        <header class="header-luxury">
+            <div class="header-top">
+                <div class="brand">
+                    <h1>Mister</h1>
+                    <p>MASCULINE FRAGRANCES</p>
+                </div>
+                <nav class="nav-links">
+                    <a href="#"><i class="fa-solid fa-home"></i></a>
+                    <a href="https://wa.me/5511999999999" target="_blank"><i class="fa-brands fa-whatsapp"></i></a>
+                    <div class="social-icons">
+                        <a href="#"><i class="fa-brands fa-instagram"></i></a>
+                        <a href="#"><i class="fa-brands fa-facebook"></i></a>
+                    </div>
+                </nav>
+            </div>
+        </header>
+        
+        <div class="grid-produtos">
+            <div class="produto-card">
+                <div class="img-box"><img src="imagens/perf1.jpg" onerror="this.style.display='none'"></div>
+                <h3>Black Oud Extreme</h3>
+                <p class="preco-txt">R$ 70,00</p>
+                <div class="botoes">
+                    <button type="button" class="btn-m" onclick="alterar('Black Oud', 70, -1)">-</button>
+                    <button type="button" class="btn-p" onclick="alterar('Black Oud', 70, 1)">+</button>
+                </div>
+            </div>
+            <div class="produto-card">
+                <div class="img-box"><img src="imagens/perf2.jpg" onerror="this.style.display='none'"></div>
+                <h3>Blue Marine Fresh</h3>
+                <p class="preco-txt">R$ 45,00</p>
+                <div class="botoes">
+                    <button type="button" class="btn-m" onclick="alterar('Blue Marine', 45, -1)">-</button>
+                    <button type="button" class="btn-p" onclick="alterar('Blue Marine', 45, 1)">+</button>
+                </div>
+            </div>
+            <div class="produto-card">
+                <div class="img-box"><img src="imagens/perf3.jpg" onerror="this.style.display='none'"></div>
+                <h3>Kit Silver Wood</h3>
+                <p class="preco-txt">R$ 165,00</p>
+                <div class="botoes">
+                    <button type="button" class="btn-m" onclick="alterar('Silver Wood', 165, -1)">-</button>
+                    <button type="button" class="btn-p" onclick="alterar('Silver Wood', 165, 1)">+</button>
+                </div>
+            </div>
+            <div class="produto-card">
+                <div class="img-box"><img src="imagens/perf4.jpg" onerror="this.style.display='none'"></div>
+                <h3>Gold Intense</h3>
+                <p class="preco-txt">R$ 76,00</p>
+                <div class="botoes">
+                    <button type="button" class="btn-m" onclick="alterar('Gold Intense', 76, -1)">-</button>
+                    <button type="button" class="btn-p" onclick="alterar('Gold Intense', 76, 1)">+</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="checkout-estavel">
+            <div class="painel-valores">
+                <span>Itens: <b id="ui-qtd">0</b></span>
+                <span>Total: <b id="ui-total">R$ 0,00</b></span>
+            </div>
+
+            <div class="dados-pagamento">
+                <h3>💳 Pagamento</h3>
+                <div class="metodo-info">
+                    <strong>Chave Pix:</strong>
+                    <div class="copy-group">
+                        <span id="chave-pix">suachave@email.com</span>
+                        <button class="btn-copy" onclick="copiarPix()">Copiar</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-entrega">
+                <h3>🚚 Dados para Envio</h3>
+                <input type="text" id="cliente-nome" placeholder="Nome Completo" class="input-f">
+                <textarea id="cliente-endereco" placeholder="Endereço Completo (Rua, Número, CEP, Bairro, Cidade)" class="input-f" rows="3"></textarea>
+            </div>
+            
+            <div class="upload-secao">
+                <label class="label-txt">Comprovante (Clique ou Cole a Imagem):</label>
+                <div class="drop-area" id="area-upload" tabindex="0">
+                    <input type="file" id="arquivo" accept="image/*,.pdf" onchange="validarArquivo()">
+                    <div class="instrucao" id="texto-instrucao">
+                        <strong>Clique para anexar ou <br>Cole a imagem aqui (Ctrl+V)</strong>
+                    </div>
+                    <div id="preview-container"></div>
+                </div>
+            </div>
+
+            <button class="btn-finish" onclick="enviarPedido()">FINALIZAR E ENVIAR WHATSAPP</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

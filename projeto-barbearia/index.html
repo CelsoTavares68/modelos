@@ -1,0 +1,41 @@
+ <!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modelo`s Cabeleireiros</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="script_localstorage.js"></script>
+</head>
+<body>
+    <header>
+        <img src="logo.png" alt="Logotipo">
+        <h1> <em>Barbearia Modelo`s</em></h1>
+        <p><em> Agende seu horário </em></p>
+    </header>
+
+    <main>
+        
+
+        <section class="formulario">
+            <h2>Novos Agendamentos</h2>
+            <input type="text" id="nome" placeholder="Nome">
+            
+            <select id="servico">
+                 <option value="Opções">Opções</option>
+                 <option value="Cortar Cabelo">Cortar Cabelo</option>
+                 <option value="Barba">Barba</option>
+                 <option value="Barba+Cabelo ">Cabelo+Barba</option>
+            </select>
+            <input type="date" id="data">
+            <input type="time" id="hora">
+            <button onclick="agendar()">Agendar</button>
+        </section>
+        <section class="agendamentos" id="listaAgendamentos">
+             <h2>Agendamentos:</h2>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>

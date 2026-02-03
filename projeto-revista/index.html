@@ -1,0 +1,285 @@
+    <!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brasil Digital - Portal de Notícias</title>
+    <link rel="stylesheet" href="style.css">
+    
+</head>
+<body>
+
+    <header class="header-fixo" id="meuHeader">
+        <div class="menu-mobile-btn" onclick="toggleMenu()">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+        <div class="logo-container">
+            <img src="logor.png" alt="Brasil Digital" class="logo-header">
+        </div>
+        <nav id="menuPrincipal">
+            <button onclick="mudarPagina('capa', this)" class="btn-ativo">Capa</button>
+            <button onclick="mudarPagina('editor', this)">Editor</button>
+            <button onclick="mudarPagina('noticias', this)">Notícias</button>
+            <button onclick="mudarPagina('saude', this)">Saúde</button>
+            <button onclick="mudarPagina('esportes', this)">Esportes</button>
+            <button onclick="mudarPagina('tecnologia', this)">Tecnologia</button>
+            <button onclick="mudarPagina('emprego', this)">Emprego</button>
+            <button onclick="mudarPagina('variedades', this)">Variedades</button>
+            <button onclick="mudarPagina('economia', this)">Economia</button>
+        </nav>
+    </header>
+
+    <main class="conteudo-principal">
+        
+         <section id="capa" class="secao-conteudo ativa">
+    <div class="banner-capa">
+        <div class="edicao-discreta">Edição nº 01 — 2026</div>
+        
+        <div class="overlay-capa">
+            <img src="logor.png" alt="Brasil Digital" class="logo-capa">
+            <p class="slogan-capa">Inovação com alma brasileira.</p>
+            
+            <div class="botoes-capa">
+                <button class="btn-entrar" onclick="mudarPagina('editor')">ENTRAR NA EDIÇÃO</button>
+               
+                <button onclick="baixarComoPDF()" class="btn-download">
+    <span>⬇</span> BAIXAR EDIÇÃO COMPLETA (PDF)
+</button>
+            </div>
+        </div>
+    </div>
+</section>
+
+        <section id="editor" class="secao-conteudo">
+            <h2 class="titulo-pagina">Editorial</h2>
+            <div class="card-longo">
+                <div class="card-corpo">
+                    <p> Seja bem-vindo à Brasil Digital, a sua nova bússola no território da inovação. É com imenso orgulho que entregamos a você a nossa edição de estreia.</p>
+
+
+    <p><strong>Editorial: O Futuro Tem Sotaque Brasileiro.</strong></p>
+    <p>Vivemos um momento em que a tecnologia deixou de ser um "setor da economia" para se tornar o próprio tecido da nossa sociedade. Mas, durante muito tempo, consumimos inovação como um produto enlatado, importado de hubs distantes. A Brasil Digital nasce para mudar essa narrativa.</p>
+
+
+<p><strong>Nossa missão é clara:</strong> documentar a ascensão do ecossistema tecnológico brasileiro, dando voz aos empreendedores, desenvolvedores e visionários que estão hackeando as dificuldades locais para criar soluções de impacto global. Não queremos apenas falar de máquinas; queremos falar de pessoas e de como a cultura da digitalização está transformando do agronegócio no Centro-Oeste às startups de educação no Nordeste.</p>
+
+<p>
+    Por que agora?</p>
+   <p> O Brasil não é apenas um grande consumidor de redes sociais. Somos hoje um celeiro de fintechs que desafiam gigantes, pioneiros em sistemas de pagamento instantâneo que servem de modelo para o mundo e detentores de uma criatividade digital única. Nesta primeira edição, mergulhamos em três pilares fundamentais:
+</p>
+    
+   <p> <strong>A Soberania de Dados:</strong> Por que a proteção de informações tornou-se a nova fronteira da nossa democracia.
+</p>
+
+<p><strong>O Novo Horizonte do Trabalho:</strong> Como o modelo híbrido está redesenhando as cidades brasileiras.</p>
+
+<p><strong>ESG e Tech:</strong> A tecnologia como aliada indispensável para a preservação dos nossos biomas.</p>
+
+<p>
+    <h4>Um Convite ao Diálogo</h4>
+    <p> A Brasil Digital não é uma via de mão única. Queremos que este espaço seja um fórum de debates. Acreditamos que a tecnologia deve ser inclusiva, ética e, acima de tudo, uma ferramenta para reduzir as desigualdades históricas do nosso país.
+</p>
+
+<p>
+    Nestas páginas, você encontrará análises profundas, entrevistas exclusivas e um olhar atento às tendências que realmente importam para o contexto nacional. Desligue as notificações por um momento e mergulhe conosco nesta jornada pelo Brasil que já deu certo — e pelo que ainda estamos construindo.
+    
+    Boa leitura!
+</p>
+
+<p> <strong>Equipe Brasil Digital. Inovação com alma brasileira.</strong></p>
+                </div>
+            </div>
+        </section>
+
+        <section id="noticias" class="secao-conteudo">
+            <h1 class="titulo-pagina">Notícias</h1>
+            <hr>
+            <div class="grid-vertical">
+                <article class="card-longo">
+                    <img src="https://images.pexels.com/photos/3953481/pexels-photo-3953481.jpeg" class="img-card-longo">
+                    <div class="card-corpo">
+                        <span class="categoria">Brasil</span>
+                        <h3>Pequenas Cidades: O Contraste Paraná vs. Brasil</h3><p><em>Dados atualizados: Estimativa IBGE 2025 / IPS Brasil 2025.</em></p> 
+                        <h4>1. Perfil Populacional e Crescimento</h4>
+                        <p>Enquanto a média nacional mostra uma desaceleração no crescimento de cidades pequenas (muitas perdendo população para grandes centros), o Paraná mantém uma rede urbana sólida.</p>
+                        <p><strong>No Paraná:</strong> O estado possui 305 municípios com menos de 20 mil habitantes (cerca de 76% do total). Destes, 101 têm menos de 5 mil habitantes.</p>
+                        <p><strong>O Diferencial:</strong> Diferente de outras regiões do Brasil, onde cidades pequenas muitas vezes sofrem com o esvaziamento, no Paraná elas funcionam como satélites de produção. Municípios como Nova Aliança do Ivaí (1.322 hab.) e Jardim Olinda (1.349 hab.) permanecem no ranking das menores do país, mas com economias estabilizadas pelo campo.</p>
+                        <h4>2. Qualidade de Vida (IPS e IPDM)</h4>
+                        <p>O Paraná concentra 5 das 10 cidades mais desenvolvidas do Brasil, segundo o Índice Firjan.</p>
+                        <p><strong>IDH/IPS Elevado:</strong> A média do Índice de Progresso Social (IPS) no Paraná em 2025 é de 63,83, a 4ª melhor do país.</p>
+                        <p><strong>Pequenas Notáveis:</strong> Municípios minúsculos como Quatro Pontes e Entre Rios do Oeste figuram frequentemente no topo dos rankings de qualidade de vida, superando capitais do Norte e Nordeste. No Brasil profundo, cidades desse porte costumam sofrer com falta de saneamento básico, algo que no Paraná atinge índices de cobertura próximos a 90-100% nessas localidades.</p>
+                        <h4>3. A Economia do "Agrotech"</h4>
+                        <p>A grande diferença reside na origem do PIB. Nas pequenas cidades brasileiras, a economia costuma depender de repasses governamentais (FPM) e aposentadorias. No Paraná, a economia é produtiva.</p>
+                        <p><strong>. VBP (Valor Bruto de Produção):</strong> Cidades como Toledo e Santa Helena (médias/pequenas) lideram o agronegócio nacional. Pequenas cidades paranaenses são campeãs em nichos: Carlópolis (café e frutas), Nova Aurora (tilápia) e Diamante do Sul (sericicultura)</p>
+                        <p><strong>. Emprego:</strong> Em 2025, 82% dos municípios paranaenses (incluindo os menores) registraram saldo positivo de empregos, um fenômeno raro em cidades de pequeno porte no restante do país.</p>
+                        <h4>Tabela Comparativa: Resumo Executivo</h4>
+                        <div class="tabela-container">
+  <table class="tabela-comparativa">
+    <thead>
+      <tr>
+        <th>Indicador</th>
+        <th>Média Pequenas Cidades Brasil</th>
+        <th>Pequenas Cidades Paraná</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Dependência Pública</strong></td>
+        <td>Alta (serviço público e repasses)</td>
+        <td class="destaque">Baixa/Média (setor privado/agro)</td>
+      </tr>
+      <tr>
+        <td><strong>Saneamento Básico</strong></td>
+        <td>Baixo/Irregular</td>
+        <td class="destaque">Alto (Investimentos Sanepar)</td>
+      </tr>
+      <tr>
+        <td><strong>Conectividade</strong></td>
+        <td>Deficiente em áreas remotas</td>
+        <td class="destaque">Alta integração (Cooperativas)</td>
+      </tr>
+      <tr>
+        <td><strong>IDH-M Médio</strong></td>
+        <td>0,550 - 0,650 (Médio)</td>
+        <td class="destaque">0,700 - 0,790 (Alto)</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+                         <p><strong>Nota do Redator:</strong><em> O "segredo" paranaense parece ser o modelo de cooperativismo. Ele digitaliza o campo e mantém a renda circulando dentro das pequenas comunidades, impedindo o êxodo rural desordenado que vemos em outros estados.</em></p>
+                    </div>
+                </article>
+                 <hr>
+                 <article class="card-longo">
+                    <img src="https://images.pexels.com/photos/3953481/pexels-photo-3953481.jpeg" class="img-card-longo">
+                    <div class="card-corpo">
+                        <span class="categoria">Paraná</span>
+                       <h3>Céu Azul: Onde a Tecnologia encontra o Corredor do Mercosul</h3>
+<p>Localizada no coração do Oeste paranaense, a cerca de 50 km de Cascavel e 90 km de Foz do Iguaçu, <strong>Céu Azul</strong> não recebeu esse nome por acaso. Mas, para além da beleza natural, a cidade de aproximadamente 11 mil habitantes destaca-se hoje como um ponto estratégico no mapa logístico e ambiental do Brasil.</p>
+
+
+    <h4>O Portão de Entrada para a Preservação</h4>
+    <p>Céu Azul é a principal porta de entrada para o <strong>Parque Nacional do Iguaçu</strong> via BR-277. Para a Brasil Digital, o destaque aqui é o uso de monitoramento digital e tecnologias de preservação que permitem ao município equilibrar uma produção agrícola vigorosa com a manutenção de um dos maiores remanescentes de Mata Atlântica do país.</p>
+
+
+<h4>Economia 4.0: Do Campo para a Indústria</h4>
+<p>Diferente de muitas pequenas cidades que dependem apenas da monocultura, Céu Azul diversificou sua matriz produtiva com tecnologia:</p>
+
+<p><strong>. Avicultura de Precisão:</strong> O município é um dos grandes fornecedores da Lar Cooperativa Agroindustrial. Aqui, granjas utilizam sensores de temperatura, umidade e alimentação automatizada via IoT (Internet das Coisas).</p>
+
+ <p><strong>. Logística Inteligente:</strong> Por estar às margens da BR-277, a cidade tornou-se um hub de serviços. Empresas locais já utilizam softwares de roteirização e gestão de frotas para atender o fluxo constante que liga o Porto de Paranaguá ao Paraguai e Argentina.</p>
+
+<p><strong>. A Força do Cooperativismo:</strong> O modelo de gestão das cooperativas na região garante que o produtor rural tenha acesso a softwares de análise de solo e previsão climática que seriam inacessíveis individualmente.</p>
+
+<h4>Qualidade de Vida e Conectividade</h4>
+<p>Com um <strong>IDH considerado alto (0,749)</strong>, a cidade investe na digitalização dos serviços públicos. A conectividade de fibra óptica atinge praticamente 100% da área urbana, permitindo que o comércio local se integre ao e-commerce e que novos modelos de trabalho remoto comecem a florescer entre os jovens que, antigamente, deixariam a cidade em busca de oportunidades.</p>
+
+<div class="info">
+    <h4>Ficha Técnica da Potência:</h4>
+    <p><strong>População:</strong> 11.000 habitantes.</p>
+    
+    <p><strong>Principal Rodovia:</strong> BR-277 (Eixo de exportação).</p>
+    
+    <p><strong>Destaque:</strong> Sustentabilidade e Integração Lavoura-Pecuária.</p>
+    
+    <p><strong>Visão de Futuro:</strong> Expansão do turismo ecológico digital e modernização logística.</p>
+</div>
+
+<p><strong>Frase de Destaque para a Revista:</strong> <em>"Céu Azul prova que o tamanho da população não limita o tamanho da inovação. É a prova de que o futuro do Paraná passa por cidades que sabem integrar natureza e progresso tecnológico." </em></p>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <section id="saude" class="secao-conteudo">
+            <h1 class="titulo-pagina">Saúde</h1>
+            <div class="grid-vertical">
+                <article class="card-longo">
+                    <img src="https://images.pexels.com/photos/40568/medical-appointment-doctor-healthcare-40568.jpeg" class="img-card-longo">
+                    <div class="card-corpo">
+                        <span class="categoria">Inovação</span>
+                        <h4>Telemedicina em 2026</h4>
+                        <p>Como a IA está ajudando médicos em diagnósticos precoces.</p>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <section id="esportes" class="secao-conteudo">
+            <h2 class="titulo-pagina">Esportes</h2>
+            <div class="grid-vertical">
+                <article class="card-longo">
+                    <img src="https://images.pexels.com/photos/46798/the-ball-stadion-football-the-pitch-46798.jpeg" class="img-card-longo">
+                    <div class="card-corpo">
+                        <span class="categoria">Futebol</span>
+                        <h4>Preparação para a Copa</h4>
+                        <p>Acompanhe os treinos da seleção para os próximos desafios.</p>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <section id="tecnologia" class="secao-conteudo">
+            <h2 class="titulo-pagina">Tecnologia</h2>
+            <div class="grid-vertical">
+                <article class="card-longo">
+                    <img src="https://images.pexels.com/photos/2599244/pexels-photo-2599244.jpeg" class="img-card-longo">
+                    <div class="card-corpo">
+                        <span class="categoria">IA</span>
+                        <h4>O impacto da computação quântica</h4>
+                        <p>Como novas máquinas estão mudando o processamento de dados.</p>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <section id="emprego" class="secao-conteudo">
+            <h2 class="titulo-pagina">Emprego & Carreira</h2>
+            <div class="grid-vertical">
+                <article class="card-longo">
+                    <img src="https://images.pexels.com/photos/3184292/pexels-photo-3184292.jpeg" class="img-card-longo">
+                    <div class="card-corpo">
+                        <span class="categoria">Trabalho</span>
+                        <h4>As profissões do futuro</h4>
+                        <p>Saiba quais áreas terão mais demanda neste ano.</p>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <section id="variedades" class="secao-conteudo">
+            <h2 class="titulo-pagina">Variedades</h2>
+            <div class="grid-vertical">
+                <article class="card-longo">
+                    <img src="https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg" class="img-card-longo">
+                    <div class="card-corpo">
+                        <span class="categoria">Cultura</span>
+                        <h4>Festivais de Verão</h4>
+                        <p>A agenda cultural completa para os próximos meses.</p>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <section id="economia" class="secao-conteudo">
+            <h2 class="titulo-pagina">Economia & Mercado</h2>
+            <div class="grid-vertical">
+                <article class="card-longo">
+                    <img src="https://images.pexels.com/photos/164527/pexels-photo-164527.jpeg" class="img-card-longo">
+                    <div class="card-corpo">
+                        <span class="categoria">Mercado</span>
+                        <h4>O Novo Ciclo de Investimentos</h4>
+                        <p>Brasil atrai capital estrangeiro no setor de energia limpa.</p>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+    </main>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

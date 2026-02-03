@@ -1,0 +1,130 @@
+    @charset "UTF-8";
+
+body { 
+    font-family: 'Segoe UI', sans-serif; 
+    background-color: #f0f2f5; 
+    padding: 20px;
+}
+
+.container { 
+    max-width: 850px; 
+    margin: auto; 
+    background: white; 
+    padding: 25px; 
+    border-radius: 12px; 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+}
+
+h2 { 
+    text-align: center; 
+    color: #1a73e8; 
+    margin-bottom: 20px; 
+}
+
+.seletor-mes { 
+    background: #e8f0fe; 
+    padding: 15px; 
+    border-radius: 8px; 
+    margin-bottom: 20px; 
+    display: flex; 
+    align-items: center; 
+    gap: 10px; 
+    justify-content: center; 
+}
+
+.resumo { 
+    text-align: center; 
+    font-size: 1.6em; 
+    margin-bottom: 20px; 
+    padding: 15px; 
+    border-radius: 8px; 
+    background: #fff; 
+    border: 2px solid #ddd; 
+}
+
+.saldo-positivo { color: #2e7d32; font-weight: bold; }
+.saldo-negativo { color: #d32f2f; font-weight: bold; }
+
+input, select, button { 
+    padding: 12px; 
+    margin: 5px 0; 
+    width: 100%; 
+    border: 1px solid #ccc; 
+    border-radius: 6px; 
+    box-sizing: border-box; 
+    font-size: 1em;
+}
+
+.btn-add { 
+    background-color: #1a73e8; 
+    color: white; 
+    border: none; 
+    font-weight: bold; 
+    cursor: pointer; 
+}
+
+.btn-pdf { 
+    background-color: #e74c3c; 
+    color: white; 
+    border: none; 
+    cursor: pointer; 
+    margin-top: 10px; 
+    font-weight: bold;
+}
+
+.filtros { 
+    display: flex; 
+    gap: 5px; 
+    margin-top: 15px; 
+}
+
+.btn-filtro { 
+    background-color: #e4e6eb; 
+    border: none; 
+    cursor: pointer; 
+    padding: 8px; 
+    font-size: 0.8em; 
+    flex: 1; 
+}
+
+.btn-filtro.ativo { 
+    background-color: #1a73e8; 
+    color: white; 
+}
+
+table { 
+    width: 100%; 
+    border-collapse: collapse;
+    margin-top: 15px; 
+    font-size: 0.95em; 
+}
+
+th, td { 
+    border-bottom: 1px solid #eee; 
+    padding: 12px; 
+    text-align: left; 
+}
+
+th { background-color: #f8f9fa; color: #555; }
+
+.btn-excluir { 
+    background-color: #ff4d4d; 
+    color: white; 
+    border: none; 
+    padding: 6px 10px; 
+    border-radius: 4px; 
+    cursor: pointer; 
+}
+
+/* RESPONSIVIDADE PARA CELULAR */
+@media screen and (max-width: 600px) {
+    /* Esconde coluna de Saldo e Ações no celular */
+    table th:nth-child(4), table td:nth-child(4),
+    table th:nth-child(5), table td:nth-child(5) { 
+        display: none; 
+    }
+    
+    .resumo { font-size: 1.2em; }
+    .seletor-mes { flex-direction: column; }
+    table { font-size: 0.85em; }
+}

@@ -1,0 +1,45 @@
+ <!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Meu App de Discurso</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <div class="botoes-esquerda">
+      <button onclick="copiarTudo()">Copiar</button>
+      <button onclick="gerarPDF()">PDF</button>
+      <button onclick="limparTudo()" style="color:red">Novo</button>
+    </div>
+    <button id="btn-toggle" onclick="toggleVers()">Detalhes</button>
+  </header>
+
+  <main class="container">
+    <section id="tela-discurso" class="painel">
+      <div class="toolbar" onmousedown="event.preventDefault()">
+        <button onclick="formatar('bold')"><b>B</b></button>
+        <button onclick="formatar('italic')"><i>I</i></button>
+        <select onchange="formatar('fontSize', this.value)">
+          <option value="3">Tam.</option>
+          <option value="5">Médio</option>
+          <option value="7">Grande</option>
+        </select>
+        <input type="color" onchange="formatar('foreColor', this.value)">
+      </div>
+      <div id="editor-principal" class="editor" contenteditable="true"></div>
+    </section>
+
+    <section id="tela-versiculos" class="painel">
+      <div class="header-vers">
+        <h2>Detalhes</h2>
+        <button onclick="toggleVers()">Voltar ao Texto</button>
+      </div>
+      <div id="editor-versiculos" class="editor" contenteditable="true"></div>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

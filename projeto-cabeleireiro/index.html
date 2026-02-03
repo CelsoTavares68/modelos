@@ -1,0 +1,64 @@
+ <!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modelo`s Cabeleireiros</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="script_localstorage.js"></script>
+</head>
+<body>
+    <header>
+        <img src="Logo.png" alt="Logotipo">
+        <h1> <em> Modelo`s  Cabeleireiros</em></h1>
+        <p><em> Agende seu horário </em></p>
+    </header>
+
+    <main>
+        <!-- Slider: wrapper, nav com imagens, botões e indicadores -->
+        <section class="list">
+           <div class="slider-wrapper">
+               <nav class="item">
+                   <ul>
+                    <li class="foto active"><img src="cabelos.jpg" alt="Cabeleireira"> </li>
+                    <li class="foto"><img src="manicure.jpg" alt="Manicure"></li>
+                    <li class="foto"><img src="pedicure.jpg" alt="Pedicure"></li>
+                   </ul>
+               </nav>
+
+               <!-- Botões visíveis para navegar -->
+               <button class="slider-btn prev" aria-label="Anterior">&lsaquo;</button>
+               <button class="slider-btn next" aria-label="Próximo">&rsaquo;</button>
+
+               <!-- Indicadores (serão preenchidos pelo script) -->
+               <div class="slider-indicators" aria-hidden="false"></div>
+           </div>
+        </section>
+
+        <section class="formulario">
+            <h2>Novos Agendamentos</h2>
+            <input type="text" id="nome" placeholder="Nome">
+            
+            <select id="servico">
+                 <option value="">Selecione o serviço</option>
+                 <option value="Corte de cabelo">Corte de Cabelo</option>
+                 <option value="Tintura">Tintura</option>
+                 <option value="Corte + Tintura">Corte+Tintura</option>
+                 <option value="Lavagem+Escova">Lavagem+Escova</option>
+                 <option value="Manicure">Manicure</option>
+                 <option value="Pedicure">Pedicure</option>
+                 <option value="Manicure+Pedicure">Manicure+Pedicure</option>
+                 <option value="Serviço completo">Serviço completo</option>
+            </select>
+            <input type="date" id="data">
+            <input type="time" id="hora">
+            <button onclick="agendar()">Agendar</button>
+        </section>
+        <section class="agendamentos" id="listaAgendamentos">
+             <h2>Agendamentos:</h2>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>

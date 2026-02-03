@@ -1,0 +1,315 @@
+    /* --- CONFIGURAÇÕES GERAIS --- */
+:root {
+    --cor-principal: #1a1a1a;
+    --cor-fundo: #f0f2f5;
+}
+
+html, body {
+    margin: 0; 
+    padding: 0; 
+    width: 100%; 
+    min-height: 100vh;
+    background-color: var(--cor-fundo); font-family: 'Segoe UI', sans-serif;
+    overflow-x: hidden; 
+    overflow-y: auto;
+    text-indent: 30px;
+    line-height: 2em;
+}
+
+/* --- HEADER FIXO --- */
+.header-fixo {
+    position: fixed; 
+    top: 0; 
+    width: 100%; 
+    background-color: var(--cor-principal);
+    padding: 10px 0; 
+    z-index: 2000; 
+    display: flex; 
+    flex-direction: column;
+    align-items: center; 
+    min-height: 100px; 
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+/* Estilo do Botão Hambúrguer */
+.menu-mobile-btn {
+    display: none; 
+    flex-direction: column;
+    justify-content: space-around;
+    width: 25px;
+    height: 20px;
+    cursor: pointer;
+    position: absolute;
+    left: 20px;
+    top: 35px;
+    z-index: 2500;
+}
+
+.menu-mobile-btn span {
+    width: 100%;
+    height: 2px;
+    background-color: white;
+    border-radius: 10px;
+}
+
+/* Container para permitir scroll horizontal em telas pequenas */
+.tabela-container {
+  overflow-x: auto;
+  margin: 20px 0;
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+.tabela-comparativa {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #fff;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  overflow: hidden; 
+}
+
+.tabela-comparativa thead {
+  background-color: #004a8d; 
+  color: white;
+  text-align: left;
+}
+
+.tabela-comparativa th, 
+.tabela-comparativa td {
+  padding: 15px 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.tabela-comparativa tbody tr:hover {
+  background-color: #f8f9fa; 
+}
+
+/* Destaque para a coluna do Paraná */
+.destaque {
+  color: #007b00; 
+  font-weight: 500;
+  background-color: #f0fdf4; 
+}
+
+.logo-header { 
+    height: 100px; 
+    margin-bottom: 5px; 
+}
+
+nav { 
+    display: flex; 
+    justify-content: center; 
+    gap: 5px; 
+    flex-wrap: wrap; 
+    width: 95%; 
+}
+
+nav button {
+    background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+    color: white; 
+    padding: 4px 10px; 
+    border-radius: 15px; 
+    cursor: pointer; 
+    font-size: 0.7rem;
+    text-transform: uppercase; 
+    transition: 0.3s;
+}
+
+nav button.btn-ativo { 
+    background: white; 
+    color: black; 
+    font-weight: bold; 
+}
+
+/* --- CONTEÚDO PRINCIPAL --- */
+.conteudo-principal {
+    margin-top: 180px; 
+    max-width: 1000px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 0 20px 50px 20px;
+}
+
+.secao-conteudo { 
+    display: none; 
+}
+
+.secao-conteudo.ativa { 
+    display: block; 
+    animation: fadeIn 0.5s ease; 
+}
+
+@keyframes fadeIn { 
+    from { 
+        opacity: 0; 
+    } to { opacity: 1; 
+    } 
+}
+
+/* --- BANNER DA CAPA E NÚMERO DA EDIÇÃO --- */
+.banner-capa {
+    height: 75vh; 
+    min-height: 550px; 
+    position: relative; 
+    border-radius: 20px;
+    overflow: hidden; 
+    background: url('https://images.pexels.com/photos/1612351/pexels-photo-1612351.jpeg') no-repeat center/cover;
+}
+
+.slogan-capa {
+    text-align: center;
+}
+
+.edicao-discreta {
+    position: absolute;
+    top: 25px;
+    right: 25px;
+    color: white;
+    font-size: 0.7rem;
+    font-weight: bold;
+    letter-spacing: 2px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+    padding-bottom: 5px;
+    z-index: 100; 
+    text-shadow: 1px 1px 4px rgba(0,0,0,0.8);
+    text-transform: uppercase;
+}
+
+.overlay-capa {
+    background: linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.7));
+    width: 100%; 
+    height: 100%;
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    justify-content: center; 
+    color: white;
+}
+
+.logo-capa { 
+    width: 60%; 
+    max-width: 350px; 
+    margin-bottom: 15px; 
+}
+
+.botoes-capa { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 15px; 
+    margin-top: 20px; 
+}
+
+.btn-entrar {
+    background: #ff5722; 
+    color: white; 
+    border: none; 
+    padding: 14px 40px;
+    border-radius: 50px; 
+    font-weight: bold; 
+    cursor: pointer; 
+    font-size: 1rem;
+    transition: 0.3s;
+}
+
+.btn-download {
+    background: rgba(255, 255, 255, 0.15); color: white; 
+    text-decoration: none;
+    padding: 10px 20px; 
+    border-radius: 50px; 
+    font-size: 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.3); 
+    backdrop-filter: blur(5px);
+}
+
+.card-longo {
+    margin-bottom: 30px;
+    margin-top: 80px;
+}
+
+.img-card-longo {
+    width: 100%;
+    height: 400px;
+    object-fit: cover; 
+    display: block;
+}
+
+.info {
+    background-color: lightgray;
+    padding: 20px;
+    text-indent: 0px;
+}
+
+@media print {
+    
+    .header-fixo, .menu-mobile-btn, .btn-entrar, .btn-download, nav {
+        display: none !important;
+    }
+
+    /* Garante que o conteúdo ocupe a folha toda */
+    .conteudo-principal {
+        margin-top: 0 !important;
+        padding: 0 !important;
+    }
+
+    .secao-conteudo {
+        display: block !important;
+        page-break-after: always; /* Cada seção vira uma página do PDF */
+    }
+    
+    body { 
+        background-color: white !important; 
+    }
+}
+
+@media (max-width: 600px) {
+  .tabela-comparativa th, 
+  .tabela-comparativa td {
+    padding: 10px;
+    font-size: 14px;
+  }
+}
+
+/* --- RESPONSIVIDADE (MOBILE) --- */
+ @media (max-width: 992px) {
+    
+
+     .img-card-longo {
+        height: 250px !important;
+        width: 100%;
+        object-fit: cover;
+    }
+
+    .card-longo {
+        margin-bottom: 20px;
+    }
+
+    .card-corpo {
+        padding: 15px;           
+    }
+
+    .titulo-pagina {
+        font-size: 1.5rem; 
+        margin-bottom: 15px;
+    }
+
+    .menu-mobile-btn {
+        display: flex; 
+    }
+    
+    nav {
+        position: fixed;
+        left: -280px;
+        top: 0;
+        width: 260px;
+        height: 100vh;
+        background-color: #111;
+        flex-direction: column;
+        padding-top: 80px;
+        transition: 0.4s ease;
+        z-index: 2400;
+    }
+
+    nav.aberto {
+        left: 0;
+    }
+}
