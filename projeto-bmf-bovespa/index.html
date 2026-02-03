@@ -71,7 +71,11 @@
             <div id="tabela-rendimentos" class="resultado-container"></div>
         </section> 
     
-
+         <div class="filtros-mercado">
+    <button onclick="filtrarTabela('todos')" class="btn-filtro btn-todos">🔍 Ver Tudo</button>
+    <button onclick="filtrarTabela('bmf')" class="btn-filtro btn-agro">🌿 Apenas Agro</button>
+    <button onclick="filtrarTabela('b3')" class="btn-filtro btn-b3">🏦 Apenas Bovespa</button>
+</div>
         <section style="margin-top: 30px;">
             <h3>🌾 Commodities e Futuros (BMF / Agro / Petróleo)</h3>
             <div class="table-responsive" id="corpo-cotacoes-parent">

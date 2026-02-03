@@ -87,6 +87,20 @@ th {
     text-align: center;
 }
 
+/* Estilo para as listas de ranking */
+#lista-altas, #lista-baixas {
+    list-style: none;
+    padding: 0;
+}
+
+ #lista-altas li, #lista-baixas li {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr; /* 3 colunas iguais */
+    align-items: center;
+    padding: 10px 5px;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
 #corpo-cotacoes td {
     padding: 12px;
     border-bottom: 1px solid #eee;
@@ -410,12 +424,48 @@ body.dark-mode .renda-fixa input {
     transition: background-color 0.3s, border-color 0.3s;
 }
 
+/* Container dos botões */
+.filtros-mercado {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* Estilo Base dos Botões */
+.btn-filtro {
+    cursor: pointer;
+    padding: 10px 20px;
+    border-radius: 25px; /* Formato pílula */
+    border: 2px solid #ddd;
+    background: transparent;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    color: #555;
+    font-size: 0.9rem;
+}
+
+.btn-todos:hover { background: #eee; border-color: #bbb; }
+
+.btn-agro { border-color: #27ae60; color: #27ae60; }
+.btn-agro:hover { background: #27ae60; color: white; }
+
+.btn-b3 { border-color: #2980b9; color: #2980b9; }
+.btn-b3:hover { background: #2980b9; color: white; }
+
+.rank-ticker { text-align: left; font-weight: bold; }
+.rank-preco  { text-align: center; color: #666; }
+.rank-pct    { text-align: right; font-weight: bold; }
+
 /* Modo Escuro para a Carteira */
 body.dark-mode .card-carteira {
     background-color: #2c3e50; /* Fundo escuro combinando com seus cards */
     border-color: #34495e;
     color: #ecf0f1;
 }
+
+
 
 body.dark-mode .input-group-carteira input {
     background-color: #34495e;
@@ -437,6 +487,25 @@ body.dark-mode .alerta-stop-loss {
     background-color: rgba(231, 76, 60, 0.2) !important;
     color: #ff7675 !important;
 }
+
+body.dark-mode .btn-filtro {
+    border-color: #444;
+    color: #bbb;
+}
+
+body.dark-mode .btn-agro { border-color: #2ecc71; color: #2ecc71; }
+body.dark-mode .btn-agro:hover { background: #2ecc71; color: #121212; }
+
+body.dark-mode .btn-b3 { border-color: #3498db; color: #3498db; }
+body.dark-mode .btn-b3:hover { background: #3498db; color: #121212; }
+
+body.dark-mode li {
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+ 
+
+ body.dark-mode .rank-preco { color: #bbb; }
 
 /* Botão Flutuante */
  .btn-dark-toggle {
