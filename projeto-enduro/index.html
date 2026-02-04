@@ -1,0 +1,26 @@
+ <!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini Enduro JS</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <div class="instrucoes">
+            <h2>MINI ENDURO</h2>
+            <p>Setas: Acelera, Freia e Curva</p>
+        </div>
+
+        <canvas id="gameCanvas"></canvas>
+
+        <div class="controles">
+            <button onclick="togglePause()" id="pauseBtn">Pausar</button>
+            <button onclick="resetGame()">Reiniciar Jogo</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
