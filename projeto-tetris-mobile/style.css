@@ -23,6 +23,16 @@
     box-sizing: border-box;
 }
 
+.game-title {
+    font-size: 1.8rem;
+    margin: 5px 0 10px 0;
+    color: #fff;
+    text-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc;
+    letter-spacing: 4px;
+    font-weight: 900;
+    text-align: center;
+}
+
 #info {
     display: flex;
     justify-content: space-between;
@@ -35,9 +45,10 @@ canvas {
     background-color: #000000; /* Fundo preto puro para o jogo */
     border: 2px solid #00ffcc;
     border-radius: 10px;
-    width: 100%;
+    width: auto;
     height: auto;
-    max-height: 55vh; /* Ajuste para caber em telas de celulares menores */
+    max-height: 50vh; /* Ajuste para caber em telas de celulares menores */
+    aspect-ratio: 10 / 15;
 }
 
 .button-container {
