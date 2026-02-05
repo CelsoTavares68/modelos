@@ -1,30 +1,24 @@
- <!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    
     <meta name="theme-color" content="#0a0538">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    
     <title>Fruit Columns Mobile</title>
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
-
-<link rel="apple-touch-icon" href="icon.png">
-
-<script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js');
-  }
-</script>
+    <link rel="apple-touch-icon" href="icon.png">
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js');
+      }
+    </script>
 </head>
 <body>
     <div class="game-container">
-        <div class="game-container">
-    <h1 class="game-title">FRUIT COLUMNS</h1>
-    
-    <div id="info">
+        <h1 class="game-title">FRUIT COLUMNS</h1>
+        
         <div id="info">
             <div>Nível: <span id="level">1</span></div>
             <div>Pontos: <span id="score">0</span></div>

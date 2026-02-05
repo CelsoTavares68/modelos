@@ -1,19 +1,21 @@
-   html, body {
-    background-color: #0a0538 !important; /* Cor azul escuro profundo */
+   /* 1. RESET E CONFIGURAÇÃO DA TELA */
+html, body {
+    background-color: #0a0538 !important; /* Azul escuro profundo */
     margin: 0;
     padding: 0;
-    width: 100%;
-    height: 100%;
+    width: 100vw;
+    height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: center;
     color: white;
-    font-family: sans-serif;
-    overflow: hidden; /* Evita que a tela "pule" ao tocar nos botões */
-    touch-action: none; 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    overflow: hidden; /* Evita rolagem acidental no mobile */
+    touch-action: none; /* Bloqueia gestos do navegador para não bugar o jogo */
 }
 
- .game-container {
+/* 2. CONTAINER PRINCIPAL */
+.game-container {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -23,6 +25,7 @@
     box-sizing: border-box;
 }
 
+/* 3. TÍTULO NEON */
 .game-title {
     font-size: 1.8rem;
     margin: 5px 0 10px 0;
@@ -33,45 +36,103 @@
     text-align: center;
 }
 
+/* 4. PLACAR E INFO */
 #info {
     display: flex;
     justify-content: space-between;
     width: 100%;
-    font-size: 1.1rem;
+    font-size: 1rem;
     margin-bottom: 10px;
+    padding: 0 5px;
 }
 
+.high-score-label {
+    color: #ffcc00;
+}
+
+/* 5. ÁREA DO JOGO (CANVAS) */
 canvas {
-    background-color: #000000; /* Fundo preto puro para o jogo */
+    background-color: #000000;
     border: 2px solid #00ffcc;
     border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0, 255, 204, 0.3);
     width: auto;
     height: auto;
-    max-height: 50vh; /* Ajuste para caber em telas de celulares menores */
+    max-height: 50vh; /* Ajustado para caber o título e botões na mesma tela */
     aspect-ratio: 10 / 15;
 }
 
+/* 6. BOTÕES DE SISTEMA (PAUSAR/RESET) */
 .button-container {
     display: flex;
     gap: 15px;
     margin: 10px 0;
 }
 
-/* Estilo do Direcional */
- .mobile-controls { display: flex; gap: 20px; margin-top: 15px; }
-.vertical-btns { display: flex; flex-direction: column; gap: 10px; }
+button {
+    background: transparent;
+    color: #00ffcc;
+    border: 2px solid #00ffcc;
+    padding: 8px 15px;
+    font-weight: bold;
+    border-radius: 5px;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+button:active {
+    background: rgba(0, 255, 204, 0.2);
+}
+
+/* 7. CONTROLES MÓVEIS (D-PAD) */
+.mobile-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    margin-top: 10px;
+}
+
+.vertical-btns {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
 .ctrl-btn {
-    width: 65px; height: 65px;
+    width: 65px;
+    height: 65px;
     background: rgba(0, 255, 204, 0.1);
     border: 2px solid #00ffcc;
     border-radius: 50%;
-    color: white; font-size: 24px;
+    color: white;
+    font-size: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    touch-action: manipulation;
 }
-.ctrl-btn:active { background: #00ffcc; }
 
+.ctrl-btn:active {
+    background: #00ffcc;
+    color: #0a0538;
+    transform: scale(0.95);
+}
+
+/* Destaque para o botão de girar */
 .action-btn {
-    background: rgba(255, 204, 0, 0.2);
+    background: rgba(255, 204, 0, 0.1);
     border-color: #ffcc00;
 }
 
-.high-score-label { color: #ffcc00; }
+.action-btn:active {
+    background: #ffcc00;
+}
+
+/* 8. AJUSTE PARA TELAS MUITO PEQUENAS */
+@media (max-height: 700px) {
+    .game-title { font-size: 1.4rem; margin: 2px; }
+    .ctrl-btn { width: 55px; height: 55px; font-size: 20px; }
+    canvas { max-height: 45vh; }
+}
