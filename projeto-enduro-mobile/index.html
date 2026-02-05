@@ -1,26 +1,41 @@
- <!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mini Enduro JS</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Mini Enduro Mobile</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js');
+      }
+    </script>
 </head>
 <body>
     <div class="game-container">
-        <div class="instrucoes">
-            <h2>MINI ENDURO</h2>
-            <p>Setas: Acelera, Freia e Curva</p>
-        </div>
-
+        <h1 class="game-title">MINI ENDURO</h1>
+        
         <canvas id="gameCanvas"></canvas>
 
-        <div class="controles">
+        <div class="controles-sistema">
             <button onclick="togglePause()" id="pauseBtn">Pausar</button>
-            <button onclick="resetGame()">Reiniciar Jogo</button>
+            <button onclick="resetGame()">Reiniciar</button>
+        </div>
+
+        <div class="mobile-controls">
+            <div class="d-pad">
+                <button class="ctrl-btn" id="btnLeft">⬅️</button>
+                <div class="vertical-btns">
+                    <button class="ctrl-btn" id="btnUp">GAS</button>
+                    <button class="ctrl-btn" id="btnDown">BRK</button>
+                </div>
+                <button class="ctrl-btn" id="btnRight">➡️</button>
+            </div>
         </div>
     </div>
-
     <script src="script.js"></script>
 </body>
 </html>

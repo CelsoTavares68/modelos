@@ -1,4 +1,4 @@
- const canvas = document.getElementById('gameCanvas');
+  const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 canvas.width = 400; canvas.height = 400;
 
@@ -9,7 +9,7 @@ let isPaused = false;
 
 const maxSpeed = 12; 
 const STAGE_DURATION = 12600; 
-const DAY_DURATION = STAGE_DURATION * 7; 
+const DAY_DURATION = STAGE_DURATION * 8; 
 let currentTime = 0; 
 
 let enemies = [];
@@ -46,7 +46,7 @@ function playCrashSound() {
     osc.start(); osc.stop(audioCtx.currentTime + 0.4);
 }
 
-// --- CONTROLES ---
+// --- FUNÇÕES DE CONTROLE ---
 function togglePause() {
     if (gameState === "PLAYING") {
         isPaused = !isPaused;
@@ -71,7 +71,7 @@ function resetDay() {
     if (gameState !== "PLAYING") gameState = "PLAYING";
 }
 
-// --- DESENHO COM EFEITO DE FAROL ---
+// --- DESENHO DO CARRO ---
 function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
     let s = scale * 1.2; 
     if (s < 0.02 || s > 30) return; 
@@ -81,34 +81,26 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
     ctx.translate(x, y);
     if(isPlayer) ctx.rotate((roadCurve / 40) * Math.PI / 180);
 
-    // EFEITO DE FAROL (Desenha antes do carro para ficar "embaixo" na pista)
     if (nightMode) {
         ctx.save();
-        // Triângulos de luz saindo da frente (em direção ao horizonte, então o Y diminui)
         let gradient = ctx.createLinearGradient(0, 0, 0, -100 * s);
         gradient.addColorStop(0, "rgba(255, 255, 200, 0.4)");
         gradient.addColorStop(1, "rgba(255, 255, 200, 0)");
         ctx.fillStyle = gradient;
-
-        // Farol Esquerdo
         ctx.beginPath();
         ctx.moveTo(-w * 0.3, 0); ctx.lineTo(-w * 0.8, -100 * s); ctx.lineTo(-w * 0.1, -100 * s);
         ctx.fill();
-
-        // Farol Direito
         ctx.beginPath();
         ctx.moveTo(w * 0.3, 0); ctx.lineTo(w * 0.1, -100 * s); ctx.lineTo(w * 0.8, -100 * s);
         ctx.fill();
         ctx.restore();
 
-        // Lanternas traseiras (Posição de quem olha de trás)
         ctx.fillStyle = "#ff0000";
         ctx.shadowBlur = 15 * s;
         ctx.shadowColor = "red";
         ctx.fillRect(-w * 0.45, -h * 0.2, w * 0.25, h * 0.3); 
         ctx.fillRect(w * 0.2, -h * 0.2, w * 0.25, h * 0.3);
     } else {
-        // Visual Diurno
         ctx.fillStyle = "#111"; 
         ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8);
         ctx.fillRect(w * 0.25, -h * 0.1, w * 0.25, h * 0.8);
@@ -133,15 +125,17 @@ function update() {
     if (gameTick % 4 === 0) playEngineSound();
 
     let currentStage = Math.floor(currentTime / STAGE_DURATION);
-    let colors = { sky: "#87CEEB", grass: "#1a7a1a", fog: 0, mt: "#555", nightMode: false };
+    let colors = { sky: "#87CEEB", grass: "#1a7a1a", fog: 0, mt: "#555", nightMode: false, snowCaps: false };
 
     switch(currentStage) {
-        case 1: colors.sky = "#DDD"; colors.grass = "#FFF"; colors.mt = "#999"; break;
-        case 2: colors.sky = "#ff8c00"; colors.grass = "#145c14"; colors.mt = "#442200"; break;
-        case 3: colors.sky = "#111144"; colors.grass = "#001100"; colors.mt = "#111"; colors.nightMode = true; break;
-        case 4: colors.sky = "#444"; colors.grass = "#333"; colors.mt = "#222"; colors.fog = 0.8; colors.nightMode = true; break;
-        case 5: colors.sky = "#000011"; colors.grass = "#000800"; colors.mt = "#000"; colors.nightMode = true; break;
-        case 6: colors.sky = "#ADD8E6"; colors.grass = "#1a7a1a"; colors.mt = "#555"; break;
+        case 0: colors.snowCaps = true; break; 
+        case 1: colors.sky = "#DDD"; colors.grass = "#FFF"; colors.mt = "#999"; colors.snowCaps = true; break; 
+        case 2: colors.sky = "#ff8c00"; colors.grass = "#145c14"; colors.mt = "#442200"; break; 
+        case 3: colors.sky = "#111144"; colors.grass = "#001100"; colors.mt = "#111"; colors.nightMode = true; break; 
+        case 4: colors.sky = "#444"; colors.grass = "#333"; colors.mt = "#222"; colors.fog = 0.8; colors.nightMode = true; break; 
+        case 5: colors.sky = "#000011"; colors.grass = "#000800"; colors.mt = "#000"; colors.nightMode = true; break; 
+        case 6: colors.sky = "#4682B4"; colors.grass = "#0d4d0d"; colors.mt = "#222"; colors.fog = 0.3; colors.nightMode = true; break; 
+        case 7: colors.sky = "#ADD8E6"; colors.grass = "#1a7a1a"; colors.mt = "#555"; break; 
     }
 
     if (currentTime >= DAY_DURATION) {
@@ -151,11 +145,15 @@ function update() {
     }
 
     let offRoad = Math.abs(playerX) > 380;
-    let currentMaxSpeed = offRoad ? 3 : maxSpeed;
+    let currentMaxSpeed = offRoad ? 2 : maxSpeed; 
+    
     if (keys.ArrowUp) {
-        speed = Math.min(speed + 0.06, currentMaxSpeed); 
-        if (offRoad && speed > currentMaxSpeed) speed -= 0.2;
-    } else { speed = Math.max(speed - 0.1, 0); }
+        let accelRate = (speed < 4 || offRoad) ? 0.012 : 0.06; 
+        speed = Math.min(speed + accelRate, currentMaxSpeed); 
+        if (offRoad && speed > currentMaxSpeed) speed -= 0.15;
+    } else { 
+        speed = Math.max(speed - 0.1, 0); 
+    }
 
     playerX -= (roadCurve / 25) * (speed / maxSpeed); 
     if (keys.ArrowLeft && speed > 0.1) playerX -= 6;
@@ -165,18 +163,16 @@ function update() {
     if (--curveTimer <= 0) { targetCurve = (Math.random() - 0.5) * 160; curveTimer = 120; }
     roadCurve += (targetCurve - roadCurve) * 0.02;
 
-     if (gameTick % 150 === 0 && enemies.length < 100) { 
-    let horizonClear = !enemies.some(e => e.z > 3000);
-    if (horizonClear) {
-        enemies.push({ 
-            lane: (Math.random() - 0.5) * 1.8, 
-            z: 4000, 
-            v: 7.2, 
-            color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)],
-            isOvertaken: false 
-        });
+    if (gameTick % 150 === 0 && enemies.length < 100) {
+        let horizonClear = !enemies.some(e => e.z > 3000);
+        if (horizonClear) {
+            enemies.push({ 
+                lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 8.5, 
+                color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)],
+                isOvertaken: false 
+            });
+        }
     }
-}
 
     enemies.forEach((enemy) => {
         enemy.z -= (speed - enemy.v);
@@ -189,7 +185,12 @@ function update() {
         let yPos = 200 + (p * 140);
         let roadWidth = 20 + p * 800;
         let screenX = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p) + (enemy.lane * roadWidth * 0.5);
-        if (p > 0.82 && p < 1.05 && Math.abs(screenX - 200) < 45) { speed = -1; enemy.z += 300; playCrashSound(); }
+        
+        if (p > 0.82 && p < 1.05 && Math.abs(screenX - 200) < 45) { 
+            speed = -1; 
+            enemy.z += 300; 
+            playCrashSound(); 
+        }
         enemy.lastY = yPos; enemy.lastX = screenX; enemy.lastP = p;
     });
 
@@ -199,23 +200,27 @@ function update() {
 }
 
 function draw(colors) {
-    if (!colors) colors = { sky: "#000", grass: "#000", mt: "#333", nightMode: false };
+    if (!colors) colors = { sky: "#000", grass: "#000", mt: "#333", nightMode: false, snowCaps: false };
     ctx.fillStyle = colors.sky; ctx.fillRect(0, 0, 400, 200);
     ctx.fillStyle = colors.grass; ctx.fillRect(0, 200, 400, 200);
     
-    // Montanhas
     ctx.save();
     let mtShift = (roadCurve * 0.8);
-    ctx.fillStyle = colors.mt;
     for (let i = -2; i < 8; i++) {
         let bx = (i * 100) + mtShift;
+        ctx.fillStyle = colors.mt;
         ctx.beginPath();
         ctx.moveTo(bx - 60, 200); ctx.lineTo(bx, 140); ctx.lineTo(bx + 60, 200);
         ctx.fill();
+        if (colors.snowCaps) {
+            ctx.fillStyle = "#FFF";
+            ctx.beginPath();
+            ctx.moveTo(bx - 15, 155); ctx.lineTo(bx, 140); ctx.lineTo(bx + 15, 155);
+            ctx.fill();
+        }
     }
     ctx.restore();
 
-    // Pista
     for (let i = 200; i < 400; i += 4) {
         let p = (i - 200) / 140;
         let x = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p);
@@ -233,12 +238,8 @@ function draw(colors) {
     
     drawF1Car(200, 340, 1.0, "#E00", true, colors.nightMode);
     
-    if (colors.fog) { 
-        ctx.fillStyle = `rgba(180,180,180,${colors.fog})`; 
-        ctx.fillRect(0, 180, 400, 220); 
-    }
+    if (colors.fog) { ctx.fillStyle = `rgba(180,180,180,${colors.fog})`; ctx.fillRect(0, 180, 400, 220); }
 
-    // HUD
     ctx.fillStyle = "black"; ctx.fillRect(0, 0, 400, 55);
     ctx.fillStyle = (gameState === "GOAL_REACHED") ? "lime" : "yellow";
     ctx.font = "bold 18px Courier";
@@ -246,5 +247,30 @@ function draw(colors) {
     ctx.fillStyle = "yellow"; ctx.fillText(`DAY: ${dayNumber}`, 160, 35);
     ctx.fillStyle = "#444"; ctx.fillRect(260, 20, 120, 15);
     ctx.fillStyle = "lime"; ctx.fillRect(260, 20, (currentTime/DAY_DURATION) * 120, 15);
+
+    if (isPaused) {
+        ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.fillRect(0, 55, 400, 345);
+        ctx.fillStyle = "white"; ctx.textAlign = "center";
+        ctx.font = "30px Courier"; ctx.fillText("PAUSADO", 200, 200);
+        ctx.textAlign = "left";
+    }
 }
+
+// --- CONEXÃO COM BOTÕES MOBILE ---
+function setupMobileControls() {
+    const mobileKeys = { 'btnLeft': 'ArrowLeft', 'btnRight': 'ArrowRight', 'btnUp': 'ArrowUp', 'btnDown': 'ArrowDown' };
+    Object.keys(mobileKeys).forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) {
+            // Touch para Celular
+            btn.addEventListener('touchstart', (e) => { e.preventDefault(); keys[mobileKeys[id]] = true; if (audioCtx.state === 'suspended') audioCtx.resume(); });
+            btn.addEventListener('touchend', (e) => { e.preventDefault(); keys[mobileKeys[id]] = false; });
+            // Mouse para teste no PC
+            btn.addEventListener('mousedown', (e) => { keys[mobileKeys[id]] = true; });
+            btn.addEventListener('mouseup', (e) => { keys[mobileKeys[id]] = false; });
+        }
+    });
+}
+
+setupMobileControls();
 update();
