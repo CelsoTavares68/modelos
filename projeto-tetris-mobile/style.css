@@ -1,32 +1,20 @@
-  body {
-    /* Gradiente estilo espaço profundo */
-    background: linear-gradient(-45deg, #0a0538, #211882, #2b2b47, #050505);
-    background-size: 400% 400%;
-    animation: gradient 15s ease infinite;
-    color: #00ffcc;
-    font-family: 'Segoe UI', sans-serif;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-    margin: 0;
-    overflow: hidden;
+  /* Garante que o jogo caiba na tela e permita ver os botões */
+body {
+    height: auto; 
+    min-height: 100vh;
+    overflow-y: auto; /* Permite rolar se o celular for muito pequeno */
+    padding: 10px 0;
+}
+    
+
+  .game-container {
+    padding: 10px; /* Reduzido para ganhar espaço */
+    max-width: 95vw;
 }
 
- .game-container {
-    background: rgba(0, 0, 0, 0.7); /* Fundo semi-transparente */
-    padding: 20px;
-    border-radius: 15px;
-    border: 1px solid rgba(0, 255, 204, 0.3);
-    box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
-    text-align: center;
-}
-
- canvas {
-    border: 3px solid #00ffcc;
-    background-color: rgba(0, 0, 0, 0.9);
-    box-shadow: 0 0 15px rgba(0, 255, 204, 0.2);
+canvas {
+    max-width: 100%; /* Ajusta a largura ao celular */
+    height: auto;    /* Mantém a proporção */
 }
 
 #info {
@@ -80,6 +68,36 @@ button:hover {
 
 button:active {
     transform: scale(0.95);
+}
+
+/* Estilo dos novos botões */
+.mobile-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.vertical-btns {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.ctrl-btn {
+    width: 60px;
+    height: 60px;
+    background: rgba(0, 255, 204, 0.1);
+    border: 2px solid #00ffcc;
+    border-radius: 12px;
+    color: white;
+    font-size: 24px;
+    touch-action: manipulation; /* Importante: remove o delay do toque no celular */
+}
+
+.ctrl-btn:active {
+    background: #00ffcc;
 }
 
 @keyframes gradient {

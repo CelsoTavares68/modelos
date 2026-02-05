@@ -331,3 +331,21 @@ document.getElementById('btnLeft').addEventListener('mousedown', moveLeft);
 document.getElementById('btnRight').addEventListener('mousedown', moveRight);
 document.getElementById('btnRotate').addEventListener('mousedown', rotatePiece);
 document.getElementById('btnDown').addEventListener('mousedown', moveDown);
+
+// Funções de movimento para os botões
+const handleMobileMove = (action) => {
+    if (isPaused) return;
+    switch(action) {
+        case 'left': if (piece.x > 0 && !checkCollision(piece.x - 1, piece.y)) piece.x--; break;
+        case 'right': if (piece.x < COLS - 1 && !checkCollision(piece.x + 1, piece.y)) piece.x++; break;
+        case 'rotate': let last = piece.items.pop(); piece.items.unshift(last); break;
+        case 'down': moveDown(); break;
+    }
+    draw();
+};
+
+// Vinculando aos IDs do HTML
+document.getElementById('btnLeft').onclick = () => handleMobileMove('left');
+document.getElementById('btnRight').onclick = () => handleMobileMove('right');
+document.getElementById('btnRotate').onclick = () => handleMobileMove('rotate');
+document.getElementById('btnDown').onclick = () => handleMobileMove('down');
