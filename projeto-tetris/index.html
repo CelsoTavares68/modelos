@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fruit Columns - Retro</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+      <div class="game-container">
+    <h1 class="game-title">FRUIT COLUMNS</h1>
+    
+    <div id="info">
+        <div>Nível: <span id="level">1</span></div>
+        <div>Pontos: <span id="score">0</span></div>
+        <div class="high-score-label">Recorde: <span id="highScore">0</span></div>
+    </div>
+
+     <canvas id="gameCanvas" width="400" height="600"></canvas>
+
+    <div class="button-container">
+        <button id="btnPause" onclick="togglePause()">Pausar</button>
+        <button id="btnReset" onclick="resetGame()">Recomeçar</button>
+    </div>
+
+    <div class="controls">
+        <p>⬅️ ➡️ Mover | ⬆️ ou Espaço: Girar | ⬇️ Cair rápido</p>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

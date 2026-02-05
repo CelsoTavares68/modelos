@@ -1,0 +1,89 @@
+  body {
+    /* Gradiente estilo espaço profundo */
+    background: linear-gradient(-45deg, #0a0538, #211882, #2b2b47, #050505);
+    background-size: 400% 400%;
+    animation: gradient 15s ease infinite;
+    color: #00ffcc;
+    font-family: 'Segoe UI', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+    overflow: hidden;
+}
+
+ .game-container {
+    background: rgba(0, 0, 0, 0.7); /* Fundo semi-transparente */
+    padding: 20px;
+    border-radius: 15px;
+    border: 1px solid rgba(0, 255, 204, 0.3);
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
+    text-align: center;
+}
+
+ canvas {
+    border: 3px solid #00ffcc;
+    background-color: rgba(0, 0, 0, 0.9);
+    box-shadow: 0 0 15px rgba(0, 255, 204, 0.2);
+}
+
+#info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 18px;
+    margin-bottom: 10px;
+    padding: 0 10px;
+}
+
+#score {
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+
+.high-score-label {
+    color: #ffcc00; /* Destaque para o recorde */
+}
+
+  .controls {
+    margin-top: 15px;
+    color: #aaa;
+    font-size: 0.8rem;
+}
+
+.button-container {
+    margin-top: 15px;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+button {
+    background: transparent;
+    color: #00ffcc;
+    border: 2px solid #00ffcc;
+    padding: 10px 20px;
+    font-family: 'Segoe UI', sans-serif;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: all 0.3s;
+    text-transform: uppercase;
+}
+
+button:hover {
+    background: #00ffcc;
+    color: #000;
+    box-shadow: 0 0 15px #00ffcc;
+}
+
+button:active {
+    transform: scale(0.95);
+}
+
+@keyframes gradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
