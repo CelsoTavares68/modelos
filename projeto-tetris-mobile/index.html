@@ -8,7 +8,6 @@
 </head>
 <body>
       <div class="game-container">
-    <h1 class="game-title">FRUIT COLUMNS</h1>
     
     <div id="info">
         <div>Nível: <span id="level">1</span></div>
@@ -23,14 +22,29 @@
         <button id="btnReset" onclick="resetGame()">Recomeçar</button>
     </div>
 
+     <div class="game-container">
+    <div id="info">
+        <div>Nível: <span id="level">1</span></div>
+        <div>Pontos: <span id="score">0</span></div>
+        <div class="high-score-label">Recorde: <span id="highScore">0</span></div>
+    </div>
+
+    <canvas id="gameCanvas" width="400" height="600"></canvas>
+
+    <div class="button-container">
+        <button id="btnPause" onclick="togglePause()">Pausar</button>
+        <button id="btnReset" onclick="resetGame()">Recomeçar</button>
+    </div>
+
     <div class="mobile-controls">
-    <div class="d-pad">
         <button class="ctrl-btn" id="btnLeft">⬅️</button>
         <div class="vertical-btns">
             <button class="ctrl-btn" id="btnRotate">🔄</button>
             <button class="ctrl-btn" id="btnDown">⬇️</button>
         </div>
         <button class="ctrl-btn" id="btnRight">➡️</button>
+    </div>
+
     </div>
 </div>
 
