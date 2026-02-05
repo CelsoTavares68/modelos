@@ -1,52 +1,37 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fruit Columns - Retro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Fruit Columns Mobile</title>
     <link rel="stylesheet" href="style.css">
+    <meta name="theme-color" content="#0a0538">
+    <meta name="apple-mobile-web-app-capable" content="yes">
 </head>
 <body>
-      <div class="game-container">
-    
-    <div id="info">
-        <div>Nível: <span id="level">1</span></div>
-        <div>Pontos: <span id="score">0</span></div>
-        <div class="high-score-label">Recorde: <span id="highScore">0</span></div>
-    </div>
-
-     <canvas id="gameCanvas" width="400" height="600"></canvas>
-
-    <div class="button-container">
-        <button id="btnPause" onclick="togglePause()">Pausar</button>
-        <button id="btnReset" onclick="resetGame()">Recomeçar</button>
-    </div>
-
-     <div class="game-container">
-    <div id="info">
-        <div>Nível: <span id="level">1</span></div>
-        <div>Pontos: <span id="score">0</span></div>
-        <div class="high-score-label">Recorde: <span id="highScore">0</span></div>
-    </div>
-
-    <canvas id="gameCanvas" width="400" height="600"></canvas>
-
-    <div class="button-container">
-        <button id="btnPause" onclick="togglePause()">Pausar</button>
-        <button id="btnReset" onclick="resetGame()">Recomeçar</button>
-    </div>
-
-    <div class="mobile-controls">
-        <button class="ctrl-btn" id="btnLeft">⬅️</button>
-        <div class="vertical-btns">
-            <button class="ctrl-btn" id="btnRotate">🔄</button>
-            <button class="ctrl-btn" id="btnDown">⬇️</button>
+    <div class="game-container">
+        <div id="info">
+            <div>Nível: <span id="level">1</span></div>
+            <div>Pontos: <span id="score">0</span></div>
+            <div class="high-score-label">Recorde: <span id="highScore">0</span></div>
         </div>
-        <button class="ctrl-btn" id="btnRight">➡️</button>
-    </div>
 
+        <canvas id="gameCanvas" width="400" height="600"></canvas>
+
+        <div class="button-container">
+            <button id="btnPause" onclick="togglePause()">Pausar</button>
+            <button id="btnReset" onclick="resetGame()">Recomeçar</button>
+        </div>
+
+        <div class="mobile-controls">
+            <button class="ctrl-btn" id="btnLeft">⬅️</button>
+            <div class="vertical-btns">
+                <button class="ctrl-btn action-btn" id="btnRotate">🔄</button>
+                <button class="ctrl-btn" id="btnDown">⬇️</button>
+            </div>
+            <button class="ctrl-btn" id="btnRight">➡️</button>
+        </div>
     </div>
-</div>
 
     <script src="script.js"></script>
 </body>

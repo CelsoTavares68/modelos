@@ -1,153 +1,82 @@
-  /* Garante que o jogo caiba na tela e permita ver os botões */
-body {
-    height: auto; 
-    min-height: 100vh;
-    overflow-y: auto; /* Permite rolar se o celular for muito pequeno */
-    padding: 10px 0;
-}
-    
-
-  .game-container {
-    padding: 10px; /* Reduzido para ganhar espaço */
-    max-width: 95vw;
+   body {
+    background: #0a0538;
+    color: white;
+    font-family: sans-serif;
+    margin: 0;
+    padding: 10px;
+    display: flex;
+    justify-content: center;
+    overflow: hidden; /* Evita que a página balance no toque */
+    touch-action: none; /* Bloqueia gestos do navegador para não atrapalhar o jogo */
 }
 
-canvas {
-    max-width: 100%; /* Ajusta a largura ao celular */
-    height: auto;    /* Mantém a proporção */
+.game-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 500px;
 }
 
 #info {
     display: flex;
     justify-content: space-between;
-    font-size: 18px;
-    margin-bottom: 10px;
-    padding: 0 10px;
+    width: 100%;
+    font-size: 1.2rem;
+    margin-bottom: 5px;
 }
 
-#score {
-    font-size: 24px;
-    margin-bottom: 10px;
-}
-
-.high-score-label {
-    color: #ffcc00; /* Destaque para o recorde */
-}
-
-  .controls {
-    margin-top: 15px;
-    color: #aaa;
-    font-size: 0.8rem;
+canvas {
+    background: rgba(0,0,0,0.8);
+    border: 3px solid #00ffcc;
+    border-radius: 8px;
+    width: 100%; /* O canvas se ajusta à largura do celular */
+    height: auto;
+    max-height: 60vh; /* Garante espaço para os botões embaixo */
 }
 
 .button-container {
-    margin-top: 15px;
     display: flex;
-    justify-content: center;
     gap: 15px;
+    margin: 10px 0;
 }
 
-button {
-    background: transparent;
-    color: #00ffcc;
+/* Estilo do Direcional */
+.mobile-controls {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    margin-top: 5px;
+}
+
+.vertical-btns {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.ctrl-btn {
+    width: 70px;
+    height: 70px;
+    background: rgba(0, 255, 204, 0.15);
     border: 2px solid #00ffcc;
-    padding: 10px 20px;
-    font-family: 'Segoe UI', sans-serif;
-    font-weight: bold;
-    cursor: pointer;
-    border-radius: 5px;
-    transition: all 0.3s;
-    text-transform: uppercase;
+    border-radius: 50%;
+    font-size: 1.8rem;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
 }
 
-button:hover {
+.ctrl-btn:active {
     background: #00ffcc;
-    color: #000;
-    box-shadow: 0 0 15px #00ffcc;
-}
-
-button:active {
     transform: scale(0.95);
 }
 
-/* Estilo dos novos botões */
-.mobile-controls {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 15px;
-    margin-top: 15px;
+.action-btn {
+    background: rgba(255, 204, 0, 0.2);
+    border-color: #ffcc00;
 }
 
-.vertical-btns {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.ctrl-btn {
-    width: 60px;
-    height: 60px;
-    background: rgba(0, 255, 204, 0.1);
-    border: 2px solid #00ffcc;
-    border-radius: 12px;
-    color: white;
-    font-size: 24px;
-    touch-action: manipulation; /* Importante: remove o delay do toque no celular */
-}
-
-.ctrl-btn:active {
-    background: #00ffcc;
-}
-
-@keyframes gradient {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-}
-
-@media (max-width: 600px) {
-    canvas {
-        width: 100%;
-        height: auto;
-    }
-    .game-title { font-size: 1.5rem; }
-}
-
-.mobile-controls {
-    display: flex;
-    justify-content: center;
-    margin-top: 20px;
-    user-select: none; /* Impede de selecionar texto ao clicar rápido */
-}
-
-.d-pad {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-}
-
-.vertical-btns {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.ctrl-btn {
-    width: 65px;
-    height: 65px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 2px solid #00ffcc;
-    border-radius: 50%;
-    color: white;
-    font-size: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    touch-action: manipulation; /* Melhora a resposta ao toque */
-}
-
-.ctrl-btn:active {
-    background: #00ffcc;
-    color: black;
-}
+.high-score-label { color: #ffcc00; }
