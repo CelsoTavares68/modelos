@@ -17,6 +17,7 @@ let speed = 1000;
 let isPaused = false;
 let gameLoop = null;
 let board = Array(ROWS).fill().map(() => Array(COLS).fill(null));
+let blinkingBlocks = []; // Para a animação de piscar
 
 // Recorde Local
 let highScore = parseInt(localStorage.getItem('fruitColumnsHighScore')) || 0;
@@ -37,11 +38,11 @@ function randomPiece() {
     };
 }
 
-// Renderização
-function draw() {
+// Renderização Principal
+function draw(showBlinking = true) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Grade de fundo suave
+    // Grade de fundo
     ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
     for(let i=0; i<COLS; i++) {
         for(let j=0; j<ROWS; j++) {
@@ -52,11 +53,17 @@ function draw() {
     // Desenha Tabuleiro
     for (let r = 0; r < ROWS; r++) {
         for (let c = 0; c < COLS; c++) {
-            if (board[r][c] !== null) drawBlock(c, r, board[r][c]);
+            if (board[r][c] !== null) {
+                // Lógica de piscar: se o bloco está na lista e showBlinking é falso, pula o desenho
+                const isBlinking = blinkingBlocks.some(b => b.r === r && b.c === c);
+                if (!isBlinking || showBlinking) {
+                    drawBlock(c, r, board[r][c]);
+                }
+            }
         }
     }
 
-    // Desenha Peça Ativa
+    // Desenha Peça Ativa (não pisca)
     piece.items.forEach((fruitIdx, i) => {
         if (piece.y + i < ROWS) {
             drawBlock(piece.x, piece.y + i, fruitIdx);
@@ -64,7 +71,7 @@ function draw() {
     });
 
     // Overlay de Pausa
-    if (isPaused) {
+    if (isPaused && blinkingBlocks.length === 0) {
         ctx.fillStyle = "rgba(0,0,0,0.6)";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = "white";
@@ -112,7 +119,7 @@ function lockPiece() {
     }
 }
 
-// Combinações e Pontuação
+// Sistema de Combinações com Animação (Piscar)
 function clearMatches() {
     let toRemove = [];
     for (let r = 0; r < ROWS; r++) {
@@ -128,18 +135,32 @@ function clearMatches() {
     }
 
     if (toRemove.length > 0) {
-        toRemove.forEach(p => board[p.r][p.c] = null);
-        score += toRemove.length * 15;
-        scoreElement.innerText = score;
-        
-        if (score > highScore) {
-            highScore = score;
-            highScoreElement.innerText = highScore;
-            localStorage.setItem('fruitColumnsHighScore', highScore);
-        }
+        blinkingBlocks = toRemove;
+        isPaused = true; // Pausa o jogo durante a animação
 
-        applyGravity();
-        setTimeout(clearMatches, 200);
+        let flashes = 0;
+        let flashInterval = setInterval(() => {
+            flashes++;
+            draw(flashes % 2 === 0);
+            
+            if (flashes > 5) {
+                clearInterval(flashInterval);
+                toRemove.forEach(p => board[p.r][p.c] = null);
+                score += toRemove.length * 15;
+                scoreElement.innerText = score;
+                
+                if (score > highScore) {
+                    highScore = score;
+                    highScoreElement.innerText = highScore;
+                    localStorage.setItem('fruitColumnsHighScore', highScore);
+                }
+
+                blinkingBlocks = [];
+                isPaused = false;
+                applyGravity();
+                setTimeout(clearMatches, 200);
+            }
+        }, 80);
     }
 }
 
@@ -160,7 +181,7 @@ function applyGravity() {
     draw();
 }
 
-// Controle de Fluxo
+// Fluxo de Jogo
 function startGame() {
     clearInterval(gameLoop);
     gameLoop = setInterval(moveDown, speed);
@@ -189,7 +210,7 @@ window.resetGame = function() {
     draw();
 }
 
-// --- CONTROLES MÓVEIS (D-PAD) ---
+// --- CONTROLES MÓVEIS ---
 function handleAction(type) {
     if (isPaused) return;
     switch(type) {
@@ -204,27 +225,19 @@ function handleAction(type) {
     draw();
 }
 
-// Configuração dos botões touch
 const controls = {
-    'btnLeft': 'left',
-    'btnRight': 'right',
-    'btnDown': 'down',
-    'btnRotate': 'rotate'
+    'btnLeft': 'left', 'btnRight': 'right', 'btnDown': 'down', 'btnRotate': 'rotate'
 };
 
 Object.keys(controls).forEach(id => {
     const btn = document.getElementById(id);
-    
-    // Touchstart para resposta instantânea no mobile
-    btn.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        handleAction(controls[id]);
-    }, { passive: false });
-
-    // Click para suporte a mouse (tablets/desktops)
-    btn.addEventListener('click', (e) => {
-        handleAction(controls[id]);
-    });
+    if(btn) {
+        btn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            handleAction(controls[id]);
+        }, { passive: false });
+        btn.addEventListener('click', () => handleAction(controls[id]));
+    }
 });
 
 // Inicialização
