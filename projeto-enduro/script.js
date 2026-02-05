@@ -9,29 +9,39 @@ let isPaused = false;
 
 const maxSpeed = 12; 
 const STAGE_DURATION = 12600; 
-const DAY_DURATION = STAGE_DURATION * 8; 
+const DAY_DURATION = STAGE_DURATION * 9; 
 let currentTime = 0; 
 
 let enemies = [];
 let roadCurve = 0, targetCurve = 0, curveTimer = 0;
 
 const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
-window.addEventListener('keydown', e => { if (keys.hasOwnProperty(e.code)) keys[e.code] = true; });
+window.addEventListener('keydown', e => { 
+    if (keys.hasOwnProperty(e.code)) keys[e.code] = true; 
+    // Tenta retomar o áudio no primeiro clique de tecla (exigência do navegador)
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+});
 window.addEventListener('keyup', e => { if (keys.hasOwnProperty(e.code)) keys[e.code] = false; });
 
-// --- SISTEMA DE ÁUDIO ---
+// --- SISTEMA DE ÁUDIO CORRIGIDO ---
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
 function playEngineSound() {
-    if (isPaused || speed <= 0 || audioCtx.state === 'suspended') return;
+    // Se estiver pausado, parado ou o contexto não iniciou, não toca
+    if (isPaused || speed <= 0 || audioCtx.state !== 'running') return;
+    
     let osc = audioCtx.createOscillator();
     let gain = audioCtx.createGain();
     osc.type = 'sawtooth';
+    // Frequência baseada na velocidade para o efeito de aceleração
     osc.frequency.setValueAtTime(60 + (speed * 15), audioCtx.currentTime);
     gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-    osc.connect(gain); gain.connect(audioCtx.destination);
-    osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+    
+    osc.connect(gain); 
+    gain.connect(audioCtx.destination);
+    osc.start(); 
+    osc.stop(audioCtx.currentTime + 0.1);
 }
 
 function playCrashSound() {
@@ -57,7 +67,7 @@ function togglePause() {
 }
 
 function resetGame() {
-    if (audioCtx.state === 'suspended') audioCtx.resume();
+    audioCtx.resume();
     dayNumber = 1; baseGoal = 200; isPaused = false;
     const btn = document.getElementById('pauseBtn');
     if (btn) btn.innerText = "Pausar";
@@ -122,6 +132,7 @@ function update() {
     playerDist += speed;
     currentTime++;
     
+    // Toca o som a cada 4 ticks se estiver acelerando
     if (gameTick % 4 === 0) playEngineSound();
 
     let currentStage = Math.floor(currentTime / STAGE_DURATION);
@@ -131,11 +142,12 @@ function update() {
         case 0: colors.snowCaps = true; break; 
         case 1: colors.sky = "#DDD"; colors.grass = "#FFF"; colors.mt = "#999"; colors.snowCaps = true; break; 
         case 2: colors.sky = "#ff8c00"; colors.grass = "#145c14"; colors.mt = "#442200"; break; 
-        case 3: colors.sky = "#111144"; colors.grass = "#001100"; colors.mt = "#111"; colors.nightMode = true; break; 
-        case 4: colors.sky = "#444"; colors.grass = "#333"; colors.mt = "#222"; colors.fog = 0.8; colors.nightMode = true; break; 
-        case 5: colors.sky = "#000011"; colors.grass = "#000800"; colors.mt = "#000"; colors.nightMode = true; break; 
-        case 6: colors.sky = "#4682B4"; colors.grass = "#0d4d0d"; colors.mt = "#222"; colors.fog = 0.3; colors.nightMode = true; break; 
-        case 7: colors.sky = "#ADD8E6"; colors.grass = "#1a7a1a"; colors.mt = "#555"; break; 
+        case 3: colors.sky = "#4B0082"; colors.grass = "#0a2a0a"; colors.mt = "#221100"; break; 
+        case 4: colors.sky = "#111144"; colors.grass = "#001100"; colors.mt = "#111"; colors.nightMode = true; break; 
+        case 5: colors.sky = "#444"; colors.grass = "#333"; colors.mt = "#222"; colors.fog = 0.8; colors.nightMode = true; break; 
+        case 6: colors.sky = "#000011"; colors.grass = "#000800"; colors.mt = "#000"; colors.nightMode = true; break; 
+        case 7: colors.sky = "#3485f6"; colors.grass = "#0d4d0d"; colors.mt = "#222"; colors.fog = 0.3; colors.nightMode = false; break; 
+        case 8: colors.sky = "#83d9f5"; colors.grass = "#1a7a1a"; colors.mt = "#555"; break; 
     }
 
     if (currentTime >= DAY_DURATION) {
@@ -144,16 +156,12 @@ function update() {
         } else { gameState = "GAME_OVER"; }
     }
 
-    // --- LÓGICA DE PENALIDADE: SAIR DA PISTA (OFFROAD) ---
     let offRoad = Math.abs(playerX) > 380;
-    let currentMaxSpeed = offRoad ? 2 : maxSpeed; // Máxima velocidade na grama é muito baixa
+    let currentMaxSpeed = offRoad ? 2 : maxSpeed;
     
     if (keys.ArrowUp) {
-        // Penalidade de aceleração: igual à batida se estiver offroad ou em baixa velocidade
         let accelRate = (speed < 4 || offRoad) ? 0.012 : 0.06; 
         speed = Math.min(speed + accelRate, currentMaxSpeed); 
-        
-        // Se já estiver rápido e entrar na grama, perde velocidade rápido até chegar no limite offroad
         if (offRoad && speed > currentMaxSpeed) speed -= 0.15;
     } else { 
         speed = Math.max(speed - 0.1, 0); 
