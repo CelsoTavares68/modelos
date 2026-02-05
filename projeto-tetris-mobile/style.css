@@ -1,38 +1,43 @@
-   body {
-    background: #0a0538;
+   html, body {
+    background-color: #0a0538 !important; /* Cor azul escuro profundo */
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     color: white;
     font-family: sans-serif;
-    margin: 0;
-    padding: 10px;
-    display: flex;
-    justify-content: center;
-    overflow: hidden; /* Evita que a página balance no toque */
-    touch-action: none; /* Bloqueia gestos do navegador para não atrapalhar o jogo */
+    overflow: hidden; /* Evita que a tela "pule" ao tocar nos botões */
+    touch-action: none; 
 }
 
-.game-container {
+ .game-container {
     display: flex;
     flex-direction: column;
     align-items: center;
     width: 100%;
-    max-width: 500px;
+    max-width: 450px;
+    padding: 10px;
+    box-sizing: border-box;
 }
 
 #info {
     display: flex;
     justify-content: space-between;
     width: 100%;
-    font-size: 1.2rem;
-    margin-bottom: 5px;
+    font-size: 1.1rem;
+    margin-bottom: 10px;
 }
 
 canvas {
-    background: rgba(0,0,0,0.8);
-    border: 3px solid #00ffcc;
-    border-radius: 8px;
-    width: 100%; /* O canvas se ajusta à largura do celular */
+    background-color: #000000; /* Fundo preto puro para o jogo */
+    border: 2px solid #00ffcc;
+    border-radius: 10px;
+    width: 100%;
     height: auto;
-    max-height: 60vh; /* Garante espaço para os botões embaixo */
+    max-height: 55vh; /* Ajuste para caber em telas de celulares menores */
 }
 
 .button-container {
@@ -42,37 +47,16 @@ canvas {
 }
 
 /* Estilo do Direcional */
-.mobile-controls {
-    display: flex;
-    gap: 20px;
-    align-items: center;
-    margin-top: 5px;
-}
-
-.vertical-btns {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
+ .mobile-controls { display: flex; gap: 20px; margin-top: 15px; }
+.vertical-btns { display: flex; flex-direction: column; gap: 10px; }
 .ctrl-btn {
-    width: 70px;
-    height: 70px;
-    background: rgba(0, 255, 204, 0.15);
+    width: 65px; height: 65px;
+    background: rgba(0, 255, 204, 0.1);
     border: 2px solid #00ffcc;
     border-radius: 50%;
-    font-size: 1.8rem;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    touch-action: manipulation;
+    color: white; font-size: 24px;
 }
-
-.ctrl-btn:active {
-    background: #00ffcc;
-    transform: scale(0.95);
-}
+.ctrl-btn:active { background: #00ffcc; }
 
 .action-btn {
     background: rgba(255, 204, 0, 0.2);
