@@ -15,12 +15,10 @@ let currentTime = 0;
 let enemies = [];
 let roadCurve = 0, targetCurve = 0, curveTimer = 0;
 
-// Agora usamos apenas Esquerda e Direita
 const keys = { ArrowLeft: false, ArrowRight: false };
 window.addEventListener('keydown', e => { if (keys.hasOwnProperty(e.code)) keys[e.code] = true; });
 window.addEventListener('keyup', e => { if (keys.hasOwnProperty(e.code)) keys[e.code] = false; });
 
-// --- SISTEMA DE ÁUDIO ---
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
 function playEngineSound() {
@@ -49,19 +47,16 @@ function playCrashSound() {
     osc.start(); osc.stop(audioCtx.currentTime + 0.4);
 }
 
-// --- LÓGICA DO JOGO ---
 function resetGame() {
     playerX = 0; speed = 0; gameTick = 0; playerDist = 0;
     dayNumber = 1; carsRemaining = baseGoal;
     enemies = []; roadCurve = 0; currentTime = 0;
     gameState = "PLAYING";
     isPaused = false;
-    document.getElementById('pauseBtn').innerText = "Pausar";
 }
 
 function togglePause() {
     isPaused = !isPaused;
-    document.getElementById('pauseBtn').innerText = isPaused ? "Continuar" : "Pausar";
     if (!isPaused) {
         if (audioCtx.state === 'suspended') audioCtx.resume();
         update();
@@ -102,21 +97,23 @@ function update() {
     if (isPaused || gameState !== "PLAYING") return;
     gameTick++; currentTime++; playerDist += speed * 0.2;
 
-    // --- ACELERAÇÃO AUTOMÁTICA ---
-    let offRoad = Math.abs(playerX) > 165;
+    // --- LÓGICA DE MOVIMENTO CORRIGIDA ---
+    let offRoad = Math.abs(playerX) > 170;
     
     if (offRoad) {
-        speed = 0; // Se sair da pista, o carro para e precisa acelerar de novo
+        speed = Math.max(speed - 0.2, 2); // Na grama ele não para total, fica bem lento (vel 2) para você conseguir voltar
     } else {
-        // Acelera sozinho até a velocidade máxima
         if (speed < maxSpeed) speed += 0.05; 
     }
 
-    // Controles apenas laterais
-    if (keys.ArrowLeft && speed > 0.1) playerX -= 7;
-    if (keys.ArrowRight && speed > 0.1) playerX += 7;
+    // Controles mais fortes para conseguir sair da grama
+    let steeringForce = offRoad ? 4 : 8; 
+    if (keys.ArrowLeft) playerX -= steeringForce;
+    if (keys.ArrowRight) playerX += steeringForce;
 
-    // Lógica da curva (puxa o carro)
+    // Impede o carro de sumir da tela
+    playerX = Math.max(-250, Math.min(250, playerX));
+
     curveTimer--;
     if (curveTimer <= 0) {
         targetCurve = (Math.random() - 0.5) * 4;
@@ -142,10 +139,10 @@ function update() {
             if (gameState === "PLAYING") carsRemaining--; 
         }
         
-        // --- COLISÃO: ZERA VELOCIDADE ---
+        // COLISÃO: Reduz velocidade para 1 mas não trava o jogo
         if (e.z > 0 && e.z < 30 && Math.abs(e.x - playerX) < 40) { 
-            speed = 0; 
-            playerX += (playerX > e.x ? 30 : -30); // Empurrão lateral
+            speed = 1; 
+            playerX += (playerX > e.x ? 40 : -40); 
             playCrashSound();
         }
     });
@@ -165,20 +162,14 @@ function draw() {
     let colors = getColors(currentTime);
     ctx.fillStyle = colors.sky; ctx.fillRect(0, 0, 400, 200);
     
-    // Desenho das Montanhas (Sua lógica original)
     ctx.fillStyle = colors.mt;
     for(let i=-1; i<6; i++) {
         let mx = (i * 100 - (playerX * 0.1) + (roadCurve * 50)) % 500;
-        ctx.beginPath(); 
-        ctx.moveTo(mx-50, 200); 
-        ctx.lineTo(mx, 120); 
-        ctx.lineTo(mx+50, 200); 
-        ctx.fill();
+        ctx.beginPath(); ctx.moveTo(mx-50, 200); ctx.lineTo(mx, 120); ctx.lineTo(mx+50, 200); ctx.fill();
     }
 
     ctx.fillStyle = colors.ground; ctx.fillRect(0, 200, 400, 200);
 
-    // Estrada com Perspectiva
     for (let i = 200; i < 400; i += 4) {
         let p = (i - 180) / 220;
         let x = 200 + (roadCurve * (1-p) * 100) - (playerX * p);
@@ -190,42 +181,26 @@ function draw() {
         ctx.fillRect(x + w/2, i, 10*p, 4);
     }
     
-    // Inimigos
     enemies.sort((a,b) => b.z - a.z).forEach(e => {
         if (e.lastP > -2) drawF1Car(e.lastX, e.lastY, e.lastP, e.color, false, colors.nightMode);
     });
     
-    // Carro do Jogador
     drawF1Car(200, 340, 1.0, "#E00", true, colors.nightMode);
     
-    // Neblina (Fog)
-    if (colors.fog) { 
-        ctx.fillStyle = `rgba(180,180,180,${colors.fog})`; 
-        ctx.fillRect(0, 180, 400, 220); 
-    }
+    if (colors.fog) { ctx.fillStyle = `rgba(180,180,180,${colors.fog})`; ctx.fillRect(0, 180, 400, 220); }
 
-    // HUD / Placar
     ctx.fillStyle = "black"; ctx.fillRect(0, 0, 400, 40);
     ctx.fillStyle = "white"; ctx.font = "14px Courier New";
     ctx.fillText(`CARS: ${carsRemaining}  DAY: ${dayNumber}  SPEED: ${Math.floor(speed*20)}km/h`, 10, 25);
 }
 
-// --- CONFIGURAÇÃO MOBILE ---
 function setupMobileControls() {
     const mobileKeys = { 'btnLeft': 'ArrowLeft', 'btnRight': 'ArrowRight' };
     Object.keys(mobileKeys).forEach(id => {
         const btn = document.getElementById(id);
         if (btn) {
-            btn.addEventListener('touchstart', (e) => { 
-                e.preventDefault(); 
-                keys[mobileKeys[id]] = true; 
-                if (audioCtx.state === 'suspended') audioCtx.resume(); 
-            });
-            btn.addEventListener('touchend', (e) => { 
-                e.preventDefault(); 
-                keys[mobileKeys[id]] = false; 
-            });
-            // Suporte para mouse para testar no PC
+            btn.addEventListener('touchstart', (e) => { e.preventDefault(); keys[mobileKeys[id]] = true; if (audioCtx.state === 'suspended') audioCtx.resume(); });
+            btn.addEventListener('touchend', (e) => { e.preventDefault(); keys[mobileKeys[id]] = false; });
             btn.addEventListener('mousedown', () => { keys[mobileKeys[id]] = true; });
             btn.addEventListener('mouseup', () => { keys[mobileKeys[id]] = false; });
         }
