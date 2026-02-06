@@ -8,7 +8,7 @@ let gameState = "PLAYING";
 let isPaused = false;
 
 const maxSpeed = 12; 
-const STAGE_DURATION = 9000; // 2,5 minutos
+const STAGE_DURATION = 9000; // Ajustado para 2,5 minutos
 const DAY_DURATION = STAGE_DURATION * 9; 
 let currentTime = 0; 
 
@@ -53,7 +53,7 @@ function playEngineSound() {
     osc.type = 'sawtooth';
     osc.frequency.setValueAtTime(60 + (speed * 15), audioCtx.currentTime);
     gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
-    // Som corrigido (sem o "_" que travava tudo)
+    // Corrigido para não travar nos botões
     gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
     osc.connect(gain); gain.connect(audioCtx.destination);
     osc.start(); osc.stop(audioCtx.currentTime + 0.1);
@@ -157,6 +157,7 @@ function update() {
     if (--curveTimer <= 0) { targetCurve = (Math.random() - 0.5) * 160; curveTimer = 120; }
     roadCurve += (targetCurve - roadCurve) * 0.02;
 
+    // TRAVA ORIGINAL (Horizon Clear)
     if (gameTick % 150 === 0 && enemies.length < 100) {
         let horizonClear = !enemies.some(e => e.z > 3000);
         if (horizonClear) {
@@ -175,17 +176,17 @@ function update() {
         let roadWidth = 20 + p * 800;
         let screenX = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p) + (enemy.lane * roadWidth * 0.5);
         
-        // --- COLISÃO CÚBICA (RETANGULAR) RESTAURADA ---
-        // Checa se o inimigo está perto o suficiente (Z) e se as laterais se tocam (X)
-        let playerW = 40; // Largura aproximada do seu carro na tela
-        if (p > 0.92 && p < 1.05) { // Profundidade do impacto
-            if (Math.abs(screenX - 200) < playerW) { // Impacto lateral (cubo)
+        // COLISÃO CÚBICA (Batida lateral)
+        let playerW = 35; 
+        if (p > 0.92 && p < 1.05) { 
+            if (Math.abs(screenX - 200) < playerW) { 
                 speed = -1; 
                 enemy.z += 600; 
                 playCrashSound(); 
             }
         }
 
+        // LÓGICA DE ULTRAPASSAGEM (CARS REMAINING)
         if (gameState === "PLAYING") {
             if (enemy.z <= 0 && !enemy.isOvertaken) { carsRemaining--; enemy.isOvertaken = true; }
             if (enemy.z > 0 && enemy.isOvertaken) { carsRemaining++; enemy.isOvertaken = false; }
@@ -195,7 +196,8 @@ function update() {
         enemy.lastY = 200 + (p * 140); enemy.lastX = screenX; enemy.lastP = p;
     });
 
-    enemies = enemies.filter(e => e.z > -1000 && e.z < 5000);
+    // DISTÂNCIA RESTAURADA PARA -15000 (Permite que eles te ultrapassem por trás)
+    enemies = enemies.filter(e => e.z > -15000 && e.z < 6000);
     draw(colors);
     requestAnimationFrame(update);
 }
@@ -223,7 +225,8 @@ function draw(colors) {
     }
     
     enemies.sort((a,b) => b.z - a.z).forEach(e => {
-        if (e.lastP > -2) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode);
+        // Só desenha se estiver visível (na frente)
+        if (e.lastP > 0 && e.lastP < 2) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode);
     });
     
     drawF1Car(200, 350, 0.85, "#E00", true, colors.nightMode); 
