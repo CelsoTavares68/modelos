@@ -8,7 +8,7 @@ let gameState = "PLAYING";
 let isPaused = false;
 
 const maxSpeed = 12; 
-// Tempo de 2,5 minutos (9000 ticks)
+// 1. TEMPO DE 2,5 MINUTOS (9000 ticks)
 const STAGE_DURATION = 9000; 
 const DAY_DURATION = STAGE_DURATION * 9; 
 let currentTime = 0; 
@@ -54,7 +54,7 @@ function playEngineSound() {
     osc.type = 'sawtooth';
     osc.frequency.setValueAtTime(60 + (speed * 15), audioCtx.currentTime);
     gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
-    // CORREÇÃO AQUI: Removido o "_" que causava o travamento
+    // CORRIGIDO: Removido o "_" que fazia o jogo travar ao tocar no botão
     gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
     osc.connect(gain); gain.connect(audioCtx.destination);
     osc.start(); osc.stop(audioCtx.currentTime + 0.1);
@@ -158,7 +158,7 @@ function update() {
     if (--curveTimer <= 0) { targetCurve = (Math.random() - 0.5) * 160; curveTimer = 120; }
     roadCurve += (targetCurve - roadCurve) * 0.02;
 
-    // --- SUA TRAVA ORIGINAL RESTAURADA ---
+    // --- TUA TRAVA ORIGINAL MANTIDA (Para não amontoar) ---
     if (gameTick % 150 === 0 && enemies.length < 100) {
         let horizonClear = !enemies.some(e => e.z > 3000);
         if (horizonClear) {
@@ -182,7 +182,7 @@ function update() {
         let roadWidth = 20 + p * 800;
         let screenX = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p) + (enemy.lane * roadWidth * 0.5);
         
-        // --- COLISÃO EM CUBO ---
+        // --- 2. COLISÃO EM CUBO ---
         if (p > 0.94 && p < 1.05 && Math.abs(screenX - 200) < 30) { 
             speed = -1; 
             enemy.z += 600; 
