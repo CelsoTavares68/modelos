@@ -22,7 +22,6 @@ window.addEventListener('keydown', e => {
 });
 window.addEventListener('keyup', e => { if (keys.hasOwnProperty(e.code)) keys[e.code] = false; });
 
-// --- [MANTIDO] Sistema de Áudio Original ---
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
 function playEngineSound() {
@@ -49,7 +48,6 @@ function playCrashSound() {
     osc.start(); osc.stop(audioCtx.currentTime + 0.4);
 }
 
-// --- [MANTIDO] Controles e Resets ---
 function togglePause() {
     if (gameState === "PLAYING") {
         isPaused = !isPaused;
@@ -74,7 +72,6 @@ function resetDay() {
     if (gameState !== "PLAYING") gameState = "PLAYING";
 }
 
-// --- [MANTIDO] Desenho do Carro Original ---
 function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
     let s = scale * 1.2; 
     if (s < 0.02 || s > 30) return; 
@@ -110,7 +107,7 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
         ctx.fillStyle = color; 
         ctx.fillRect(-w * 0.25, h * 0.1, w * 0.5, h * 0.4); 
         ctx.fillRect(-w * 0.5, -h * 0.3, w, h * 0.2); 
-        ctx.fillStyle = (isPlayer && !keys.ArrowUp) ? "#f00" : "#400";
+        ctx.fillStyle = (isPlayer && speed < maxSpeed - 1) ? "#f00" : "#400";
         ctx.fillRect(-w * 0.4, -h * 0.2, w * 0.12, h * 0.15);
         ctx.fillRect(w * 0.28, -h * 0.2, w * 0.12, h * 0.15);
     }
@@ -151,13 +148,13 @@ function update() {
     let offRoad = Math.abs(playerX) > 380;
     let currentMaxSpeed = offRoad ? 2 : maxSpeed;
     
-    // Ajuste de aceleração para evitar "atropelamento" na arrancada
-    if (keys.ArrowUp) {
-        let accelRate = (speed < 4 || offRoad) ? 0.025 : 0.06; 
-        speed = Math.min(speed + accelRate, currentMaxSpeed); 
-    } else { 
-        speed = Math.max(speed - 0.1, 0); 
-    }
+    // --- ALTERAÇÃO: ACELERAÇÃO AUTOMÁTICA ---
+    // Removemos a verificação do keys.ArrowUp. O carro acelera sempre.
+    let accelRate = (speed < 4 || offRoad) ? 0.025 : 0.06; 
+    speed = Math.min(speed + accelRate, currentMaxSpeed); 
+    
+    // Freio manual ainda funciona se o usuário quiser reduzir na curva
+    if (keys.ArrowDown) speed = Math.max(speed - 0.2, 0);
 
     playerX -= (roadCurve / 25) * (speed / maxSpeed); 
     if (keys.ArrowLeft && speed > 0.1) playerX -= 6;
@@ -191,12 +188,10 @@ function update() {
         let roadWidth = 20 + p * 800;
         let screenX = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p) + (enemy.lane * roadWidth * 0.5);
         
-        // --- CONSERTO DA COLISÃO ---
-        // Aumentei a precisão: p > 0.85 é quando ele está visualmente na frente do seu bico.
-        // Reduzi o hitbox lateral (45 para 30) para permitir ultrapassagens finas.
+        // Colisão ajustada para escala 0.85
         if (p > 0.85 && p < 1.02 && Math.abs(screenX - 200) < 30) { 
             speed = -1; 
-            enemy.z += 500; // Empurra mais para não "atropelar" na sequência
+            enemy.z += 600; 
             playCrashSound(); 
         }
         enemy.lastY = yPos; enemy.lastX = screenX; enemy.lastP = p;
@@ -241,11 +236,9 @@ function draw(colors) {
     }
     
     enemies.sort((a,b) => b.z - a.z).forEach(e => {
-        // Reduzi levemente o multiplicador de escala (0.85) para casar com o player
         if (e.lastP > -2) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode);
     });
     
-    // Player agora tem escala 0.85 fixa, combinando com o tamanho dos inimigos na mesma linha
     drawF1Car(200, 340, 0.85, "#E00", true, colors.nightMode);
     
     if (colors.fog) { 
