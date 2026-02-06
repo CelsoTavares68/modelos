@@ -8,8 +8,7 @@ let gameState = "PLAYING";
 let isPaused = false;
 
 const maxSpeed = 12; 
-// 1. TEMPO DE 2,5 MINUTOS (9000 ticks)
-const STAGE_DURATION = 9000; 
+const STAGE_DURATION = 9000; // 2,5 minutos
 const DAY_DURATION = STAGE_DURATION * 9; 
 let currentTime = 0; 
 
@@ -54,7 +53,7 @@ function playEngineSound() {
     osc.type = 'sawtooth';
     osc.frequency.setValueAtTime(60 + (speed * 15), audioCtx.currentTime);
     gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
-    // CORRIGIDO: Removido o "_" que fazia o jogo travar ao tocar no botão
+    // Som corrigido (sem o "_" que travava tudo)
     gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
     osc.connect(gain); gain.connect(audioCtx.destination);
     osc.start(); osc.stop(audioCtx.currentTime + 0.1);
@@ -158,7 +157,6 @@ function update() {
     if (--curveTimer <= 0) { targetCurve = (Math.random() - 0.5) * 160; curveTimer = 120; }
     roadCurve += (targetCurve - roadCurve) * 0.02;
 
-    // --- TUA TRAVA ORIGINAL MANTIDA (Para não amontoar) ---
     if (gameTick % 150 === 0 && enemies.length < 100) {
         let horizonClear = !enemies.some(e => e.z > 3000);
         if (horizonClear) {
@@ -172,22 +170,28 @@ function update() {
 
     enemies.forEach((enemy) => {
         enemy.z -= (speed - enemy.v);
+        
+        let p = 1 - (enemy.z / 4000); 
+        let roadWidth = 20 + p * 800;
+        let screenX = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p) + (enemy.lane * roadWidth * 0.5);
+        
+        // --- COLISÃO CÚBICA (RETANGULAR) RESTAURADA ---
+        // Checa se o inimigo está perto o suficiente (Z) e se as laterais se tocam (X)
+        let playerW = 40; // Largura aproximada do seu carro na tela
+        if (p > 0.92 && p < 1.05) { // Profundidade do impacto
+            if (Math.abs(screenX - 200) < playerW) { // Impacto lateral (cubo)
+                speed = -1; 
+                enemy.z += 600; 
+                playCrashSound(); 
+            }
+        }
+
         if (gameState === "PLAYING") {
             if (enemy.z <= 0 && !enemy.isOvertaken) { carsRemaining--; enemy.isOvertaken = true; }
             if (enemy.z > 0 && enemy.isOvertaken) { carsRemaining++; enemy.isOvertaken = false; }
             if (carsRemaining <= 0) { carsRemaining = 0; gameState = "GOAL_REACHED"; }
         }
         
-        let p = 1 - (enemy.z / 4000); 
-        let roadWidth = 20 + p * 800;
-        let screenX = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p) + (enemy.lane * roadWidth * 0.5);
-        
-        // --- 2. COLISÃO EM CUBO ---
-        if (p > 0.94 && p < 1.05 && Math.abs(screenX - 200) < 30) { 
-            speed = -1; 
-            enemy.z += 600; 
-            playCrashSound(); 
-        }
         enemy.lastY = 200 + (p * 140); enemy.lastX = screenX; enemy.lastP = p;
     });
 
