@@ -25,18 +25,29 @@ window.addEventListener('keydown', e => {
 window.addEventListener('keyup', e => { if (keys.hasOwnProperty(e.code)) keys[e.code] = false; });
 
 // Adicionando suporte para os botões do seu index.html e toques na tela
-    function setupMobileControls() {
-    const ids = { 'btnLeft': 'ArrowLeft', 'btnRight': 'ArrowRight' };
+     function setupMobileControls() {
+    // Mapeamos todos os IDs possíveis para as teclas correspondentes
+    const ids = { 
+        'btnLeft': 'ArrowLeft', 
+        'btnRight': 'ArrowRight',
+        'mobileLeft': 'ArrowLeft', 
+        'mobileRight': 'ArrowRight' 
+    };
     
     Object.keys(ids).forEach(id => {
         const btn = document.getElementById(id);
         if (btn) {
-            const press = () => { keys[ids[id]] = true; if(audioCtx.state === 'suspended') audioCtx.resume(); };
+            const press = (e) => { 
+                if(e.type === 'touchstart') e.preventDefault();
+                keys[ids[id]] = true; 
+                if(audioCtx.state === 'suspended') audioCtx.resume(); 
+            };
             const release = () => { keys[ids[id]] = false; };
 
             btn.addEventListener('mousedown', press);
             btn.addEventListener('mouseup', release);
-            btn.addEventListener('touchstart', (e) => { e.preventDefault(); press(); }, {passive: false});
+            btn.addEventListener('mouseleave', release);
+            btn.addEventListener('touchstart', press, {passive: false});
             btn.addEventListener('touchend', release);
         }
     });
@@ -262,7 +273,7 @@ function draw(colors) {
         if (e.lastP > -2) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode);
     });
     
-    drawF1Car(200, 340, 0.85, "#E00", true, colors.nightMode); 
+    drawF1Car(200, 350, 0.85, "#E00", true, colors.nightMode); 
     
     if (colors.fog) { 
         ctx.fillStyle = `rgba(180,180,180,${colors.fog})`; 

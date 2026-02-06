@@ -15,31 +15,32 @@
     z-index: 1; /* Garante que o jogo fique visível */
 }
 
- .mobile-controls {
+  .mobile-controls {
     position: absolute;
-    bottom: 10%; /* Altura dos botões na tela */
+    bottom: 15%; /* Ajuste a altura conforme preferir */
     width: 100%;
     display: flex;
     justify-content: space-between; /* Um para cada lado */
-    padding: 0 20px; /* Afastamento das bordas laterais */
+    padding: 0 30px; 
     box-sizing: border-box;
-    pointer-events: none; /* Permite que o toque passe para os botões */
-    z-index: 20;
+    pointer-events: none; /* Permite clicar no que está atrás se necessário */
+    z-index: 100; /* Garante que fiquem no topo */
 }
 
- .touch-btn {
-    pointer-events: auto;
+  .touch-btn {
+    pointer-events: auto; /* Reativa o clique apenas nos botões circulares */
     width: 80px;
     height: 80px;
-    background: rgba(255, 255, 255, 0.2);
-    border: 2px solid #fff;
+    background: rgba(255, 255, 255, 0.3); /* Um pouco mais visível */
+    border: 3px solid #fff;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     color: #fff;
-    font-size: 35px;
+    font-size: 40px;
     user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .controles { position: absolute; top: 15px; right: 15px; display: flex; gap: 10px; z-index: 10; }
