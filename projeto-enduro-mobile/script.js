@@ -25,16 +25,13 @@ window.addEventListener('keydown', e => {
 window.addEventListener('keyup', e => { if (keys.hasOwnProperty(e.code)) keys[e.code] = false; });
 
 // Adicionando suporte para os botões do seu index.html e toques na tela
- function setupMobileControls() {
+  function setupMobileControls() {
     function bindBtn(id, key) {
         const btn = document.getElementById(id);
         if (btn) {
-            // Eventos para Mouse
             btn.addEventListener('mousedown', () => { keys[key] = true; });
             btn.addEventListener('mouseup', () => { keys[key] = false; });
             btn.addEventListener('mouseleave', () => { keys[key] = false; });
-            
-            // Eventos para Touch (Celular)
             btn.addEventListener('touchstart', (e) => { 
                 e.preventDefault(); 
                 keys[key] = true; 
@@ -47,26 +44,12 @@ window.addEventListener('keyup', e => { if (keys.hasOwnProperty(e.code)) keys[e.
         }
     }
 
+    // Vincula os botões de texto e os botões redondos (mobile)
     bindBtn('btnLeft', 'ArrowLeft');
     bindBtn('btnRight', 'ArrowRight');
-
-   // ADICIONE ISSO AQUI:
-    const bLeft = document.getElementById('btnLeft');
-    const bRight = document.getElementById('btnRight');
-    
-    if(bLeft) {
-        bLeft.onmousedown = () => keys.ArrowLeft = true;
-        bLeft.onmouseup = () => keys.ArrowLeft = false;
-        bLeft.ontouchstart = (e) => { e.preventDefault(); keys.ArrowLeft = true; };
-        bLeft.ontouchend = () => keys.ArrowLeft = false;
-    }
-    if(bRight) {
-        bRight.onmousedown = () => keys.ArrowRight = true;
-        bRight.onmouseup = () => keys.ArrowRight = false;
-        bRight.ontouchstart = (e) => { e.preventDefault(); keys.ArrowRight = true; };
-        bRight.ontouchend = () => keys.ArrowRight = false;
-    }
-} 
+    bindBtn('mobileLeft', 'ArrowLeft');
+    bindBtn('mobileRight', 'ArrowRight');
+}
 
 setupMobileControls();
 

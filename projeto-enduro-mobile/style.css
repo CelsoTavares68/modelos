@@ -10,11 +10,13 @@
     background: #000; 
 }
 
+ #gameCanvas {
+    position: relative;
+    z-index: 1; /* Garante que o jogo fique visível */
+}
+
 .mobile-controls {
-    position: absolute; bottom: 15%; width: 100%;
-    display: flex; justify-content: space-between;
-    padding: 0 40px; box-sizing: border-box;
-    pointer-events: none;
+    z-index: 5; /* Botões ficam por cima mas não bloqueiam o desenho */
 }
 
 .touch-btn {
