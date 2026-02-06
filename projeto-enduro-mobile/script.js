@@ -8,7 +8,9 @@ let gameState = "PLAYING";
 let isPaused = false;
 
 const maxSpeed = 12; 
-const STAGE_DURATION = 9000; // 2,5 minutos
+
+// --- 1. ALTERAÇÃO DE TEMPO: 2,5 minutos por estágio (9000 ticks) ---
+const STAGE_DURATION = 9000; 
 const DAY_DURATION = STAGE_DURATION * 9; 
 let currentTime = 0; 
 
@@ -17,7 +19,7 @@ let roadCurve = 0, targetCurve = 0, curveTimer = 0;
 
 const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
 
-// --- CONTROLES ---
+// --- EVENTOS DE CONTROLE ORIGINAIS ---
 window.addEventListener('keydown', e => { 
     if (keys.hasOwnProperty(e.code)) keys[e.code] = true; 
     if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -26,8 +28,10 @@ window.addEventListener('keyup', e => { if (keys.hasOwnProperty(e.code)) keys[e.
 
 function setupMobileControls() {
     const ids = { 
-        'btnLeft': 'ArrowLeft', 'btnRight': 'ArrowRight',
-        'mobileLeft': 'ArrowLeft', 'mobileRight': 'ArrowRight' 
+        'btnLeft': 'ArrowLeft', 
+        'btnRight': 'ArrowRight',
+        'mobileLeft': 'ArrowLeft', 
+        'mobileRight': 'ArrowRight' 
     };
     Object.keys(ids).forEach(id => {
         const btn = document.getElementById(id);
@@ -75,7 +79,7 @@ function playCrashSound() {
 }
 
 function togglePause() {
-    if (gameState === "PLAYING") {
+    if (gameState === "PLAYING" || gameState === "GOAL_REACHED") {
         isPaused = !isPaused;
         const btn = document.getElementById('pauseBtn');
         if (btn) btn.innerText = isPaused ? "Retomar" : "Pausar";
@@ -106,13 +110,28 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
     ctx.translate(x, y);
     if(isPlayer) ctx.rotate((roadCurve / 40) * Math.PI / 180);
     if (nightMode) {
-        ctx.fillStyle = "rgba(255, 255, 200, 0.4)";
-        ctx.beginPath(); ctx.moveTo(-w*0.3, 0); ctx.lineTo(-w*0.8, -100*s); ctx.lineTo(-w*0.1, -100*s); ctx.fill();
-        ctx.beginPath(); ctx.moveTo(w*0.3, 0); ctx.lineTo(w*0.1, -100*s); ctx.lineTo(w*0.8, -100*s); ctx.fill();
-        ctx.fillStyle = "#ff0000"; ctx.fillRect(-w*0.45, -h*0.2, w*0.25, h*0.3); ctx.fillRect(w*0.2, -h*0.2, w*0.25, h*0.3);
+        ctx.save();
+        let gradient = ctx.createLinearGradient(0, 0, 0, -100 * s);
+        gradient.addColorStop(0, "rgba(255, 255, 200, 0.4)");
+        gradient.addColorStop(1, "rgba(255, 255, 200, 0)");
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.moveTo(-w * 0.3, 0); ctx.lineTo(-w * 0.8, -100 * s); ctx.lineTo(-w * 0.1, -100 * s);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(w * 0.3, 0); ctx.lineTo(w * 0.1, -100 * s); ctx.lineTo(w * 0.8, -100 * s);
+        ctx.fill();
+        ctx.restore();
+        ctx.fillStyle = "#ff0000";
+        ctx.fillRect(-w * 0.45, -h * 0.2, w * 0.25, h * 0.3); 
+        ctx.fillRect(w * 0.2, -h * 0.2, w * 0.25, h * 0.3);
     } else {
-        ctx.fillStyle = "#111"; ctx.fillRect(-w*0.5, -h*0.1, w*0.25, h*0.8); ctx.fillRect(w*0.25, -h*0.1, w*0.25, h*0.8);
-        ctx.fillStyle = color; ctx.fillRect(-w*0.25, h*0.1, w*0.5, h*0.4); ctx.fillRect(-w*0.5, -h*0.3, w, h*0.2); 
+        ctx.fillStyle = "#111"; 
+        ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8);
+        ctx.fillRect(w * 0.25, -h * 0.1, w * 0.25, h * 0.8);
+        ctx.fillStyle = color; 
+        ctx.fillRect(-w * 0.25, h * 0.1, w * 0.5, h * 0.4); 
+        ctx.fillRect(-w * 0.5, -h * 0.3, w, h * 0.2); 
     }
     ctx.restore();
 }
@@ -126,6 +145,7 @@ function update() {
 
     let currentStage = Math.floor(currentTime / STAGE_DURATION);
     let colors = { sky: "#87CEEB", grass: "#1a7a1a", fog: 0, mt: "#555", nightMode: false, snowCaps: false };
+
     switch(currentStage) {
         case 0: colors.snowCaps = true; break; 
         case 1: colors.sky = "#DDD"; colors.grass = "#FFF"; colors.mt = "#999"; colors.snowCaps = true; break; 
@@ -139,8 +159,9 @@ function update() {
     }
 
     if (currentTime >= DAY_DURATION) {
-        if (carsRemaining <= 0) { gameState = "WIN_DAY"; dayNumber++; setTimeout(resetDay, 3500); }
-        else { gameState = "GAME_OVER"; }
+        if (gameState === "GOAL_REACHED" || carsRemaining <= 0) {
+            gameState = "WIN_DAY"; dayNumber++; setTimeout(resetDay, 3500);
+        } else { gameState = "GAME_OVER"; }
     }
 
     let offRoad = Math.abs(playerX) > 380;
@@ -155,8 +176,13 @@ function update() {
     if (--curveTimer <= 0) { targetCurve = (Math.random() - 0.5) * 160; curveTimer = 120; }
     roadCurve += (targetCurve - roadCurve) * 0.02;
 
-    if (gameTick % 120 === 0 && enemies.length < 10) {
-        enemies.push({ lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 8.5, color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)], isOvertaken: false });
+    // --- MANUTENÇÃO DA LÓGICA DE INIMIGOS ORIGINAL ---
+    if (gameTick % 150 === 0 && enemies.length < 10) {
+        enemies.push({ 
+            lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 8.5, 
+            color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)],
+            isOvertaken: false 
+        });
     }
 
     enemies.forEach((enemy) => {
@@ -164,12 +190,11 @@ function update() {
         let p = 1 - (enemy.z / 4000);
         let screenX = (200 - playerX * 0.05) + (roadCurve * p * p) + (enemy.lane * 200 * p) - (playerX * p);
         
-        // SALVA AS COORDENADAS PARA O DESENHO
         enemy.lastX = screenX; 
         enemy.lastY = 200 + (p * 140);
         enemy.lastP = p;
 
-        // LÓGICA DE CUBO RETANGULAR
+        // --- 2. COLISÃO EM CUBO RETANGULAR ---
         const dentroDoComprimento = (p > 0.90 && p < 1.05);
         const dentroDaLargura = (Math.abs(screenX - 200) < 30);
 
@@ -179,7 +204,13 @@ function update() {
             playCrashSound(); 
         }
 
-        if (enemy.z <= 0 && !enemy.isOvertaken) { carsRemaining = Math.max(0, carsRemaining - 1); enemy.isOvertaken = true; }
+        if (gameState === "PLAYING") {
+            if (enemy.z <= 0 && !enemy.isOvertaken) { 
+                carsRemaining--; 
+                enemy.isOvertaken = true; 
+                if (carsRemaining <= 0) { carsRemaining = 0; gameState = "GOAL_REACHED"; }
+            }
+        }
     });
 
     enemies = enemies.filter(e => e.z > -1000 && e.z < 5000);
@@ -210,7 +241,7 @@ function draw(colors) {
     }
     
     enemies.sort((a,b) => b.z - a.z).forEach(e => {
-        if (e.lastP > 0 && e.lastP < 2) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode);
+        if (e.lastP > -2) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode);
     });
     
     drawF1Car(200, 350, 0.85, "#E00", true, colors.nightMode); 
@@ -221,9 +252,10 @@ function draw(colors) {
     }
 
     ctx.fillStyle = "black"; ctx.fillRect(0, 0, 400, 55);
-    ctx.fillStyle = "yellow"; ctx.font = "bold 18px Courier";
-    ctx.fillText(`CARS: ${carsRemaining}`, 15, 35);
-    ctx.fillText(`DAY: ${dayNumber}`, 160, 35);
+    ctx.fillStyle = (gameState === "GOAL_REACHED") ? "lime" : "yellow";
+    ctx.font = "bold 18px Courier";
+    ctx.fillText(gameState === "GOAL_REACHED" ? "GOAL OK!" : `CARS: ${carsRemaining}`, 15, 35);
+    ctx.fillStyle = "yellow"; ctx.fillText(`DAY: ${dayNumber}`, 160, 35);
     ctx.fillStyle = "#444"; ctx.fillRect(260, 20, 120, 15);
     ctx.fillStyle = "lime"; ctx.fillRect(260, 20, (currentTime/DAY_DURATION) * 120, 15);
 
