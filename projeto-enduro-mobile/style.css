@@ -1,11 +1,10 @@
- body {
+  body, html {
     margin: 0;
     padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden; /* Importante: impede que a tela suba ou desça */
     background: #000;
-    color: white;
-    font-family: sans-serif;
-    overflow: hidden; /* Impede scroll acidental */
-    touch-action: none; /* Desativa gestos do navegador */
 }
 
 .app-container {
@@ -26,37 +25,33 @@
     font-size: 14px;
 }
 
-#gameCanvas {
-    flex-grow: 1; /* Ocupa todo o espaço restante */
-    width: 100%;
-    background: #000;
+ #gameCanvas {
+    display: block;
+    width: 100vw;
+    height: calc(100vh - 60px); /* Ajusta para sobrar espaço pros botões */
 }
 
-.touch-controls {
-    position: absolute;
-    bottom: 20px;
+ .touch-controls {
+    position: fixed;
+    bottom: 10px;
     width: 100%;
     display: flex;
     justify-content: space-between;
-    padding: 0 20px;
+    padding: 0 30px;
     box-sizing: border-box;
-    pointer-events: none; /* Permite clicar através da div, mas não dos botões */
 }
 
 .ctrl-btn {
-    width: 100px;
-    height: 100px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 3px solid rgba(255, 255, 255, 0.5);
+    width: 80px;
+    height: 80px;
+    background: rgba(255, 255, 0, 0.3);
+    border: 2px solid yellow;
     border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 40px;
     color: white;
-    pointer-events: auto; /* Reativa o clique no botão */
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
+    font-size: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .ctrl-btn:active {

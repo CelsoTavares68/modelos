@@ -1,20 +1,18 @@
- const canvas = document.getElementById('gameCanvas');
+  const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-// Ajuste automático de resolução
+// Ajuste de ecrã para Mobile/Tablet
 function resize() {
     canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight - 50; // Desconta o header
+    canvas.height = window.innerHeight - 60; // Deixa espaço para o topo
 }
 window.addEventListener('resize', resize);
 resize();
 
 let playerX = 0, speed = 0, playerDist = 0;
 let dayNumber = 1, carsRemaining = 200;
-let gameState = "PLAYING", isPaused = false;
 let roadCurve = 0, targetCurve = 0, curveTimer = 0;
 let enemies = [];
-
 const maxSpeed = 12;
 const keys = { ArrowLeft: false, ArrowRight: false };
 
@@ -31,107 +29,106 @@ function playCrash() {
     osc.start(); osc.stop(audioCtx.currentTime + 0.3);
 }
 
-// --- CONTROLES TOUCH ---
-function initTouch() {
-    const left = document.getElementById('btnLeft');
-    const right = document.getElementById('btnRight');
-    
-    const handle = (el, key, val) => {
-        el.addEventListener('touchstart', (e) => { e.preventDefault(); keys[key] = val; audioCtx.resume(); });
-        el.addEventListener('touchend', (e) => { e.preventDefault(); keys[key] = !val; });
-    };
-    
-    handle(left, 'ArrowLeft', true);
-    handle(right, 'ArrowRight', true);
+// --- DESENHO DO CARRO (PROPORCIONAL) ---
+function drawCar(x, y, scale, color) {
+    let s = scale * (canvas.width / 400); // Escala baseada na largura da tela
+    let w = 40 * s;
+    let h = 20 * s;
+    ctx.fillStyle = color;
+    ctx.fillRect(x - w/2, y - h, w, h);
+    // Rodas
+    ctx.fillStyle = "black";
+    ctx.fillRect(x - w/2, y - h/4, w/4, h/4);
+    ctx.fillRect(x + w/4, y - h/4, w/4, h/4);
 }
-initTouch();
+
+// --- CONTROLES TOUCH ---
+document.addEventListener('DOMContentLoaded', () => {
+    const setup = (id, key) => {
+        const el = document.getElementById(id);
+        el.addEventListener('touchstart', (e) => { e.preventDefault(); keys[key] = true; audioCtx.resume(); });
+        el.addEventListener('touchend', (e) => { e.preventDefault(); keys[key] = false; });
+    };
+    setup('btnLeft', 'ArrowLeft');
+    setup('btnRight', 'ArrowRight');
+});
 
 function update() {
-    if (isPaused) return;
+    // Aceleração automática e recuperação
+    speed = Math.min(speed + (speed < 4 ? 0.08 : 0.04), maxSpeed);
 
-    // Aceleração Automática (Recupera após batida)
-    let accel = speed < 5 ? 0.1 : 0.03; // Acelera mais rápido se estiver devagar
-    speed = Math.min(speed + accel, maxSpeed);
-
-    // Curvas e Movimento
-    if (keys.ArrowLeft) playerX -= 8;
-    if (keys.ArrowRight) playerX += 8;
+    // Movimento lateral (proporcional à tela)
+    if (keys.ArrowLeft) playerX -= 10;
+    if (keys.ArrowRight) playerX += 10;
     
-    // O carro tende a sair da pista na curva
-    playerX -= (roadCurve / 35) * (speed / maxSpeed);
-    playerX = Math.max(-500, Math.min(500, playerX));
+    // Força da curva (arrasta o carro)
+    playerX -= (roadCurve / 40) * (speed / maxSpeed);
+    playerX = Math.max(-canvas.width * 0.8, Math.min(canvas.width * 0.8, playerX));
 
     playerDist += speed;
 
-    // Lógica da Estrada
+    // Lógica da Curva
     if (--curveTimer <= 0) {
-        targetCurve = (Math.random() - 0.5) * 180;
+        targetCurve = (Math.random() - 0.5) * (canvas.width * 0.4);
         curveTimer = 100;
     }
     roadCurve += (targetCurve - roadCurve) * 0.03;
 
-    // Gerar Inimigos
-    if (Math.random() < 0.02 && enemies.length < 10) {
-        enemies.push({ lane: (Math.random() - 0.5) * 1.5, z: 4000, v: 7, over: false });
+    // Inimigos (vêm um de cada vez em intervalos)
+    if (gameTick % 100 === 0 && enemies.length < 8) {
+        enemies.push({ lane: (Math.random() - 0.5) * 1.5, z: 4000, v: 7, color: "yellow", over: false });
     }
+    gameTick++;
 
     enemies.forEach(e => {
         e.z -= (speed - e.v);
         let p = 1 - (e.z / 4000);
-        let roadW = canvas.width * 0.1 + p * (canvas.width * 2);
-        let x = (canvas.width/2) + (roadCurve * p * p) - (playerX * p) + (e.lane * roadW * 0.5);
-        let y = (canvas.height/2) + (p * p * (canvas.height/2));
+        
+        // CÁLCULO DE PISTA: centraliza os inimigos na estrada visível
+        let roadW = 40 + p * (canvas.width * 1.5);
+        e.x = (canvas.width/2) + (roadCurve * p * p) - (playerX * p) + (e.lane * roadW * 0.5);
+        e.y = (canvas.height/2) + (p * p * (canvas.height/2.2));
 
-        // Colisão (Recuperação automática ligada)
-        if (p > 0.85 && p < 1.05 && Math.abs(x - canvas.width/2) < 40) {
-            speed = 0.5; // Quase para, mas a aceleração automática o puxa de volta
-            e.z += 1000;
-            playCrash();
+        // Colisão
+        if (p > 0.85 && p < 1.05 && Math.abs(e.x - canvas.width/2) < (canvas.width * 0.1)) {
+            speed = 0.5; e.z += 1000; playCrash();
         }
 
         if (e.z <= 0 && !e.over) {
             carsRemaining = Math.max(0, carsRemaining - 1);
             e.over = true;
         }
-        e.screenX = x; e.screenY = y; e.p = p;
     });
 
     enemies = enemies.filter(e => e.z > -500);
-    
-    // UI
-    document.getElementById('infoCars').innerText = `CARROS: ${carsRemaining}`;
-    
     draw();
     requestAnimationFrame(update);
 }
+let gameTick = 0;
 
 function draw() {
-    // Céu e Grama
-    ctx.fillStyle = "#87CEEB"; ctx.fillRect(0, 0, canvas.width, canvas.height/2);
-    ctx.fillStyle = "#1a7a1a"; ctx.fillRect(0, canvas.height/2, canvas.width, canvas.height/2);
+    ctx.fillStyle = "#87CEEB"; ctx.fillRect(0, 0, canvas.width, canvas.height/2); // Céu
+    ctx.fillStyle = "#1a7a1a"; ctx.fillRect(0, canvas.height/2, canvas.width, canvas.height/2); // Grama
 
-    // Estrada Responsiva
-    for (let i = canvas.height/2; i < canvas.height; i += 4) {
+    // Estrada
+    for (let i = canvas.height/2; i < canvas.height; i += 5) {
         let p = (i - canvas.height/2) / (canvas.height/2);
         let x = (canvas.width/2) + (roadCurve * p * p) - (playerX * p);
-        let w = 20 + p * (canvas.width * 2);
+        let w = 20 + p * (canvas.width * 1.5);
         ctx.fillStyle = Math.sin(i * 0.5 + playerDist * 0.2) > 0 ? "#333" : "#444";
-        ctx.fillRect(x - w/2, i, w, 4);
+        ctx.fillRect(x - w/2, i, w, 5);
     }
 
-    // Carros
+    // Desenha Inimigos
     enemies.forEach(e => {
-        if(e.p > 0) {
-            ctx.fillStyle = "yellow";
-            ctx.fillRect(e.screenX - (20*e.p), e.screenY - (10*e.p), 40*e.p, 20*e.p);
-        }
+        if(e.z > 0 && e.z < 4000) drawCar(e.x, e.y, (1 - e.z/4000), e.color);
     });
 
-    // Player
-    ctx.fillStyle = "#ff0000";
-    ctx.fillRect(canvas.width/2 - 25, canvas.height - 80, 50, 25);
-}
+    // Desenha Jogador (Sempre visível no fundo da tela)
+    drawCar(canvas.width/2, canvas.height * 0.9, 1.2, "#ff0000");
 
-function togglePause() { isPaused = !isPaused; if(!isPaused) update(); }
+    // UI
+    document.getElementById('infoCars').innerText = `CARROS: ${carsRemaining}`;
+}
 
 update();
