@@ -1,46 +1,88 @@
- html, body { 
-    margin: 0; padding: 0;
+ body { 
+    margin: 0; 
     background: #111; 
-    display: flex; flex-direction: column; align-items: center; 
-    height: 100vh; color: white; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    height: 100vh; 
+    color: white; 
     font-family: 'Courier New', Courier, monospace; 
-    overflow: hidden; touch-action: none;
 }
 
 .game-container {
-    display: flex; flex-direction: column; align-items: center;
-    width: 100%; max-width: 450px; padding: 10px;
-}
-
-.game-title {
-    font-size: 1.4rem; color: #ffff00; margin: 5px 0;
-    text-shadow: 2px 2px #f00; letter-spacing: 2px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
 }
 
 canvas { 
-    border: 3px solid #fff; background: #000; 
-    width: 100%; height: auto; max-height: 45vh;
+    border: 4px solid #fff; 
+    background: #000; 
+    box-shadow: 0 0 20px rgba(0,0,0,0.8); 
 }
 
-.controles-sistema {
-    display: flex; gap: 10px; margin: 8px 0;
+.instrucoes h2 {
+    margin: 0;
+    color: #ffff00;
+}
+
+.controles {
+    display: flex;
+    gap: 15px;
+}
+
+button {
+    padding: 10px 20px;
+    font-family: 'Courier New', Courier, monospace;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+    background: #333;
+    color: white;
+    border: 2px solid #fff;
+    transition: 0.2s;
+}
+
+button:hover {
+    background: #fff;
+    color: #000;
+}
+
+button:active {
+    transform: scale(0.95);
+}
+
+#pauseBtn {
+    border-color: #ffff00;
+    color: #ffff00;
+}
+
+#pauseBtn:hover {
+    background: #ffff00;
+    color: #000;
 }
 
 .mobile-controls {
-    margin-top: 5px; user-select: none;
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 400px;
+    padding: 10px;
 }
 
-.d-pad { display: flex; align-items: center; gap: 15px; }
-.vertical-btns { display: flex; flex-direction: column; gap: 8px; }
-
-.ctrl-btn {
-    width: 70px; height: 70px;
-    background: #222; border: 2px solid #fff;
-    color: white; font-size: 1.2rem; font-weight: bold;
-    border-radius: 12px; display: flex; align-items: center; justify-content: center;
-    touch-action: manipulation;
+.touch-btn {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%; /* Botões redondos são melhores para o polegar */
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid #fff;
+    font-size: 30px;
+    user-select: none; /* Impede que o telemóvel selecione o texto do botão */
+    -webkit-tap-highlight-color: transparent; /* Remove o brilho azul ao tocar */
 }
 
-.ctrl-btn:active { background: #ffff00; color: #000; }
-#btnUp { border-color: #0f0; color: #0f0; }
-#btnDown { border-color: #f00; color: #f00; }
+/* Opcional: Esconder controlos de desktop se quiser purismo mobile */
+@media (min-width: 768px) {
+    .mobile-controls { display: none; }
+}
