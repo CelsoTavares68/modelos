@@ -9,23 +9,22 @@ let isPaused = false;
 
 const maxSpeed = 12; 
 const STAGE_DURATION = 12600; 
-let currentTime = 0; 
 const DAY_DURATION = STAGE_DURATION * 9; 
+let currentTime = 0; 
 
 let enemies = [];
 let roadCurve = 0, targetCurve = 0, curveTimer = 0;
 
-const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
+const keys = { ArrowLeft: false, ArrowRight: false };
 
-// --- EVENTOS DE TECLADO (PC) ---
+// --- CONTROLES DE TECLADO ---
 window.addEventListener('keydown', e => { 
     if (keys.hasOwnProperty(e.code)) keys[e.code] = true; 
     if (audioCtx.state === 'suspended') audioCtx.resume();
 });
 window.addEventListener('keyup', e => { if (keys.hasOwnProperty(e.code)) keys[e.code] = false; });
 
-// --- CONFIGURAÇÃO DOS CONTROLES MOBILE ---
-// Encapsulado em DOMContentLoaded para garantir que os botões existam no HTML
+// --- CONTROLES TOUCH (MOBILE) ---
 document.addEventListener('DOMContentLoaded', () => {
     const btnLeft = document.getElementById('btnLeft');
     const btnRight = document.getElementById('btnRight');
@@ -37,7 +36,6 @@ document.addEventListener('DOMContentLoaded', () => {
             keys[keyCode] = true;
             if (audioCtx.state === 'suspended') audioCtx.resume();
         });
-        
         element.addEventListener('touchend', (e) => {
             e.preventDefault();
             keys[keyCode] = false;
@@ -59,10 +57,8 @@ function playEngineSound() {
     osc.frequency.setValueAtTime(60 + (speed * 15), audioCtx.currentTime);
     gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-    osc.connect(gain); 
-    gain.connect(audioCtx.destination);
-    osc.start(); 
-    osc.stop(audioCtx.currentTime + 0.1);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime + 0.1);
 }
 
 function playCrashSound() {
@@ -77,7 +73,7 @@ function playCrashSound() {
     osc.start(); osc.stop(audioCtx.currentTime + 0.4);
 }
 
-// --- FUNÇÕES DE CONTROLE ---
+// --- FUNÇÕES DE INTERFACE ---
 function togglePause() {
     if (gameState === "PLAYING") {
         isPaused = !isPaused;
@@ -102,12 +98,11 @@ function resetDay() {
     if (gameState !== "PLAYING") gameState = "PLAYING";
 }
 
-// --- DESENHO DO CARRO ---
+// --- RENDERIZAÇÃO ---
 function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
     let s = scale * 1.2; 
     if (s < 0.02 || s > 30) return; 
     let w = 45 * s; let h = 22 * s; 
-
     ctx.save();
     ctx.translate(x, y);
     if(isPlayer) ctx.rotate((roadCurve / 40) * Math.PI / 180);
@@ -125,10 +120,7 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
         ctx.moveTo(w * 0.3, 0); ctx.lineTo(w * 0.1, -100 * s); ctx.lineTo(w * 0.8, -100 * s);
         ctx.fill();
         ctx.restore();
-
-        ctx.fillStyle = "#ff0000";
-        ctx.shadowBlur = 15 * s;
-        ctx.shadowColor = "red";
+        ctx.fillStyle = "#ff0000"; ctx.shadowBlur = 15 * s; ctx.shadowColor = "red";
         ctx.fillRect(-w * 0.45, -h * 0.2, w * 0.25, h * 0.3); 
         ctx.fillRect(w * 0.2, -h * 0.2, w * 0.25, h * 0.3);
     } else {
@@ -138,14 +130,14 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
         ctx.fillStyle = color; 
         ctx.fillRect(-w * 0.25, h * 0.1, w * 0.5, h * 0.4); 
         ctx.fillRect(-w * 0.5, -h * 0.3, w, h * 0.2); 
-        ctx.fillStyle = "#400";
+        ctx.fillStyle = "#400"; // Removido brilho de freio (freio é automático/ausente)
         ctx.fillRect(-w * 0.4, -h * 0.2, w * 0.12, h * 0.15);
         ctx.fillRect(w * 0.28, -h * 0.2, w * 0.12, h * 0.15);
     }
     ctx.restore();
 }
 
-// --- LOOP PRINCIPAL ---
+// --- LÓGICA DO JOGO ---
 function update() {
     if (isPaused) return; 
     if (gameState === "WIN_DAY" || gameState === "GAME_OVER") { draw(); requestAnimationFrame(update); return; }
@@ -187,7 +179,7 @@ function update() {
     if (offRoad && speed > currentMaxSpeed) speed -= 0.15;
 
     playerX -= (roadCurve / 25) * (speed / maxSpeed); 
-    if (keys.ArrowLeft && speed > 0.1) playerX -= 7; // Aumentada sensibilidade p/ mobile
+    if (keys.ArrowLeft && speed > 0.1) playerX -= 7;
     if (keys.ArrowRight && speed > 0.1) playerX += 7;
     playerX = Math.max(-450, Math.min(450, playerX));
 
@@ -217,7 +209,7 @@ function update() {
         let roadWidth = 20 + p * 800;
         let screenX = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p) + (enemy.lane * roadWidth * 0.5);
         
-        // COLISÃO: Reseta velocidade para zero e empurra inimigo
+        // COLISÃO: Reseta para 0
         if (p > 0.82 && p < 1.05 && Math.abs(screenX - 200) < 45) { 
             speed = 0; 
             enemy.z += 500; 
@@ -291,5 +283,4 @@ function draw(colors) {
     }
 }
 
-// Iniciar loop
 update();
