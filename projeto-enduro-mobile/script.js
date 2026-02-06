@@ -25,22 +25,30 @@ window.addEventListener('keydown', e => {
 window.addEventListener('keyup', e => { if (keys.hasOwnProperty(e.code)) keys[e.code] = false; });
 
 // Adicionando suporte para os botões do seu index.html e toques na tela
-function setupMobileControls() {
-    const canvasEl = document.getElementById('gameCanvas');
-    
-    // Detecta toque no lado esquerdo ou direito do canvas
-    canvasEl.addEventListener('touchstart', e => {
-        e.preventDefault();
-        const touchX = e.touches[0].clientX;
-        if (touchX < window.innerWidth / 2) keys.ArrowLeft = true;
-        else keys.ArrowRight = true;
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-    }, {passive: false});
+ function setupMobileControls() {
+    function bindBtn(id, key) {
+        const btn = document.getElementById(id);
+        if (btn) {
+            // Eventos para Mouse
+            btn.addEventListener('mousedown', () => { keys[key] = true; });
+            btn.addEventListener('mouseup', () => { keys[key] = false; });
+            btn.addEventListener('mouseleave', () => { keys[key] = false; });
+            
+            // Eventos para Touch (Celular)
+            btn.addEventListener('touchstart', (e) => { 
+                e.preventDefault(); 
+                keys[key] = true; 
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+            }, {passive: false});
+            btn.addEventListener('touchend', (e) => { 
+                e.preventDefault(); 
+                keys[key] = false; 
+            }, {passive: false});
+        }
+    }
 
-    canvasEl.addEventListener('touchend', e => {
-        keys.ArrowLeft = false;
-        keys.ArrowRight = false;
-    });
+    bindBtn('btnLeft', 'ArrowLeft');
+    bindBtn('btnRight', 'ArrowRight');
 }
 setupMobileControls();
 

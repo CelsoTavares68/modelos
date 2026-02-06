@@ -1,18 +1,23 @@
-   <!DOCTYPE html>
+    <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mini Enduro Mobile</title>
+    <title>Mini Enduro JS</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="game-container">
+        <div class="instrucoes">
+            <h2>MINI ENDURO</h2>
+            <p>Use os botões ou setas para curvar</p>
+        </div>
+
         <canvas id="gameCanvas"></canvas>
-        
+
         <div class="mobile-controls">
-            <div id="btnLeft" class="touch-btn">◀</div>
-            <div id="btnRight" class="touch-btn">▶</div>
+            <div class="touch-btn" id="btnLeft">◀</div>
+            <div class="touch-btn" id="btnRight">▶</div>
         </div>
 
         <div class="controles">
@@ -20,6 +25,7 @@
             <button onclick="resetGame()">Reiniciar</button>
         </div>
     </div>
+
     <script src="script.js"></script>
 </body>
 </html>
