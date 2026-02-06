@@ -1,41 +1,21 @@
- /* Remove margens e impede o scroll da página */
-  body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; }
+ body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #111; }
 .game-container { position: relative; width: 100vw; height: 100vh; }
-canvas { display: block; width: 100%; height: 100%; }
+canvas { display: block; width: 100%; height: 100%; background: #000; }
 
-  .mobile-controls {
-    position: absolute; 
-    bottom: 80px; /* Mais alto para conforto */
-    width: 100%;
-    display: flex; 
-    justify-content: space-between;
-    padding: 0 30px; 
-    box-sizing: border-box;
+.mobile-controls {
+    position: absolute; bottom: 15%; width: 100%;
+    display: flex; justify-content: space-between;
+    padding: 0 40px; box-sizing: border-box;
     pointer-events: none;
 }
 
 .touch-btn {
-    pointer-events: auto; width: 85px; height: 85px;
-    background: rgba(255, 255, 255, 0.2);
-    border: 3px solid #fff; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    color: white; font-size: 35px; user-select: none;
-    -webkit-tap-highlight-color: transparent;
+    pointer-events: auto; width: 90px; height: 90px;
+    background: rgba(255, 255, 255, 0.1); border: 3px solid #fff;
+    border-radius: 50%; display: flex; align-items: center;
+    justify-content: center; color: #fff; font-size: 40px;
+    user-select: none; -webkit-tap-highlight-color: transparent;
 }
 
-.touch-btn:active { background: rgba(255, 255, 0, 0.3); border-color: #ff0; }
-
-.top-bar {
-    position: absolute; top: 60px; right: 10px;
-    display: flex; flex-direction: column; gap: 5px;
-}
-
-button {
-    background: rgba(0,0,0,0.5); color: #ff0; border: 1px solid #ff0;
-    padding: 5px 10px; font-size: 12px; cursor: pointer;
-}
-
-.controles { position: absolute; top: 60px; right: 10px; display: flex; gap: 10px; }
-button { background: #333; color: white; border: 1px solid white; padding: 5px 10px; }
-
-.ui-top { position: absolute; top: 15px; right: 15px; }
+.controles { position: absolute; top: 15px; right: 15px; display: flex; gap: 10px; z-index: 10; }
+button { background: rgba(0,0,0,0.6); color: white; border: 1px solid white; padding: 8px 15px; font-family: 'Courier New', monospace; }
