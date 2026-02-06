@@ -8,8 +8,7 @@ let gameState = "PLAYING";
 let isPaused = false;
 
 const maxSpeed = 12; 
-
-// --- 1. ALTERAÇÃO DE TEMPO: 2,5 minutos por estágio (9000 ticks) ---
+// 1. ALTERAÇÃO DE TEMPO (2,5 minutos por estágio)
 const STAGE_DURATION = 9000; 
 const DAY_DURATION = STAGE_DURATION * 9; 
 let currentTime = 0; 
@@ -19,7 +18,6 @@ let roadCurve = 0, targetCurve = 0, curveTimer = 0;
 
 const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
 
-// --- EVENTOS DE CONTROLE ORIGINAIS ---
 window.addEventListener('keydown', e => { 
     if (keys.hasOwnProperty(e.code)) keys[e.code] = true; 
     if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -27,12 +25,7 @@ window.addEventListener('keydown', e => {
 window.addEventListener('keyup', e => { if (keys.hasOwnProperty(e.code)) keys[e.code] = false; });
 
 function setupMobileControls() {
-    const ids = { 
-        'btnLeft': 'ArrowLeft', 
-        'btnRight': 'ArrowRight',
-        'mobileLeft': 'ArrowLeft', 
-        'mobileRight': 'ArrowRight' 
-    };
+    const ids = { 'btnLeft': 'ArrowLeft', 'btnRight': 'ArrowRight', 'mobileLeft': 'ArrowLeft', 'mobileRight': 'ArrowRight' };
     Object.keys(ids).forEach(id => {
         const btn = document.getElementById(id);
         if (btn) {
@@ -110,27 +103,13 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
     ctx.translate(x, y);
     if(isPlayer) ctx.rotate((roadCurve / 40) * Math.PI / 180);
     if (nightMode) {
-        ctx.save();
-        let gradient = ctx.createLinearGradient(0, 0, 0, -100 * s);
-        gradient.addColorStop(0, "rgba(255, 255, 200, 0.4)");
-        gradient.addColorStop(1, "rgba(255, 255, 200, 0)");
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.moveTo(-w * 0.3, 0); ctx.lineTo(-w * 0.8, -100 * s); ctx.lineTo(-w * 0.1, -100 * s);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.moveTo(w * 0.3, 0); ctx.lineTo(w * 0.1, -100 * s); ctx.lineTo(w * 0.8, -100 * s);
-        ctx.fill();
-        ctx.restore();
         ctx.fillStyle = "#ff0000";
         ctx.fillRect(-w * 0.45, -h * 0.2, w * 0.25, h * 0.3); 
         ctx.fillRect(w * 0.2, -h * 0.2, w * 0.25, h * 0.3);
     } else {
-        ctx.fillStyle = "#111"; 
-        ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8);
+        ctx.fillStyle = "#111"; ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8);
         ctx.fillRect(w * 0.25, -h * 0.1, w * 0.25, h * 0.8);
-        ctx.fillStyle = color; 
-        ctx.fillRect(-w * 0.25, h * 0.1, w * 0.5, h * 0.4); 
+        ctx.fillStyle = color; ctx.fillRect(-w * 0.25, h * 0.1, w * 0.5, h * 0.4); 
         ctx.fillRect(-w * 0.5, -h * 0.3, w, h * 0.2); 
     }
     ctx.restore();
@@ -176,7 +155,7 @@ function update() {
     if (--curveTimer <= 0) { targetCurve = (Math.random() - 0.5) * 160; curveTimer = 120; }
     roadCurve += (targetCurve - roadCurve) * 0.02;
 
-    // --- MANUTENÇÃO DA LÓGICA DE INIMIGOS ORIGINAL ---
+    // RITMO ORIGINAL DE INIMIGOS (150 ticks)
     if (gameTick % 150 === 0 && enemies.length < 10) {
         enemies.push({ 
             lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 8.5, 
@@ -194,22 +173,17 @@ function update() {
         enemy.lastY = 200 + (p * 140);
         enemy.lastP = p;
 
-        // --- 2. COLISÃO EM CUBO RETANGULAR ---
-        const dentroDoComprimento = (p > 0.90 && p < 1.05);
-        const dentroDaLargura = (Math.abs(screenX - 200) < 30);
-
-        if (dentroDoComprimento && dentroDaLargura) { 
+        // 2. COLISÃO CUBO (Só acontece se estiver no X e Z corretos)
+        if (p > 0.90 && p < 1.05 && Math.abs(screenX - 200) < 30) { 
             speed = -1; 
             enemy.z += 600; 
             playCrashSound(); 
         }
 
-        if (gameState === "PLAYING") {
-            if (enemy.z <= 0 && !enemy.isOvertaken) { 
-                carsRemaining--; 
-                enemy.isOvertaken = true; 
-                if (carsRemaining <= 0) { carsRemaining = 0; gameState = "GOAL_REACHED"; }
-            }
+        if (gameState === "PLAYING" && enemy.z <= 0 && !enemy.isOvertaken) { 
+            carsRemaining--; 
+            enemy.isOvertaken = true; 
+            if (carsRemaining <= 0) { carsRemaining = 0; gameState = "GOAL_REACHED"; }
         }
     });
 
