@@ -223,7 +223,7 @@ function update() {
         let roadWidth = 20 + p * 800;
         let screenX = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p) + (enemy.lane * roadWidth * 0.5);
         
-        if (p > 0.85 && p < 1.05 && Math.abs(screenX - 200) < 35) { 
+        if (p > 0.94 && p < 1.05 && Math.abs(screenX - 200) < 30) { 
             speed = -1; 
             enemy.z += 600; 
             playCrashSound(); 
