@@ -8,13 +8,13 @@ function resize() {
 window.addEventListener('resize', resize);
 resize();
 
-// --- VARIÁVEIS DE CONTROLE ---
+// --- VARIÁVEIS DE TEMPO (3,5 MINUTOS POR ESTÁGIO) ---
 let playerX = 0, speed = 0, gameTick = 0, playerDist = 0;
 let dayNumber = 1, baseGoal = 200, carsRemaining = baseGoal; 
 let isPaused = false, currentTime = 0;
 
 const maxSpeed = 12; 
-const STAGE_DURATION = 2000; 
+const STAGE_DURATION = 12600; // 3.5 minutos (60fps * 210 segundos)
 const DAY_DURATION = STAGE_DURATION * 9; 
 
 let enemies = [];
@@ -57,7 +57,6 @@ function update() {
     if (currentTime >= DAY_DURATION) {
         currentTime = 0;
         dayNumber++;
-        carsRemaining = baseGoal + (dayNumber * 10);
     }
 
     // --- CORES DOS ESTÁGIOS ---
@@ -65,18 +64,18 @@ function update() {
     let colors = { sky: "#87CEEB", grass: "#1a7a1a", mt: "#4B5320", snow: false, night: false };
 
     switch(stage) {
-        case 0: colors.sky = "#87CEEB"; break;
-        case 1: colors.sky = "#4682B4"; colors.snow = true; colors.grass = "#DDD"; break;
-        case 2: colors.sky = "#B0C4DE"; colors.snow = true; colors.grass = "#FFF"; break;
-        case 3: colors.sky = "#F4A460"; break;
-        case 4: colors.sky = "#FF4500"; break;
-        case 5: colors.sky = "#191970"; colors.night = true; break;
-        case 6: colors.sky = "#000055"; colors.night = true; break;
-        case 7: colors.sky = "#483D8B"; break;
-        case 8: colors.sky = "#B0E0E6"; break;
+        case 0: colors.sky = "#87CEEB"; break; // Dia
+        case 1: colors.sky = "#4682B4"; colors.snow = true; colors.grass = "#DDD"; break; // Neve
+        case 2: colors.sky = "#B0C4DE"; colors.snow = true; colors.grass = "#FFF"; break; // Neve forte
+        case 3: colors.sky = "#F4A460"; break; // Tarde
+        case 4: colors.sky = "#FF4500"; break; // Pôr do sol
+        case 5: colors.sky = "#191970"; colors.night = true; break; // Noite
+        case 6: colors.sky = "#000055"; colors.night = true; break; // Noite profunda
+        case 7: colors.sky = "#483D8B"; break; // Madrugada
+        case 8: colors.sky = "#B0E0E6"; break; // Amanhecer
     }
 
-    // Aceleração progressiva
+    // Aceleração
     let accel = (speed < 2) ? 0.015 : 0.05;
     speed = Math.min(speed + accel, maxSpeed);
 
@@ -90,7 +89,7 @@ function update() {
         speed = Math.max(speed - 0.2, 3);
     }
 
-    // Gerador de inimigos
+    // Inimigos
     if (gameTick % 100 === 0 && enemies.length < 5) {
         enemies.push({ 
             lane: (Math.random() - 0.5) * 1.2,
@@ -101,34 +100,28 @@ function update() {
     }
 
     enemies.forEach((e) => {
-        // Posição Z antiga para checar se "pulou" o jogador
-        let oldZ = e.z;
         e.z -= (speed - e.v);
-        
         let p = 1 - (e.z / 4000); 
         let roadW = 40 + (p * canvas.width * 2.2); 
         
         e.x = (canvas.width/2) + (roadCurve * p * p) - (playerX * p) + (e.lane * roadW * 0.4);
         e.y = (canvas.height/2) + (p * (canvas.height/2.1));
 
-        // --- CONSERTO DA COLISÃO TRASEIRA ---
-        let playerW = (canvas.width * 0.12); 
-        let enemyW = playerW * p;
+        // --- COLISÃO SÓ POR TRÁS (AJUSTADA) ---
+        let enemyWidth = (canvas.width * 0.12) * p;
         
-        // Se o carro inimigo estava na sua frente (z > 0) e agora está atrás (z <= 0)
-        // OU se ele está muito perto da sua linha de base (p > 0.85)
-        if (e.z < 150 && e.z > -100) {
+        // Só colide se estiver muito perto do seu "nariz" (z pequeno)
+        if (e.z < 80 && e.z > 0) {
             let dx = Math.abs(e.x - canvas.width/2);
-            // Se estiver na mesma linha lateral (pista)
-            if (dx < enemyW * 0.85) {
-                speed = 0;       // Para o carro
-                e.z = 500;       // Joga o inimigo para frente para não bugar a colisão
-                currentTime -= 50; // Opcional: penalidade de tempo estilo Enduro
+            // Reduzi para 0.4: você precisa estar quase centralizado atrás dele para bater
+            if (dx < enemyWidth * 0.4) {
+                speed = 0;
+                e.z = 500;
             }
         }
 
         if (e.z <= 0 && !e.over) { 
-            if (speed > 0) carsRemaining--; // Só conta ponto se não bateu
+            if (speed > 0) carsRemaining--; 
             e.over = true; 
         }
     });
@@ -149,7 +142,7 @@ function draw(colors) {
     ctx.fillStyle = colors.sky; ctx.fillRect(0, 0, canvas.width, canvas.height/2);
     
     // Montanhas
-    ctx.fillStyle = colors.night ? "#111" : "#4B5320";
+    ctx.fillStyle = colors.night ? "#111" : (colors.snow ? "#BBB" : "#4B5320");
     for (let i = -2; i < 5; i++) {
         let bx = (canvas.width/2) + (i * canvas.width * 0.8) - (playerX * 0.1) + (roadCurve * 0.5);
         ctx.beginPath();
@@ -182,8 +175,10 @@ function draw(colors) {
 
     // HUD
     ctx.fillStyle = "black"; ctx.fillRect(0, 0, canvas.width, 50);
-    ctx.fillStyle = "yellow"; ctx.font = "bold 18px Courier";
-    ctx.fillText(`CARS: ${Math.max(0, carsRemaining)}  DAY: ${dayNumber}`, 20, 32);
+    ctx.fillStyle = "yellow"; ctx.font = "bold 16px Courier";
+    // Barra de progresso do estágio (opcional para você ver o tempo passar)
+    let prog = Math.floor((currentTime % STAGE_DURATION) / STAGE_DURATION * 100);
+    ctx.fillText(`CARS: ${Math.max(0, carsRemaining)}  DAY: ${dayNumber}  TIME: ${prog}%`, 15, 32);
 }
 
 function drawF1Car(x, y, scale, color, night) {
@@ -191,7 +186,6 @@ function drawF1Car(x, y, scale, color, night) {
     let w = 45 * s; let h = 22 * s;
     ctx.save();
     ctx.translate(x, y);
-    
     if (night) {
         ctx.fillStyle = "red";
         ctx.fillRect(-w/2, -h/2, w/4, h/4);
