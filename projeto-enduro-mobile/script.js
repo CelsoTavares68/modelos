@@ -16,12 +16,35 @@ let enemies = [];
 let roadCurve = 0, targetCurve = 0, curveTimer = 0;
 
 const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
+
+// --- CORREÇÃO DOS EVENTOS DE CONTROLE ---
 window.addEventListener('keydown', e => { 
     if (keys.hasOwnProperty(e.code)) keys[e.code] = true; 
     if (audioCtx.state === 'suspended') audioCtx.resume();
 });
 window.addEventListener('keyup', e => { if (keys.hasOwnProperty(e.code)) keys[e.code] = false; });
 
+// Adicionando suporte para os botões do seu index.html e toques na tela
+function setupMobileControls() {
+    const canvasEl = document.getElementById('gameCanvas');
+    
+    // Detecta toque no lado esquerdo ou direito do canvas
+    canvasEl.addEventListener('touchstart', e => {
+        e.preventDefault();
+        const touchX = e.touches[0].clientX;
+        if (touchX < window.innerWidth / 2) keys.ArrowLeft = true;
+        else keys.ArrowRight = true;
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+    }, {passive: false});
+
+    canvasEl.addEventListener('touchend', e => {
+        keys.ArrowLeft = false;
+        keys.ArrowRight = false;
+    });
+}
+setupMobileControls();
+
+// --- SISTEMA DE ÁUDIO MANTIDO ---
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
 function playEngineSound() {
@@ -148,17 +171,17 @@ function update() {
     let offRoad = Math.abs(playerX) > 380;
     let currentMaxSpeed = offRoad ? 2 : maxSpeed;
     
-    // --- ALTERAÇÃO: ACELERAÇÃO AUTOMÁTICA ---
-    // Removemos a verificação do keys.ArrowUp. O carro acelera sempre.
+    // --- ACELERAÇÃO AUTOMÁTICA MANTIDA ---
     let accelRate = (speed < 4 || offRoad) ? 0.025 : 0.06; 
     speed = Math.min(speed + accelRate, currentMaxSpeed); 
     
-    // Freio manual ainda funciona se o usuário quiser reduzir na curva
     if (keys.ArrowDown) speed = Math.max(speed - 0.2, 0);
 
+    // --- CORREÇÃO DO MOVIMENTO LATERAL ---
+    // Ajustado para ser mais fluido e responder tanto a teclado quanto touch
     playerX -= (roadCurve / 25) * (speed / maxSpeed); 
-    if (keys.ArrowLeft && speed > 0.1) playerX -= 6;
-    if (keys.ArrowRight && speed > 0.1) playerX += 6;
+    if (keys.ArrowLeft) playerX -= 7;
+    if (keys.ArrowRight) playerX += 7;
     playerX = Math.max(-450, Math.min(450, playerX));
 
     if (--curveTimer <= 0) { targetCurve = (Math.random() - 0.5) * 160; curveTimer = 120; }
@@ -188,7 +211,6 @@ function update() {
         let roadWidth = 20 + p * 800;
         let screenX = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p) + (enemy.lane * roadWidth * 0.5);
         
-        // Colisão ajustada para escala 0.85
         if (p > 0.85 && p < 1.02 && Math.abs(screenX - 200) < 30) { 
             speed = -1; 
             enemy.z += 600; 
