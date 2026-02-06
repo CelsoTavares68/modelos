@@ -8,7 +8,7 @@ let gameState = "PLAYING";
 let isPaused = false;
 
 const maxSpeed = 12; 
-const STAGE_DURATION = 12600; 
+const STAGE_DURATION = 9000; 
 const DAY_DURATION = STAGE_DURATION * 9; 
 let currentTime = 0; 
 
@@ -223,7 +223,7 @@ function update() {
         let roadWidth = 20 + p * 800;
         let screenX = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p) + (enemy.lane * roadWidth * 0.5);
         
-        if (p > 0.94 && p < 1.05 && Math.abs(screenX - 200) < 30) { 
+        if (p > 0.90 && p < 1.05 && Math.abs(screenX - 200) < 25) { 
             speed = -1; 
             enemy.z += 600; 
             playCrashSound(); 
