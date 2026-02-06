@@ -2,37 +2,34 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mini Enduro JS</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Enduro Mobile</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
 </head>
 <body>
-    <div class="game-container">
-        <div class="instrucoes">
-            <h2>MINI ENDURO</h2>
-            <p>Setas: Acelera, Freia e Curva</p>
+    <div class="app-container">
+        <div class="header">
+            <span id="infoCars">CARROS: 0</span>
+            <span id="infoDay">DIA: 1</span>
+            <button onclick="togglePause()" id="pauseBtn">Pausar</button>
         </div>
 
         <canvas id="gameCanvas"></canvas>
-        <div class="mobile-controls">
-    <button id="btnLeft" class="touch-btn">◀</button>
-    <button id="btnRight" class="touch-btn">▶</button>
-</div>
-        <div class="controles">
-            <button onclick="togglePause()" id="pauseBtn">Pausar</button>
-            <button onclick="resetGame()">Reiniciar Jogo</button>
+
+        <div class="touch-controls">
+            <div id="btnLeft" class="ctrl-btn">◀</div>
+            <div id="btnRight" class="ctrl-btn">▶</div>
         </div>
     </div>
 
     <script src="script.js"></script>
     <script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js')
-      .then(reg => console.log('Service Worker registrado!', reg))
-      .catch(err => console.error('Erro ao registrar SW:', err));
-  }
-</script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js');
+        }
+    </script>
 </body>
 </html>

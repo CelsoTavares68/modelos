@@ -1,88 +1,73 @@
- body { 
-    margin: 0; 
-    background: #111; 
-    display: flex; 
-    justify-content: center; 
-    align-items: center; 
-    height: 100vh; 
-    color: white; 
-    font-family: 'Courier New', Courier, monospace; 
+ body {
+    margin: 0;
+    padding: 0;
+    background: #000;
+    color: white;
+    font-family: sans-serif;
+    overflow: hidden; /* Impede scroll acidental */
+    touch-action: none; /* Desativa gestos do navegador */
 }
 
-.game-container {
+.app-container {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 20px;
+    height: 100vh;
+    width: 100vw;
 }
 
-canvas { 
-    border: 4px solid #fff; 
-    background: #000; 
-    box-shadow: 0 0 20px rgba(0,0,0,0.8); 
-}
-
-.instrucoes h2 {
-    margin: 0;
-    color: #ffff00;
-}
-
-.controles {
+.header {
+    height: 50px;
     display: flex;
-    gap: 15px;
-}
-
-button {
-    padding: 10px 20px;
-    font-family: 'Courier New', Courier, monospace;
+    justify-content: space-around;
+    align-items: center;
+    background: #111;
+    border-bottom: 2px solid #ffff00;
     font-weight: bold;
-    font-size: 16px;
-    cursor: pointer;
-    background: #333;
+    font-size: 14px;
+}
+
+#gameCanvas {
+    flex-grow: 1; /* Ocupa todo o espaço restante */
+    width: 100%;
+    background: #000;
+}
+
+.touch-controls {
+    position: absolute;
+    bottom: 20px;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 20px;
+    box-sizing: border-box;
+    pointer-events: none; /* Permite clicar através da div, mas não dos botões */
+}
+
+.ctrl-btn {
+    width: 100px;
+    height: 100px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 3px solid rgba(255, 255, 255, 0.5);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 40px;
     color: white;
-    border: 2px solid #fff;
-    transition: 0.2s;
+    pointer-events: auto; /* Reativa o clique no botão */
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
-button:hover {
-    background: #fff;
-    color: #000;
-}
-
-button:active {
-    transform: scale(0.95);
+.ctrl-btn:active {
+    background: rgba(255, 255, 0, 0.4);
+    border-color: #ffff00;
+    transform: scale(1.1);
 }
 
 #pauseBtn {
-    border-color: #ffff00;
+    background: #333;
     color: #ffff00;
-}
-
-#pauseBtn:hover {
-    background: #ffff00;
-    color: #000;
-}
-
-.mobile-controls {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-    max-width: 400px;
-    padding: 10px;
-}
-
-.touch-btn {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%; /* Botões redondos são melhores para o polegar */
-    background: rgba(255, 255, 255, 0.2);
-    border: 2px solid #fff;
-    font-size: 30px;
-    user-select: none; /* Impede que o telemóvel selecione o texto do botão */
-    -webkit-tap-highlight-color: transparent; /* Remove o brilho azul ao tocar */
-}
-
-/* Opcional: Esconder controlos de desktop se quiser purismo mobile */
-@media (min-width: 768px) {
-    .mobile-controls { display: none; }
+    border: 1px solid #ffff00;
+    padding: 5px 10px;
 }
