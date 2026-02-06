@@ -3,33 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Enduro Mobile</title>
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="mobile-web-app-capable" content="yes">
+    <title>Mini Enduro Mobile</title>
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
 </head>
 <body>
-    <div class="app-container">
-        <div class="header">
-            <span id="infoCars">CARROS: 0</span>
-            <span id="infoDay">DIA: 1</span>
-            <button onclick="togglePause()" id="pauseBtn">Pausar</button>
+    <div class="game-container">
+        <canvas id="gameCanvas"></canvas>
+        
+        <div class="mobile-controls">
+            <div id="btnLeft" class="touch-btn">◀</div>
+            <div id="btnRight" class="touch-btn">▶</div>
         </div>
 
-        <canvas id="gameCanvas"></canvas>
-
-        <div class="touch-controls">
-            <div id="btnLeft" class="ctrl-btn">◀</div>
-            <div id="btnRight" class="ctrl-btn">▶</div>
+        <div class="top-bar">
+            <button onclick="togglePause()" id="pauseBtn">PAUSAR</button>
+            <button onclick="resetGame()">REINICIAR</button>
         </div>
     </div>
 
     <script src="script.js"></script>
-    <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./sw.js');
-        }
-    </script>
 </body>
 </html>

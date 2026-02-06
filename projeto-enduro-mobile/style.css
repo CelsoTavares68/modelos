@@ -1,83 +1,42 @@
  /* Remove margens e impede o scroll da página */
-body, html {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    height: 100%;
-    overflow: hidden; 
-    background: #000;
+ body, html {
+    margin: 0; padding: 0; width: 100%; height: 100%;
+    overflow: hidden; background: #000;
     font-family: 'Courier New', Courier, monospace;
 }
 
-/* Container principal em tela cheia */
 .game-container {
-    position: relative;
-    width: 100vw;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
+    position: relative; width: 100vw; height: 100vh;
 }
 
-/* O Canvas se ajusta ao tamanho total disponível */
 canvas {
-    display: block;
-    width: 100%;
-    height: 100%;
-    background: #000;
+    display: block; width: 100%; height: 100%;
 }
 
-/* Controles sobrepostos ao jogo na parte inferior */
 .mobile-controls {
-    position: absolute;
-    bottom: 30px; /* Distância do fundo da tela */
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    padding: 0 40px;
-    box-sizing: border-box;
-    pointer-events: none; /* Permite toques no canvas através da div, exceto nos botões */
+    position: absolute; bottom: 40px; width: 100%;
+    display: flex; justify-content: space-between;
+    padding: 0 30px; box-sizing: border-box;
+    pointer-events: none;
 }
 
-/* Estilo dos botões gigantes para polegares */
 .touch-btn {
-    pointer-events: auto; /* Reativa o toque para o botão em si */
-    width: 90px;
-    height: 90px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.15); /* Semi-transparente para não tapar o jogo */
-    border: 3px solid rgba(255, 255, 255, 0.5);
-    color: white;
-    font-size: 35px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+    pointer-events: auto; width: 85px; height: 85px;
+    border-radius: 50%; background: rgba(255, 255, 255, 0.1);
+    border: 3px solid rgba(255, 255, 255, 0.4);
+    color: white; font-size: 35px;
+    display: flex; align-items: center; justify-content: center;
+    user-select: none; -webkit-tap-highlight-color: transparent;
 }
 
-/* Feedback visual ao tocar */
-.touch-btn:active {
-    background: rgba(255, 255, 0, 0.4);
-    border-color: #ffff00;
-    transform: scale(1.1);
+.touch-btn:active { background: rgba(255, 255, 0, 0.3); border-color: #ff0; }
+
+.top-bar {
+    position: absolute; top: 60px; right: 10px;
+    display: flex; flex-direction: column; gap: 5px;
 }
 
-/* Botões de pausa/reset (opcionais, ficam no topo) */
-.controles {
-    position: absolute;
-    top: 60px; /* Abaixo do HUD de carros */
-    right: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+button {
+    background: rgba(0,0,0,0.5); color: #ff0; border: 1px solid #ff0;
+    padding: 5px 10px; font-size: 12px; cursor: pointer;
 }
-
-.controles button {
-    background: rgba(0, 0, 0, 0.6);
-    color: #ffff00;
-    border: 1px solid #ffff00;
-    padding: 8px 12px;
-    font-size: 12px;
-    text-transform: uppercase;
-}  
