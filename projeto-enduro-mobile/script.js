@@ -14,7 +14,6 @@ let dayNumber = 1, baseGoal = 200, carsRemaining = baseGoal;
 let isPaused = false, currentTime = 0;
 
 const maxSpeed = 12; 
-// Duração de cada um dos 9 estágios (Ajuste para testar mais rápido se quiser)
 const STAGE_DURATION = 2000; 
 const DAY_DURATION = STAGE_DURATION * 9; 
 
@@ -55,30 +54,29 @@ function update() {
     playerDist += speed; 
     currentTime++;
 
-    // Reinicia o dia se passar dos 9 estágios
     if (currentTime >= DAY_DURATION) {
         currentTime = 0;
         dayNumber++;
         carsRemaining = baseGoal + (dayNumber * 10);
     }
 
-    // --- LÓGICA DOS 9 ESTÁGIOS (CORES) ---
+    // --- CORES DOS ESTÁGIOS ---
     let stage = Math.floor(currentTime / STAGE_DURATION);
     let colors = { sky: "#87CEEB", grass: "#1a7a1a", mt: "#4B5320", snow: false, night: false };
 
     switch(stage) {
-        case 0: colors.sky = "#87CEEB"; break; // Dia
-        case 1: colors.sky = "#4682B4"; colors.snow = true; colors.grass = "#DDD"; break; // Neve 1
-        case 2: colors.sky = "#B0C4DE"; colors.snow = true; colors.grass = "#FFF"; break; // Neve 2
-        case 3: colors.sky = "#F4A460"; break; // Entardecer
-        case 4: colors.sky = "#FF4500"; break; // Pôr do sol
-        case 5: colors.sky = "#191970"; colors.night = true; break; // Noite
-        case 6: colors.sky = "#000055"; colors.night = true; break; // Noite Profunda
-        case 7: colors.sky = "#483D8B"; break; // Madrugada
-        case 8: colors.sky = "#B0E0E6"; break; // Amanhecer
+        case 0: colors.sky = "#87CEEB"; break;
+        case 1: colors.sky = "#4682B4"; colors.snow = true; colors.grass = "#DDD"; break;
+        case 2: colors.sky = "#B0C4DE"; colors.snow = true; colors.grass = "#FFF"; break;
+        case 3: colors.sky = "#F4A460"; break;
+        case 4: colors.sky = "#FF4500"; break;
+        case 5: colors.sky = "#191970"; colors.night = true; break;
+        case 6: colors.sky = "#000055"; colors.night = true; break;
+        case 7: colors.sky = "#483D8B"; break;
+        case 8: colors.sky = "#B0E0E6"; break;
     }
 
-    // Aceleração e Retomada
+    // Aceleração progressiva
     let accel = (speed < 2) ? 0.015 : 0.05;
     speed = Math.min(speed + accel, maxSpeed);
 
@@ -86,7 +84,7 @@ function update() {
     if (keys.ArrowRight) playerX += 12;
     playerX -= (roadCurve / 35) * (speed / maxSpeed);
 
-    // Sair da pista diminui velocidade
+    // Penalidade na grama
     let currentRoadW = 40 + (1 * canvas.width * 2.2);
     if (Math.abs(playerX) > currentRoadW / 2.1) {
         speed = Math.max(speed - 0.2, 3);
@@ -103,24 +101,36 @@ function update() {
     }
 
     enemies.forEach((e) => {
+        // Posição Z antiga para checar se "pulou" o jogador
+        let oldZ = e.z;
         e.z -= (speed - e.v);
+        
         let p = 1 - (e.z / 4000); 
         let roadW = 40 + (p * canvas.width * 2.2); 
         
         e.x = (canvas.width/2) + (roadCurve * p * p) - (playerX * p) + (e.lane * roadW * 0.4);
         e.y = (canvas.height/2) + (p * (canvas.height/2.1));
 
-        // Colisão (Traseira/Lateral)
+        // --- CONSERTO DA COLISÃO TRASEIRA ---
         let playerW = (canvas.width * 0.12); 
         let enemyW = playerW * p;
-        if (p > 0.90 && p < 1.02) {
+        
+        // Se o carro inimigo estava na sua frente (z > 0) e agora está atrás (z <= 0)
+        // OU se ele está muito perto da sua linha de base (p > 0.85)
+        if (e.z < 150 && e.z > -100) {
             let dx = Math.abs(e.x - canvas.width/2);
-            if (dx < enemyW * 0.8) {
-                speed = 0;
-                e.z += 600;
+            // Se estiver na mesma linha lateral (pista)
+            if (dx < enemyW * 0.85) {
+                speed = 0;       // Para o carro
+                e.z = 500;       // Joga o inimigo para frente para não bugar a colisão
+                currentTime -= 50; // Opcional: penalidade de tempo estilo Enduro
             }
         }
-        if (e.z <= 0 && !e.over) { carsRemaining--; e.over = true; }
+
+        if (e.z <= 0 && !e.over) { 
+            if (speed > 0) carsRemaining--; // Só conta ponto se não bateu
+            e.over = true; 
+        }
     });
 
     if (--curveTimer <= 0) { 
@@ -183,7 +193,6 @@ function drawF1Car(x, y, scale, color, night) {
     ctx.translate(x, y);
     
     if (night) {
-        // Na noite, desenha apenas os faróis traseiros vermelhos
         ctx.fillStyle = "red";
         ctx.fillRect(-w/2, -h/2, w/4, h/4);
         ctx.fillRect(w/4, -h/2, w/4, h/4);
