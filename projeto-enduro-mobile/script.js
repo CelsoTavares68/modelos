@@ -49,7 +49,25 @@ window.addEventListener('keyup', e => { if (keys.hasOwnProperty(e.code)) keys[e.
 
     bindBtn('btnLeft', 'ArrowLeft');
     bindBtn('btnRight', 'ArrowRight');
-}
+
+   // ADICIONE ISSO AQUI:
+    const bLeft = document.getElementById('btnLeft');
+    const bRight = document.getElementById('btnRight');
+    
+    if(bLeft) {
+        bLeft.onmousedown = () => keys.ArrowLeft = true;
+        bLeft.onmouseup = () => keys.ArrowLeft = false;
+        bLeft.ontouchstart = (e) => { e.preventDefault(); keys.ArrowLeft = true; };
+        bLeft.ontouchend = () => keys.ArrowLeft = false;
+    }
+    if(bRight) {
+        bRight.onmousedown = () => keys.ArrowRight = true;
+        bRight.onmouseup = () => keys.ArrowRight = false;
+        bRight.ontouchstart = (e) => { e.preventDefault(); keys.ArrowRight = true; };
+        bRight.ontouchend = () => keys.ArrowRight = false;
+    }
+} 
+
 setupMobileControls();
 
 // --- SISTEMA DE ÁUDIO MANTIDO ---
@@ -269,7 +287,7 @@ function draw(colors) {
         if (e.lastP > -2) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode);
     });
     
-    drawF1Car(200, 340, 0.85, "#E00", true, colors.nightMode);
+    drawF1Car(200, 340, 0.85, "#E00", true, colors.nightMode); 
     
     if (colors.fog) { 
         ctx.fillStyle = `rgba(180,180,180,${colors.fog})`; 
