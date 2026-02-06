@@ -1,4 +1,4 @@
-   const canvas = document.getElementById('gameCanvas');
+  const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
 function resize() {
@@ -8,62 +8,48 @@ function resize() {
 window.addEventListener('resize', resize);
 resize();
 
-let playerX = 0, speed = 0, gameTick = 0, playerDist = 0;
-let carsRemaining = 200;
+let playerX = 0, speed = 0, playerDist = 0, gameTick = 0;
 let enemies = [];
 let roadCurve = 0, targetCurve = 0, curveTimer = 0;
-const maxSpeed = 12;
+let carsRemaining = 200;
 const keys = { ArrowLeft: false, ArrowRight: false };
 
-// --- LIGAR BOTÕES MOBILE ---
+// --- BOTÕES ---
 const setupBtn = (id, key) => {
     const el = document.getElementById(id);
-    el.addEventListener('touchstart', (e) => { e.preventDefault(); keys[key] = true; });
-    el.addEventListener('touchend', (e) => { e.preventDefault(); keys[key] = false; });
+    el.ontouchstart = (e) => { e.preventDefault(); keys[key] = true; };
+    el.ontouchend = (e) => { e.preventDefault(); keys[key] = false; };
 };
 setupBtn('btnLeft', 'ArrowLeft');
 setupBtn('btnRight', 'ArrowRight');
 
-// --- O TEU DESENHO ORIGINAL DE F1 ---
 function drawF1Car(x, y, scale, color) {
-    let s = scale * (canvas.width / 400); 
+    let s = scale * (canvas.width / 350); 
     let w = 45 * s; let h = 22 * s;
     ctx.save();
     ctx.translate(x, y);
-    // Aerofólio Traseiro
-    ctx.fillStyle = color; ctx.fillRect(-w * 0.5, -h * 0.3, w, h * 0.2);
-    // Rodas
-    ctx.fillStyle = "#111"; 
-    ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8);
-    ctx.fillRect(w * 0.25, -h * 0.1, w * 0.25, h * 0.8);
-    // Corpo
-    ctx.fillStyle = color; ctx.fillRect(-w * 0.25, h * 0.1, w * 0.5, h * 0.4);
-    // Aerofólio Dianteiro
-    ctx.fillStyle = "#400";
-    ctx.fillRect(-w * 0.4, -h * 0.2, w * 0.12, h * 0.15);
-    ctx.fillRect(w * 0.28, -h * 0.2, w * 0.12, h * 0.15);
+    ctx.fillStyle = color; ctx.fillRect(-w/2, -h, w, h*0.5); // Corpo
+    ctx.fillStyle = "#111"; ctx.fillRect(-w/1.8, -h, w/4, h); // Rodas
+    ctx.fillRect(w/3, -h, w/4, h);
     ctx.restore();
 }
 
 function update() {
     gameTick++;
-    // Aceleração automática
-    speed = Math.min(speed + (speed < 4 ? 0.05 : 0.03), maxSpeed);
+    speed = Math.min(speed + (speed < 4 ? 0.03 : 0.05), 12);
 
-    if (keys.ArrowLeft) playerX -= 8;
-    if (keys.ArrowRight) playerX += 8;
+    if (keys.ArrowLeft) playerX -= 9;
+    if (keys.ArrowRight) playerX += 9;
     
-    playerX -= (roadCurve / 50) * (speed / maxSpeed);
+    playerX -= (roadCurve / 40) * (speed / 12);
     playerDist += speed;
 
-    // --- GERADOR EM SEQUÊNCIA (SEM BLOCOS) ---
-    // Verifica se o horizonte está livre (z > 3000)
-    let horizonClear = enemies.every(e => e.z < 3000);
-    if (gameTick % 120 === 0 && enemies.length < 5 && horizonClear) {
+    // Gerador de inimigos em sequência
+    let horizonClear = enemies.every(e => e.z < 3200);
+    if (gameTick % 110 === 0 && enemies.length < 6 && horizonClear) {
         enemies.push({ 
-            lane: (Math.random() - 0.5) * 1.3, // Garante que fiquem no asfalto
-            z: 4000, 
-            v: 7, 
+            lane: (Math.random() - 0.5) * 1.5, 
+            z: 4000, v: 7.2, 
             color: ["#F0F","#0FF","#0F0","#FF0"][Math.floor(Math.random()*4)],
             over: false 
         });
@@ -72,53 +58,61 @@ function update() {
     enemies.forEach(e => {
         e.z -= (speed - e.v);
         let p = 1 - (e.z / 4000);
-        let roadW = p * (canvas.width * 0.8) + 40;
         
-        // Mantém os inimigos dentro do asfalto mobile
-        e.x = (canvas.width/2) + (roadCurve * p * p) - (playerX * p) + (e.lane * roadW * 0.48);
-        e.y = (canvas.height/2) + (p * p * (canvas.height/2.2));
+        // ESTRADA LARGA: p*p garante o afunilamento real para o horizonte
+        let roadW = 20 + (p * p * canvas.width * 1.8); 
+        
+        e.x = (canvas.width/2) + (roadCurve * p * p) - (playerX * p) + (e.lane * roadW * 0.45);
+        e.y = (canvas.height/2) + (p * p * (canvas.height/2.1));
 
-        // Colisão com recuperação lenta
-        if (p > 0.85 && p < 1.05 && Math.abs(e.x - canvas.width/2) < (canvas.width * 0.12)) {
-            speed = 0.2; e.z += 1000;
+        // COLISÃO AJUSTADA: Agora você só bate se estiver realmente perto
+        let hitWidth = (canvas.width * 0.08) * p; 
+        if (p > 0.9 && p < 1.05 && Math.abs(e.x - canvas.width/2) < hitWidth) {
+            speed = 0.5; e.z += 1000;
         }
         if (e.z <= 0 && !e.over) { carsRemaining--; e.over = true; }
     });
 
-    // Lógica da Curva
-    if (--curveTimer <= 0) { 
-        targetCurve = (Math.random() - 0.5) * (canvas.width * 0.2); 
-        curveTimer = 150; 
-    }
+    if (--curveTimer <= 0) { targetCurve = (Math.random() - 0.5) * (canvas.width * 0.3); curveTimer = 150; }
     roadCurve += (targetCurve - roadCurve) * 0.02;
-
     enemies = enemies.filter(e => e.z > -500);
     draw();
     requestAnimationFrame(update);
 }
 
 function draw() {
-    // Céu e Grama
+    // Céu
     ctx.fillStyle = "#87CEEB"; ctx.fillRect(0, 0, canvas.width, canvas.height/2);
-    ctx.fillStyle = "#1a7a1a"; ctx.fillRect(0, canvas.height/2, canvas.width, canvas.height/2);
-
-    // Estrada
-    for (let i = canvas.height/2; i < canvas.height; i += 6) {
-        let p = (i - canvas.height/2) / (canvas.height/2);
-        let x = (canvas.width/2) + (roadCurve * p * p) - (playerX * p);
-        let w = p * (canvas.width * 0.8) + 40;
-        ctx.fillStyle = Math.sin(i * 0.5 + playerDist * 0.2) > 0 ? "#333" : "#444";
-        ctx.fillRect(x - w/2, i, w, 6);
+    
+    // MONTANHAS (Restauradas)
+    ctx.fillStyle = "#555";
+    for(let m = -1; m < 2; m++) {
+        let mx = (canvas.width/2) + (m * canvas.width) - (playerX * 0.1) + (roadCurve * 0.5);
+        ctx.beginPath();
+        ctx.moveTo(mx - 200, canvas.height/2);
+        ctx.lineTo(mx, canvas.height/2 - 100);
+        ctx.lineTo(mx + 200, canvas.height/2);
+        ctx.fill();
     }
 
-    // Inimigos e Jogador
-    enemies.forEach(e => { if(e.z > 0) drawF1Car(e.x, e.y, 1 - e.z/4000, e.color); });
-    drawF1Car(canvas.width/2, canvas.height * 0.88, 1.1, "#E00");
+    // Grama
+    ctx.fillStyle = "#1a7a1a"; ctx.fillRect(0, canvas.height/2, canvas.width, canvas.height/2);
 
-    // HUD
-    ctx.fillStyle = "black"; ctx.fillRect(0,0, canvas.width, 50);
-    ctx.fillStyle = "yellow"; ctx.font = "bold 16px Courier";
-    ctx.fillText(`CARS: ${carsRemaining}`, 20, 30);
+    // ESTRADA PERSPECTIVA (Larga na base)
+    for (let i = canvas.height/2; i < canvas.height; i += 4) {
+        let p = (i - canvas.height/2) / (canvas.height/2);
+        let roadW = 20 + (p * p * canvas.width * 1.8); 
+        let x = (canvas.width/2) + (roadCurve * p * p) - (playerX * p);
+        
+        ctx.fillStyle = Math.sin(i * 0.5 + playerDist * 0.2) > 0 ? "#333" : "#444";
+        ctx.fillRect(x - roadW/2, i, roadW, 4);
+    }
+
+    enemies.sort((a,b) => b.z - a.z).forEach(e => {
+        let p = 1 - (e.z/4000);
+        if(p > 0) drawF1Car(e.x, e.y, p, e.color);
+    });
+
+    drawF1Car(canvas.width/2, canvas.height * 0.9, 1.2, "#E00");
 }
-
 update();
