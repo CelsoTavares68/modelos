@@ -155,7 +155,7 @@ function update() {
     if (--curveTimer <= 0) { targetCurve = (Math.random() - 0.5) * 160; curveTimer = 120; }
     roadCurve += (targetCurve - roadCurve) * 0.02;
 
-    if (gameTick % 150 === 0 && enemies.length < 10) {
+    if (gameTick % 200 === 0 && enemies.length < 10) {
         enemies.push({ lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 8.5, color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)], isOvertaken: false });
     }
 
