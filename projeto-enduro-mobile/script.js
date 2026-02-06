@@ -8,7 +8,7 @@ let gameState = "PLAYING";
 let isPaused = false;
 
 const maxSpeed = 12; 
-// 1. ALTERAÇÃO DE TEMPO (2,5 minutos por estágio)
+// 1. ALTERAÇÃO DE TEMPO: 2,5 minutos por estágio (9000 ticks)
 const STAGE_DURATION = 9000; 
 const DAY_DURATION = STAGE_DURATION * 9; 
 let currentTime = 0; 
@@ -54,7 +54,7 @@ function playEngineSound() {
     osc.type = 'sawtooth';
     osc.frequency.setValueAtTime(60 + (speed * 15), audioCtx.currentTime);
     gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+    gain.gain.exponential_RampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
     osc.connect(gain); gain.connect(audioCtx.destination);
     osc.start(); osc.stop(audioCtx.currentTime + 0.1);
 }
@@ -72,7 +72,7 @@ function playCrashSound() {
 }
 
 function togglePause() {
-    if (gameState === "PLAYING" || gameState === "GOAL_REACHED") {
+    if (gameState === "PLAYING") {
         isPaused = !isPaused;
         const btn = document.getElementById('pauseBtn');
         if (btn) btn.innerText = isPaused ? "Retomar" : "Pausar";
@@ -92,7 +92,7 @@ function resetGame() {
 function resetDay() {
     currentTime = 0; playerDist = 0; speed = 0; enemies = [];
     carsRemaining = baseGoal + (dayNumber - 1) * 10; 
-    gameState = "PLAYING";
+    if (gameState !== "PLAYING") gameState = "PLAYING";
 }
 
 function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
@@ -107,9 +107,11 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
         ctx.fillRect(-w * 0.45, -h * 0.2, w * 0.25, h * 0.3); 
         ctx.fillRect(w * 0.2, -h * 0.2, w * 0.25, h * 0.3);
     } else {
-        ctx.fillStyle = "#111"; ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8);
+        ctx.fillStyle = "#111"; 
+        ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8);
         ctx.fillRect(w * 0.25, -h * 0.1, w * 0.25, h * 0.8);
-        ctx.fillStyle = color; ctx.fillRect(-w * 0.25, h * 0.1, w * 0.5, h * 0.4); 
+        ctx.fillStyle = color; 
+        ctx.fillRect(-w * 0.25, h * 0.1, w * 0.5, h * 0.4); 
         ctx.fillRect(-w * 0.5, -h * 0.3, w, h * 0.2); 
     }
     ctx.restore();
@@ -155,36 +157,37 @@ function update() {
     if (--curveTimer <= 0) { targetCurve = (Math.random() - 0.5) * 160; curveTimer = 120; }
     roadCurve += (targetCurve - roadCurve) * 0.02;
 
-    // RITMO ORIGINAL DE INIMIGOS (150 ticks)
-    if (gameTick % 150 === 0 && enemies.length < 10) {
-        enemies.push({ 
-            lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 8.5, 
-            color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)],
-            isOvertaken: false 
-        });
+    // --- MANTENDO A SUA TRAVA ORIGINAL (horizonClear) ---
+    if (gameTick % 150 === 0 && enemies.length < 100) {
+        let horizonClear = !enemies.some(e => e.z > 3000);
+        if (horizonClear) {
+            enemies.push({ 
+                lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 8.5, 
+                color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)],
+                isOvertaken: false 
+            });
+        }
     }
 
     enemies.forEach((enemy) => {
         enemy.z -= (speed - enemy.v);
-        let p = 1 - (enemy.z / 4000);
-        let screenX = (200 - playerX * 0.05) + (roadCurve * p * p) + (enemy.lane * 200 * p) - (playerX * p);
+        if (gameState === "PLAYING") {
+            if (enemy.z <= 0 && !enemy.isOvertaken) { carsRemaining--; enemy.isOvertaken = true; }
+            if (enemy.z > 0 && enemy.isOvertaken) { carsRemaining++; enemy.isOvertaken = false; }
+            if (carsRemaining <= 0) { carsRemaining = 0; gameState = "GOAL_REACHED"; }
+        }
         
-        enemy.lastX = screenX; 
-        enemy.lastY = 200 + (p * 140);
-        enemy.lastP = p;
-
-        // 2. COLISÃO CUBO (Só acontece se estiver no X e Z corretos)
-        if (p > 0.90 && p < 1.05 && Math.abs(screenX - 200) < 30) { 
+        let p = 1 - (enemy.z / 4000); 
+        let roadWidth = 20 + p * 800;
+        let screenX = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p) + (enemy.lane * roadWidth * 0.5);
+        
+        // --- 2. COLISÃO EM CUBO (Ajustada para o seu cálculo de screenX) ---
+        if (p > 0.94 && p < 1.05 && Math.abs(screenX - 200) < 30) { 
             speed = -1; 
             enemy.z += 600; 
             playCrashSound(); 
         }
-
-        if (gameState === "PLAYING" && enemy.z <= 0 && !enemy.isOvertaken) { 
-            carsRemaining--; 
-            enemy.isOvertaken = true; 
-            if (carsRemaining <= 0) { carsRemaining = 0; gameState = "GOAL_REACHED"; }
-        }
+        enemy.lastY = 200 + (p * 140); enemy.lastX = screenX; enemy.lastP = p;
     });
 
     enemies = enemies.filter(e => e.z > -1000 && e.z < 5000);
@@ -220,11 +223,6 @@ function draw(colors) {
     
     drawF1Car(200, 350, 0.85, "#E00", true, colors.nightMode); 
     
-    if (colors.fog) { 
-        ctx.fillStyle = `rgba(180,180,180,${colors.fog})`; 
-        ctx.fillRect(0, 180, 400, 220); 
-    }
-
     ctx.fillStyle = "black"; ctx.fillRect(0, 0, 400, 55);
     ctx.fillStyle = (gameState === "GOAL_REACHED") ? "lime" : "yellow";
     ctx.font = "bold 18px Courier";
