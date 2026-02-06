@@ -87,49 +87,79 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
     ctx.restore();
 }
 
-function update() {
+ function update() {
     if (isPaused) return; 
     gameTick++; playerDist += speed; currentTime++;
     if (gameTick % 4 === 0) playEngineSound();
 
-    // Lógica de Estágios (Tua original)
+    // 1. Lógica de Estágios e Cores
     let currentStage = Math.floor(currentTime / STAGE_DURATION);
     let colors = { sky: "#87CEEB", grass: "#1a7a1a", mt: "#555", nightMode: false };
     if (currentStage === 4 || currentStage === 5 || currentStage === 6) colors.nightMode = true;
 
-    // ACELERAÇÃO AUTOMÁTICA (Substitui o ArrowUp)
-    let offRoad = Math.abs(playerX) > canvas.width * 0.4;
-    let targetMax = offRoad ? 2 : maxSpeed;
-    speed = Math.min(speed + (speed < 4 ? 0.08 : 0.04), targetMax);
+    // 2. Aceleração Automática e Recuperação Lenta
+    let offRoad = Math.abs(playerX) > canvas.width * 0.35; // Detecta se saiu da pista
+    let targetMax = offRoad ? 3 : maxSpeed;
+    
+    // Recuperação após batida: se a velocidade for muito baixa, a aceleração é mínima (0.01)
+    let accelRate = (speed < 5) ? 0.015 : 0.04; 
+    speed = Math.min(speed + accelRate, targetMax);
 
-    // Movimento
+    // 3. Movimento Lateral
     if (keys.ArrowLeft) playerX -= 8;
     if (keys.ArrowRight) playerX += 8;
-    playerX -= (roadCurve / 40) * (speed / maxSpeed);
+    playerX -= (roadCurve / 45) * (speed / maxSpeed); // Drift na curva
     playerX = Math.max(-canvas.width * 0.8, Math.min(canvas.width * 0.8, playerX));
 
-    if (--curveTimer <= 0) { targetCurve = (Math.random() - 0.5) * (canvas.width * 0.3); curveTimer = 120; }
+    // 4. Lógica de Curva
+    if (--curveTimer <= 0) { 
+        targetCurve = (Math.random() - 0.5) * (canvas.width * 0.25); 
+        curveTimer = 150; 
+    }
     roadCurve += (targetCurve - roadCurve) * 0.02;
 
-    // INIMIGOS NO HORIZONTE
-    if (gameTick % 100 === 0 && enemies.length < 8) {
-        enemies.push({ lane: (Math.random()-0.5)*1.6, z: 4000, v: 7.5, color: ["#F0F","#0FF","#0F0","#FF0"][Math.floor(Math.random()*4)] });
+    // 5. Gerador de Inimigos em Sequência (Fila)
+    // Só cria um carro novo se o horizonte estiver limpo (z < 3000) e a cada 120 frames
+    let horizonBusy = enemies.some(e => e.z > 3000);
+    if (gameTick % 120 === 0 && enemies.length < 6 && !horizonBusy) {
+        enemies.push({ 
+            lane: (Math.random() - 0.5) * 1.2, // Faixa reduzida para garantir que fiquem no asfalto
+            z: 4000, 
+            v: 7.5, 
+            color: ["#F0F","#0FF","#0F0","#FF0"][Math.floor(Math.random()*4)],
+            over: false 
+        });
     }
 
+    // 6. Atualização dos Inimigos
     enemies.forEach(e => {
-        e.z -= (speed - e.v); // Lógica de ultrapassagem reversa se bater
+        // Velocidade relativa: se bater, eles te ultrapassam por trás
+        e.z -= (speed - e.v); 
+        
         let p = 1 - (e.z / 4000);
-        let roadW = 20 + p * (canvas.width * 1.5);
-        e.x = (canvas.width/2) + (roadCurve * p * p) - (playerX * p) + (e.lane * roadW * 0.5);
-        e.y = (canvas.height/2) + (p * p * (canvas.height/2.2));
+        // roadW ajustado para a escala mobile
+        let roadW = 20 + p * (canvas.width * 1.2); 
+        
+        // Posição X calculada para seguir a perspectiva da estrada
+        e.x = (canvas.width / 2) + (roadCurve * p * p) - (playerX * p) + (e.lane * roadW * 0.45);
+        e.y = (canvas.height / 2) + (p * p * (canvas.height / 2.2));
 
-        if (p > 0.85 && p < 1.05 && Math.abs(e.x - canvas.width/2) < (canvas.width * 0.1)) {
-            speed = 0.5; e.z += 1000; playCrashSound();
+        // Colisão com recuperação gradual
+        if (p > 0.85 && p < 1.05 && Math.abs(e.x - canvas.width / 2) < (canvas.width * 0.12)) {
+            speed = 0.2; // Velocidade cai quase a zero
+            e.z += 1200; // Joga o inimigo para frente para não bater de novo
+            playCrashSound();
         }
-        if (e.z <= 0 && !e.over) { carsRemaining--; e.over = true; }
+
+        if (e.z <= 0 && !e.over) { 
+            if (speed > e.v) carsRemaining--; 
+            e.over = true; 
+        }
     });
 
-    enemies = enemies.filter(e => e.z > -1000);
+    // Limpeza de inimigos fora de alcance
+    enemies = enemies.filter(e => e.z > -1000 && e.z < 5000);
+    
     draw(colors);
     requestAnimationFrame(update);
 }
