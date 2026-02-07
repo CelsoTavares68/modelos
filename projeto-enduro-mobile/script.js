@@ -133,7 +133,7 @@ function resetDay() {
     ctx.restore();
 }
 
-function update() {
+ function update() {
     if (isPaused) return; 
     
     if (gameState === "WIN_DAY" || gameState === "GAME_OVER") { 
@@ -174,6 +174,7 @@ function update() {
     speed = Math.min(speed + (offRoad ? 0.025 : 0.06), offRoad ? 2 : maxSpeed); 
     if (keys.ArrowDown) speed = Math.max(speed - 0.2, 0);
 
+    // Movimento lateral suave e estabilidade na curva
     playerX -= (roadCurve / 35) * (speed / maxSpeed); 
     if (keys.ArrowLeft) playerX -= 4.5;
     if (keys.ArrowRight) playerX += 4.5;
@@ -200,9 +201,11 @@ function update() {
         let roadWidth = 20 + p * 800;
         let screenX = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p) + (enemy.lane * roadWidth * 0.5);
         
-        // AJUSTE: Largura de colisão reduzida para 42 para evitar bater no "ar"
-        let hitBoxWidth = 38; 
-        if (p > 0.94 && p < 1.02) { 
+        // --- NOVA LÓGICA DE COLISÃO REFORÇADA ---
+        // Aumentamos a largura (hitBoxWidth) para 50 para garantir o choque lateral.
+        // Mas mantemos a profundidade curta (p entre 0.92 e 1.05) para não bater no ar.
+        let hitBoxWidth = 50; 
+        if (p > 0.92 && p < 1.05) { 
             if (Math.abs(screenX - 200) < hitBoxWidth) { 
                 speed = -1; 
                 enemy.z += 800; 
