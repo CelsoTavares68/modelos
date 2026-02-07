@@ -1,4 +1,4 @@
-const CACHE_NAME = 'enduro-mobile-v1';
+ const CACHE_NAME = 'enduro-mobile-v2'; // Mudei para v2
 const assets = [
   './',
   './index.html',
@@ -7,33 +7,24 @@ const assets = [
   './manifest.json'
 ];
 
-// Instala o Service Worker e guarda os arquivos no cache
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      console.log('Enduro Cache: Arquivos guardados com sucesso!');
-      return cache.addAll(assets);
-    })
+    caches.open(CACHE_NAME).then(cache => cache.addAll(assets))
   );
+  self.skipWaiting(); // Força a ativação imediata
 });
 
-// Ativa o SW e remove caches antigos se houver
 self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then(keys => {
-      return Promise.all(
-        keys.filter(key => key !== CACHE_NAME)
-            .map(key => caches.delete(key))
-      );
-    })
+    caches.keys().then(keys => Promise.all(
+      keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
+    ))
   );
 });
 
-// Responde com o cache quando estiver offline
+// Lógica "Network First": Tenta baixar o novo, se falhar usa o cache
 self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.match(event.request).then(response => {
-      return response || fetch(event.request);
-    })
+    fetch(event.request).catch(() => caches.match(event.request))
   );
 });
