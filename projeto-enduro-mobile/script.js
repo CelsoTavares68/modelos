@@ -24,60 +24,30 @@ window.addEventListener('keydown', e => {
 window.addEventListener('keyup', e => { if (keys.hasOwnProperty(e.code)) keys[e.code] = false; });
 
 function setupMobileControls() {
-    const ids = { 'btnLeft': 'ArrowLeft', 'btnRight': 'ArrowRight', 'mobileLeft': 'ArrowLeft', 'mobileRight': 'ArrowRight' };
+    // Sincronizei os IDs com o seu index.html (mobileLeft e mobileRight)
+    const ids = { 'mobileLeft': 'ArrowLeft', 'mobileRight': 'ArrowRight' };
     Object.keys(ids).forEach(id => {
         const btn = document.getElementById(id);
         if (btn) {
             const press = (e) => { 
-                if(e.type === 'touchstart') e.preventDefault();
+                e.preventDefault();
                 keys[ids[id]] = true; 
                 if(audioCtx.state === 'suspended') audioCtx.resume(); 
             };
-            const release = () => { keys[ids[id]] = false; };
+            const release = (e) => { 
+                e.preventDefault();
+                keys[ids[id]] = false; 
+            };
+            btn.addEventListener('touchstart', press, {passive: false});
+            btn.addEventListener('touchend', release, {passive: false});
             btn.addEventListener('mousedown', press);
             btn.addEventListener('mouseup', release);
-            btn.addEventListener('mouseleave', release);
-            btn.addEventListener('touchstart', press, {passive: false});
-            btn.addEventListener('touchend', release);
         }
     });
 }
 setupMobileControls();
 
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-// --- NOVAS FUNÇÕES DE SOM (VITÓRIA E DERROTA) ---
-function playWinSound() {
-    const notes = [523.25, 659.25, 783.99, 1046.50]; // Acorde subindo
-    notes.forEach((freq, i) => {
-        setTimeout(() => {
-            let osc = audioCtx.createOscillator();
-            let gain = audioCtx.createGain();
-            osc.type = 'square';
-            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.start(); osc.stop(audioCtx.currentTime + 0.4);
-        }, i * 150);
-    });
-}
-
-function playGameOverSound() {
-    const notes = [200, 150, 100]; // Notas caindo
-    notes.forEach((freq, i) => {
-        setTimeout(() => {
-            let osc = audioCtx.createOscillator();
-            let gain = audioCtx.createGain();
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.6);
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.start(); osc.stop(audioCtx.currentTime + 0.6);
-        }, i * 200);
-    });
-}
 
 function playEngineSound() {
     if (isPaused || speed <= 0 || audioCtx.state !== 'running') return;
@@ -113,7 +83,7 @@ function togglePause() {
 }
 
 function resetGame() {
-    audioCtx.resume();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
     dayNumber = 1; baseGoal = 200; isPaused = false;
     const btn = document.getElementById('pauseBtn');
     if (btn) btn.innerText = "Pausar";
@@ -123,7 +93,7 @@ function resetGame() {
 
 function resetDay() {
     currentTime = 0; playerDist = 0; speed = 0; enemies = [];
-    carsRemaining = baseGoal + (dayNumber - 1) * 10; 
+    carsRemaining = baseGoal + (dayNumber - 1) * 20; 
     gameState = "PLAYING";
 }
 
@@ -134,10 +104,21 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
     ctx.save();
     ctx.translate(x, y);
     if(isPlayer) ctx.rotate((roadCurve / 40) * Math.PI / 180);
+
     if (nightMode) {
+        ctx.fillStyle = "#111"; 
+        ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8);
+        ctx.fillRect(w * 0.25, -h * 0.1, w * 0.25, h * 0.8);
+        ctx.fillRect(-w * 0.25, h * 0.1, w * 0.5, h * 0.4); 
+        ctx.fillRect(-w * 0.5, -h * 0.3, w, h * 0.2);
+        ctx.fillStyle = "rgba(255, 255, 200, 0.2)";
+        ctx.beginPath();
+        ctx.arc(-w * 0.3, h * 0.5, w * 0.2, 0, Math.PI * 2);
+        ctx.arc(w * 0.3, h * 0.5, w * 0.2, 0, Math.PI * 2);
+        ctx.fill();
         ctx.fillStyle = "#ff0000";
-        ctx.fillRect(-w * 0.45, -h * 0.2, w * 0.25, h * 0.3); 
-        ctx.fillRect(w * 0.2, -h * 0.2, w * 0.25, h * 0.3);
+        ctx.fillRect(-w * 0.45, -h * 0.2, w * 0.2, h * 0.2); 
+        ctx.fillRect(w * 0.25, -h * 0.2, w * 0.2, h * 0.2);
     } else {
         ctx.fillStyle = "#111"; 
         ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8);
@@ -151,7 +132,12 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
 
 function update() {
     if (isPaused) return; 
-    if (gameState === "WIN_DAY" || gameState === "GAME_OVER") { draw(); requestAnimationFrame(update); return; }
+    
+    if (gameState === "WIN_DAY" || gameState === "GAME_OVER") { 
+        draw(); 
+        requestAnimationFrame(update); 
+        return; 
+    }
 
     gameTick++; playerDist += speed; currentTime++;
     if (gameTick % 4 === 0) playEngineSound();
@@ -171,26 +157,13 @@ function update() {
         case 8: colors.sky = "#ade1f2"; colors.grass = "#1a7a1a"; colors.mt = "#555"; break; 
     }
 
-    // --- LÓGICA DE FIM DE DIA COM SONS ---
-    if (currentTime >= DAY_DURATION) {
-        if (gameState === "GOAL_REACHED" || carsRemaining <= 0) {
-            gameState = "WIN_DAY"; 
-            playWinSound();
-            dayNumber++; 
-            setTimeout(resetDay, 4500); // Aumentado para ouvir a música
-        } else { 
-            gameState = "GAME_OVER"; 
-            playGameOverSound();
-        }
-    }
-
     let offRoad = Math.abs(playerX) > 380;
     speed = Math.min(speed + (offRoad ? 0.025 : 0.06), offRoad ? 2 : maxSpeed); 
     if (keys.ArrowDown) speed = Math.max(speed - 0.2, 0);
 
-    playerX -= (roadCurve / 25) * (speed / maxSpeed); 
-    if (keys.ArrowLeft) playerX -= 7;
-    if (keys.ArrowRight) playerX += 7;
+    playerX -= (roadCurve / 35) * (speed / maxSpeed); 
+    if (keys.ArrowLeft) playerX -= 4.5;
+    if (keys.ArrowRight) playerX += 4.5;
     playerX = Math.max(-450, Math.min(450, playerX));
 
     if (--curveTimer <= 0) { targetCurve = (Math.random() - 0.5) * 160; curveTimer = 120; }
@@ -213,8 +186,8 @@ function update() {
         let roadWidth = 20 + p * 800;
         let screenX = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p) + (enemy.lane * roadWidth * 0.5);
         
-        let hitBoxWidth = 55; 
-        if (p > 0.90 && p < 1.10) { 
+        let hitBoxWidth = 50; 
+        if (p > 0.92 && p < 1.05) { 
             if (Math.abs(screenX - 200) < hitBoxWidth) { 
                 speed = -1; 
                 enemy.z += 800; 
@@ -237,6 +210,8 @@ function update() {
 }
 
 function draw(colors) {
+    if (!colors) colors = { sky: "#87CEEB", grass: "#1a7a1a", mt: "#555", fog: 0, nightMode: false, snowCaps: false };
+
     ctx.fillStyle = colors.sky; ctx.fillRect(0, 0, 400, 200);
     ctx.fillStyle = colors.grass; ctx.fillRect(0, 200, 400, 200);
     
@@ -245,6 +220,10 @@ function draw(colors) {
         let bx = (i * 100) + mtShift;
         ctx.fillStyle = colors.mt;
         ctx.beginPath(); ctx.moveTo(bx - 60, 200); ctx.lineTo(bx, 140); ctx.lineTo(bx + 60, 200); ctx.fill();
+        if (colors.snowCaps) {
+            ctx.fillStyle = "white";
+            ctx.beginPath(); ctx.moveTo(bx, 140); ctx.lineTo(bx - 20, 160); ctx.lineTo(bx + 20, 160); ctx.fill();
+        }
     }
 
     for (let i = 200; i < 400; i += 4) {
@@ -259,27 +238,18 @@ function draw(colors) {
     }
     
     enemies.sort((a,b) => b.z - a.z).forEach(e => {
-        if (e.lastP > 0 && e.lastP < 2) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode);
+        if (e.lastP > 0 && e.lastP < 0.92) {
+            drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode);
+        }
     });
     
     drawF1Car(200, 350, 0.85, "#E00", true, colors.nightMode); 
 
-    // --- BANDEIRINHAS TREMULANDO NA VITÓRIA ---
-    if (gameState === "WIN_DAY") {
-        let wave = Math.sin(gameTick * 0.2) * 5; // Efeito de balanço
-        ctx.fillStyle = "white";
-        // Mastro esquerdo
-        ctx.fillRect(160, 310, 2, 30);
-        // Bandeira quadriculada (alterna cores no tempo)
-        ctx.fillStyle = (gameTick % 10 < 5) ? "black" : "white";
-        ctx.fillRect(135 + wave, 310, 25, 15);
-        
-        ctx.fillStyle = "white";
-        // Mastro direito
-        ctx.fillRect(240, 310, 2, 30);
-        ctx.fillStyle = (gameTick % 10 < 5) ? "white" : "black";
-        ctx.fillRect(242 + wave, 310, 25, 15);
-    }
+    enemies.forEach(e => {
+        if (e.lastP >= 0.92 && e.lastP < 2) {
+            drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode);
+        }
+    });
 
     if (colors.fog > 0) {
         ctx.fillStyle = `rgba(200,200,200,${colors.fog})`;
@@ -289,12 +259,11 @@ function draw(colors) {
     ctx.fillStyle = "black"; ctx.fillRect(0, 0, 400, 55);
     ctx.fillStyle = (gameState === "GOAL_REACHED" || gameState === "WIN_DAY") ? "lime" : "yellow";
     ctx.font = "bold 18px Courier";
-    ctx.fillText((gameState === "GOAL_REACHED" || gameState === "WIN_DAY") ? "GOAL OK!" : `CARS: ${carsRemaining}`, 15, 35);
+    ctx.fillText(gameState === "GOAL_REACHED" || gameState === "WIN_DAY" ? "GOAL OK!" : `CARS: ${carsRemaining}`, 15, 35);
     ctx.fillStyle = "yellow"; ctx.fillText(`DAY: ${dayNumber}`, 160, 35);
     ctx.fillStyle = "#444"; ctx.fillRect(260, 20, 120, 15);
     ctx.fillStyle = "lime"; ctx.fillRect(260, 20, (currentTime/DAY_DURATION) * 120, 15);
 
-    // --- MENSAGENS DE FIM DE JOGO ---
     if (gameState === "WIN_DAY") {
         ctx.fillStyle = "rgba(0,0,0,0.7)"; ctx.fillRect(0, 55, 400, 345);
         ctx.fillStyle = "lime"; ctx.textAlign = "center";
@@ -305,7 +274,7 @@ function draw(colors) {
     if (gameState === "GAME_OVER") {
         ctx.fillStyle = "rgba(200,0,0,0.8)"; ctx.fillRect(0, 55, 400, 345);
         ctx.fillStyle = "white"; ctx.textAlign = "center";
-        ctx.font = "bold 30px Courier"; ctx.fillText("GAME OVER", 200, 200);
+        ctx.font = "bold 30px Courier"; ctx.fillText("FIM DE JOGO", 200, 200);
         ctx.textAlign = "left";
     }
 

@@ -1,5 +1,19 @@
- body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #111; }
-.game-container { position: relative; width: 100vw; height: 100vh; display: flex; flex-direction: column; }
+ body, html { 
+    margin: 0; 
+    padding: 0; 
+    width: 100%; 
+    height: 100%; 
+    overflow: hidden; 
+    background: #111; 
+}
+
+.game-container { 
+    position: relative; 
+    width: 100vw; 
+    height: 100vh; 
+    display: flex; 
+    flex-direction: column; 
+}
 
 /* AJUSTE: O canvas agora tem uma margem no topo para não bater nos botões */
 canvas { 
@@ -81,6 +95,14 @@ canvas {
 }
 
 /* Mantendo o estilo genérico de botões que você tinha */
-button { background: rgba(0,0,0,0.6); color: white; border: 1px solid white; padding: 8px 15px; font-family: 'Courier New', monospace; }
+button { 
+    background: rgba(0,0,0,0.6); 
+    color: white; 
+    border: 1px solid white; 
+    padding: 8px 15px; 
+    font-family: 'Courier New', monospace; 
+}
 
-.instrucoes { display: none; }
+.instrucoes { 
+    display: none; 
+}
