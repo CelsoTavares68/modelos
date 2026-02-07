@@ -97,7 +97,7 @@ function resetDay() {
     gameState = "PLAYING";
 }
 
-function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
+ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
     let s = scale * 1.2; 
     if (s < 0.02 || s > 30) return; 
     let w = 45 * s; let h = 22 * s; 
@@ -105,27 +105,28 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
     ctx.translate(x, y);
     if(isPlayer) ctx.rotate((roadCurve / 40) * Math.PI / 180);
 
+    // Corpo do carro (Desenha sempre)
+    ctx.fillStyle = "#111"; 
+    ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8); // Rodas traseiras
+    ctx.fillRect(w * 0.25, -h * 0.1, w * 0.25, h * 0.8); // Rodas dianteiras
+    ctx.fillStyle = color; 
+    ctx.fillRect(-w * 0.25, h * 0.1, w * 0.5, h * 0.4); // Corpo central
+    ctx.fillRect(-w * 0.5, -h * 0.3, w, h * 0.2); // Aerofólio
+
+    // MODO NOTURNO (Faróis para frente)
     if (nightMode) {
-        ctx.fillStyle = "#111"; 
-        ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8);
-        ctx.fillRect(w * 0.25, -h * 0.1, w * 0.25, h * 0.8);
-        ctx.fillRect(-w * 0.25, h * 0.1, w * 0.5, h * 0.4); 
-        ctx.fillRect(-w * 0.5, -h * 0.3, w, h * 0.2);
-        ctx.fillStyle = "rgba(255, 255, 200, 0.2)";
+        // Brilho do farol (bolinhas brancas à frente)
+        ctx.fillStyle = "rgba(255, 255, 200, 0.8)";
         ctx.beginPath();
-        ctx.arc(-w * 0.3, h * 0.5, w * 0.2, 0, Math.PI * 2);
-        ctx.arc(w * 0.3, h * 0.5, w * 0.2, 0, Math.PI * 2);
+        // Aumentei o valor de X para 0.4 e 0.5 para projetar a luz na FRENTE do carro
+        ctx.arc(w * 0.4, h * 0.5, w * 0.15, 0, Math.PI * 2); 
+        ctx.arc(w * 0.6, h * 0.5, w * 0.15, 0, Math.PI * 2);
         ctx.fill();
-        ctx.fillStyle = "#ff0000";
-        ctx.fillRect(-w * 0.45, -h * 0.2, w * 0.2, h * 0.2); 
-        ctx.fillRect(w * 0.25, -h * 0.2, w * 0.2, h * 0.2);
-    } else {
-        ctx.fillStyle = "#111"; 
-        ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8);
-        ctx.fillRect(w * 0.25, -h * 0.1, w * 0.25, h * 0.8);
-        ctx.fillStyle = color; 
-        ctx.fillRect(-w * 0.25, h * 0.1, w * 0.5, h * 0.4); 
-        ctx.fillRect(-w * 0.5, -h * 0.3, w, h * 0.2); 
+
+        // Lanternas traseiras (opcional: dois pontinhos vermelhos atrás)
+        ctx.fillStyle = "#500"; // Vermelho escuro
+        ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.1, h * 0.1);
+        ctx.fillRect(-w * 0.5, h * 0.4, w * 0.1, h * 0.1);
     }
     ctx.restore();
 }
