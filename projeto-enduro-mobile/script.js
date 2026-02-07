@@ -73,6 +73,34 @@ function playCrashSound() {
     osc.start(); osc.stop(audioCtx.currentTime + 0.4);
 }
 
+function playWinSound() {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    let osc = audioCtx.createOscillator();
+    let gain = audioCtx.createGain();
+    // Som tipo "Fanfarra" (sobe o tom)
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.5);
+    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.5);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime + 0.5);
+}
+
+function playGameOverSound() {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    let osc = audioCtx.createOscillator();
+    let gain = audioCtx.createGain();
+    // Som triste (desce o tom)
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+    osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 1);
+    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime + 1);
+}
+
 function togglePause() {
     if (gameState === "PLAYING" || gameState === "GOAL_REACHED") {
         isPaused = !isPaused;
@@ -154,19 +182,43 @@ function resetDay() {
     ctx.restore();
 }
 
-function update() {
+ function update() {
     if (isPaused) return; 
     
+    // Se o estado for de vitória ou derrota, para o processamento e apenas desenha a tela final
     if (gameState === "WIN_DAY" || gameState === "GAME_OVER") { 
         draw(); 
         requestAnimationFrame(update); 
         return; 
     }
 
-    gameTick++; playerDist += speed; currentTime++;
+    gameTick++; 
+    playerDist += speed; 
+    currentTime++; // Incrementa o cronômetro do dia
+
     if (gameTick % 4 === 0) playEngineSound();
 
+    // 1. CALCULA O ESTÁGIO ATUAL (0 a 8)
     let currentStage = Math.floor(currentTime / STAGE_DURATION);
+
+    // 2. REGRA DE FIM DE DIA (O que estava faltando)
+    // Se o tempo atual atingir o limite do dia (DAY_DURATION)
+    if (currentTime >= DAY_DURATION) {
+        // Se a meta foi batida (GOAL_REACHED) ou o contador zerou
+        if (gameState === "GOAL_REACHED" || carsRemaining <= 0) {
+            gameState = "WIN_DAY"; 
+            dayNumber++; 
+            // Espera 4 segundos exibindo a mensagem de vitória e reseta para o dia seguinte
+            setTimeout(resetDay, 4000); 
+        } else { 
+            // Se o tempo acabou e você não ultrapassou os carros necessários
+            gameState = "GAME_OVER"; 
+        }
+        // Trava o tempo no limite para evitar que o switch case abaixo dê erro
+        currentTime = DAY_DURATION - 1; 
+    }
+
+    // Configuração de cores e clima por estágio
     let colors = { sky: "#87CEEB", grass: "#1a7a1a", fog: 0, mt: "#555", nightMode: false, snowCaps: false };
 
     switch(currentStage) {
@@ -181,15 +233,18 @@ function update() {
         case 8: colors.sky = "#ade1f2"; colors.grass = "#1a7a1a"; colors.mt = "#555"; break; 
     }
 
-     let offRoad = Math.abs(playerX) > 380;
+    // 3. REGRAS DE FÍSICA E ACELERAÇÃO (Mantendo suas regras de penalidade)
+    let offRoad = Math.abs(playerX) > 380;
     if (offRoad) {
-        speed = Math.min(speed + 0.01, 2); 
+        speed = Math.min(speed + 0.01, 2); // Aceleração curtíssima na grama
     } else {
+        // Retomada lenta se estiver abaixo de 5 de velocidade
         let acceleration = (speed < 5) ? 0.02 : 0.06;
         speed = Math.min(speed + acceleration, maxSpeed);
     }
     if (keys.ArrowDown) speed = Math.max(speed - 0.2, 0);
 
+    // Curvatura e movimento
     playerX -= (roadCurve / 35) * (speed / maxSpeed); 
     if (keys.ArrowLeft) playerX -= 4.5;
     if (keys.ArrowRight) playerX += 4.5;
@@ -198,6 +253,7 @@ function update() {
     if (--curveTimer <= 0) { targetCurve = (Math.random() - 0.5) * 160; curveTimer = 120; }
     roadCurve += (targetCurve - roadCurve) * 0.02;
 
+    // Gerador de inimigos
     if (gameTick % 150 === 0 && enemies.length < 100) {
         let horizonClear = !enemies.some(e => e.z > 3000);
         if (horizonClear) {
@@ -209,6 +265,7 @@ function update() {
         }
     }
 
+    // Colisão e ultrapassagem
     enemies.forEach((enemy) => {
         enemy.z -= (speed - enemy.v);
         let p = 1 - (enemy.z / 4000); 
@@ -218,7 +275,7 @@ function update() {
         let hitBoxWidth = 50; 
         if (p > 0.92 && p < 1.05) { 
             if (Math.abs(screenX - 200) < hitBoxWidth) { 
-                speed = -3; 
+                speed = -3; // Penalidade de batida
                 enemy.z += 800; 
                 playCrashSound(); 
             }
