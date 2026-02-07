@@ -121,7 +121,7 @@ function resetGame() {
 
 function resetDay() {
     currentTime = 0; playerDist = 0; speed = 0; enemies = [];
-    carsRemaining = baseGoal + (dayNumber - 1) * 20; 
+    carsRemaining = baseGoal + (dayNumber - 1) * 10; 
     gameState = "PLAYING";
 }
 
