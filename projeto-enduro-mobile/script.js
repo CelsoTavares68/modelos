@@ -279,13 +279,19 @@ function resetDay() {
     
     // 4. Desenha os Inimigos (Ordenados por profundidade Z para sobreposição correta)
     enemies.sort((a,b) => b.z - a.z).forEach(e => {
-        if (e.lastP > 0 && e.lastP < 2) {
+        if (e.lastP > 0 && e.lastP < 0.92) {
             drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode);
         }
     });
     
     // 5. Desenha o Carro do Jogador (Sempre à frente)
     drawF1Car(200, 350, 0.85, "#E00", true, colors.nightMode); 
+
+    enemies.forEach(e => {
+    if (e.lastP >= 0.92 && e.lastP < 2) {
+        drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode);
+    }
+});
 
     // 6. Efeito de Neblina (se houver)
     if (colors.fog > 0) {
