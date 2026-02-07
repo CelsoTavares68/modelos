@@ -97,19 +97,20 @@ function resetDay() {
     gameState = "PLAYING";
 }
 
-  function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
+   function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
     let s = scale * 1.2; 
     if (s < 0.02 || s > 30) return; 
     let w = 45 * s; let h = 22 * s; 
     
     ctx.save();
     ctx.translate(x, y);
+    // Se for o jogador, inclina levemente conforme a curva
     if(isPlayer) ctx.rotate((roadCurve / 40) * Math.PI / 180);
 
-    // No modo noturno, o carro fica preto. No dia, usa a cor original.
+    // No modo noturno (etapas 4, 5, 6), os carros ficam pretos
     let carColor = nightMode ? "#000" : color;
 
-    // 1. RODAS (Sempre escuras)
+    // 1. RODAS
     ctx.fillStyle = "#111"; 
     ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8); // Traseiras
     ctx.fillRect(w * 0.25, -h * 0.1, w * 0.25, h * 0.8); // Dianteiras
@@ -119,31 +120,35 @@ function resetDay() {
     ctx.fillRect(-w * 0.25, h * 0.1, w * 0.5, h * 0.4);   // Chassi
     ctx.fillRect(-w * 0.5, -h * 0.3, w, h * 0.2);        // Aerofólio
 
-    // 3. ILUMINAÇÃO NOTURNA
+    // 3. MODO NOTURNO: Lanternas e Faróis "para cima"
     if (nightMode) {
-        // LANTERNAS TRASEIRAS (Pontos vermelhos no aerofólio)
+        // LANTERNAS TRASEIRAS (Vermelhas - ficam na parte de baixo do desenho)
         ctx.fillStyle = "#FF0000";
-        ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.1, h * 0.1);
-        ctx.fillRect(-w * 0.5, h * 0.4, w * 0.1, h * 0.1);
+        ctx.fillRect(-w * 0.4, h * 0.4, w * 0.15, h * 0.15);
+        ctx.fillRect(w * 0.25, h * 0.4, w * 0.15, h * 0.15);
 
-        // FEIXE DE LUZ (Projetado para frente do carro)
-        // O ponto w * 0.5 é a frente do carro. O feixe vai até w * 3.0
-        let gradient = ctx.createLinearGradient(w * 0.4, 0, w * 3.0, 0);
-        gradient.addColorStop(0, "rgba(255, 255, 200, 0.5)");
+        // FEIXE DE LUZ (Projetado para CIMA/FRENTE)
+        // Criamos um gradiente que começa no bico e sobe sumindo
+        let lightLength = h * 6.0; // Comprimento do feixe
+        let gradient = ctx.createLinearGradient(0, 0, 0, -lightLength);
+        gradient.addColorStop(0, "rgba(255, 255, 200, 0.6)");
         gradient.addColorStop(1, "rgba(255, 255, 200, 0)");
         
         ctx.fillStyle = gradient;
         ctx.beginPath();
-        ctx.moveTo(w * 0.4, h * 0.2);      // Origem no farol esquerdo
-        ctx.lineTo(w * 3.0, h * -1.5);     // Expande para frente/esquerda
-        ctx.lineTo(w * 3.0, h * 2.5);      // Expande para frente/direita
-        ctx.lineTo(w * 0.4, h * 0.8);      // Origem no farol direito
+        // A luz sai da parte da frente do carro (h * 0) e vai para cima (h negativo)
+        ctx.moveTo(-w * 0.2, 0);           // Origem farol esquerdo
+        ctx.lineTo(-w * 1.5, -lightLength); // Expande para esquerda e cima
+        ctx.lineTo(w * 1.5, -lightLength);  // Expande para direita e cima
+        ctx.lineTo(w * 0.2, 0);            // Origem farol direito
         ctx.fill();
 
-        // LUZ DO FAROL (O ponto físico no bico)
-        ctx.fillStyle = "#FFFFCC";
-        ctx.fillRect(w * 0.4, h * 0.2, w * 0.1, h * 0.1);
-        ctx.fillRect(w * 0.4, h * 0.7, w * 0.1, h * 0.1);
+        // PONTOS BRANCOS DOS FARÓIS (No bico do carro)
+        ctx.fillStyle = "#FFF";
+        ctx.beginPath();
+        ctx.arc(-w * 0.15, 0, w * 0.08, 0, Math.PI * 2);
+        ctx.arc(w * 0.15, 0, w * 0.08, 0, Math.PI * 2);
+        ctx.fill();
     }
     
     ctx.restore();
