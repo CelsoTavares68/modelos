@@ -1,4 +1,4 @@
- const canvas = document.getElementById('gameCanvas');
+  const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 canvas.width = 400; canvas.height = 400;
 
@@ -15,6 +15,10 @@ let currentTime = 0;
 let enemies = [];
 let roadCurve = 0, targetCurve = 0, curveTimer = 0;
 
+// Variáveis para Clima
+let raindrops = []; 
+let lightningAlpha = 0; 
+
 const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
 
 window.addEventListener('keydown', e => { 
@@ -24,7 +28,6 @@ window.addEventListener('keydown', e => {
 window.addEventListener('keyup', e => { if (keys.hasOwnProperty(e.code)) keys[e.code] = false; });
 
 function setupMobileControls() {
-    // Sincronizei os IDs com o seu index.html (mobileLeft e mobileRight)
     const ids = { 'mobileLeft': 'ArrowLeft', 'mobileRight': 'ArrowRight' };
     Object.keys(ids).forEach(id => {
         const btn = document.getElementById(id);
@@ -77,7 +80,6 @@ function playWinSound() {
     if (audioCtx.state === 'suspended') audioCtx.resume();
     let osc = audioCtx.createOscillator();
     let gain = audioCtx.createGain();
-    // Som tipo "Fanfarra" (sobe o tom)
     osc.type = 'square';
     osc.frequency.setValueAtTime(400, audioCtx.currentTime);
     osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.5);
@@ -91,7 +93,6 @@ function playGameOverSound() {
     if (audioCtx.state === 'suspended') audioCtx.resume();
     let osc = audioCtx.createOscillator();
     let gain = audioCtx.createGain();
-    // Som triste (desce o tom)
     osc.type = 'sawtooth';
     osc.frequency.setValueAtTime(300, audioCtx.currentTime);
     osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 1);
@@ -125,64 +126,53 @@ function resetDay() {
     gameState = "PLAYING";
 }
 
-   function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
+function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
     let s = scale * 1.2; 
     if (s < 0.02 || s > 30) return; 
     let w = 45 * s; let h = 22 * s; 
     
     ctx.save();
     ctx.translate(x, y);
-    // Se for o jogador, inclina levemente conforme a curva
     if(isPlayer) ctx.rotate((roadCurve / 40) * Math.PI / 180);
 
-    // No modo noturno (etapas 4, 5, 6), os carros ficam pretos
     let carColor = nightMode ? "#000" : color;
 
-    // 1. RODAS
     ctx.fillStyle = "#111"; 
-    ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8); // Traseiras
-    ctx.fillRect(w * 0.25, -h * 0.1, w * 0.25, h * 0.8); // Dianteiras
+    ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8); 
+    ctx.fillRect(w * 0.25, -h * 0.1, w * 0.25, h * 0.8); 
 
-    // 2. CORPO DO CARRO
     ctx.fillStyle = carColor; 
-    ctx.fillRect(-w * 0.25, h * 0.1, w * 0.5, h * 0.4);   // Chassi
-    ctx.fillRect(-w * 0.5, -h * 0.3, w, h * 0.2);        // Aerofólio
+    ctx.fillRect(-w * 0.25, h * 0.1, w * 0.5, h * 0.4);   
+    ctx.fillRect(-w * 0.5, -h * 0.3, w, h * 0.2);        
 
-    // 3. MODO NOTURNO: Lanternas e Faróis "para cima"
     if (nightMode) {
-        // LANTERNAS TRASEIRAS (Vermelhas - ficam na parte de baixo do desenho)
         ctx.fillStyle = "#FF0000";
         ctx.fillRect(-w * 0.4, h * 0.4, w * 0.15, h * 0.15);
         ctx.fillRect(w * 0.25, h * 0.4, w * 0.15, h * 0.15);
 
-        // FEIXE DE LUZ (Projetado para CIMA/FRENTE)
-        // Criamos um gradiente que começa no bico e sobe sumindo
-        let lightLength = h * 6.0; // Comprimento do feixe
+        let lightLength = h * 6.0; 
         let gradient = ctx.createLinearGradient(0, 0, 0, -lightLength);
         gradient.addColorStop(0, "rgba(255, 255, 200, 0.6)");
         gradient.addColorStop(1, "rgba(255, 255, 200, 0)");
         
         ctx.fillStyle = gradient;
         ctx.beginPath();
-        // A luz sai da parte da frente do carro (h * 0) e vai para cima (h negativo)
-        ctx.moveTo(-w * 0.2, 0);           // Origem farol esquerdo
-        ctx.lineTo(-w * 1.5, -lightLength); // Expande para esquerda e cima
-        ctx.lineTo(w * 1.5, -lightLength);  // Expande para direita e cima
-        ctx.lineTo(w * 0.2, 0);            // Origem farol direito
+        ctx.moveTo(-w * 0.2, 0);           
+        ctx.lineTo(-w * 1.5, -lightLength); 
+        ctx.lineTo(w * 1.5, -lightLength);  
+        ctx.lineTo(w * 0.2, 0);            
         ctx.fill();
 
-        // PONTOS BRANCOS DOS FARÓIS (No bico do carro)
         ctx.fillStyle = "#ffffff00";
         ctx.beginPath();
         ctx.arc(-w * 0.15, 0, w * 0.08, 0, Math.PI * 2);
         ctx.arc(w * 0.15, 0, w * 0.08, 0, Math.PI * 2);
         ctx.fill();
     }
-    
     ctx.restore();
 }
 
-  function update() {
+function update() {
     if (isPaused) return; 
     
     if (gameState === "WIN_DAY" || gameState === "GAME_OVER") { 
@@ -198,20 +188,34 @@ function resetDay() {
     if (gameTick % 4 === 0) playEngineSound();
 
     let currentStage = Math.min(Math.floor(currentTime / STAGE_DURATION), 8);
+    let isRaining = (currentStage === 3 || currentStage === 7);
 
-    // LÓGICA DE FIM DE DIA
+    // Lógica de Clima (Raios e Chuva)
+    if ((currentStage === 3 || currentStage === 4) && gameTick % 1800 === 0) {
+        lightningAlpha = 1.0; 
+    }
+    if (lightningAlpha > 0) lightningAlpha -= 0.05;
+
+    if (isRaining) {
+        for (let i = 0; i < 5; i++) {
+            raindrops.push({ x: Math.random() * 400, y: Math.random() * 400, s: Math.random() * 10 + 10 });
+        }
+    }
+    raindrops.forEach(r => { r.y += r.s; if(r.y > 400) r.y = 0; });
+
+    // Lógica de Fim de Dia
     if (currentTime >= DAY_DURATION) {
         if (gameState === "GOAL_REACHED" || carsRemaining <= 0) {
-            if (gameState !== "WIN_DAY") { // Garante que o som toque apenas uma vez
+            if (gameState !== "WIN_DAY") {
                 gameState = "WIN_DAY"; 
-                playWinSound(); // Toca som de vitória
+                playWinSound(); 
                 dayNumber++; 
                 setTimeout(resetDay, 4000); 
             }
         } else { 
             if (gameState !== "GAME_OVER") {
                 gameState = "GAME_OVER"; 
-                playGameOverSound(); // Toca som de derrota
+                playGameOverSound(); 
             }
         }
         currentTime = DAY_DURATION - 1; 
@@ -231,13 +235,14 @@ function resetDay() {
         case 8: colors.sky = "#ade1f2"; colors.grass = "#1a7a1a"; colors.mt = "#555"; break; 
     }
 
-    // FÍSICA E PENALIDADE
+    // Física e Penalidade (Jogador e Chuva)
     let offRoad = Math.abs(playerX) > 380;
     if (offRoad) {
         speed = Math.min(speed + 0.01, 2); 
     } else {
         let acceleration = (speed < 5) ? 0.02 : 0.06;
-        speed = Math.min(speed + acceleration, maxSpeed);
+        let rainMaxSpeed = isRaining ? 9 : maxSpeed;
+        speed = Math.min(speed + acceleration, rainMaxSpeed);
     }
     if (keys.ArrowDown) speed = Math.max(speed - 0.2, 0);
 
@@ -249,12 +254,13 @@ function resetDay() {
     if (--curveTimer <= 0) { targetCurve = (Math.random() - 0.5) * 160; curveTimer = 120; }
     roadCurve += (targetCurve - roadCurve) * 0.02;
 
-    // INIMIGOS
+    // Inimigos (Penalidade de Chuva para todos)
     if (gameTick % 150 === 0 && enemies.length < 100) {
         let horizonClear = !enemies.some(e => e.z > 3000);
         if (horizonClear) {
+            let enemyBaseV = isRaining ? 6 : 8.5; 
             enemies.push({ 
-                lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 8.5, 
+                lane: (Math.random() - 0.5) * 1.8, z: 4000, v: enemyBaseV, 
                 color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)],
                 isOvertaken: false 
             });
@@ -331,6 +337,20 @@ function draw(colors) {
         }
     });
 
+    // Chuva e Relâmpago
+    if (colors.sky === "#4B0082" || colors.fog === 0.3) {
+        ctx.strokeStyle = "rgba(200, 200, 255, 0.4)";
+        ctx.lineWidth = 1;
+        raindrops.forEach(r => {
+            ctx.beginPath(); ctx.moveTo(r.x, r.y); ctx.lineTo(r.x + 1, r.y + 15); ctx.stroke();
+        });
+    }
+
+    if (lightningAlpha > 0) {
+        ctx.fillStyle = `rgba(255, 255, 255, ${lightningAlpha})`;
+        ctx.fillRect(0, 55, 400, 345);
+    }
+
     if (colors.fog > 0) {
         ctx.fillStyle = `rgba(200,200,200,${colors.fog})`;
         ctx.fillRect(0, 200, 400, 200);
@@ -369,7 +389,6 @@ update();
 
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.addEventListener('controllerchange', () => {
-        // Exibe o aviso quando o cache for renovado
         document.getElementById('update-toast').style.display = 'block';
     });
 }
