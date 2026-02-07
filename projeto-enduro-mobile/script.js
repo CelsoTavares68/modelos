@@ -214,7 +214,7 @@ function draw(colors) {
     ctx.fillStyle = colors.sky; ctx.fillRect(0, 0, 400, 200);
     ctx.fillStyle = colors.grass; ctx.fillRect(0, 200, 400, 200);
     
-    let mtShift = (roadCurve * 0.8);
+     let mtShift = (roadCurve * 0.8);
     for (let i = -2; i < 8; i++) {
         let bx = (i * 100) + mtShift;
         ctx.fillStyle = colors.mt;
@@ -237,7 +237,7 @@ function draw(colors) {
     }
     
     enemies.sort((a,b) => b.z - a.z).forEach(e => {
-        if (e.lastP > 0 && e.lastP < 2) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode);
+        if (e.lastP > 0 && e.lastP < 0.85) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode);
     });
     
     drawF1Car(200, 350, 0.85, "#E00", true, colors.nightMode); 
