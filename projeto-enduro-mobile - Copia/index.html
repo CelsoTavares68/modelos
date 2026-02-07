@@ -1,0 +1,43 @@
+    <!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mini Enduro JS</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+</head>
+<body>
+     <div class="game-container">
+    <div class="jogo-titulo">MINI ENDURO</div>
+
+    <div class="instrucoes">
+        <p>Use os botões ou setas para curvar</p>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <div class="mobile-controls">
+        <div class="touch-btn" id="mobileLeft">◀</div> 
+        <div class="touch-btn" id="mobileRight">▶</div> 
+    </div>
+
+    <div class="controles">
+        <button onclick="togglePause()" id="pauseBtn">Pausar</button>
+        <button onclick="resetGame()">Reiniciar</button>
+    </div>
+</div>
+
+    <script src="script.js"></script>
+
+    <script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(reg => console.log('App pronto para uso offline!', reg))
+        .catch(err => console.log('Erro ao registrar App:', err));
+    });
+  }
+</script>
+</body>
+</html>
