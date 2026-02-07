@@ -182,10 +182,9 @@ function resetDay() {
     ctx.restore();
 }
 
- function update() {
+  function update() {
     if (isPaused) return; 
     
-    // Se o estado for de vitória ou derrota, para o processamento e apenas desenha a tela final
     if (gameState === "WIN_DAY" || gameState === "GAME_OVER") { 
         draw(); 
         requestAnimationFrame(update); 
@@ -194,31 +193,30 @@ function resetDay() {
 
     gameTick++; 
     playerDist += speed; 
-    currentTime++; // Incrementa o cronômetro do dia
+    currentTime++; 
 
     if (gameTick % 4 === 0) playEngineSound();
 
-    // 1. CALCULA O ESTÁGIO ATUAL (0 a 8)
-    let currentStage = Math.floor(currentTime / STAGE_DURATION);
+    let currentStage = Math.min(Math.floor(currentTime / STAGE_DURATION), 8);
 
-    // 2. REGRA DE FIM DE DIA (O que estava faltando)
-    // Se o tempo atual atingir o limite do dia (DAY_DURATION)
+    // LÓGICA DE FIM DE DIA
     if (currentTime >= DAY_DURATION) {
-        // Se a meta foi batida (GOAL_REACHED) ou o contador zerou
         if (gameState === "GOAL_REACHED" || carsRemaining <= 0) {
-            gameState = "WIN_DAY"; 
-            dayNumber++; 
-            // Espera 4 segundos exibindo a mensagem de vitória e reseta para o dia seguinte
-            setTimeout(resetDay, 4000); 
-        }  else { 
-        gameState = "GAME_OVER"; 
-        playGameOverSound(); // Chamada do som de derrota
-    }
-        // Trava o tempo no limite para evitar que o switch case abaixo dê erro
+            if (gameState !== "WIN_DAY") { // Garante que o som toque apenas uma vez
+                gameState = "WIN_DAY"; 
+                playWinSound(); // Toca som de vitória
+                dayNumber++; 
+                setTimeout(resetDay, 4000); 
+            }
+        } else { 
+            if (gameState !== "GAME_OVER") {
+                gameState = "GAME_OVER"; 
+                playGameOverSound(); // Toca som de derrota
+            }
+        }
         currentTime = DAY_DURATION - 1; 
     }
 
-    // Configuração de cores e clima por estágio
     let colors = { sky: "#87CEEB", grass: "#1a7a1a", fog: 0, mt: "#555", nightMode: false, snowCaps: false };
 
     switch(currentStage) {
@@ -233,18 +231,16 @@ function resetDay() {
         case 8: colors.sky = "#ade1f2"; colors.grass = "#1a7a1a"; colors.mt = "#555"; break; 
     }
 
-    // 3. REGRAS DE FÍSICA E ACELERAÇÃO (Mantendo suas regras de penalidade)
+    // FÍSICA E PENALIDADE
     let offRoad = Math.abs(playerX) > 380;
     if (offRoad) {
-        speed = Math.min(speed + 0.01, 2); // Aceleração curtíssima na grama
+        speed = Math.min(speed + 0.01, 2); 
     } else {
-        // Retomada lenta se estiver abaixo de 5 de velocidade
         let acceleration = (speed < 5) ? 0.02 : 0.06;
         speed = Math.min(speed + acceleration, maxSpeed);
     }
     if (keys.ArrowDown) speed = Math.max(speed - 0.2, 0);
 
-    // Curvatura e movimento
     playerX -= (roadCurve / 35) * (speed / maxSpeed); 
     if (keys.ArrowLeft) playerX -= 4.5;
     if (keys.ArrowRight) playerX += 4.5;
@@ -253,7 +249,7 @@ function resetDay() {
     if (--curveTimer <= 0) { targetCurve = (Math.random() - 0.5) * 160; curveTimer = 120; }
     roadCurve += (targetCurve - roadCurve) * 0.02;
 
-    // Gerador de inimigos
+    // INIMIGOS
     if (gameTick % 150 === 0 && enemies.length < 100) {
         let horizonClear = !enemies.some(e => e.z > 3000);
         if (horizonClear) {
@@ -265,17 +261,15 @@ function resetDay() {
         }
     }
 
-    // Colisão e ultrapassagem
     enemies.forEach((enemy) => {
         enemy.z -= (speed - enemy.v);
         let p = 1 - (enemy.z / 4000); 
         let roadWidth = 20 + p * 800;
         let screenX = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p) + (enemy.lane * roadWidth * 0.5);
         
-        let hitBoxWidth = 50; 
         if (p > 0.92 && p < 1.05) { 
-            if (Math.abs(screenX - 200) < hitBoxWidth) { 
-                speed = -3; // Penalidade de batida
+            if (Math.abs(screenX - 200) < 50) { 
+                speed = -3; 
                 enemy.z += 800; 
                 playCrashSound(); 
             }
@@ -372,3 +366,10 @@ function draw(colors) {
     }
 }
 update();
+
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+        // Exibe o aviso quando o cache for renovado
+        document.getElementById('update-toast').style.display = 'block';
+    });
+}
