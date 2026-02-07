@@ -184,8 +184,8 @@ function update() {
         let screenX = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p) + (enemy.lane * roadWidth * 0.5);
         
         // AJUSTE: Largura de colisão reduzida para 42 para evitar bater no "ar"
-        let hitBoxWidth = 42; 
-        if (p > 0.90 && p < 1.05) { 
+        let hitBoxWidth = 38; 
+        if (p > 0.94 && p < 1.02) { 
             if (Math.abs(screenX - 200) < hitBoxWidth) { 
                 speed = -1; 
                 enemy.z += 800; 
