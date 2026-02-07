@@ -101,7 +101,7 @@ function playGameOverSound() {
     });
 }
 
-// --- LÓGICA DE ESTADOS ---
+// --- FUNÇÕES DE ESTADO ---
 function togglePause() {
     if (gameState === "PLAYING" || gameState === "GOAL_REACHED") {
         isPaused = !isPaused;
@@ -164,7 +164,6 @@ function update() {
     let stage = Math.floor(currentTime / STAGE_DURATION);
     let colors = { sky: "#87CEEB", grass: "#1a7a1a", fog: 0, mt: "#555", nightMode: false, snowCaps: false };
 
-    // RESTAURADO: Cores de todos os estágios
     switch(stage) {
         case 0: colors.snowCaps = true; break; 
         case 1: colors.sky = "#DDD"; colors.grass = "#FFF"; colors.mt = "#999"; colors.snowCaps = true; break; 
@@ -189,6 +188,7 @@ function update() {
     speed = Math.min(speed + (offRoad ? 0.025 : 0.06), offRoad ? 2 : maxSpeed); 
     if (keys.ArrowDown) speed = Math.max(speed - 0.2, 0);
 
+    // DIREÇÃO SUAVE RESTAURADA (4.5 e Divisor 35)
     playerX -= (roadCurve / 35) * (speed / maxSpeed); 
     if (keys.ArrowLeft) playerX -= 4.5;
     if (keys.ArrowRight) playerX += 4.5;
@@ -197,17 +197,12 @@ function update() {
     if (--curveTimer <= 0) { targetCurve = (Math.random() - 0.5) * 160; curveTimer = 120; }
     roadCurve += (targetCurve - roadCurve) * 0.02;
 
-    // RESTAURADO: Lógica de mandar carros aos poucos (Horizonte Limpo)
-    if (gameTick % 120 === 0 && enemies.length < 40) {
+    // SPAWN CONTROLADO RESTAURADO (Intervalo maior e horizonte limpo)
+    if (gameTick % 180 === 0 && enemies.length < 30) {
         let horizonClear = !enemies.some(e => e.z > 3200);
         if (horizonClear) {
             let randomColor = ["#F0F", "#0FF", "#0F0", "#FF0", "#FFF"][Math.floor(Math.random() * 5)];
-            enemies.push({ 
-                lane: (Math.random() - 0.5) * 1.8, 
-                z: 4000, v: 8.5, 
-                color: randomColor, 
-                isOvertaken: false 
-            });
+            enemies.push({ lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 8.5, color: randomColor, isOvertaken: false });
         }
     }
 
@@ -217,14 +212,11 @@ function update() {
         let roadWidth = 20 + p * 800;
         let screenX = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p) + (enemy.lane * roadWidth * 0.5);
         
-        // Colisão sólida (Formato T / Profundidade curta)
+        // Colisão sólida sem atropelar aerofólio
         if (p > 0.92 && p < 1.02 && Math.abs(screenX - 200) < 48) { 
             speed = -1; enemy.z += 800; playCrashSound(); 
         }
-        if (enemy.z <= 0 && !enemy.isOvertaken) { 
-            carsRemaining = Math.max(0, carsRemaining - 1); 
-            enemy.isOvertaken = true; 
-        }
+        if (enemy.z <= 0 && !enemy.isOvertaken) { carsRemaining = Math.max(0, carsRemaining - 1); enemy.isOvertaken = true; }
         
         enemy.lastY = 200 + (p * 140); enemy.lastX = screenX; enemy.lastP = p;
     });
@@ -239,7 +231,6 @@ function draw(colors) {
     ctx.fillStyle = colors.sky; ctx.fillRect(0, 0, 400, 200);
     ctx.fillStyle = colors.grass; ctx.fillRect(0, 200, 400, 200);
     
-    // Montanhas com Picos Nevados
     for (let i = -2; i < 8; i++) {
         let bx = (i * 100) + (roadCurve * 0.8);
         ctx.fillStyle = colors.mt;
@@ -250,7 +241,6 @@ function draw(colors) {
         }
     }
 
-    // Estrada e Zebras
     for (let i = 200; i < 400; i += 4) {
         let p = (i - 200) / 140;
         let x = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p);
@@ -262,20 +252,19 @@ function draw(colors) {
         ctx.fillRect(x + w/2, i, 10*p, 4);
     }
     
-    // Desenha inimigos longe
+    // Inimigos Longe
     enemies.sort((a,b) => b.z - a.z).forEach(e => {
         if (e.lastP > 0 && e.lastP < 0.92) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode);
     });
     
-    // Carro do Jogador
+    // Jogador
     drawF1Car(200, 350, 0.85, "#E00", true, colors.nightMode); 
 
-    // Inimigos Perto (Para não passar por cima)
+    // Inimigos Perto (Abaixo do aerofólio)
     enemies.forEach(e => {
         if (e.lastP >= 0.92 && e.lastP < 2) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode);
     });
 
-    // Bandeiras de Vitória
     if (gameState === "WIN_DAY") {
         let wave = Math.sin(gameTick * 0.2) * 5;
         ctx.fillStyle = "white"; ctx.fillRect(160, 310, 2, 30); ctx.fillRect(240, 310, 2, 30);
@@ -285,16 +274,14 @@ function draw(colors) {
 
     if (colors.fog > 0) { ctx.fillStyle = `rgba(200,200,200,${colors.fog})`; ctx.fillRect(0, 200, 400, 200); }
     
-    // UI - Placar
     ctx.fillStyle = "black"; ctx.fillRect(0, 0, 400, 55);
-    ctx.fillStyle = (carsRemaining <= 0) ? "lime" : "yellow";
+    ctx.fillStyle = carsRemaining <= 0 ? "lime" : "yellow";
     ctx.font = "bold 18px Courier";
     ctx.fillText(carsRemaining <= 0 ? "GOAL OK!" : `CARS: ${carsRemaining}`, 15, 35);
     ctx.fillStyle = "yellow"; ctx.fillText(`DAY: ${dayNumber}`, 160, 35);
     ctx.fillStyle = "#444"; ctx.fillRect(260, 20, 120, 15);
     ctx.fillStyle = "lime"; ctx.fillRect(260, 20, (currentTime/DAY_DURATION) * 120, 15);
 
-    // Mensagens de Fim
     if (gameState === "WIN_DAY") {
         ctx.fillStyle = "rgba(0,0,0,0.7)"; ctx.fillRect(0, 55, 400, 345);
         ctx.fillStyle = "lime"; ctx.textAlign = "center";
