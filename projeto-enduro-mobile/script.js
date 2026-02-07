@@ -144,7 +144,7 @@ function resetDay() {
         ctx.fill();
 
         // PONTOS BRANCOS DOS FARÓIS (No bico do carro)
-        ctx.fillStyle = "#FFF";
+        ctx.fillStyle = "#ffffff00";
         ctx.beginPath();
         ctx.arc(-w * 0.15, 0, w * 0.08, 0, Math.PI * 2);
         ctx.arc(w * 0.15, 0, w * 0.08, 0, Math.PI * 2);
