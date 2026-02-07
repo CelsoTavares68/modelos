@@ -8,7 +8,8 @@ let gameState = "PLAYING";
 let isPaused = false;
 
 const maxSpeed = 12; 
-const STAGE_DURATION = 9000; // 2,5 minutos (3600 para 1min, 9000 para 2.5min)
+// Mantido o tempo de 3,5 minutos que você configurou
+const STAGE_DURATION = 12800; 
 const DAY_DURATION = STAGE_DURATION * 9; 
 let currentTime = 0; 
 
@@ -71,7 +72,7 @@ function playCrashSound() {
 }
 
 function togglePause() {
-    if (gameState === "PLAYING") {
+    if (gameState === "PLAYING" || gameState === "GOAL_REACHED") {
         isPaused = !isPaused;
         const btn = document.getElementById('pauseBtn');
         if (btn) btn.innerText = isPaused ? "Retomar" : "Pausar";
@@ -90,8 +91,9 @@ function resetGame() {
 
 function resetDay() {
     currentTime = 0; playerDist = 0; speed = 0; enemies = [];
-    carsRemaining = baseGoal + (dayNumber - 1) * 10; 
-    if (gameState !== "PLAYING") gameState = "PLAYING";
+    // Aumento progressivo de meta a cada dia
+    carsRemaining = baseGoal + (dayNumber - 1) * 20; 
+    gameState = "PLAYING";
 }
 
 function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
@@ -118,7 +120,13 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
 
 function update() {
     if (isPaused) return; 
-    if (gameState === "WIN_DAY" || gameState === "GAME_OVER") { draw(); requestAnimationFrame(update); return; }
+    
+    // Se o dia foi vencido ou deu Game Over, o jogo espera o tempo de transição
+    if (gameState === "WIN_DAY" || gameState === "GAME_OVER") { 
+        draw(); 
+        requestAnimationFrame(update); 
+        return; 
+    }
 
     gameTick++; playerDist += speed; currentTime++;
     if (gameTick % 4 === 0) playEngineSound();
@@ -138,10 +146,16 @@ function update() {
         case 8: colors.sky = "#ade1f2"; colors.grass = "#1a7a1a"; colors.mt = "#555"; break; 
     }
 
+    // LÓGICA DE FINAL DE DIA REVISADA
     if (currentTime >= DAY_DURATION) {
         if (gameState === "GOAL_REACHED" || carsRemaining <= 0) {
-            gameState = "WIN_DAY"; dayNumber++; setTimeout(resetDay, 3500);
-        } else { gameState = "GAME_OVER"; }
+            gameState = "WIN_DAY"; 
+            dayNumber++; 
+            // Reinicia o dia automaticamente após 3.5 segundos de comemoração
+            setTimeout(resetDay, 3500);
+        } else { 
+            gameState = "GAME_OVER"; 
+        }
     }
 
     let offRoad = Math.abs(playerX) > 380;
@@ -156,7 +170,6 @@ function update() {
     if (--curveTimer <= 0) { targetCurve = (Math.random() - 0.5) * 160; curveTimer = 120; }
     roadCurve += (targetCurve - roadCurve) * 0.02;
 
-    // TRAVA DO HORIZONTE (Original sua)
     if (gameTick % 150 === 0 && enemies.length < 100) {
         let horizonClear = !enemies.some(e => e.z > 3000);
         if (horizonClear) {
@@ -175,18 +188,17 @@ function update() {
         let roadWidth = 20 + p * 800;
         let screenX = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p) + (enemy.lane * roadWidth * 0.5);
         
-        // --- AJUSTE DA COLISÃO CÚBICA (REFORÇADA) ---
-        // Aumentei o playerW para 55 para garantir que a lateral bata
+        // MANTIDA COLISÃO DE CUBO REFORÇADA (hitBoxWidth = 55)
         let hitBoxWidth = 55; 
-        if (p > 0.90 && p < 1.10) { // Margem de profundidade
+        if (p > 0.90 && p < 1.10) { 
             if (Math.abs(screenX - 200) < hitBoxWidth) { 
                 speed = -1; 
-                enemy.z += 800; // Empurra o inimigo para frente na batida
+                enemy.z += 800; 
                 playCrashSound(); 
             }
         }
 
-        if (gameState === "PLAYING") {
+        if (gameState === "PLAYING" || gameState === "GOAL_REACHED") {
             if (enemy.z <= 0 && !enemy.isOvertaken) { carsRemaining--; enemy.isOvertaken = true; }
             if (enemy.z > 0 && enemy.isOvertaken) { carsRemaining++; enemy.isOvertaken = false; }
             if (carsRemaining <= 0) { carsRemaining = 0; gameState = "GOAL_REACHED"; }
@@ -195,13 +207,15 @@ function update() {
         enemy.lastY = 200 + (p * 140); enemy.lastX = screenX; enemy.lastP = p;
     });
 
-    // Mantendo inimigos distantes para eles poderem te ultrapassar
+    // MANTIDA PERSISTÊNCIA DOS INIMIGOS
     enemies = enemies.filter(e => e.z > -15000 && e.z < 6000);
     draw(colors);
     requestAnimationFrame(update);
 }
 
 function draw(colors) {
+    if (!colors) colors = { sky: "#000", grass: "#000", mt: "#000", fog: 0, nightMode: false };
+    
     ctx.fillStyle = colors.sky; ctx.fillRect(0, 0, 400, 200);
     ctx.fillStyle = colors.grass; ctx.fillRect(0, 200, 400, 200);
     
@@ -235,12 +249,29 @@ function draw(colors) {
     }
     
     ctx.fillStyle = "black"; ctx.fillRect(0, 0, 400, 55);
-    ctx.fillStyle = (gameState === "GOAL_REACHED") ? "lime" : "yellow";
+    ctx.fillStyle = (gameState === "GOAL_REACHED" || gameState === "WIN_DAY") ? "lime" : "yellow";
     ctx.font = "bold 18px Courier";
-    ctx.fillText(gameState === "GOAL_REACHED" ? "GOAL OK!" : `CARS: ${carsRemaining}`, 15, 35);
+    ctx.fillText(gameState === "GOAL_REACHED" || gameState === "WIN_DAY" ? "GOAL OK!" : `CARS: ${carsRemaining}`, 15, 35);
     ctx.fillStyle = "yellow"; ctx.fillText(`DAY: ${dayNumber}`, 160, 35);
     ctx.fillStyle = "#444"; ctx.fillRect(260, 20, 120, 15);
     ctx.fillStyle = "lime"; ctx.fillRect(260, 20, (currentTime/DAY_DURATION) * 120, 15);
+
+    // Mensagens de Estado do Jogo
+    if (gameState === "WIN_DAY") {
+        ctx.fillStyle = "rgba(0,0,0,0.7)"; ctx.fillRect(0, 55, 400, 345);
+        ctx.fillStyle = "lime"; ctx.textAlign = "center";
+        ctx.font = "bold 25px Courier"; ctx.fillText(`DIA ${dayNumber-1} COMPLETO!`, 200, 180);
+        ctx.fillStyle = "white"; ctx.font = "18px Courier"; ctx.fillText(`PREPARANDO DIA ${dayNumber}...`, 200, 220);
+        ctx.textAlign = "left";
+    }
+
+    if (gameState === "GAME_OVER") {
+        ctx.fillStyle = "rgba(200,0,0,0.8)"; ctx.fillRect(0, 55, 400, 345);
+        ctx.fillStyle = "white"; ctx.textAlign = "center";
+        ctx.font = "bold 30px Courier"; ctx.fillText("FIM DE JOGO", 200, 200);
+        ctx.font = "15px Courier"; ctx.fillText("META NÃO ALCANÇADA", 200, 240);
+        ctx.textAlign = "left";
+    }
 
     if (isPaused) {
         ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.fillRect(0, 55, 400, 345);
