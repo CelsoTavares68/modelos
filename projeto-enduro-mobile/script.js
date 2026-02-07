@@ -8,8 +8,7 @@ let gameState = "PLAYING";
 let isPaused = false;
 
 const maxSpeed = 12; 
-// Mantido o tempo de 3,5 minutos que você configurou
-const STAGE_DURATION = 12800; 
+const STAGE_DURATION = 12800; // 3,5 minutos
 const DAY_DURATION = STAGE_DURATION * 9; 
 let currentTime = 0; 
 
@@ -91,7 +90,6 @@ function resetGame() {
 
 function resetDay() {
     currentTime = 0; playerDist = 0; speed = 0; enemies = [];
-    // Aumento progressivo de meta a cada dia
     carsRemaining = baseGoal + (dayNumber - 1) * 20; 
     gameState = "PLAYING";
 }
@@ -121,7 +119,6 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
 function update() {
     if (isPaused) return; 
     
-    // Se o dia foi vencido ou deu Game Over, o jogo espera o tempo de transição
     if (gameState === "WIN_DAY" || gameState === "GAME_OVER") { 
         draw(); 
         requestAnimationFrame(update); 
@@ -146,12 +143,10 @@ function update() {
         case 8: colors.sky = "#ade1f2"; colors.grass = "#1a7a1a"; colors.mt = "#555"; break; 
     }
 
-    // LÓGICA DE FINAL DE DIA REVISADA
     if (currentTime >= DAY_DURATION) {
         if (gameState === "GOAL_REACHED" || carsRemaining <= 0) {
             gameState = "WIN_DAY"; 
             dayNumber++; 
-            // Reinicia o dia automaticamente após 3.5 segundos de comemoração
             setTimeout(resetDay, 3500);
         } else { 
             gameState = "GAME_OVER"; 
@@ -188,9 +183,9 @@ function update() {
         let roadWidth = 20 + p * 800;
         let screenX = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p) + (enemy.lane * roadWidth * 0.5);
         
-        // MANTIDA COLISÃO DE CUBO REFORÇADA (hitBoxWidth = 55)
-        let hitBoxWidth = 55; 
-        if (p > 0.90 && p < 1.10) { 
+        // AJUSTE: Largura de colisão reduzida para 42 para evitar bater no "ar"
+        let hitBoxWidth = 42; 
+        if (p > 0.90 && p < 1.05) { 
             if (Math.abs(screenX - 200) < hitBoxWidth) { 
                 speed = -1; 
                 enemy.z += 800; 
@@ -207,7 +202,6 @@ function update() {
         enemy.lastY = 200 + (p * 140); enemy.lastX = screenX; enemy.lastP = p;
     });
 
-    // MANTIDA PERSISTÊNCIA DOS INIMIGOS
     enemies = enemies.filter(e => e.z > -15000 && e.z < 6000);
     draw(colors);
     requestAnimationFrame(update);
@@ -256,7 +250,6 @@ function draw(colors) {
     ctx.fillStyle = "#444"; ctx.fillRect(260, 20, 120, 15);
     ctx.fillStyle = "lime"; ctx.fillRect(260, 20, (currentTime/DAY_DURATION) * 120, 15);
 
-    // Mensagens de Estado do Jogo
     if (gameState === "WIN_DAY") {
         ctx.fillStyle = "rgba(0,0,0,0.7)"; ctx.fillRect(0, 55, 400, 345);
         ctx.fillStyle = "lime"; ctx.textAlign = "center";
