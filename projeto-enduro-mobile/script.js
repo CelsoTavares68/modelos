@@ -157,8 +157,13 @@ function update() {
         case 8: colors.sky = "#ade1f2"; colors.grass = "#1a7a1a"; colors.mt = "#555"; break; 
     }
 
-    let offRoad = Math.abs(playerX) > 380;
-    speed = Math.min(speed + (offRoad ? 0.025 : 0.06), offRoad ? 2 : maxSpeed); 
+     let offRoad = Math.abs(playerX) > 380;
+    if (offRoad) {
+        speed = Math.min(speed + 0.01, 2); 
+    } else {
+        let acceleration = (speed < 5) ? 0.02 : 0.06;
+        speed = Math.min(speed + acceleration, maxSpeed);
+    }
     if (keys.ArrowDown) speed = Math.max(speed - 0.2, 0);
 
     playerX -= (roadCurve / 35) * (speed / maxSpeed); 
@@ -189,7 +194,7 @@ function update() {
         let hitBoxWidth = 50; 
         if (p > 0.92 && p < 1.05) { 
             if (Math.abs(screenX - 200) < hitBoxWidth) { 
-                speed = -1; 
+                speed = -3; 
                 enemy.z += 800; 
                 playCrashSound(); 
             }
