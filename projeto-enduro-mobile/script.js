@@ -157,9 +157,9 @@ function update() {
     speed = Math.min(speed + (offRoad ? 0.025 : 0.06), offRoad ? 2 : maxSpeed); 
     if (keys.ArrowDown) speed = Math.max(speed - 0.2, 0);
 
-    playerX -= (roadCurve / 25) * (speed / maxSpeed); 
-    if (keys.ArrowLeft) playerX -= 7;
-    if (keys.ArrowRight) playerX += 7;
+    playerX -= (roadCurve / 35) * (speed / maxSpeed); 
+    if (keys.ArrowLeft) playerX -= 4.5;
+    if (keys.ArrowRight) playerX += 4.5;
     playerX = Math.max(-450, Math.min(450, playerX));
 
     if (--curveTimer <= 0) { targetCurve = (Math.random() - 0.5) * 160; curveTimer = 120; }
