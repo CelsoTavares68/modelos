@@ -210,10 +210,10 @@ function resetDay() {
             dayNumber++; 
             // Espera 4 segundos exibindo a mensagem de vitória e reseta para o dia seguinte
             setTimeout(resetDay, 4000); 
-        } else { 
-            // Se o tempo acabou e você não ultrapassou os carros necessários
-            gameState = "GAME_OVER"; 
-        }
+        }  else { 
+        gameState = "GAME_OVER"; 
+        playGameOverSound(); // Chamada do som de derrota
+    }
         // Trava o tempo no limite para evitar que o switch case abaixo dê erro
         currentTime = DAY_DURATION - 1; 
     }

@@ -1,4 +1,4 @@
- const CACHE_NAME = 'enduro-mobile-v2'; // Mudei para v2
+  const CACHE_NAME = 'enduro-mobile-v2'; // Mude o v1 para v2 sempre que fizer uma grande alteração
 const assets = [
   './',
   './index.html',
@@ -8,10 +8,10 @@ const assets = [
 ];
 
 self.addEventListener('install', event => {
+  self.skipWaiting(); // Força o novo SW a assumir o controle imediatamente
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(assets))
   );
-  self.skipWaiting(); // Força a ativação imediata
 });
 
 self.addEventListener('activate', event => {
@@ -22,9 +22,16 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Lógica "Network First": Tenta baixar o novo, se falhar usa o cache
 self.addEventListener('fetch', event => {
   event.respondWith(
-    fetch(event.request).catch(() => caches.match(event.request))
+    caches.open(CACHE_NAME).then(cache => {
+      return cache.match(event.request).then(response => {
+        const fetchPromise = fetch(event.request).then(networkResponse => {
+          cache.put(event.request, networkResponse.clone());
+          return networkResponse;
+        });
+        return response || fetchPromise; // Retorna cache se houver, mas atualiza em segundo plano
+      });
+    })
   );
 });
