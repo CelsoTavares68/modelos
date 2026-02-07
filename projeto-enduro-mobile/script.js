@@ -8,7 +8,7 @@ let gameState = "PLAYING";
 let isPaused = false;
 
 const maxSpeed = 12; 
-const STAGE_DURATION = 12800; 
+const STAGE_DURATION = 12800; // 3,5 minutos
 const DAY_DURATION = STAGE_DURATION * 9; 
 let currentTime = 0; 
 
@@ -19,11 +19,12 @@ const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: f
 
 window.addEventListener('keydown', e => { 
     if (keys.hasOwnProperty(e.code)) keys[e.code] = true; 
-    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
 });
 window.addEventListener('keyup', e => { if (keys.hasOwnProperty(e.code)) keys[e.code] = false; });
 
 function setupMobileControls() {
+    // Sincronizei os IDs com o seu index.html (mobileLeft e mobileRight)
     const ids = { 'mobileLeft': 'ArrowLeft', 'mobileRight': 'ArrowRight' };
     Object.keys(ids).forEach(id => {
         const btn = document.getElementById(id);
@@ -131,7 +132,12 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
 
 function update() {
     if (isPaused) return; 
-    if (gameState === "WIN_DAY" || gameState === "GAME_OVER") { draw(); requestAnimationFrame(update); return; }
+    
+    if (gameState === "WIN_DAY" || gameState === "GAME_OVER") { 
+        draw(); 
+        requestAnimationFrame(update); 
+        return; 
+    }
 
     gameTick++; playerDist += speed; currentTime++;
     if (gameTick % 4 === 0) playEngineSound();
@@ -149,12 +155,6 @@ function update() {
         case 6: colors.sky = "#000011"; colors.grass = "#000800"; colors.mt = "#000"; colors.nightMode = true; break; 
         case 7: colors.sky = "#5c97ea"; colors.grass = "#0d4d0d"; colors.mt = "#222"; colors.fog = 0.3; colors.nightMode = false; break; 
         case 8: colors.sky = "#ade1f2"; colors.grass = "#1a7a1a"; colors.mt = "#555"; break; 
-    }
-
-    if (currentTime >= DAY_DURATION) {
-        if (gameState === "GOAL_REACHED" || carsRemaining <= 0) {
-            gameState = "WIN_DAY"; dayNumber++; setTimeout(resetDay, 4000);
-        } else { gameState = "GAME_OVER"; }
     }
 
     let offRoad = Math.abs(playerX) > 380;
@@ -211,10 +211,11 @@ function update() {
 
 function draw(colors) {
     if (!colors) colors = { sky: "#87CEEB", grass: "#1a7a1a", mt: "#555", fog: 0, nightMode: false, snowCaps: false };
+
     ctx.fillStyle = colors.sky; ctx.fillRect(0, 0, 400, 200);
     ctx.fillStyle = colors.grass; ctx.fillRect(0, 200, 400, 200);
     
-     let mtShift = (roadCurve * 0.8);
+    let mtShift = (roadCurve * 0.8);
     for (let i = -2; i < 8; i++) {
         let bx = (i * 100) + mtShift;
         ctx.fillStyle = colors.mt;
@@ -237,10 +238,18 @@ function draw(colors) {
     }
     
     enemies.sort((a,b) => b.z - a.z).forEach(e => {
-        if (e.lastP > 0 && e.lastP < 0.85) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode);
+        if (e.lastP > 0 && e.lastP < 0.92) {
+            drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode);
+        }
     });
     
     drawF1Car(200, 350, 0.85, "#E00", true, colors.nightMode); 
+
+    enemies.forEach(e => {
+        if (e.lastP >= 0.92 && e.lastP < 2) {
+            drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode);
+        }
+    });
 
     if (colors.fog > 0) {
         ctx.fillStyle = `rgba(200,200,200,${colors.fog})`;
