@@ -94,18 +94,35 @@ function resetDay() {
     gameState = "PLAYING";
 }
 
-function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
+ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
     let s = scale * 1.2; 
     if (s < 0.02 || s > 30) return; 
     let w = 45 * s; let h = 22 * s; 
     ctx.save();
     ctx.translate(x, y);
     if(isPlayer) ctx.rotate((roadCurve / 40) * Math.PI / 180);
+
     if (nightMode) {
+        // Silhueta do carro (Preto/Cinza escuro)
+        ctx.fillStyle = "#111"; 
+        ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8);
+        ctx.fillRect(w * 0.25, -h * 0.1, w * 0.25, h * 0.8);
+        ctx.fillRect(-w * 0.25, h * 0.1, w * 0.5, h * 0.4); 
+        ctx.fillRect(-w * 0.5, -h * 0.3, w, h * 0.2);
+
+        // Faróis (Luz fraca na frente)
+        ctx.fillStyle = "rgba(255, 255, 200, 0.2)";
+        ctx.beginPath();
+        ctx.arc(-w * 0.3, h * 0.5, w * 0.2, 0, Math.PI * 2);
+        ctx.arc(w * 0.3, h * 0.5, w * 0.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Lanternas Traseiras Vermelhas
         ctx.fillStyle = "#ff0000";
-        ctx.fillRect(-w * 0.45, -h * 0.2, w * 0.25, h * 0.3); 
-        ctx.fillRect(w * 0.2, -h * 0.2, w * 0.25, h * 0.3);
+        ctx.fillRect(-w * 0.45, -h * 0.2, w * 0.2, h * 0.2); 
+        ctx.fillRect(w * 0.25, -h * 0.2, w * 0.2, h * 0.2);
     } else {
+        // Desenho normal para o dia
         ctx.fillStyle = "#111"; 
         ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8);
         ctx.fillRect(w * 0.25, -h * 0.1, w * 0.25, h * 0.8);
@@ -207,69 +224,124 @@ function update() {
     requestAnimationFrame(update);
 }
 
-function draw(colors) {
-    if (!colors) colors = { sky: "#000", grass: "#000", mt: "#000", fog: 0, nightMode: false };
+ function draw(colors) {
+    // Caso colors não esteja definido por algum erro, define um padrão seguro
+    if (!colors) colors = { sky: "#87CEEB", grass: "#1a7a1a", mt: "#555", fog: 0, nightMode: false, snowCaps: false };
+
+    // 1. Desenha o Céu e o Chão base
+    ctx.fillStyle = colors.sky; 
+    ctx.fillRect(0, 0, 400, 200);
+    ctx.fillStyle = colors.grass; 
+    ctx.fillRect(0, 200, 400, 200);
     
-    ctx.fillStyle = colors.sky; ctx.fillRect(0, 0, 400, 200);
-    ctx.fillStyle = colors.grass; ctx.fillRect(0, 200, 400, 200);
-    
+    // 2. Desenha as Montanhas com Picos Nevados
     let mtShift = (roadCurve * 0.8);
     for (let i = -2; i < 8; i++) {
         let bx = (i * 100) + mtShift;
+        
+        // Corpo da montanha
         ctx.fillStyle = colors.mt;
-        ctx.beginPath(); ctx.moveTo(bx - 60, 200); ctx.lineTo(bx, 140); ctx.lineTo(bx + 60, 200); ctx.fill();
+        ctx.beginPath(); 
+        ctx.moveTo(bx - 60, 200); 
+        ctx.lineTo(bx, 140); 
+        ctx.lineTo(bx + 60, 200); 
+        ctx.fill();
+
+        // Picos Nevados (Chapéu branco no topo)
+        if (colors.snowCaps) {
+            ctx.fillStyle = "white";
+            ctx.beginPath();
+            ctx.moveTo(bx, 140); // Ponta do topo
+            ctx.lineTo(bx - 20, 160); // Lado esquerdo do pico
+            ctx.lineTo(bx + 20, 160); // Lado direito do pico
+            ctx.fill();
+        }
     }
 
+    // 3. Desenha a Estrada (Perspectiva e faixas laterais)
     for (let i = 200; i < 400; i += 4) {
         let p = (i - 200) / 140;
         let x = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p);
         let w = 20 + p * 800;
+        
+        // Asfalto
         ctx.fillStyle = Math.sin(i * 0.5 + playerDist * 0.2) > 0 ? "#333" : "#3d3d3d";
         ctx.fillRect(x - w/2, i, w, 4);
+        
+        // Zebras/Faixas laterais
         ctx.fillStyle = Math.sin(i * 0.5 + playerDist * 0.2) > 0 ? "red" : "white";
         ctx.fillRect(x - w/2 - 10*p, i, 10*p, 4);
         ctx.fillRect(x + w/2, i, 10*p, 4);
     }
     
+    // 4. Desenha os Inimigos (Ordenados por profundidade Z para sobreposição correta)
     enemies.sort((a,b) => b.z - a.z).forEach(e => {
-        if (e.lastP > 0 && e.lastP < 2) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode);
+        if (e.lastP > 0 && e.lastP < 2) {
+            drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode);
+        }
     });
     
+    // 5. Desenha o Carro do Jogador (Sempre à frente)
     drawF1Car(200, 350, 0.85, "#E00", true, colors.nightMode); 
 
+    // 6. Efeito de Neblina (se houver)
     if (colors.fog > 0) {
         ctx.fillStyle = `rgba(200,200,200,${colors.fog})`;
         ctx.fillRect(0, 200, 400, 200);
     }
     
-    ctx.fillStyle = "black"; ctx.fillRect(0, 0, 400, 55);
+    // 7. Painel Superior (UI - Placar e Progresso)
+    ctx.fillStyle = "black"; 
+    ctx.fillRect(0, 0, 400, 55);
+    
+    // Texto de Carros Restantes / Meta batida
     ctx.fillStyle = (gameState === "GOAL_REACHED" || gameState === "WIN_DAY") ? "lime" : "yellow";
     ctx.font = "bold 18px Courier";
     ctx.fillText(gameState === "GOAL_REACHED" || gameState === "WIN_DAY" ? "GOAL OK!" : `CARS: ${carsRemaining}`, 15, 35);
-    ctx.fillStyle = "yellow"; ctx.fillText(`DAY: ${dayNumber}`, 160, 35);
-    ctx.fillStyle = "#444"; ctx.fillRect(260, 20, 120, 15);
-    ctx.fillStyle = "lime"; ctx.fillRect(260, 20, (currentTime/DAY_DURATION) * 120, 15);
+    
+    // Dia Atual
+    ctx.fillStyle = "yellow"; 
+    ctx.fillText(`DAY: ${dayNumber}`, 160, 35);
+    
+    // Barra de Progresso do Tempo
+    ctx.fillStyle = "#444"; 
+    ctx.fillRect(260, 20, 120, 15);
+    ctx.fillStyle = "lime"; 
+    ctx.fillRect(260, 20, (currentTime/DAY_DURATION) * 120, 15);
 
+    // 8. Mensagens de Tela (Vitória, Game Over, Pausa)
     if (gameState === "WIN_DAY") {
-        ctx.fillStyle = "rgba(0,0,0,0.7)"; ctx.fillRect(0, 55, 400, 345);
-        ctx.fillStyle = "lime"; ctx.textAlign = "center";
-        ctx.font = "bold 25px Courier"; ctx.fillText(`DIA ${dayNumber-1} COMPLETO!`, 200, 180);
-        ctx.fillStyle = "white"; ctx.font = "18px Courier"; ctx.fillText(`PREPARANDO DIA ${dayNumber}...`, 200, 220);
+        ctx.fillStyle = "rgba(0,0,0,0.7)"; 
+        ctx.fillRect(0, 55, 400, 345);
+        ctx.fillStyle = "lime"; 
+        ctx.textAlign = "center";
+        ctx.font = "bold 25px Courier"; 
+        ctx.fillText(`DIA ${dayNumber-1} COMPLETO!`, 200, 180);
+        ctx.fillStyle = "white"; 
+        ctx.font = "18px Courier"; 
+        ctx.fillText(`PREPARANDO DIA ${dayNumber}...`, 200, 220);
         ctx.textAlign = "left";
     }
 
     if (gameState === "GAME_OVER") {
-        ctx.fillStyle = "rgba(200,0,0,0.8)"; ctx.fillRect(0, 55, 400, 345);
-        ctx.fillStyle = "white"; ctx.textAlign = "center";
-        ctx.font = "bold 30px Courier"; ctx.fillText("FIM DE JOGO", 200, 200);
-        ctx.font = "15px Courier"; ctx.fillText("META NÃO ALCANÇADA", 200, 240);
+        ctx.fillStyle = "rgba(200,0,0,0.8)"; 
+        ctx.fillRect(0, 55, 400, 345);
+        ctx.fillStyle = "white"; 
+        ctx.textAlign = "center";
+        ctx.font = "bold 30px Courier"; 
+        ctx.fillText("FIM DE JOGO", 200, 200);
+        ctx.font = "15px Courier"; 
+        ctx.fillText("META NÃO ALCANÇADA", 200, 240);
         ctx.textAlign = "left";
     }
 
     if (isPaused) {
-        ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.fillRect(0, 55, 400, 345);
-        ctx.fillStyle = "white"; ctx.textAlign = "center";
-        ctx.font = "30px Courier"; ctx.fillText("PAUSADO", 200, 200);
+        ctx.fillStyle = "rgba(0,0,0,0.5)"; 
+        ctx.fillRect(0, 55, 400, 345);
+        ctx.fillStyle = "white"; 
+        ctx.textAlign = "center";
+        ctx.font = "30px Courier"; 
+        ctx.fillText("PAUSADO", 200, 200);
         ctx.textAlign = "left";
     }
 }
