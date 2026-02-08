@@ -244,13 +244,20 @@ function update() {
     }
 
     enemies.forEach((enemy) => {
-        enemy.z -= (speed - enemy.v);
+        // Ajuste: O inimigo só se move em relação a você se você estiver acima da velocidade dele
+        // Se você bater (speed < 0), ele continua se afastando de forma constante, sem "voar"
+        let relativeSpeed = (speed > enemy.v) ? (speed - enemy.v) : (speed - 8.5);
+        enemy.z -= relativeSpeed;
+
         let p = 1 - (enemy.z / 4000); 
         let roadWidth = 20 + p * 800;
         let screenX = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p) + (enemy.lane * roadWidth * 0.5);
         
+        // Colisão (Mantendo sua lógica)
         if (p > 0.92 && p < 1.05 && Math.abs(screenX - 200) < 50) { 
-            speed = -3; enemy.z += 800; playCrashSound(); 
+            speed = -3; 
+            enemy.z += 800; 
+            playCrashSound(); 
         }
 
         if (gameState === "PLAYING" || gameState === "GOAL_REACHED") {
