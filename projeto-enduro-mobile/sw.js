@@ -1,10 +1,10 @@
-  const CACHE_NAME = 'enduro-mobile-v7'; // Mude o v1 para v2 sempre que fizer uma grande alteração
+  const CACHE_NAME = 'enduro-mobile-v6'; // Mude o v1 para v2 sempre que fizer uma grande alteração
 const assets = [
   './',
   './index.html',
   './style.css',
   './script.js',
-  './manifest.json'
+  './manifest.json',
 ];
 
 self.addEventListener('install', event => {
