@@ -15,7 +15,7 @@ let currentTime = 0;
 let enemies = [];
 let roadCurve = 0, targetCurve = 0, curveTimer = 0;
 
-// --- NOVA VARIÁVEL PARA CHUVA ---
+// --- GERENCIADOR DE CHUVA ---
 let raindrops = []; 
 
 const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
@@ -175,11 +175,11 @@ function update() {
 
     let currentStage = Math.min(Math.floor(currentTime / STAGE_DURATION), 8);
     
-    // --- LÓGICA DA CHUVA ---
+    // --- LÓGICA DE MOVIMENTO DA CHUVA ---
     let isRaining = (currentStage === 3 || currentStage === 7);
     if (isRaining) {
-        for (let i = 0; i < 8; i++) { // Cria 8 gotas por frame
-            raindrops.push({ x: Math.random() * 400, y: -20, s: Math.random() * 15 + 20 });
+        for (let i = 0; i < 10; i++) { // Cria gotas constantes
+            raindrops.push({ x: Math.random() * 400, y: -20, s: Math.random() * 10 + 20 });
         }
     }
     raindrops.forEach((r, i) => { 
@@ -210,11 +210,11 @@ function update() {
         case 0: colors.snowCaps = true; break; 
         case 1: colors.sky = "#DDD"; colors.grass = "#FFF"; colors.mt = "#999"; colors.snowCaps = true; break; 
         case 2: colors.sky = "#ff8c00"; colors.grass = "#145c14"; colors.mt = "#442200"; break; 
-        case 3: colors.sky = "#303050"; colors.grass = "#0a2a0a"; colors.mt = "#221100"; colors.fog = 0.5; break; // Chuva Forte 1
+        case 3: colors.sky = "#303545"; colors.grass = "#0a2a0a"; colors.mt = "#221100"; colors.fog = 0.5; break; // Chuva
         case 4: colors.sky = "#111144"; colors.grass = "#001100"; colors.mt = "#111"; colors.nightMode = true; break; 
         case 5: colors.sky = "#444"; colors.grass = "#333"; colors.mt = "#222"; colors.fog = 0.8; colors.nightMode = true; break; 
         case 6: colors.sky = "#000011"; colors.grass = "#000800"; colors.mt = "#000"; colors.nightMode = true; break; 
-        case 7: colors.sky = "#4a6ea5"; colors.grass = "#0d4d0d"; colors.mt = "#222"; colors.fog = 0.6; break; // Chuva Forte 2
+        case 7: colors.sky = "#405070"; colors.grass = "#0d4d0d"; colors.mt = "#222"; colors.fog = 0.6; break; // Chuva
         case 8: colors.sky = "#ade1f2"; colors.grass = "#1a7a1a"; colors.mt = "#555"; break; 
     }
 
@@ -307,19 +307,19 @@ function draw(colors, isRaining) {
         if (e.lastP >= 0.92 && e.lastP < 2) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode);
     });
 
-    // --- NEBLINA E CHUVA NO TOPO ---
+    // --- CAMADA VISUAL: NEBLINA E CHUVA ---
     if (colors.fog > 0) {
-        ctx.fillStyle = `rgba(150,150,150,${colors.fog})`;
+        ctx.fillStyle = `rgba(160,165,180,${colors.fog})`;
         ctx.fillRect(0, 55, 400, 345);
     }
     
     if (isRaining) {
-        ctx.strokeStyle = "rgba(180, 180, 255, 0.5)";
-        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = "rgba(180, 190, 255, 0.4)";
+        ctx.lineWidth = 1.2;
         raindrops.forEach(r => {
             ctx.beginPath();
             ctx.moveTo(r.x, r.y);
-            ctx.lineTo(r.x + 2, r.y + 12);
+            ctx.lineTo(r.x + 1.5, r.y + 10);
             ctx.stroke();
         });
     }
