@@ -1,4 +1,4 @@
-  const canvas = document.getElementById('gameCanvas');
+ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 canvas.width = 400; canvas.height = 400;
 
@@ -145,31 +145,19 @@ function update() {
     let stage = Math.min(Math.floor(currentTime / STAGE_DURATION), 8);
     let raining = (stage === 3 || stage === 7);
 
-    // Relâmpagos e Chuva Forte
+    // Chuva e Raios
     if (raining) {
-        // Relâmpagos aleatórios durante a chuva
-        if (Math.random() < 0.005) lightningAlpha = 1.0; 
-        
-        // Chuva mais densa (adicionando mais gotas por frame)
-        for (let i = 0; i < 12; i++) {
-            raindrops.push({ x: Math.random() * 400, y: -10, s: Math.random() * 15 + 15 });
-        }
+        if (Math.random() < 0.005) lightningAlpha = 1.2; 
+        for (let i = 0; i < 8; i++) raindrops.push({ x: Math.random() * 400, y: -10, s: Math.random() * 15 + 15 });
     }
-    
-    if (lightningAlpha > 0) lightningAlpha -= 0.08; // Flash do raio some gradualmente
-    
-    raindrops.forEach((r, index) => { 
-        r.y += r.s; 
-        if(r.y > 400) raindrops.splice(index, 1); 
-    });
+    if (lightningAlpha > 0) lightningAlpha -= 0.07;
+    raindrops.forEach((r, index) => { r.y += r.s; if(r.y > 400) raindrops.splice(index, 1); });
 
-    // Fim do Dia
+    // Lógica de Final de Fase
     if (currentTime >= DAY_DURATION) {
         if (gameState === "GOAL_REACHED" || carsRemaining <= 0) {
             if (gameState !== "WIN_DAY") { gameState = "WIN_DAY"; playWinSound(); dayNumber++; setTimeout(resetDay, 4000); }
-        } else if (gameState !== "GAME_OVER") {
-            gameState = "GAME_OVER"; playGameOverSound(); 
-        }
+        } else if (gameState !== "GAME_OVER") { gameState = "GAME_OVER"; playGameOverSound(); }
         currentTime = DAY_DURATION - 1; 
     }
 
@@ -178,22 +166,18 @@ function update() {
         case 0: colors.snowCaps = true; break; 
         case 1: colors.sky = "#DDD"; colors.grass = "#FFF"; colors.mt = "#999"; colors.snowCaps = true; break; 
         case 2: colors.sky = "#ff8c00"; colors.grass = "#145c14"; colors.mt = "#442200"; break; 
-        case 3: colors.sky = "#300050"; colors.grass = "#0a2a0a"; colors.mt = "#111"; colors.fog = 0.4; break; // Chuva 1
+        case 3: colors.sky = "#300050"; colors.grass = "#0a2a0a"; colors.mt = "#111"; colors.fog = 0.5; break; 
         case 4: colors.sky = "#111144"; colors.grass = "#001100"; colors.mt = "#111"; colors.nightMode = true; break; 
         case 5: colors.sky = "#444"; colors.grass = "#333"; colors.mt = "#222"; colors.fog = 0.8; colors.nightMode = true; break; 
         case 6: colors.sky = "#000011"; colors.grass = "#000800"; colors.mt = "#000"; colors.nightMode = true; break; 
-        case 7: colors.sky = "#4a6ea5"; colors.grass = "#0d4d0d"; colors.mt = "#222"; colors.fog = 0.5; break; // Chuva 2
+        case 7: colors.sky = "#4a6ea5"; colors.grass = "#0d4d0d"; colors.mt = "#222"; colors.fog = 0.6; break; 
         case 8: colors.sky = "#ade1f2"; colors.grass = "#1a7a1a"; colors.mt = "#555"; break; 
     }
 
-    // VELOCIDADE SEMPRE NORMAL
+    // Velocidade (Normal na Chuva)
     let offRoad = Math.abs(playerX) > 380;
-    if (offRoad) {
-        speed = Math.min(speed + 0.01, 2); 
-    } else {
-        let acc = (speed < 5) ? 0.02 : 0.06;
-        if (speed < maxSpeed) speed += acc;
-    }
+    if (offRoad) speed = Math.min(speed + 0.01, 2); 
+    else if (speed < maxSpeed) speed += (speed < 5 ? 0.02 : 0.06);
     if (keys.ArrowDown) speed = Math.max(speed - 0.2, 0);
 
     playerX -= (roadCurve / 35) * (speed / maxSpeed); 
@@ -204,8 +188,8 @@ function update() {
     if (--curveTimer <= 0) { targetCurve = (Math.random() - 0.5) * 160; curveTimer = 120; }
     roadCurve += (targetCurve - roadCurve) * 0.02;
 
-    // Inimigos
-    if (gameTick % 150 === 0 && enemies.length < 50) {
+    // Inimigos (Restauração da lógica de persistência)
+    if (gameTick % 140 === 0 && enemies.length < 40) {
         enemies.push({ 
             lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 8.5, 
             color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)],
@@ -218,15 +202,33 @@ function update() {
         let p = 1 - (enemy.z / 4000); 
         let roadW = 20 + p * 800;
         let sx = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p) + (enemy.lane * roadW * 0.5);
-        if (p > 0.92 && p < 1.05 && Math.abs(sx - 200) < 50) { speed = -3; enemy.z += 800; playCrashSound(); }
+        
+        // Colisão
+        if (p > 0.92 && p < 1.05 && Math.abs(sx - 200) < 50) { 
+            speed = -3; 
+            enemy.z += 600; // Empurra o inimigo para frente na batida
+            playCrashSound(); 
+        }
+
+        // Ultrapassagem (Contagem regressiva)
         if (enemy.z <= 0 && !enemy.isOvertaken && (gameState === "PLAYING" || gameState === "GOAL_REACHED")) {
-            carsRemaining--; enemy.isOvertaken = true;
+            carsRemaining--; 
+            enemy.isOvertaken = true;
             if (carsRemaining <= 0) { carsRemaining = 0; gameState = "GOAL_REACHED"; }
         }
+        
+        // Se batermos e ficarmos atrás dele de novo, ele volta a ser contável
+        if (enemy.z > 0 && enemy.isOvertaken) {
+            carsRemaining++;
+            enemy.isOvertaken = false;
+        }
+
         enemy.lastY = 200 + (p * 140); enemy.lastX = sx; enemy.lastP = p;
     });
 
-    enemies = enemies.filter(e => e.z > -1000);
+    // Filtro: só remove se estiver MUITO longe (para permitir bater e ele ainda estar lá)
+    enemies = enemies.filter(e => e.z > -4000 && e.z < 6000);
+
     draw(colors, raining);
     requestAnimationFrame(update);
 }
@@ -249,16 +251,11 @@ function draw(colors, raining) {
     drawF1Car(200, 350, 0.85, "#E00", true, colors.nightMode); 
     enemies.forEach(e => { if (e.lastP >= 0.92 && e.lastP < 2) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode); });
 
-    // Camada de Neblina da Chuva (Diminui a visão)
     if (colors.fog > 0) { ctx.fillStyle = `rgba(150,150,180,${colors.fog})`; ctx.fillRect(0, 55, 400, 345); }
-
-    // Desenho da Chuva Forte
     if (raining) {
-        ctx.strokeStyle = "rgba(220, 220, 255, 0.6)"; ctx.lineWidth = 2;
+        ctx.strokeStyle = "rgba(220, 220, 255, 0.5)"; ctx.lineWidth = 2;
         raindrops.forEach(r => { ctx.beginPath(); ctx.moveTo(r.x, r.y); ctx.lineTo(r.x + 2, r.y + 20); ctx.stroke(); });
     }
-    
-    // Flash do Raio (Atrapalha a visão)
     if (lightningAlpha > 0) { ctx.fillStyle = `rgba(255, 255, 255, ${lightningAlpha})`; ctx.fillRect(0, 0, 400, 400); }
     
     ctx.fillStyle = "black"; ctx.fillRect(0, 0, 400, 55);
