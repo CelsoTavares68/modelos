@@ -1,4 +1,4 @@
- const canvas = document.getElementById('gameCanvas');
+  const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 canvas.width = 400; canvas.height = 400;
 
@@ -8,15 +8,16 @@ let gameState = "PLAYING";
 let isPaused = false;
 
 const maxSpeed = 12; 
-const STAGE_DURATION = 12800; // 3,5 minutos
+const STAGE_DURATION = 12800; 
 const DAY_DURATION = STAGE_DURATION * 9; 
 let currentTime = 0; 
 
 let enemies = [];
 let roadCurve = 0, targetCurve = 0, curveTimer = 0;
 
-// --- GERENCIADOR DE CHUVA ---
+// --- CLIMA: CHUVA E RELÂMPAGOS ---
 let raindrops = []; 
+let lightningAlpha = 0; 
 
 const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
 
@@ -31,15 +32,8 @@ function setupMobileControls() {
     Object.keys(ids).forEach(id => {
         const btn = document.getElementById(id);
         if (btn) {
-            const press = (e) => { 
-                e.preventDefault();
-                keys[ids[id]] = true; 
-                if(audioCtx.state === 'suspended') audioCtx.resume(); 
-            };
-            const release = (e) => { 
-                e.preventDefault();
-                keys[ids[id]] = false; 
-            };
+            const press = (e) => { e.preventDefault(); keys[ids[id]] = true; if(audioCtx.state === 'suspended') audioCtx.resume(); };
+            const release = (e) => { e.preventDefault(); keys[ids[id]] = false; };
             btn.addEventListener('touchstart', press, {passive: false});
             btn.addEventListener('touchend', release, {passive: false});
             btn.addEventListener('mousedown', press);
@@ -149,10 +143,8 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
         gradient.addColorStop(1, "rgba(255, 255, 200, 0)");
         ctx.fillStyle = gradient;
         ctx.beginPath();
-        ctx.moveTo(-w * 0.2, 0);           
-        ctx.lineTo(-w * 1.5, -lightLength); 
-        ctx.lineTo(w * 1.5, -lightLength);  
-        ctx.lineTo(w * 0.2, 0);            
+        ctx.moveTo(-w * 0.2, 0); ctx.lineTo(-w * 1.5, -lightLength); 
+        ctx.lineTo(w * 1.5, -lightLength); ctx.lineTo(w * 0.2, 0);            
         ctx.fill();
         ctx.fillStyle = "#ffffff00";
         ctx.beginPath();
@@ -167,39 +159,31 @@ function update() {
     if (isPaused) return; 
     if (gameState === "WIN_DAY" || gameState === "GAME_OVER") { draw(); requestAnimationFrame(update); return; }
 
-    gameTick++; 
-    playerDist += speed; 
-    currentTime++; 
-
+    gameTick++; playerDist += speed; currentTime++; 
     if (gameTick % 4 === 0) playEngineSound();
 
     let currentStage = Math.min(Math.floor(currentTime / STAGE_DURATION), 8);
     
-    // --- LÓGICA DE MOVIMENTO DA CHUVA ---
+    // --- LOGICA DE CLIMA ---
     let isRaining = (currentStage === 3 || currentStage === 7);
     if (isRaining) {
-        for (let i = 0; i < 10; i++) { // Cria gotas constantes
-            raindrops.push({ x: Math.random() * 400, y: -20, s: Math.random() * 10 + 20 });
+        // Chuva
+        for (let i = 0; i < 12; i++) { 
+            raindrops.push({ x: Math.random() * 400, y: -20, s: Math.random() * 10 + 22 });
         }
+        // Relâmpago (Raro)
+        if (Math.random() > 0.985) lightningAlpha = 0.7;
     }
-    raindrops.forEach((r, i) => { 
-        r.y += r.s; 
-        if (r.y > 400) raindrops.splice(i, 1); 
-    });
+    raindrops.forEach((r, i) => { r.y += r.s; if (r.y > 400) raindrops.splice(i, 1); });
+    if (lightningAlpha > 0) lightningAlpha -= 0.05;
 
     if (currentTime >= DAY_DURATION) {
         if (gameState === "GOAL_REACHED" || carsRemaining <= 0) {
             if (gameState !== "WIN_DAY") {
-                gameState = "WIN_DAY"; 
-                playWinSound(); 
-                dayNumber++; 
-                setTimeout(resetDay, 4000); 
+                gameState = "WIN_DAY"; playWinSound(); dayNumber++; setTimeout(resetDay, 4000); 
             }
         } else { 
-            if (gameState !== "GAME_OVER") {
-                gameState = "GAME_OVER"; 
-                playGameOverSound(); 
-            }
+            if (gameState !== "GAME_OVER") { gameState = "GAME_OVER"; playGameOverSound(); }
         }
         currentTime = DAY_DURATION - 1; 
     }
@@ -210,21 +194,18 @@ function update() {
         case 0: colors.snowCaps = true; break; 
         case 1: colors.sky = "#DDD"; colors.grass = "#FFF"; colors.mt = "#999"; colors.snowCaps = true; break; 
         case 2: colors.sky = "#ff8c00"; colors.grass = "#145c14"; colors.mt = "#442200"; break; 
-        case 3: colors.sky = "#303545"; colors.grass = "#0a2a0a"; colors.mt = "#221100"; colors.fog = 0.5; break; // Chuva
+        case 3: colors.sky = "#2c3e50"; colors.grass = "#0a2a0a"; colors.mt = "#1a1a1a"; colors.fog = 0.6; break; 
         case 4: colors.sky = "#111144"; colors.grass = "#001100"; colors.mt = "#111"; colors.nightMode = true; break; 
         case 5: colors.sky = "#444"; colors.grass = "#333"; colors.mt = "#222"; colors.fog = 0.8; colors.nightMode = true; break; 
         case 6: colors.sky = "#000011"; colors.grass = "#000800"; colors.mt = "#000"; colors.nightMode = true; break; 
-        case 7: colors.sky = "#405070"; colors.grass = "#0d4d0d"; colors.mt = "#222"; colors.fog = 0.6; break; // Chuva
+        case 7: colors.sky = "#34495e"; colors.grass = "#0d4d0d"; colors.mt = "#1a1a1a"; colors.fog = 0.7; break; 
         case 8: colors.sky = "#ade1f2"; colors.grass = "#1a7a1a"; colors.mt = "#555"; break; 
     }
 
     let offRoad = Math.abs(playerX) > 380;
-    if (offRoad) {
-        speed = Math.min(speed + 0.01, 2); 
-    } else {
-        let acceleration = (speed < 5) ? 0.02 : 0.06;
-        speed = Math.min(speed + acceleration, maxSpeed);
-    }
+    if (offRoad) speed = Math.min(speed + 0.01, 2); 
+    else speed = Math.min(speed + ((speed < 5) ? 0.02 : 0.06), maxSpeed);
+    
     if (keys.ArrowDown) speed = Math.max(speed - 0.2, 0);
 
     playerX -= (roadCurve / 35) * (speed / maxSpeed); 
@@ -236,8 +217,7 @@ function update() {
     roadCurve += (targetCurve - roadCurve) * 0.02;
 
     if (gameTick % 150 === 0 && enemies.length < 100) {
-        let horizonClear = !enemies.some(e => e.z > 3000);
-        if (horizonClear) {
+        if (!enemies.some(e => e.z > 3000)) {
             enemies.push({ 
                 lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 8.5, 
                 color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)],
@@ -251,11 +231,7 @@ function update() {
         let p = 1 - (enemy.z / 4000); 
         let roadWidth = 20 + p * 800;
         let screenX = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p) + (enemy.lane * roadWidth * 0.5);
-        
-        if (p > 0.92 && p < 1.05 && Math.abs(screenX - 200) < 50) { 
-            speed = -3; enemy.z += 800; playCrashSound(); 
-        }
-
+        if (p > 0.92 && p < 1.05 && Math.abs(screenX - 200) < 50) { speed = -3; enemy.z += 800; playCrashSound(); }
         if (gameState === "PLAYING" || gameState === "GOAL_REACHED") {
             if (enemy.z <= 0 && !enemy.isOvertaken) { carsRemaining--; enemy.isOvertaken = true; }
             if (enemy.z > 0 && enemy.isOvertaken) { carsRemaining++; enemy.isOvertaken = false; }
@@ -270,8 +246,6 @@ function update() {
 }
 
 function draw(colors, isRaining) {
-    if (!colors) colors = { sky: "#87CEEB", grass: "#1a7a1a", mt: "#555", fog: 0, nightMode: false, snowCaps: false };
-
     ctx.fillStyle = colors.sky; ctx.fillRect(0, 0, 400, 200);
     ctx.fillStyle = colors.grass; ctx.fillRect(0, 200, 400, 200);
     
@@ -280,10 +254,7 @@ function draw(colors, isRaining) {
         let bx = (i * 100) + mtShift;
         ctx.fillStyle = colors.mt;
         ctx.beginPath(); ctx.moveTo(bx - 60, 200); ctx.lineTo(bx, 140); ctx.lineTo(bx + 60, 200); ctx.fill();
-        if (colors.snowCaps) {
-            ctx.fillStyle = "white";
-            ctx.beginPath(); ctx.moveTo(bx, 140); ctx.lineTo(bx - 20, 160); ctx.lineTo(bx + 20, 160); ctx.fill();
-        }
+        if (colors.snowCaps) { ctx.fillStyle = "white"; ctx.beginPath(); ctx.moveTo(bx, 140); ctx.lineTo(bx - 20, 160); ctx.lineTo(bx + 20, 160); ctx.fill(); }
     }
 
     for (let i = 200; i < 400; i += 4) {
@@ -307,21 +278,25 @@ function draw(colors, isRaining) {
         if (e.lastP >= 0.92 && e.lastP < 2) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode);
     });
 
-    // --- CAMADA VISUAL: NEBLINA E CHUVA ---
+    // NEBLINA
     if (colors.fog > 0) {
-        ctx.fillStyle = `rgba(160,165,180,${colors.fog})`;
+        ctx.fillStyle = `rgba(140,145,160,${colors.fog})`;
         ctx.fillRect(0, 55, 400, 345);
     }
     
+    // CHUVA
     if (isRaining) {
-        ctx.strokeStyle = "rgba(180, 190, 255, 0.4)";
+        ctx.strokeStyle = "rgba(200, 210, 255, 0.35)";
         ctx.lineWidth = 1.2;
         raindrops.forEach(r => {
-            ctx.beginPath();
-            ctx.moveTo(r.x, r.y);
-            ctx.lineTo(r.x + 1.5, r.y + 10);
-            ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(r.x, r.y); ctx.lineTo(r.x + 1.5, r.y + 12); ctx.stroke();
         });
+    }
+
+    // CLARÃO DO RELÂMPAGO
+    if (lightningAlpha > 0) {
+        ctx.fillStyle = `rgba(255, 255, 255, ${lightningAlpha})`;
+        ctx.fillRect(0, 55, 400, 345);
     }
 
     ctx.fillStyle = "black"; ctx.fillRect(0, 0, 400, 55);
