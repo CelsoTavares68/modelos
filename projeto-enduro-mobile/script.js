@@ -147,13 +147,13 @@ function update() {
 
     // Chuva e Raios
     if (raining) {
-        if (Math.random() < 0.005) lightningAlpha = 1.2; 
-        for (let i = 0; i < 8; i++) raindrops.push({ x: Math.random() * 400, y: -10, s: Math.random() * 15 + 15 });
+        if (Math.random() < 0.008) lightningAlpha = 1.2; 
+        for (let i = 0; i < 6; i++) raindrops.push({ x: Math.random() * 400, y: -20, s: Math.random() * 12 + 15 });
     }
     if (lightningAlpha > 0) lightningAlpha -= 0.07;
     raindrops.forEach((r, index) => { r.y += r.s; if(r.y > 400) raindrops.splice(index, 1); });
 
-    // Lógica de Final de Fase
+    // Fim do Dia
     if (currentTime >= DAY_DURATION) {
         if (gameState === "GOAL_REACHED" || carsRemaining <= 0) {
             if (gameState !== "WIN_DAY") { gameState = "WIN_DAY"; playWinSound(); dayNumber++; setTimeout(resetDay, 4000); }
@@ -174,7 +174,7 @@ function update() {
         case 8: colors.sky = "#ade1f2"; colors.grass = "#1a7a1a"; colors.mt = "#555"; break; 
     }
 
-    // Velocidade (Normal na Chuva)
+    // Velocidade Total (Sem redução na chuva)
     let offRoad = Math.abs(playerX) > 380;
     if (offRoad) speed = Math.min(speed + 0.01, 2); 
     else if (speed < maxSpeed) speed += (speed < 5 ? 0.02 : 0.06);
@@ -188,13 +188,16 @@ function update() {
     if (--curveTimer <= 0) { targetCurve = (Math.random() - 0.5) * 160; curveTimer = 120; }
     roadCurve += (targetCurve - roadCurve) * 0.02;
 
-    // Inimigos (Restauração da lógica de persistência)
-    if (gameTick % 140 === 0 && enemies.length < 40) {
-        enemies.push({ 
-            lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 8.5, 
-            color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)],
-            isOvertaken: false 
-        });
+    // GERADOR DE CARROS CORRIGIDO (Evita amontoamento)
+    if (gameTick % 120 === 0 && enemies.length < 30) {
+        // Só cria se o último carro criado já estiver a uma distância segura (z < 3200)
+        if (!enemies.some(e => e.z > 3200)) {
+            enemies.push({ 
+                lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 8.5, 
+                color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)],
+                isOvertaken: false 
+            });
+        }
     }
 
     enemies.forEach((enemy) => {
@@ -203,30 +206,21 @@ function update() {
         let roadW = 20 + p * 800;
         let sx = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p) + (enemy.lane * roadW * 0.5);
         
-        // Colisão
         if (p > 0.92 && p < 1.05 && Math.abs(sx - 200) < 50) { 
-            speed = -3; 
-            enemy.z += 600; // Empurra o inimigo para frente na batida
-            playCrashSound(); 
+            speed = -3; enemy.z += 600; playCrashSound(); 
         }
 
-        // Ultrapassagem (Contagem regressiva)
         if (enemy.z <= 0 && !enemy.isOvertaken && (gameState === "PLAYING" || gameState === "GOAL_REACHED")) {
-            carsRemaining--; 
-            enemy.isOvertaken = true;
+            carsRemaining--; enemy.isOvertaken = true;
             if (carsRemaining <= 0) { carsRemaining = 0; gameState = "GOAL_REACHED"; }
         }
-        
-        // Se batermos e ficarmos atrás dele de novo, ele volta a ser contável
         if (enemy.z > 0 && enemy.isOvertaken) {
-            carsRemaining++;
-            enemy.isOvertaken = false;
+            carsRemaining++; enemy.isOvertaken = false;
         }
 
         enemy.lastY = 200 + (p * 140); enemy.lastX = sx; enemy.lastP = p;
     });
 
-    // Filtro: só remove se estiver MUITO longe (para permitir bater e ele ainda estar lá)
     enemies = enemies.filter(e => e.z > -4000 && e.z < 6000);
 
     draw(colors, raining);
