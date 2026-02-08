@@ -169,7 +169,7 @@ function update() {
     let currentStage = Math.min(Math.floor(currentTime / STAGE_DURATION), 8);
     let isRaining = (currentStage === 3 || currentStage === 7);
 
-    // Clima
+    // Relâmpago e Chuva
     if ((currentStage === 3 || currentStage === 4) && gameTick % 1800 === 0) lightningAlpha = 1.0; 
     if (lightningAlpha > 0) lightningAlpha -= 0.05;
 
@@ -203,15 +203,18 @@ function update() {
         case 8: colors.sky = "#ade1f2"; colors.grass = "#1a7a1a"; colors.mt = "#555"; break; 
     }
 
-    // Física e Penalidade Suave da Chuva
+    // Física e Penalidade Sutil da Chuva (Corrigido para não parar o carro)
     let offRoad = Math.abs(playerX) > 380;
     if (offRoad) {
         speed = Math.min(speed + 0.01, 2); 
     } else {
         let acceleration = (speed < 5) ? 0.02 : 0.06;
-        let rainMaxSpeed = isRaining ? 11 : maxSpeed; // Cai apenas de 12 para 11
-        if (speed < rainMaxSpeed) speed += acceleration;
-        else if (speed > rainMaxSpeed) speed -= 0.005; // Perda de velocidade muito suave
+        let rainMaxSpeed = isRaining ? 11.2 : maxSpeed; // Cai apenas de 12 para 11.2 (muito leve)
+        if (speed < rainMaxSpeed) {
+            speed += acceleration;
+        } else if (speed > rainMaxSpeed) {
+            speed -= 0.01; // Redução suave até o limite da chuva
+        }
     }
     if (keys.ArrowDown) speed = Math.max(speed - 0.2, 0);
 
@@ -226,7 +229,7 @@ function update() {
     // Inimigos
     if (gameTick % 150 === 0 && enemies.length < 100) {
         if (!enemies.some(e => e.z > 3000)) {
-            let enemyBaseV = isRaining ? 7.5 : 8.5; 
+            let enemyBaseV = isRaining ? 7.8 : 8.5; 
             enemies.push({ 
                 lane: (Math.random() - 0.5) * 1.8, z: 4000, v: enemyBaseV, 
                 color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)],
@@ -251,7 +254,7 @@ function update() {
         enemy.lastY = 200 + (p * 140); enemy.lastX = screenX; enemy.lastP = p;
     });
 
-    enemies = enemies.filter(e => e.z > -15000 && e.z < 6000);
+    enemies = enemies.filter(e => e.z > -1000 && e.z < 5000); // Filtro otimizado para evitar travamentos
     draw(colors);
     requestAnimationFrame(update);
 }
