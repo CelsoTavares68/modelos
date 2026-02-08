@@ -1,4 +1,4 @@
-  const CACHE_NAME = 'enduro-mobile-v1'; // Mude o v1 para v2 sempre que fizer uma grande alteração
+  const CACHE_NAME = 'enduro-mobile-v2'; // Mude o v1 para v2 sempre que fizer uma grande alteração
 const assets = [
   './',
   './index.html',
