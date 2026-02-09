@@ -16,10 +16,11 @@ let enemies = [];
 let roadCurve = 0, targetCurve = 0, curveTimer = 0;
 
 // --- CLIMA: CHUVA E RELÂMPAGOS ---
-let raindrops = []; 
+ let raindrops = []; 
 let lightningAlpha = 0; 
-
-const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
+const sfxChuva = new Audio('chuva.mp3');
+sfxChuva.loop = true; // A chuva fica em loop enquanto durar o estágio
+const sfxTrovao = new Audio('trovao.mp3');
 
 window.addEventListener('keydown', e => { 
     if (keys.hasOwnProperty(e.code)) keys[e.code] = true; 
@@ -155,7 +156,7 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
     ctx.restore();
 }
 
-function update() {
+ function update() {
     if (isPaused) return; 
     if (gameState === "WIN_DAY" || gameState === "GAME_OVER") { draw(); requestAnimationFrame(update); return; }
 
@@ -164,28 +165,49 @@ function update() {
 
     let currentStage = Math.min(Math.floor(currentTime / STAGE_DURATION), 8);
     
-    // --- LOGICA DE CLIMA ---
+    // --- LÓGICA DE CLIMA E SONS ---
     let isRaining = (currentStage === 3 || currentStage === 7);
+    
     if (isRaining) {
-        // Chuva
+        if (sfxChuva.paused) sfxChuva.play(); // Liga a chuva
         for (let i = 0; i < 12; i++) { 
             raindrops.push({ x: Math.random() * 400, y: -20, s: Math.random() * 10 + 22 });
         }
-        // Relâmpago (Raro)
-        if (Math.random() > 0.985) lightningAlpha = 0.7;
+        // Relâmpago e Trovão
+        if (Math.random() > 0.985) {
+            lightningAlpha = 0.7;
+            // Toca o trovão (reinicia o som se já estiver tocando)
+            sfxTrovao.currentTime = 0;
+            sfxTrovao.play();
+        }
+    } else {
+        sfxChuva.pause(); // Desliga a chuva nos outros estágios
     }
+
     raindrops.forEach((r, i) => { r.y += r.s; if (r.y > 400) raindrops.splice(i, 1); });
     if (lightningAlpha > 0) lightningAlpha -= 0.05;
 
-    if (currentTime >= DAY_DURATION) {
+     if (currentTime >= DAY_DURATION) {
         if (gameState === "GOAL_REACHED" || carsRemaining <= 0) {
             if (gameState !== "WIN_DAY") {
-                gameState = "WIN_DAY"; playWinSound(); dayNumber++; setTimeout(resetDay, 4000); 
+                gameState = "WIN_DAY"; 
+                playWinSound(); 
+                sfxChuva.pause(); // Garante que a chuva para no placar
+                dayNumber++; 
+                // O setTimeout abaixo já garante o reinício automático
+                setTimeout(() => {
+                    resetDay();
+                    // Importante: garantir que o loop continue após o reset
+                }, 4000); 
             }
         } else { 
-            if (gameState !== "GAME_OVER") { gameState = "GAME_OVER"; playGameOverSound(); }
+            if (gameState !== "GAME_OVER") { 
+                gameState = "GAME_OVER"; 
+                playGameOverSound(); 
+                sfxChuva.pause();
+            }
         }
-        currentTime = DAY_DURATION - 1; 
+        return; // Para a execução do frame atual
     }
 
     let colors = { sky: "#87CEEB", grass: "#1a7a1a", fog: 0, mt: "#555", nightMode: false, snowCaps: false };
