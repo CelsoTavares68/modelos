@@ -186,12 +186,16 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
     ctx.restore();
 }
 
-function update() {
+ function update() {
     if (isPaused) return; 
     if (gameState === "WIN_DAY" || gameState === "GAME_OVER") { draw(); requestAnimationFrame(update); return; }
 
-    gameTick++; playerDist += speed; currentTime++; 
-    if (gameTick % 4 === 0) playEngineSound();
+    gameTick++; 
+    // Salva o progresso automaticamente a cada 1 segundo
+    if (gameTick % 60 === 0) saveProgress(); 
+
+    playerDist += speed; 
+    currentTime++;
 
     let currentStage = Math.min(Math.floor(currentTime / STAGE_DURATION), 8);
     
@@ -230,12 +234,12 @@ function update() {
                 }, 4000); 
             }
         } else { 
-            if (gameState !== "GAME_OVER") { 
-                gameState = "GAME_OVER"; 
-                playGameOverSound(); 
-                sfxChuva.pause();
-            }
-        }
+        if (gameState !== "GAME_OVER") { 
+    gameState = "GAME_OVER"; 
+    playGameOverSound(); 
+    sfxChuva.pause();
+    localStorage.removeItem('enduro_save'); // Apaga o save se perder
+}  
         
         draw(colors, isRaining);
         requestAnimationFrame(update);
