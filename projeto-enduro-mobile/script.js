@@ -138,12 +138,38 @@ function resetGame() {
     if (gameState !== "PLAYING") { gameState = "PLAYING"; update(); }
 }
 
-function resetDay() {
-    currentTime = 0; playerDist = 0; speed = 0; enemies = [];
+ function resetDay() {
+    // 1. Reinicia o cronômetro do dia e a distância percorrida
+    currentTime = 0; 
+    playerDist = 0; 
+    
+    // 2. Reseta a velocidade e limpa os inimigos da pista para o novo começo
+    speed = 0; 
+    enemies = []; 
+    
+    // 3. Calcula a nova meta de carros baseada no dia atual (Dificuldade Progressiva)
+    // Ex: Dia 1 = 200 carros | Dia 2 = 210 carros | Dia 3 = 220 carros
     carsRemaining = baseGoal + (dayNumber - 1) * 10; 
-    gameState = "PLAYING";
+    
+    // 4. Define o estado para jogando e garante que o pause visual seja removido
+    gameState = "PLAYING"; 
+    isPaused = false;
+
+    // 5. Gerencia o áudio da chuva para não ficar tocando no início do novo dia
+    if (sfxChuva) {
+        sfxChuva.pause();
+        sfxChuva.currentTime = 0;
+    }
+
+    // 6. SALVA O PROGRESSO: Importante para que, ao começar o Dia 2, 
+    // o jogo registre que você já passou do Dia 1
     saveProgress(); 
+    
+    // 7. Atualiza o texto do botão de pausa se ele existir no seu HTML
+    const btn = document.getElementById('pauseBtn');
+    if (btn) btn.innerText = "Pausar";
 }
+
 
 function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
     let s = scale * 1.2; 
