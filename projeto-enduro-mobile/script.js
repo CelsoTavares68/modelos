@@ -13,6 +13,32 @@ const DAY_DURATION = STAGE_DURATION * 9;
 let currentTime = 0; 
 
 let enemies = [];
+
+function saveProgress() {
+    const gameStateData = {
+        dayNumber,
+        carsRemaining,
+        playerDist,
+        currentTime
+    };
+    localStorage.setItem('enduro_save', JSON.stringify(gameStateData));
+}
+
+function loadProgress() {
+    const savedData = localStorage.getItem('enduro_save');
+    if (savedData) {
+        const data = JSON.parse(savedData);
+        dayNumber = data.dayNumber;
+        carsRemaining = data.carsRemaining;
+        playerDist = data.playerDist;
+        currentTime = data.currentTime;
+        console.log("Progresso carregado: Dia " + dayNumber);
+    }
+}
+
+// Chama o carregamento assim que o script inicia
+loadProgress();
+
 let roadCurve = 0, targetCurve = 0, curveTimer = 0;
 
 // --- ADICIONADO: DEFINIÇÃO DAS TECLAS (Faltava isso!) ---
