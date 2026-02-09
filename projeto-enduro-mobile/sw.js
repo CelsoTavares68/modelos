@@ -1,4 +1,4 @@
-  const CACHE_NAME = 'enduro-mobile-v3'; // Atualize para v6
+  const CACHE_NAME = 'enduro-mobile-v4'; // Atualize para v6
 const assets = [
   './',
   './index.html',
