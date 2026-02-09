@@ -186,16 +186,20 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
     ctx.restore();
 }
 
- function update() {
+  function update() {
     if (isPaused) return; 
-    if (gameState === "WIN_DAY" || gameState === "GAME_OVER") { draw(); requestAnimationFrame(update); return; }
+    if (gameState === "WIN_DAY" || gameState === "GAME_OVER") { 
+        draw(); 
+        requestAnimationFrame(update); 
+        return; 
+    }
 
     gameTick++; 
-    // Salva o progresso automaticamente a cada 1 segundo
-    if (gameTick % 60 === 0) saveProgress(); 
+    if (gameTick % 60 === 0) saveProgress(); // Salva a cada 1 segundo
+    if (gameTick % 4 === 0) playEngineSound();
 
     playerDist += speed; 
-    currentTime++;
+    currentTime++; 
 
     let currentStage = Math.min(Math.floor(currentTime / STAGE_DURATION), 8);
     
@@ -208,7 +212,8 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
             raindrops.push({ x: Math.random() * 400, y: -20, s: Math.random() * 10 + 22 });
         }
         
-        if (Math.random() > 0.996) { 
+        // FREQUÊNCIA REDUZIDA: Mudei de 0.985 para 0.997 (Raios muito mais raros)
+        if (Math.random() > 0.997) {
             lightningAlpha = 0.7;
             sfxTrovao.currentTime = 0;
             if (audioCtx.state === 'running') sfxTrovao.play().catch(e => {});
@@ -220,6 +225,7 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
     raindrops.forEach((r, i) => { r.y += r.s; if (r.y > 400) raindrops.splice(i, 1); });
     if (lightningAlpha > 0) lightningAlpha -= 0.05;
 
+    // --- REINÍCIO AUTOMÁTICO E PROGRESSÃO DE DIAS ---
     if (currentTime >= DAY_DURATION) {
         if (gameState === "GOAL_REACHED" || carsRemaining <= 0) {
             if (gameState !== "WIN_DAY") {
@@ -227,39 +233,25 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
                 playWinSound(); 
                 sfxChuva.pause(); 
                 dayNumber++; 
-                
-                // Agenda o reinício automático
-                setTimeout(() => {
-                    resetDay(); 
-                }, 4000); 
+                setTimeout(() => { resetDay(); }, 4000); 
             }
         } else { 
-        if (gameState !== "GAME_OVER") { 
-    gameState = "GAME_OVER"; 
-    playGameOverSound(); 
-    sfxChuva.pause();
-    localStorage.removeItem('enduro_save'); // Apaga o save se perder
-}  
-        
+            if (gameState !== "GAME_OVER") { 
+                gameState = "GAME_OVER"; 
+                playGameOverSound(); 
+                sfxChuva.pause();
+                localStorage.removeItem('enduro_save'); // Reseta o save se perder
+            }
+        }
+        // Mantém o desenho ativo para o setTimeout funcionar e mostrar a mensagem
+        let colors = getColorsForStage(currentStage); 
         draw(colors, isRaining);
         requestAnimationFrame(update);
         return; 
     }
 
-    let colors = { sky: "#87CEEB", grass: "#1a7a1a", fog: 0, mt: "#555", nightMode: false, snowCaps: false };
-
-    switch(currentStage) {
-        case 0: colors.snowCaps = true; break; 
-        case 1: colors.sky = "#DDD"; colors.grass = "#FFF"; colors.mt = "#999"; colors.snowCaps = true; break; 
-        case 2: colors.sky = "#ff8c00"; colors.grass = "#145c14"; colors.mt = "#442200"; break; 
-        case 3: colors.sky = "#2c3e50"; colors.grass = "#0a2a0a"; colors.mt = "#1a1a1a"; colors.fog = 0.6; break; 
-        case 4: colors.sky = "#111144"; colors.grass = "#001100"; colors.mt = "#111"; colors.nightMode = true; break; 
-        case 5: colors.sky = "#444"; colors.grass = "#333"; colors.mt = "#222"; colors.fog = 0.8; colors.nightMode = true; break; 
-        case 6: colors.sky = "#000011"; colors.grass = "#000800"; colors.mt = "#000"; colors.nightMode = true; break; 
-        case 7: colors.sky = "#34495e"; colors.grass = "#0d4d0d"; colors.mt = "#1a1a1a"; colors.fog = 0.7; break; 
-        case 8: colors.sky = "#ade1f2"; colors.grass = "#1a7a1a"; colors.mt = "#555"; break; 
-    }
-
+    // Lógica de Movimentação (Mantida original)
+    let colors = getColorsForStage(currentStage);
     let offRoad = Math.abs(playerX) > 380;
     if (offRoad) speed = Math.min(speed + 0.01, 2); 
     else speed = Math.min(speed + ((speed < 5) ? 0.02 : 0.06), maxSpeed);
@@ -274,6 +266,7 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
     if (--curveTimer <= 0) { targetCurve = (Math.random() - 0.5) * 160; curveTimer = 120; }
     roadCurve += (targetCurve - roadCurve) * 0.02;
 
+    // Gerador de Inimigos
     if (gameTick % 150 === 0 && enemies.length < 100) {
         if (!enemies.some(e => e.z > 3000)) {
             enemies.push({ 
@@ -301,6 +294,23 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
     enemies = enemies.filter(e => e.z > -15000 && e.z < 6000);
     draw(colors, isRaining);
     requestAnimationFrame(update);
+}
+
+// Função auxiliar para organizar as cores
+function getColorsForStage(stage) {
+    let colors = { sky: "#87CEEB", grass: "#1a7a1a", fog: 0, mt: "#555", nightMode: false, snowCaps: false };
+    switch(stage) {
+        case 0: colors.snowCaps = true; break; 
+        case 1: colors.sky = "#DDD"; colors.grass = "#FFF"; colors.mt = "#999"; colors.snowCaps = true; break; 
+        case 2: colors.sky = "#ff8c00"; colors.grass = "#145c14"; colors.mt = "#442200"; break; 
+        case 3: colors.sky = "#2c3e50"; colors.grass = "#0a2a0a"; colors.mt = "#1a1a1a"; colors.fog = 0.6; break; 
+        case 4: colors.sky = "#111144"; colors.grass = "#001100"; colors.mt = "#111"; colors.nightMode = true; break; 
+        case 5: colors.sky = "#444"; colors.grass = "#333"; colors.mt = "#222"; colors.fog = 0.8; colors.nightMode = true; break; 
+        case 6: colors.sky = "#000011"; colors.grass = "#000800"; colors.mt = "#000"; colors.nightMode = true; break; 
+        case 7: colors.sky = "#34495e"; colors.grass = "#0d4d0d"; colors.mt = "#1a1a1a"; colors.fog = 0.7; break; 
+        case 8: colors.sky = "#ade1f2"; colors.grass = "#1a7a1a"; colors.mt = "#555"; break; 
+    }
+    return colors;
 }
 
  function draw(colors, isRaining) {
