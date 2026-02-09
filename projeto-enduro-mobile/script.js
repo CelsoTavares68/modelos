@@ -317,7 +317,7 @@ function update() {
         enemy.lastY = 200 + (p * 140); enemy.lastX = screenX; enemy.lastP = p;
     });
 
-    enemies = enemies.filter(e => e.z > -1000 && e.z < 5000);
+    enemies = enemies.filter(e => e.z > -15000 && e.z < 6000);
     draw(colors, isRaining);
     requestAnimationFrame(update);
 }
