@@ -14,29 +14,21 @@ let currentTime = 0;
 
 let enemies = [];
 
-function saveProgress() {
-    const gameStateData = {
-        dayNumber,
-        carsRemaining,
-        playerDist,
-        currentTime
-    };
-    localStorage.setItem('enduro_save', JSON.stringify(gameStateData));
+ function saveProgress() {
+    const data = { dayNumber, carsRemaining, playerDist, currentTime };
+    localStorage.setItem('enduro_save', JSON.stringify(data));
 }
 
 function loadProgress() {
-    const savedData = localStorage.getItem('enduro_save');
-    if (savedData) {
-        const data = JSON.parse(savedData);
+    const saved = localStorage.getItem('enduro_save');
+    if (saved) {
+        const data = JSON.parse(saved);
         dayNumber = data.dayNumber;
         carsRemaining = data.carsRemaining;
         playerDist = data.playerDist;
         currentTime = data.currentTime;
-        console.log("Progresso carregado: Dia " + dayNumber);
     }
 }
-
-// Chama o carregamento assim que o script inicia
 loadProgress();
 
 let roadCurve = 0, targetCurve = 0, curveTimer = 0;
@@ -186,13 +178,9 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
     ctx.restore();
 }
 
-  function update() {
+   function update() {
     if (isPaused) return; 
-    if (gameState === "WIN_DAY" || gameState === "GAME_OVER") { 
-        draw(); 
-        requestAnimationFrame(update); 
-        return; 
-    }
+    if (gameState === "WIN_DAY" || gameState === "GAME_OVER") { draw(getColorsForStage(Math.min(Math.floor(currentTime / STAGE_DURATION), 8)), false); requestAnimationFrame(update); return; }
 
     gameTick++; 
     if (gameTick % 60 === 0) saveProgress(); // Salva a cada 1 segundo
@@ -202,8 +190,6 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
     currentTime++; 
 
     let currentStage = Math.min(Math.floor(currentTime / STAGE_DURATION), 8);
-    
-    // --- LÓGICA DE CLIMA E SONS ---
     let isRaining = (currentStage === 3 || currentStage === 7);
     
     if (isRaining) {
@@ -211,92 +197,41 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
         for (let i = 0; i < 12; i++) { 
             raindrops.push({ x: Math.random() * 400, y: -20, s: Math.random() * 10 + 22 });
         }
-        
-        // FREQUÊNCIA REDUZIDA: Mudei de 0.985 para 0.997 (Raios muito mais raros)
-        if (Math.random() > 0.997) {
+        if (Math.random() > 0.997) { // Raios mais raros
             lightningAlpha = 0.7;
             sfxTrovao.currentTime = 0;
             if (audioCtx.state === 'running') sfxTrovao.play().catch(e => {});
         }
-    } else {
-        sfxChuva.pause();
-    }
+    } else { sfxChuva.pause(); }
 
     raindrops.forEach((r, i) => { r.y += r.s; if (r.y > 400) raindrops.splice(i, 1); });
     if (lightningAlpha > 0) lightningAlpha -= 0.05;
 
-    // --- REINÍCIO AUTOMÁTICO E PROGRESSÃO DE DIAS ---
     if (currentTime >= DAY_DURATION) {
         if (gameState === "GOAL_REACHED" || carsRemaining <= 0) {
             if (gameState !== "WIN_DAY") {
                 gameState = "WIN_DAY"; 
                 playWinSound(); 
-                sfxChuva.pause(); 
                 dayNumber++; 
                 setTimeout(() => { resetDay(); }, 4000); 
             }
-        } else { 
-            if (gameState !== "GAME_OVER") { 
-                gameState = "GAME_OVER"; 
-                playGameOverSound(); 
-                sfxChuva.pause();
-                localStorage.removeItem('enduro_save'); // Reseta o save se perder
-            }
+        } else if (gameState !== "GAME_OVER") { 
+            gameState = "GAME_OVER"; 
+            playGameOverSound(); 
+            localStorage.removeItem('enduro_save');
         }
-        // Mantém o desenho ativo para o setTimeout funcionar e mostrar a mensagem
-        let colors = getColorsForStage(currentStage); 
-        draw(colors, isRaining);
+        draw(getColorsForStage(currentStage), isRaining);
         requestAnimationFrame(update);
         return; 
     }
 
-    // Lógica de Movimentação (Mantida original)
-    let colors = getColorsForStage(currentStage);
-    let offRoad = Math.abs(playerX) > 380;
-    if (offRoad) speed = Math.min(speed + 0.01, 2); 
-    else speed = Math.min(speed + ((speed < 5) ? 0.02 : 0.06), maxSpeed);
-    
-    if (keys.ArrowDown) speed = Math.max(speed - 0.2, 0);
-
-    playerX -= (roadCurve / 35) * (speed / maxSpeed); 
-    if (keys.ArrowLeft) playerX -= 4.5;
-    if (keys.ArrowRight) playerX += 4.5;
-    playerX = Math.max(-450, Math.min(450, playerX));
-
-    if (--curveTimer <= 0) { targetCurve = (Math.random() - 0.5) * 160; curveTimer = 120; }
-    roadCurve += (targetCurve - roadCurve) * 0.02;
-
-    // Gerador de Inimigos
-    if (gameTick % 150 === 0 && enemies.length < 100) {
-        if (!enemies.some(e => e.z > 3000)) {
-            enemies.push({ 
-                lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 8.5, 
-                color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)],
-                isOvertaken: false 
-            });
-        }
-    }
-
-    enemies.forEach((enemy) => {
-        enemy.z -= (speed - enemy.v);
-        let p = 1 - (enemy.z / 4000); 
-        let roadWidth = 20 + p * 800;
-        let screenX = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p) + (enemy.lane * roadWidth * 0.5);
-        if (p > 0.92 && p < 1.05 && Math.abs(screenX - 200) < 50) { speed = -3; enemy.z += 800; playCrashSound(); }
-        if (gameState === "PLAYING" || gameState === "GOAL_REACHED") {
-            if (enemy.z <= 0 && !enemy.isOvertaken) { carsRemaining--; enemy.isOvertaken = true; }
-            if (enemy.z > 0 && enemy.isOvertaken) { carsRemaining++; enemy.isOvertaken = false; }
-            if (carsRemaining <= 0) { carsRemaining = 0; gameState = "GOAL_REACHED"; }
-        }
-        enemy.lastY = 200 + (p * 140); enemy.lastX = screenX; enemy.lastP = p;
-    });
-
-    enemies = enemies.filter(e => e.z > -15000 && e.z < 6000);
-    draw(colors, isRaining);
+    // Lógica de pista e inimigos... (mantenha seu código original aqui)
+    // ...
+    draw(getColorsForStage(currentStage), isRaining);
     requestAnimationFrame(update);
 }
 
-// Função auxiliar para organizar as cores
+// Função auxiliar para as cores (substitua seu switch antigo por esta)
 function getColorsForStage(stage) {
     let colors = { sky: "#87CEEB", grass: "#1a7a1a", fog: 0, mt: "#555", nightMode: false, snowCaps: false };
     switch(stage) {
@@ -312,6 +247,8 @@ function getColorsForStage(stage) {
     }
     return colors;
 }
+
+ 
 
  function draw(colors, isRaining) {
     if (!colors.sky) return; // Proteção contra cores vazias no fim do dia
