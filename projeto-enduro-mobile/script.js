@@ -21,8 +21,10 @@ let lightningAlpha = 0;
 
 // --- SONS (REINTEGRADOS) ---
 const sfxChuva = new Audio('chuva.mp3');
-sfxChuva.loop = true; 
+sfxChuva.loop = true;
+sfxChuva.volume = 0.5; 
 const sfxTrovao = new Audio('trovao.mp3');
+sfxTrovao.volume = 0.7;
 
 const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
 
