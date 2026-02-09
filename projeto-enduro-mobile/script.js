@@ -267,19 +267,37 @@ function update() {
     requestAnimationFrame(update);
 }
 
-function draw(colors, isRaining) {
+ function draw(colors, isRaining) {
     if (!colors.sky) return; // Proteção contra cores vazias no fim do dia
-    ctx.fillStyle = colors.sky; ctx.fillRect(0, 0, 400, 200);
-    ctx.fillStyle = colors.grass; ctx.fillRect(0, 200, 400, 200);
     
-    let mtShift = (roadCurve * 0.8);
+    ctx.fillStyle = colors.sky; 
+    ctx.fillRect(0, 0, 400, 200);
+    ctx.fillStyle = colors.grass; 
+    ctx.fillRect(0, 200, 400, 200);
+    
+    // --- CORREÇÃO: MOVIMENTO DAS MONTANHAS (Paralaxe Inverso) ---
+    let mtShift = -(roadCurve * 0.8); 
+    
     for (let i = -2; i < 8; i++) {
-        let bx = (i * 100) + mtShift;
+        let bx = (i * 100) + (mtShift % 100); 
         ctx.fillStyle = colors.mt;
-        ctx.beginPath(); ctx.moveTo(bx - 60, 200); ctx.lineTo(bx, 140); ctx.lineTo(bx + 60, 200); ctx.fill();
-        if (colors.snowCaps) { ctx.fillStyle = "white"; ctx.beginPath(); ctx.moveTo(bx, 140); ctx.lineTo(bx - 20, 160); ctx.lineTo(bx + 20, 160); ctx.fill(); }
+        ctx.beginPath(); 
+        ctx.moveTo(bx - 60, 200); 
+        ctx.lineTo(bx, 140); 
+        ctx.lineTo(bx + 60, 200); 
+        ctx.fill();
+        
+        if (colors.snowCaps) { 
+            ctx.fillStyle = "white"; 
+            ctx.beginPath(); 
+            ctx.moveTo(bx, 140); 
+            ctx.lineTo(bx - 20, 160); 
+            ctx.lineTo(bx + 20, 160); 
+            ctx.fill(); 
+        }
     }
 
+    // Desenho da Estrada
     for (let i = 200; i < 400; i += 4) {
         let p = (i - 200) / 140;
         let x = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p);
@@ -291,16 +309,20 @@ function draw(colors, isRaining) {
         ctx.fillRect(x + w/2, i, 10*p, 4);
     }
     
+    // Carros inimigos (atrás do jogador)
     enemies.sort((a,b) => b.z - a.z).forEach(e => {
         if (e.lastP > 0 && e.lastP < 0.92) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode);
     });
     
+    // Jogador
     drawF1Car(200, 350, 0.85, "#E00", true, colors.nightMode); 
 
+    // Carros inimigos (frente do jogador/ultrapassados)
     enemies.forEach(e => {
         if (e.lastP >= 0.92 && e.lastP < 2) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode);
     });
 
+    // Efeitos de Clima (Neblina, Chuva e Relâmpago)
     if (colors.fog > 0) {
         ctx.fillStyle = `rgba(140,145,160,${colors.fog})`;
         ctx.fillRect(0, 55, 400, 345);
@@ -319,6 +341,7 @@ function draw(colors, isRaining) {
         ctx.fillRect(0, 55, 400, 345);
     }
 
+    // Painel de Informações (HUD)
     ctx.fillStyle = "black"; ctx.fillRect(0, 0, 400, 55);
     ctx.fillStyle = (gameState === "GOAL_REACHED" || gameState === "WIN_DAY") ? "lime" : "yellow";
     ctx.font = "bold 18px Courier";
@@ -327,6 +350,7 @@ function draw(colors, isRaining) {
     ctx.fillStyle = "#444"; ctx.fillRect(260, 20, 120, 15);
     ctx.fillStyle = "lime"; ctx.fillRect(260, 20, (currentTime/DAY_DURATION) * 120, 15);
 
+    // Mensagens de Estado (Vitória, Derrota, Pause)
     if (gameState === "WIN_DAY") {
         ctx.fillStyle = "rgba(0,0,0,0.7)"; ctx.fillRect(0, 55, 400, 345);
         ctx.fillStyle = "lime"; ctx.textAlign = "center";
