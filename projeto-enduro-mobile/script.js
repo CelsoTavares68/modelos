@@ -177,7 +177,8 @@ function update() {
         for (let i = 0; i < 12; i++) { 
             raindrops.push({ x: Math.random() * 400, y: -20, s: Math.random() * 10 + 22 });
         }
-        if (Math.random() > 0.985) {
+        
+        if (Math.random() > 0.996) { 
             lightningAlpha = 0.7;
             sfxTrovao.currentTime = 0;
             if (audioCtx.state === 'running') sfxTrovao.play().catch(e => {});
@@ -196,7 +197,11 @@ function update() {
                 playWinSound(); 
                 sfxChuva.pause(); 
                 dayNumber++; 
-                setTimeout(() => { resetDay(); }, 4000); 
+                
+                // Agenda o reinício automático
+                setTimeout(() => {
+                    resetDay(); 
+                }, 4000); 
             }
         } else { 
             if (gameState !== "GAME_OVER") { 
@@ -205,7 +210,8 @@ function update() {
                 sfxChuva.pause();
             }
         }
-        draw({}, isRaining); // Passa cores vazias apenas para manter o desenho final
+        
+        draw(colors, isRaining);
         requestAnimationFrame(update);
         return; 
     }
