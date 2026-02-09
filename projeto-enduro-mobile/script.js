@@ -138,67 +138,74 @@ function resetGame() {
     if (gameState !== "PLAYING") { gameState = "PLAYING"; update(); }
 }
 
- function resetDay() {
-    // 1. Reinicia o cronômetro do dia e a distância percorrida
+  function resetDay() {
     currentTime = 0; 
     playerDist = 0; 
-    
-    // 2. Reseta a velocidade e limpa os inimigos da pista para o novo começo
     speed = 0; 
     enemies = []; 
     
-    // 3. Calcula a nova meta de carros baseada no dia atual (Dificuldade Progressiva)
-    // Ex: Dia 1 = 200 carros | Dia 2 = 210 carros | Dia 3 = 220 carros
+    // Atualiza a meta de carros para o novo dia
     carsRemaining = baseGoal + (dayNumber - 1) * 10; 
     
-    // 4. Define o estado para jogando e garante que o pause visual seja removido
-    gameState = "PLAYING"; 
-    isPaused = false;
+    gameState = "PLAYING";
+    isPaused = false; // Garante que o jogo não comece pausado
 
-    // 5. Gerencia o áudio da chuva para não ficar tocando no início do novo dia
+    // Resolve o problema do som que você mencionou no comentário
     if (sfxChuva) {
         sfxChuva.pause();
         sfxChuva.currentTime = 0;
     }
 
-    // 6. SALVA O PROGRESSO: Importante para que, ao começar o Dia 2, 
-    // o jogo registre que você já passou do Dia 1
+    // SALVA o progresso no Dia 2 para não perder o avanço
     saveProgress(); 
-    
-    // 7. Atualiza o texto do botão de pausa se ele existir no seu HTML
+
+    // Atualiza o botão visualmente
     const btn = document.getElementById('pauseBtn');
     if (btn) btn.innerText = "Pausar";
 }
 
 
-function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
-    let s = scale * 1.2; 
-    if (s < 0.02 || s > 30) return; 
-    let w = 45 * s; let h = 22 * s; 
+
+ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
+    let s = scale * 1.2;
+    if (s < 0.02 || s > 30) return;
+    let w = 45 * s; let h = 22 * s;
     ctx.save();
     ctx.translate(x, y);
     if(isPlayer) ctx.rotate((roadCurve / 40) * Math.PI / 180);
+    
     let carColor = nightMode ? "#000" : color;
-    ctx.fillStyle = "#111"; 
-    ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8); 
-    ctx.fillRect(w * 0.25, -h * 0.1, w * 0.25, h * 0.8); 
-    ctx.fillStyle = carColor; 
-    ctx.fillRect(-w * 0.25, h * 0.1, w * 0.5, h * 0.4);   
-    ctx.fillRect(-w * 0.5, -h * 0.3, w, h * 0.2);        
+
+    // --- AJUSTE VISUAL: DESENHAR A LUZ PRIMEIRO ---
     if (nightMode) {
+        // Luzes traseiras (Vermelhas)
         ctx.fillStyle = "#FF0000";
         ctx.fillRect(-w * 0.4, h * 0.4, w * 0.15, h * 0.15);
         ctx.fillRect(w * 0.25, h * 0.4, w * 0.15, h * 0.15);
-        let lightLength = h * 6.0; 
+
+        // Feixe de luz dos faróis (Amarelo degradê)
+        let lightLength = h * 6.0;
         let gradient = ctx.createLinearGradient(0, 0, 0, -lightLength);
         gradient.addColorStop(0, "rgba(255, 255, 200, 0.6)");
         gradient.addColorStop(1, "rgba(255, 255, 200, 0)");
         ctx.fillStyle = gradient;
         ctx.beginPath();
-        ctx.moveTo(-w * 0.2, 0); ctx.lineTo(-w * 1.5, -lightLength); 
-        ctx.lineTo(w * 1.5, -lightLength); ctx.lineTo(w * 0.2, 0);            
+        ctx.moveTo(-w * 0.2, 0); ctx.lineTo(-w * 1.5, -lightLength);
+        ctx.lineTo(w * 1.5, -lightLength); ctx.lineTo(w * 0.2, 0);
         ctx.fill();
     }
+
+    // --- AGORA DESENHA O CORPO DO CARRO (Ficará por cima da luz) ---
+    // Rodas
+    ctx.fillStyle = "#111";
+    ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8);
+    ctx.fillRect(w * 0.25, -h * 0.1, w * 0.25, h * 0.8);
+
+    // Corpo e Aerofólio
+    ctx.fillStyle = carColor;
+    ctx.fillRect(-w * 0.25, h * 0.1, w * 0.5, h * 0.4); // Cockpit
+    ctx.fillRect(-w * 0.5, -h * 0.3, w, h * 0.2);     // Aerofólio
+    
     ctx.restore();
 }
 
