@@ -86,7 +86,6 @@ window.addEventListener('keydown', e => {
 window.addEventListener('keyup', e => { if (keys.hasOwnProperty(e.code)) keys[e.code] = false; });
 
 function setupMobileControls() {
-    // Restaurado IDs originais: mobileLeft e mobileRight
     const ids = { 'mobileLeft': 'ArrowLeft', 'mobileRight': 'ArrowRight' };
     Object.keys(ids).forEach(id => {
         const btn = document.getElementById(id);
@@ -126,7 +125,6 @@ function playCrashSound() {
     osc.start(); osc.stop(audioCtx.currentTime + 0.4);
 }
 
-// --- FUNÇÕES DE INTERFACE RESTAURADAS ---
 function togglePause() {
     if (gameState === "PLAYING" || gameState === "GOAL_REACHED") {
         isPaused = !isPaused;
@@ -170,22 +168,22 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
     let carColor = nightMode ? "#000" : color;
 
     if (nightMode) {
-        // LANTERNAS TRASEIRAS (Dois pequenos pontos vermelhos na traseira do carro)
+        // LANTERNAS TRASEIRAS VERMELHAS (Fixas na parte de trás)
         ctx.fillStyle = "#FF0000";
-        ctx.fillRect(-w * 0.4, h * 0.35, w * 0.1, h * 0.15); // Esquerda
-        ctx.fillRect(w * 0.3, h * 0.35, w * 0.1, h * 0.15);  // Direita
+        ctx.fillRect(-w * 0.4, h * 0.3, w * 0.15, h * 0.2); // Esquerda
+        ctx.fillRect(w * 0.25, h * 0.3, w * 0.15, h * 0.2); // Direita
 
-        // FAREIS FRONTAIS (Diminuídos para parecerem focar apenas no asfalto à frente)
-        let lightLength = h * 3.5; // Reduzido de 6.0 para 3.5
+        // FAROIS FRONTAIS (Muito discretos e curtos)
+        let lightLength = h * 1.8; 
         let gradient = ctx.createLinearGradient(0, 0, 0, -lightLength);
-        gradient.addColorStop(0, "rgba(255, 255, 200, 0.4)"); // Opacidade levemente reduzida
+        gradient.addColorStop(0, "rgba(255, 255, 200, 0.25)"); 
         gradient.addColorStop(1, "rgba(255, 255, 200, 0)");
         ctx.fillStyle = gradient;
         ctx.beginPath();
-        ctx.moveTo(-w * 0.2, 0); 
-        ctx.lineTo(-w * 1.2, -lightLength); // Faixo mais contido lateralmente
-        ctx.lineTo(w * 1.2, -lightLength); 
-        ctx.lineTo(w * 0.2, 0);
+        ctx.moveTo(-w * 0.15, 0); 
+        ctx.lineTo(-w * 0.7, -lightLength); 
+        ctx.lineTo(w * 0.7, -lightLength); 
+        ctx.lineTo(w * 0.15, 0);
         ctx.fill();
     }
 
@@ -203,7 +201,7 @@ function update() {
     if (isPaused) return; 
     let currentStage = Math.min(Math.floor(currentTime / STAGE_DURATION), 8);
     let isRaining = (currentStage === 3 || currentStage === 7);
-    let warningLightning = (currentStage === 2); // Somente visual conforme pedido
+    let warningLightning = (currentStage === 2); 
 
     let colors = { sky: "#87CEEB", grass: "#1a7a1a", fog: 0, mt: "#555", nightMode: false, snowCaps: false };
     switch(currentStage) {
@@ -215,7 +213,7 @@ function update() {
         case 5: colors.sky = "#444"; colors.grass = "#333"; colors.mt = "#222"; colors.fog = 0.8; colors.nightMode = true; break; 
         case 6: colors.sky = "#000011"; colors.grass = "#000800"; colors.mt = "#000"; colors.nightMode = true; break; 
         case 7: colors.sky = "#34495e"; colors.grass = "#0d4d0d"; colors.mt = "#1a1a1a"; colors.fog = 0.7; break; 
-        case 8: colors.sky = "#ade1f2"; colors.grass = "#1a7a1a"; colors.mt = "#555"; colors.snowCaps = true; break; // Adicionado snowCaps aqui
+        case 8: colors.sky = "#ade1f2"; colors.grass = "#1a7a1a"; colors.mt = "#555"; colors.snowCaps = true; break; 
     }
 
     if (gameState === "WIN_DAY" || gameState === "GAME_OVER") { 
@@ -229,7 +227,6 @@ function update() {
     if (gameTick % 4 === 0) playEngineSound();
     if (gameTick % 60 === 0) saveProgress();
 
-    // Lógica de Relâmpago (Visual no 2, Visual + Som no 3 e 7)
     if (isRaining || warningLightning) {
         if (isRaining && sfxChuva.paused && audioCtx.state === 'running') sfxChuva.play().catch(e => {}); 
         if (Math.random() > 0.996) { 
@@ -327,7 +324,6 @@ function draw(colors, isRaining) {
             ctx.beginPath(); ctx.moveTo(bx, 140); ctx.lineTo(bx - 20, 160); ctx.lineTo(bx + 20, 160); ctx.fill(); 
         }
 
-        // Relâmpago visual nas montanhas (Stages 2, 3 e 7)
         if (lightningAlpha > 0) {
             ctx.fillStyle = `rgba(255, 255, 255, ${lightningAlpha * 0.7})`;
             ctx.beginPath(); ctx.moveTo(bx - 60, 200); ctx.lineTo(bx, 140); ctx.lineTo(bx + 60, 200); ctx.fill();
@@ -360,7 +356,6 @@ function draw(colors, isRaining) {
     }
     if (lightningAlpha > 0) { ctx.fillStyle = `rgba(255, 255, 255, ${lightningAlpha})`; ctx.fillRect(0, 55, 400, 345); }
 
-    // HUD
     ctx.fillStyle = "black"; ctx.fillRect(0, 0, 400, 55);
     ctx.fillStyle = (gameState === "GOAL_REACHED" || gameState === "WIN_DAY") ? "lime" : "yellow";
     ctx.font = "bold 18px Courier";
