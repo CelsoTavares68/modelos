@@ -170,21 +170,22 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
     let carColor = nightMode ? "#000" : color;
 
     if (nightMode) {
+        // LANTERNAS TRASEIRAS (Dois pequenos pontos vermelhos na traseira do carro)
         ctx.fillStyle = "#FF0000";
-        ctx.shadowBlur = 10 * s;
-        ctx.shadowColor = "red";
-        ctx.fillRect(-w * 0.4, h * 0.4, w * 0.15, h * 0.15);
-        ctx.fillRect(w * 0.25, h * 0.4, w * 0.15, h * 0.15);
-        ctx.shadowBlur = 0;
+        ctx.fillRect(-w * 0.4, h * 0.35, w * 0.1, h * 0.15); // Esquerda
+        ctx.fillRect(w * 0.3, h * 0.35, w * 0.1, h * 0.15);  // Direita
 
-        let lightLength = h * 6.0;
+        // FAREIS FRONTAIS (Diminuídos para parecerem focar apenas no asfalto à frente)
+        let lightLength = h * 3.5; // Reduzido de 6.0 para 3.5
         let gradient = ctx.createLinearGradient(0, 0, 0, -lightLength);
-        gradient.addColorStop(0, "rgba(255, 255, 200, 0.6)");
+        gradient.addColorStop(0, "rgba(255, 255, 200, 0.4)"); // Opacidade levemente reduzida
         gradient.addColorStop(1, "rgba(255, 255, 200, 0)");
         ctx.fillStyle = gradient;
         ctx.beginPath();
-        ctx.moveTo(-w * 0.2, 0); ctx.lineTo(-w * 1.5, -lightLength);
-        ctx.lineTo(w * 1.5, -lightLength); ctx.lineTo(w * 0.2, 0);
+        ctx.moveTo(-w * 0.2, 0); 
+        ctx.lineTo(-w * 1.2, -lightLength); // Faixo mais contido lateralmente
+        ctx.lineTo(w * 1.2, -lightLength); 
+        ctx.lineTo(w * 0.2, 0);
         ctx.fill();
     }
 
