@@ -26,7 +26,7 @@ sfxChuva.volume = 0.5;
 const sfxTrovao = new Audio('trovao.mp3');
 sfxTrovao.volume = 0.7;
 
-// --- ELEMENTOS DE MÍDIA (CORRIGIDOS E OTIMIZADOS) ---
+// --- ELEMENTOS DE MÍDIA ---
 const videoVitoria = document.createElement('video');
 videoVitoria.src = 'bandeira_vitoria.mp4';
 videoVitoria.style.position = 'absolute';
@@ -100,6 +100,35 @@ function playCrashSound() {
     gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.4);
     osc.connect(gain); gain.connect(audioCtx.destination);
     osc.start(); osc.stop(audioCtx.currentTime + 0.4);
+}
+
+// --- CONTROLES DE BOTÕES (RESTAURADOS) ---
+function press(key) { 
+    keys[key] = true; 
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+function release(key) { keys[key] = false; }
+
+const btnUp = document.getElementById('btnUp');
+const btnDown = document.getElementById('btnDown');
+const btnLeft = document.getElementById('btnLeft');
+const btnRight = document.getElementById('btnRight');
+
+if(btnUp) {
+    btnUp.onmousedown = btnUp.ontouchstart = () => press('ArrowUp');
+    btnUp.onmouseup = btnUp.ontouchend = () => release('ArrowUp');
+}
+if(btnDown) {
+    btnDown.onmousedown = btnDown.ontouchstart = () => press('ArrowDown');
+    btnDown.onmouseup = btnDown.ontouchend = () => release('ArrowDown');
+}
+if(btnLeft) {
+    btnLeft.onmousedown = btnLeft.ontouchstart = () => press('ArrowLeft');
+    btnLeft.onmouseup = btnLeft.ontouchend = () => release('ArrowLeft');
+}
+if(btnRight) {
+    btnRight.onmousedown = btnRight.ontouchstart = () => press('ArrowRight');
+    btnRight.onmouseup = btnRight.ontouchend = () => release('ArrowRight');
 }
 
 function resetDay() {
@@ -259,7 +288,6 @@ function update() {
     requestAnimationFrame(update);
 }
 
-// --- PARTE CORRIGIDA DO HUD E DESENHO ---
 function draw(colors, isRaining, preRainLightning) {
     ctx.fillStyle = colors.sky; ctx.fillRect(0, 0, 400, 200);
     ctx.fillStyle = colors.grass; ctx.fillRect(0, 200, 400, 200);
@@ -298,7 +326,6 @@ function draw(colors, isRaining, preRainLightning) {
     if (colors.fog > 0) { ctx.fillStyle = `rgba(140,145,160,${colors.fog})`; ctx.fillRect(0, 55, 400, 345); }
     if (isRaining && lightningAlpha > 0) { ctx.fillStyle = `rgba(255, 255, 255, ${lightningAlpha})`; ctx.fillRect(0, 55, 400, 345); }
 
-    // HUD REPARADO
     ctx.fillStyle = "black"; ctx.fillRect(0, 0, 400, 55);
     ctx.fillStyle = (gameState === "GOAL_REACHED" || gameState === "WIN_DAY") ? "lime" : "yellow";
     ctx.font = "bold 18px Courier";
@@ -308,12 +335,10 @@ function draw(colors, isRaining, preRainLightning) {
     ctx.fillStyle = "lime"; ctx.fillRect(260, 20, (currentTime/DAY_DURATION) * 120, 15);
 }
 
-// Eventos de Teclado
 window.addEventListener('keydown', e => { 
     if (keys.hasOwnProperty(e.code)) keys[e.code] = true; 
     if (audioCtx.state === 'suspended') audioCtx.resume();
 });
 window.addEventListener('keyup', e => { if (keys.hasOwnProperty(e.code)) keys[e.code] = false; });
 
-// Inicia o Loop
 update();
