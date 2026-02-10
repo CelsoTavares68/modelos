@@ -7,6 +7,7 @@ const assets = [
   './manifest.json',
   './chuva.mp3', // Adicione o arquivo de chuva
   './trovao.mp3'  // Adicione o arquivo de trovão
+  
 ];
 
 self.addEventListener('install', event => {

@@ -182,8 +182,8 @@ function resetGame() {
     if (nightMode) {
         // Luzes traseiras (Vermelhas)
         ctx.fillStyle = "#FF0000";
-        ctx.fillRect(-w * 0.4, h * 0.4, w * 0.15, h * 0.15);
-        ctx.fillRect(w * 0.25, h * 0.4, w * 0.15, h * 0.15);
+        ctx.fillRect(-w * 0.45, h * 0.3, w * 0.15, h * 0.2);
+        ctx.fillRect(w * 0.3, h * 0.3, w * 0.15, h * 0.2);
 
         // Feixe de luz dos faróis (Amarelo degradê)
         let lightLength = h * 6.0;
@@ -256,20 +256,31 @@ function update() {
     if (lightningAlpha > 0) lightningAlpha -= 0.05;
 
     // --- REINÍCIO AUTOMÁTICO DIA 2+ ---
-    if (currentTime >= DAY_DURATION) {
-        if (gameState === "GOAL_REACHED" || carsRemaining <= 0) {
-            if (gameState !== "WIN_DAY") { 
-                gameState = "WIN_DAY"; 
-                playWinSound(); 
-                dayNumber++; 
-                setTimeout(() => { resetDay(); }, 4000); 
-            }
-        } else { 
-            if (gameState !== "GAME_OVER") { gameState = "GAME_OVER"; playGameOverSound(); localStorage.removeItem('enduro_save'); }
+     if (currentTime >= DAY_DURATION) {
+    if (gameState === "GOAL_REACHED" || carsRemaining <= 0) {
+        if (gameState !== "WIN_DAY") { 
+            gameState = "WIN_DAY"; 
+            sfxVitoriaAudio.play(); // Toca o som de vitória
+            videoVitoria.style.display = 'block'; // Mostra o vídeo da bandeira
+            videoVitoria.play();
+            dayNumber++; 
+            setTimeout(() => { 
+                videoVitoria.style.display = 'none';
+                videoVitoria.pause();
+                resetDay(); 
+            }, 4000); 
         }
-        currentTime = DAY_DURATION - 1; 
+        } else { 
+        if (gameState !== "GAME_OVER") { 
+            gameState = "GAME_OVER"; 
+            sfxDerrota.play(); // Toca o som de derrota
+            videoDerrota.style.display = 'block'; // Mostra o vídeo de game over
+            videoDerrota.play();
+            localStorage.removeItem('enduro_save'); 
+        }
     }
-
+    currentTime = DAY_DURATION - 1; 
+}
     let offRoad = Math.abs(playerX) > 380;
     if (offRoad) speed = Math.min(speed + 0.01, 2); 
     else speed = Math.min(speed + ((speed < 5) ? 0.02 : 0.06), maxSpeed);
