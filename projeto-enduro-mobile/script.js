@@ -26,7 +26,7 @@ sfxChuva.volume = 0.5;
 const sfxTrovao = new Audio('trovao.mp3');
 sfxTrovao.volume = 0.7;
 
-// --- ELEMENTOS DE MÍDIA ---
+// --- NOVOS ELEMENTOS DE MÍDIA (CORRIGIDOS COM Z-INDEX) ---
 const videoVitoria = document.createElement('video');
 videoVitoria.src = 'bandeira_vitoria.mp4';
 videoVitoria.style.position = 'absolute';
@@ -34,9 +34,9 @@ videoVitoria.style.top = '55px';
 videoVitoria.style.left = '0';
 videoVitoria.style.width = '400px';
 videoVitoria.style.height = '345px';
-videoVitoria.style.zIndex = '10'; 
 videoVitoria.style.display = 'none';
-videoVitoria.muted = true; 
+videoVitoria.style.zIndex = '10'; // Garante que fica na frente do canvas
+videoVitoria.muted = true; // Ajuda no autoplay do navegador
 videoVitoria.load();
 document.body.appendChild(videoVitoria);
 
@@ -47,8 +47,8 @@ videoDerrota.style.top = '55px';
 videoDerrota.style.left = '0';
 videoDerrota.style.width = '400px';
 videoDerrota.style.height = '345px';
-videoDerrota.style.zIndex = '10';
 videoDerrota.style.display = 'none';
+videoDerrota.style.zIndex = '10';
 videoDerrota.muted = true;
 videoDerrota.load();
 document.body.appendChild(videoDerrota);
@@ -76,7 +76,30 @@ function loadProgress() {
 }
 loadProgress();
 
-// --- ÁUDIO E CONTROLES ---
+// --- EVENTOS DE TECLADO ---
+window.addEventListener('keydown', e => { 
+    if (keys.hasOwnProperty(e.code)) keys[e.code] = true; 
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+});
+window.addEventListener('keyup', e => { if (keys.hasOwnProperty(e.code)) keys[e.code] = false; });
+
+// --- CONTROLES MOBILE (MANTIDOS CONFORME O ORIGINAL) ---
+function setupMobileControls() {
+    const ids = { 'mobileLeft': 'ArrowLeft', 'mobileRight': 'ArrowRight' };
+    Object.keys(ids).forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) {
+            const press = (e) => { e.preventDefault(); keys[ids[id]] = true; if(audioCtx.state === 'suspended') audioCtx.resume(); };
+            const release = (e) => { e.preventDefault(); keys[ids[id]] = false; };
+            btn.addEventListener('touchstart', press, {passive: false});
+            btn.addEventListener('touchend', release, {passive: false});
+            btn.addEventListener('mousedown', press);
+            btn.addEventListener('mouseup', release);
+        }
+    });
+}
+setupMobileControls();
+
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
 function playEngineSound() {
@@ -86,6 +109,7 @@ function playEngineSound() {
     osc.type = 'sawtooth';
     osc.frequency.setValueAtTime(60 + (speed * 15), audioCtx.currentTime);
     gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
     osc.connect(gain); gain.connect(audioCtx.destination);
     osc.start(); osc.stop(audioCtx.currentTime + 0.1);
 }
@@ -102,36 +126,23 @@ function playCrashSound() {
     osc.start(); osc.stop(audioCtx.currentTime + 0.4);
 }
 
-// --- CONTROLES DE BOTÕES (RESTAURADOS) ---
- function press(key) { 
-    keys[key] = true; 
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-}
-function release(key) { keys[key] = false; }
-
-// Função para anexar eventos evitando o zoom e scroll do navegador
-function attachControls(id, key) {
-    const btn = document.getElementById(id);
-    if (btn) {
-        // Eventos de Mouse
-        btn.onmousedown = (e) => { e.preventDefault(); press(key); };
-        btn.onmouseup = (e) => { e.preventDefault(); release(key); };
-        btn.onmouseleave = (e) => { e.preventDefault(); release(key); };
-
-        // Eventos de Toque (Mobile) - Crucial para resposta rápida
-        btn.ontouchstart = (e) => { e.preventDefault(); press(key); };
-        btn.ontouchend = (e) => { e.preventDefault(); release(key); };
-        btn.ontouchcancel = (e) => { e.preventDefault(); release(key); };
+function togglePause() {
+    if (gameState === "PLAYING" || gameState === "GOAL_REACHED") {
+        isPaused = !isPaused;
+        const btn = document.getElementById('pauseBtn');
+        if (btn) btn.innerText = isPaused ? "Retomar" : "Pausar";
+        if (isPaused) sfxChuva.pause();
+        if (!isPaused) { audioCtx.resume(); update(); }
     }
 }
 
-// Inicializa os controles após o carregamento
-window.onload = () => {
-    attachControls('btnUp', 'ArrowUp');
-    attachControls('btnDown', 'ArrowDown');
-    attachControls('btnLeft', 'ArrowLeft');
-    attachControls('btnRight', 'ArrowRight');
-};
+function resetGame() {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    dayNumber = 1; baseGoal = 200; isPaused = false;
+    localStorage.removeItem('enduro_save');
+    resetDay();
+    if (gameState !== "PLAYING") { gameState = "PLAYING"; update(); }
+}
 
 function resetDay() {
     currentTime = 0; playerDist = 0; speed = 0; enemies = [];
@@ -142,6 +153,7 @@ function resetDay() {
     saveProgress();
 }
 
+// --- DESENHO DO CARRO COM LANTERNAS MELHORADAS ---
 function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
     let s = scale * 1.2;
     if (s < 0.02 || s > 30) return;
@@ -153,31 +165,34 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
     let carColor = nightMode ? "#000" : color;
 
     if (nightMode) {
+        // LANTERNAS TRASEIRAS COM BRILHO
         ctx.fillStyle = "#FF0000";
         ctx.shadowBlur = 10 * s;
         ctx.shadowColor = "red";
-        ctx.fillRect(-w * 0.4, h * 0.3, w * 0.15, h * 0.2); 
-        ctx.fillRect(w * 0.25, h * 0.3, w * 0.15, h * 0.2); 
+        ctx.fillRect(-w * 0.4, h * 0.4, w * 0.15, h * 0.15);
+        ctx.fillRect(w * 0.25, h * 0.4, w * 0.15, h * 0.15);
         ctx.shadowBlur = 0;
 
-        let lightLength = h * 3.5;
+        // FAROL (Ajustado comprimento)
+        let lightLength = h * 4.5;
         let gradient = ctx.createLinearGradient(0, 0, 0, -lightLength);
-        gradient.addColorStop(0, "rgba(255, 255, 200, 0.8)");
+        gradient.addColorStop(0, "rgba(255, 255, 200, 0.7)");
         gradient.addColorStop(1, "rgba(255, 255, 200, 0)");
         ctx.fillStyle = gradient;
         ctx.beginPath();
-        ctx.moveTo(-w * 0.2, 0); ctx.lineTo(-w * 1.2, -lightLength);
-        ctx.lineTo(w * 1.2, -lightLength); ctx.lineTo(w * 0.2, 0);
+        ctx.moveTo(-w * 0.2, 0); ctx.lineTo(-w * 1.3, -lightLength);
+        ctx.lineTo(w * 1.3, -lightLength); ctx.lineTo(w * 0.2, 0);
         ctx.fill();
     }
 
-    ctx.fillStyle = "#111"; 
+    ctx.fillStyle = "#111"; // Rodas
     ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8);
     ctx.fillRect(w * 0.25, -h * 0.1, w * 0.25, h * 0.8);
 
-    ctx.fillStyle = carColor; 
+    ctx.fillStyle = carColor; // Corpo
     ctx.fillRect(-w * 0.25, h * 0.1, w * 0.5, h * 0.4); 
     ctx.fillRect(-w * 0.5, -h * 0.3, w, h * 0.2); 
+    
     ctx.restore();
 }
 
@@ -185,7 +200,6 @@ function update() {
     if (isPaused) return; 
     let currentStage = Math.min(Math.floor(currentTime / STAGE_DURATION), 8);
     let isRaining = (currentStage === 3 || currentStage === 7);
-    let preRainLightning = (currentStage === 2 || currentStage === 6);
 
     let colors = { sky: "#87CEEB", grass: "#1a7a1a", fog: 0, mt: "#555", nightMode: false, snowCaps: false };
     switch(currentStage) {
@@ -202,7 +216,7 @@ function update() {
 
     if (gameState === "WIN_DAY" || gameState === "GAME_OVER") { 
         sfxChuva.pause();
-        draw(colors, isRaining, preRainLightning); 
+        draw(colors, isRaining); 
         requestAnimationFrame(update); 
         return; 
     }
@@ -211,27 +225,26 @@ function update() {
     if (gameTick % 4 === 0) playEngineSound();
     if (gameTick % 60 === 0) saveProgress();
 
-    if (isRaining || preRainLightning) {
-        if (isRaining && sfxChuva.paused && audioCtx.state === 'running') sfxChuva.play().catch(e => {}); 
+    if (isRaining) {
+        if (sfxChuva.paused && audioCtx.state === 'running') sfxChuva.play().catch(e => {}); 
+        for (let i = 0; i < 12; i++) raindrops.push({ x: Math.random() * 400, y: -20, s: Math.random() * 10 + 22 });
         if (Math.random() > 0.996) { 
-            lightningAlpha = 0.6; 
+            lightningAlpha = 0.7; 
+            sfxTrovao.currentTime = 0;
             if (audioCtx.state === 'running') sfxTrovao.play().catch(e => {});
         }
     } else { sfxChuva.pause(); }
 
-    if (isRaining) {
-        for (let i = 0; i < 12; i++) raindrops.push({ x: Math.random() * 400, y: -20, s: Math.random() * 10 + 22 });
-    }
     raindrops.forEach((r, i) => { r.y += r.s; if (r.y > 400) raindrops.splice(i, 1); });
-    if (lightningAlpha > 0) lightningAlpha -= 0.04;
+    if (lightningAlpha > 0) lightningAlpha -= 0.05;
 
     if (currentTime >= DAY_DURATION) {
         if (gameState === "GOAL_REACHED" || carsRemaining <= 0) {
             if (gameState !== "WIN_DAY") { 
                 gameState = "WIN_DAY"; 
                 sfxVitoriaAudio.play();
-                videoVitoria.style.display = 'block'; 
-                videoVitoria.play().catch(e => {});
+                videoVitoria.style.display = 'block';
+                videoVitoria.play().catch(e => console.log("Erro video", e));
                 dayNumber++; 
                 setTimeout(() => { 
                     videoVitoria.style.display = 'none'; videoVitoria.pause();
@@ -242,8 +255,8 @@ function update() {
             if (gameState !== "GAME_OVER") { 
                 gameState = "GAME_OVER"; 
                 sfxDerrota.play();
-                videoDerrota.style.display = 'block'; 
-                videoDerrota.play().catch(e => {});
+                videoDerrota.style.display = 'block';
+                videoDerrota.play().catch(e => console.log("Erro video", e));
                 localStorage.removeItem('enduro_save'); 
             }
         }
@@ -254,6 +267,8 @@ function update() {
     if (offRoad) speed = Math.min(speed + 0.01, 2); 
     else speed = Math.min(speed + ((speed < 5) ? 0.02 : 0.06), maxSpeed);
     
+    if (keys.ArrowDown) speed = Math.max(speed - 0.2, 0);
+
     playerX -= (roadCurve / 35) * (speed / maxSpeed); 
     if (keys.ArrowLeft) playerX -= 4.5;
     if (keys.ArrowRight) playerX += 4.5;
@@ -286,11 +301,11 @@ function update() {
     });
 
     enemies = enemies.filter(e => e.z > -15000 && e.z < 6000);
-    draw(colors, isRaining, preRainLightning);
+    draw(colors, isRaining);
     requestAnimationFrame(update);
 }
 
-function draw(colors, isRaining, preRainLightning) {
+function draw(colors, isRaining) {
     ctx.fillStyle = colors.sky; ctx.fillRect(0, 0, 400, 200);
     ctx.fillStyle = colors.grass; ctx.fillRect(0, 200, 400, 200);
     
@@ -303,8 +318,9 @@ function draw(colors, isRaining, preRainLightning) {
             ctx.fillStyle = "white"; 
             ctx.beginPath(); ctx.moveTo(bx, 140); ctx.lineTo(bx - 20, 160); ctx.lineTo(bx + 20, 160); ctx.fill(); 
         }
-        if (preRainLightning && lightningAlpha > 0) {
-            ctx.fillStyle = `rgba(255, 255, 255, ${lightningAlpha})`;
+        // RELÂMPAGO NAS MONTANHAS
+        if (lightningAlpha > 0) {
+            ctx.fillStyle = `rgba(255, 255, 255, ${lightningAlpha * 0.8})`;
             ctx.beginPath(); ctx.moveTo(bx - 60, 200); ctx.lineTo(bx, 140); ctx.lineTo(bx + 60, 200); ctx.fill();
         }
     }
@@ -326,8 +342,13 @@ function draw(colors, isRaining, preRainLightning) {
     });
 
     if (colors.fog > 0) { ctx.fillStyle = `rgba(140,145,160,${colors.fog})`; ctx.fillRect(0, 55, 400, 345); }
-    if (isRaining && lightningAlpha > 0) { ctx.fillStyle = `rgba(255, 255, 255, ${lightningAlpha})`; ctx.fillRect(0, 55, 400, 345); }
+    if (isRaining) {
+        ctx.strokeStyle = "rgba(200, 210, 255, 0.35)"; ctx.lineWidth = 1.2;
+        raindrops.forEach(r => { ctx.beginPath(); ctx.moveTo(r.x, r.y); ctx.lineTo(r.x + 1.5, r.y + 12); ctx.stroke(); });
+    }
+    if (lightningAlpha > 0) { ctx.fillStyle = `rgba(255, 255, 255, ${lightningAlpha})`; ctx.fillRect(0, 55, 400, 345); }
 
+    // HUD
     ctx.fillStyle = "black"; ctx.fillRect(0, 0, 400, 55);
     ctx.fillStyle = (gameState === "GOAL_REACHED" || gameState === "WIN_DAY") ? "lime" : "yellow";
     ctx.font = "bold 18px Courier";
@@ -336,11 +357,4 @@ function draw(colors, isRaining, preRainLightning) {
     ctx.fillStyle = "#444"; ctx.fillRect(260, 20, 120, 15);
     ctx.fillStyle = "lime"; ctx.fillRect(260, 20, (currentTime/DAY_DURATION) * 120, 15);
 }
-
-window.addEventListener('keydown', e => { 
-    if (keys.hasOwnProperty(e.code)) keys[e.code] = true; 
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-});
-window.addEventListener('keyup', e => { if (keys.hasOwnProperty(e.code)) keys[e.code] = false; });
-
 update();
