@@ -1,17 +1,20 @@
-  const CACHE_NAME = 'enduro-mobile-v16'; 
+   const CACHE_NAME = 'enduro-mobile-v16'; 
 const assets = [
   './',
   './index.html',
   './style.css',
   './script.js',
   './manifest.json',
-  './chuva.mp3', // Adicione o arquivo de chuva
-  './trovao.mp3'  // Adicione o arquivo de trovão
-  
+  './chuva.mp3',
+  './trovao.mp3',
+  './vitoria.mp3',        // Adicionado para o novo som de vitória
+  './game_over.mp3',      // Adicionado para o novo som de derrota
+  './bandeira_vitoria.mp4',
+  './game_over.mp4'       // Adicionado para o novo vídeo de derrota
 ];
 
 self.addEventListener('install', event => {
-  self.skipWaiting(); // Força o novo SW a assumir o controle imediatamente
+  self.skipWaiting(); 
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(assets))
   );
@@ -33,7 +36,7 @@ self.addEventListener('fetch', event => {
           cache.put(event.request, networkResponse.clone());
           return networkResponse;
         });
-        return response || fetchPromise; // Retorna cache se houver, mas atualiza em segundo plano
+        return response || fetchPromise; 
       });
     })
   );
