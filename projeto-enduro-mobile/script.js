@@ -26,7 +26,7 @@ sfxChuva.volume = 0.5;
 const sfxTrovao = new Audio('trovao.mp3');
 sfxTrovao.volume = 0.7;
 
-// --- NOVOS ELEMENTOS DE MÍDIA (CORRIGIDOS COM Z-INDEX) ---
+// --- ELEMENTOS DE MÍDIA ---
 const videoVitoria = document.createElement('video');
 videoVitoria.src = 'bandeira_vitoria.mp4';
 videoVitoria.style.position = 'absolute';
@@ -35,8 +35,8 @@ videoVitoria.style.left = '0';
 videoVitoria.style.width = '400px';
 videoVitoria.style.height = '345px';
 videoVitoria.style.display = 'none';
-videoVitoria.style.zIndex = '10'; // Garante que fica na frente do canvas
-videoVitoria.muted = true; // Ajuda no autoplay do navegador
+videoVitoria.style.zIndex = '10';
+videoVitoria.muted = true;
 videoVitoria.load();
 document.body.appendChild(videoVitoria);
 
@@ -76,15 +76,17 @@ function loadProgress() {
 }
 loadProgress();
 
-// --- EVENTOS DE TECLADO ---
+// --- CONTROLES E ÁUDIO ---
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
 window.addEventListener('keydown', e => { 
     if (keys.hasOwnProperty(e.code)) keys[e.code] = true; 
     if (audioCtx.state === 'suspended') audioCtx.resume();
 });
 window.addEventListener('keyup', e => { if (keys.hasOwnProperty(e.code)) keys[e.code] = false; });
 
-// --- CONTROLES MOBILE (MANTIDOS CONFORME O ORIGINAL) ---
 function setupMobileControls() {
+    // Restaurado IDs originais: mobileLeft e mobileRight
     const ids = { 'mobileLeft': 'ArrowLeft', 'mobileRight': 'ArrowRight' };
     Object.keys(ids).forEach(id => {
         const btn = document.getElementById(id);
@@ -99,8 +101,6 @@ function setupMobileControls() {
     });
 }
 setupMobileControls();
-
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
 function playEngineSound() {
     if (isPaused || speed <= 0 || audioCtx.state !== 'running') return;
@@ -126,6 +126,7 @@ function playCrashSound() {
     osc.start(); osc.stop(audioCtx.currentTime + 0.4);
 }
 
+// --- FUNÇÕES DE INTERFACE RESTAURADAS ---
 function togglePause() {
     if (gameState === "PLAYING" || gameState === "GOAL_REACHED") {
         isPaused = !isPaused;
@@ -140,6 +141,8 @@ function resetGame() {
     if (audioCtx.state === 'suspended') audioCtx.resume();
     dayNumber = 1; baseGoal = 200; isPaused = false;
     localStorage.removeItem('enduro_save');
+    const btn = document.getElementById('pauseBtn');
+    if (btn) btn.innerText = "Pausar";
     resetDay();
     if (gameState !== "PLAYING") { gameState = "PLAYING"; update(); }
 }
@@ -151,9 +154,11 @@ function resetDay() {
     isPaused = false;
     if (sfxChuva) { sfxChuva.pause(); sfxChuva.currentTime = 0; }
     saveProgress();
+    const btn = document.getElementById('pauseBtn');
+    if (btn) btn.innerText = "Pausar";
 }
 
-// --- DESENHO DO CARRO COM LANTERNAS MELHORADAS ---
+// --- DESENHO DO CARRO ---
 function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
     let s = scale * 1.2;
     if (s < 0.02 || s > 30) return;
@@ -165,7 +170,6 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
     let carColor = nightMode ? "#000" : color;
 
     if (nightMode) {
-        // LANTERNAS TRASEIRAS COM BRILHO
         ctx.fillStyle = "#FF0000";
         ctx.shadowBlur = 10 * s;
         ctx.shadowColor = "red";
@@ -173,26 +177,24 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
         ctx.fillRect(w * 0.25, h * 0.4, w * 0.15, h * 0.15);
         ctx.shadowBlur = 0;
 
-        // FAROL (Ajustado comprimento)
-        let lightLength = h * 4.5;
+        let lightLength = h * 6.0;
         let gradient = ctx.createLinearGradient(0, 0, 0, -lightLength);
-        gradient.addColorStop(0, "rgba(255, 255, 200, 0.7)");
+        gradient.addColorStop(0, "rgba(255, 255, 200, 0.6)");
         gradient.addColorStop(1, "rgba(255, 255, 200, 0)");
         ctx.fillStyle = gradient;
         ctx.beginPath();
-        ctx.moveTo(-w * 0.2, 0); ctx.lineTo(-w * 1.3, -lightLength);
-        ctx.lineTo(w * 1.3, -lightLength); ctx.lineTo(w * 0.2, 0);
+        ctx.moveTo(-w * 0.2, 0); ctx.lineTo(-w * 1.5, -lightLength);
+        ctx.lineTo(w * 1.5, -lightLength); ctx.lineTo(w * 0.2, 0);
         ctx.fill();
     }
 
-    ctx.fillStyle = "#111"; // Rodas
+    ctx.fillStyle = "#111"; 
     ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8);
     ctx.fillRect(w * 0.25, -h * 0.1, w * 0.25, h * 0.8);
 
-    ctx.fillStyle = carColor; // Corpo
+    ctx.fillStyle = carColor; 
     ctx.fillRect(-w * 0.25, h * 0.1, w * 0.5, h * 0.4); 
     ctx.fillRect(-w * 0.5, -h * 0.3, w, h * 0.2); 
-    
     ctx.restore();
 }
 
@@ -200,6 +202,7 @@ function update() {
     if (isPaused) return; 
     let currentStage = Math.min(Math.floor(currentTime / STAGE_DURATION), 8);
     let isRaining = (currentStage === 3 || currentStage === 7);
+    let warningLightning = (currentStage === 2); // Somente visual conforme pedido
 
     let colors = { sky: "#87CEEB", grass: "#1a7a1a", fog: 0, mt: "#555", nightMode: false, snowCaps: false };
     switch(currentStage) {
@@ -208,10 +211,10 @@ function update() {
         case 2: colors.sky = "#ff8c00"; colors.grass = "#145c14"; colors.mt = "#442200"; break; 
         case 3: colors.sky = "#2c3e50"; colors.grass = "#0a2a0a"; colors.mt = "#1a1a1a"; colors.fog = 0.6; break; 
         case 4: colors.sky = "#111144"; colors.grass = "#001100"; colors.mt = "#111"; colors.nightMode = true; break; 
-        case 5: colors.sky = "#444"; colors.grass = "#333"; colors.mt = "#222"; colors.fog = 0.95; colors.nightMode = true; break; 
+        case 5: colors.sky = "#444"; colors.grass = "#333"; colors.mt = "#222"; colors.fog = 0.8; colors.nightMode = true; break; 
         case 6: colors.sky = "#000011"; colors.grass = "#000800"; colors.mt = "#000"; colors.nightMode = true; break; 
         case 7: colors.sky = "#34495e"; colors.grass = "#0d4d0d"; colors.mt = "#1a1a1a"; colors.fog = 0.7; break; 
-        case 8: colors.sky = "#ade1f2"; colors.grass = "#1a7a1a"; colors.mt = "#555"; colors.snowCaps = true; break; 
+        case 8: colors.sky = "#ade1f2"; colors.grass = "#1a7a1a"; colors.mt = "#555"; colors.snowCaps = true; break; // Adicionado snowCaps aqui
     }
 
     if (gameState === "WIN_DAY" || gameState === "GAME_OVER") { 
@@ -225,16 +228,21 @@ function update() {
     if (gameTick % 4 === 0) playEngineSound();
     if (gameTick % 60 === 0) saveProgress();
 
-    if (isRaining) {
-        if (sfxChuva.paused && audioCtx.state === 'running') sfxChuva.play().catch(e => {}); 
-        for (let i = 0; i < 12; i++) raindrops.push({ x: Math.random() * 400, y: -20, s: Math.random() * 10 + 22 });
+    // Lógica de Relâmpago (Visual no 2, Visual + Som no 3 e 7)
+    if (isRaining || warningLightning) {
+        if (isRaining && sfxChuva.paused && audioCtx.state === 'running') sfxChuva.play().catch(e => {}); 
         if (Math.random() > 0.996) { 
             lightningAlpha = 0.7; 
-            sfxTrovao.currentTime = 0;
-            if (audioCtx.state === 'running') sfxTrovao.play().catch(e => {});
+            if (isRaining && audioCtx.state === 'running') {
+                sfxTrovao.currentTime = 0;
+                sfxTrovao.play().catch(e => {});
+            }
         }
     } else { sfxChuva.pause(); }
 
+    if (isRaining) {
+        for (let i = 0; i < 12; i++) raindrops.push({ x: Math.random() * 400, y: -20, s: Math.random() * 10 + 22 });
+    }
     raindrops.forEach((r, i) => { r.y += r.s; if (r.y > 400) raindrops.splice(i, 1); });
     if (lightningAlpha > 0) lightningAlpha -= 0.05;
 
@@ -243,8 +251,7 @@ function update() {
             if (gameState !== "WIN_DAY") { 
                 gameState = "WIN_DAY"; 
                 sfxVitoriaAudio.play();
-                videoVitoria.style.display = 'block';
-                videoVitoria.play().catch(e => console.log("Erro video", e));
+                videoVitoria.style.display = 'block'; videoVitoria.play().catch(e => {});
                 dayNumber++; 
                 setTimeout(() => { 
                     videoVitoria.style.display = 'none'; videoVitoria.pause();
@@ -255,8 +262,7 @@ function update() {
             if (gameState !== "GAME_OVER") { 
                 gameState = "GAME_OVER"; 
                 sfxDerrota.play();
-                videoDerrota.style.display = 'block';
-                videoDerrota.play().catch(e => console.log("Erro video", e));
+                videoDerrota.style.display = 'block'; videoDerrota.play().catch(e => {});
                 localStorage.removeItem('enduro_save'); 
             }
         }
@@ -268,10 +274,10 @@ function update() {
     else speed = Math.min(speed + ((speed < 5) ? 0.02 : 0.06), maxSpeed);
     
     if (keys.ArrowDown) speed = Math.max(speed - 0.2, 0);
-
     playerX -= (roadCurve / 35) * (speed / maxSpeed); 
     if (keys.ArrowLeft) playerX -= 4.5;
     if (keys.ArrowRight) playerX += 4.5;
+    playerX = Math.max(-450, Math.min(450, playerX));
 
     if (--curveTimer <= 0) { targetCurve = (Math.random() - 0.5) * 160; curveTimer = 120; }
     roadCurve += (targetCurve - roadCurve) * 0.02;
@@ -314,13 +320,15 @@ function draw(colors, isRaining) {
         let bx = (i * 100) + mtShift;
         ctx.fillStyle = colors.mt;
         ctx.beginPath(); ctx.moveTo(bx - 60, 200); ctx.lineTo(bx, 140); ctx.lineTo(bx + 60, 200); ctx.fill();
+        
         if (colors.snowCaps) { 
             ctx.fillStyle = "white"; 
             ctx.beginPath(); ctx.moveTo(bx, 140); ctx.lineTo(bx - 20, 160); ctx.lineTo(bx + 20, 160); ctx.fill(); 
         }
-        // RELÂMPAGO NAS MONTANHAS
+
+        // Relâmpago visual nas montanhas (Stages 2, 3 e 7)
         if (lightningAlpha > 0) {
-            ctx.fillStyle = `rgba(255, 255, 255, ${lightningAlpha * 0.8})`;
+            ctx.fillStyle = `rgba(255, 255, 255, ${lightningAlpha * 0.7})`;
             ctx.beginPath(); ctx.moveTo(bx - 60, 200); ctx.lineTo(bx, 140); ctx.lineTo(bx + 60, 200); ctx.fill();
         }
     }
@@ -331,14 +339,17 @@ function draw(colors, isRaining) {
         let w = 20 + p * 800;
         ctx.fillStyle = Math.sin(i * 0.5 + playerDist * 0.2) > 0 ? "#333" : "#3d3d3d";
         ctx.fillRect(x - w/2, i, w, 4);
+        ctx.fillStyle = Math.sin(i * 0.5 + playerDist * 0.2) > 0 ? "red" : "white";
+        ctx.fillRect(x - w/2 - 10*p, i, 10*p, 4);
+        ctx.fillRect(x + w/2, i, 10*p, 4);
     }
     
     enemies.sort((a,b) => b.z - a.z).forEach(e => {
-        if (e.lastP > 0 && e.lastP < 0.92) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode || colors.fog > 0);
+        if (e.lastP > 0 && e.lastP < 0.92) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode);
     });
-    drawF1Car(200, 350, 0.85, "#E00", true, colors.nightMode || colors.fog > 0); 
+    drawF1Car(200, 350, 0.85, "#E00", true, colors.nightMode); 
     enemies.forEach(e => {
-        if (e.lastP >= 0.92 && e.lastP < 2) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode || colors.fog > 0);
+        if (e.lastP >= 0.92 && e.lastP < 2) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode);
     });
 
     if (colors.fog > 0) { ctx.fillStyle = `rgba(140,145,160,${colors.fog})`; ctx.fillRect(0, 55, 400, 345); }
@@ -356,5 +367,24 @@ function draw(colors, isRaining) {
     ctx.fillStyle = "yellow"; ctx.fillText(`DAY: ${dayNumber}`, 160, 35);
     ctx.fillStyle = "#444"; ctx.fillRect(260, 20, 120, 15);
     ctx.fillStyle = "lime"; ctx.fillRect(260, 20, (currentTime/DAY_DURATION) * 120, 15);
+
+    if (gameState === "WIN_DAY") {
+        ctx.fillStyle = "rgba(0,0,0,0.7)"; ctx.fillRect(0, 55, 400, 345);
+        ctx.fillStyle = "lime"; ctx.textAlign = "center";
+        ctx.font = "bold 25px Courier"; ctx.fillText(`DIA ${dayNumber-1} COMPLETO!`, 200, 180);
+        ctx.textAlign = "left";
+    }
+    if (gameState === "GAME_OVER") {
+        ctx.fillStyle = "rgba(200,0,0,0.8)"; ctx.fillRect(0, 55, 400, 345);
+        ctx.fillStyle = "white"; ctx.textAlign = "center";
+        ctx.font = "bold 30px Courier"; ctx.fillText("FIM DE JOGO", 200, 200);
+        ctx.textAlign = "left";
+    }
+    if (isPaused) {
+        ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.fillRect(0, 55, 400, 345);
+        ctx.fillStyle = "white"; ctx.textAlign = "center";
+        ctx.font = "30px Courier"; ctx.fillText("PAUSADO", 200, 200);
+        ctx.textAlign = "left";
+    }
 }
 update();
