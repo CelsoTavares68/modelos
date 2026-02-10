@@ -103,33 +103,35 @@ function playCrashSound() {
 }
 
 // --- CONTROLES DE BOTÕES (RESTAURADOS) ---
-function press(key) { 
+ function press(key) { 
     keys[key] = true; 
     if (audioCtx.state === 'suspended') audioCtx.resume();
 }
 function release(key) { keys[key] = false; }
 
-const btnUp = document.getElementById('btnUp');
-const btnDown = document.getElementById('btnDown');
-const btnLeft = document.getElementById('btnLeft');
-const btnRight = document.getElementById('btnRight');
+// Função para anexar eventos evitando o zoom e scroll do navegador
+function attachControls(id, key) {
+    const btn = document.getElementById(id);
+    if (btn) {
+        // Eventos de Mouse
+        btn.onmousedown = (e) => { e.preventDefault(); press(key); };
+        btn.onmouseup = (e) => { e.preventDefault(); release(key); };
+        btn.onmouseleave = (e) => { e.preventDefault(); release(key); };
 
-if(btnUp) {
-    btnUp.onmousedown = btnUp.ontouchstart = () => press('ArrowUp');
-    btnUp.onmouseup = btnUp.ontouchend = () => release('ArrowUp');
+        // Eventos de Toque (Mobile) - Crucial para resposta rápida
+        btn.ontouchstart = (e) => { e.preventDefault(); press(key); };
+        btn.ontouchend = (e) => { e.preventDefault(); release(key); };
+        btn.ontouchcancel = (e) => { e.preventDefault(); release(key); };
+    }
 }
-if(btnDown) {
-    btnDown.onmousedown = btnDown.ontouchstart = () => press('ArrowDown');
-    btnDown.onmouseup = btnDown.ontouchend = () => release('ArrowDown');
-}
-if(btnLeft) {
-    btnLeft.onmousedown = btnLeft.ontouchstart = () => press('ArrowLeft');
-    btnLeft.onmouseup = btnLeft.ontouchend = () => release('ArrowLeft');
-}
-if(btnRight) {
-    btnRight.onmousedown = btnRight.ontouchstart = () => press('ArrowRight');
-    btnRight.onmouseup = btnRight.ontouchend = () => release('ArrowRight');
-}
+
+// Inicializa os controles após o carregamento
+window.onload = () => {
+    attachControls('btnUp', 'ArrowUp');
+    attachControls('btnDown', 'ArrowDown');
+    attachControls('btnLeft', 'ArrowLeft');
+    attachControls('btnRight', 'ArrowRight');
+};
 
 function resetDay() {
     currentTime = 0; playerDist = 0; speed = 0; enemies = [];
