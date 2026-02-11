@@ -7,8 +7,8 @@ let dayNumber = 1, baseGoal = 200, carsRemaining = baseGoal;
 let gameState = "PLAYING"; 
 let isPaused = false;
 
-const maxSpeed = 18; // Aumentado de 12 para 16
-const STAGE_DURATION = 10800; 
+const maxSpeed = 16; // Velocidade aumentada conforme pedido anterior
+const STAGE_DURATION = 12800; 
 const DAY_DURATION = STAGE_DURATION * 9; 
 let currentTime = 0; 
 
@@ -76,7 +76,7 @@ function loadProgress() {
 }
 loadProgress();
 
-// --- CONTROLES E ÁUDIO ---
+// --- CONTROLES ---
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
 window.addEventListener('keydown', e => { 
@@ -156,8 +156,8 @@ function resetDay() {
     if (btn) btn.innerText = "Pausar";
 }
 
-// --- DESENHO DO CARRO ---
-function drawF1Car(x, y, scale, color, isPlayer = false, lowVisMode = false) {
+// --- DESENHO DO CARRO CORRIGIDO ---
+function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasFog = false) {
     let s = scale * 1.2;
     if (s < 0.02 || s > 30) return;
     let w = 45 * s; let h = 22 * s;
@@ -165,15 +165,17 @@ function drawF1Car(x, y, scale, color, isPlayer = false, lowVisMode = false) {
     ctx.translate(x, y);
     if(isPlayer) ctx.rotate((roadCurve / 40) * Math.PI / 180);
     
-    let carColor = lowVisMode ? "#000" : color;
+    // O carro só fica preto no nightMode (fases 4, 5, 6)
+    let carColor = nightMode ? "#000" : color;
 
-    if (lowVisMode) {
-        // LANTERNAS TRASEIRAS VERMELHAS (Ativas em Noite, Neblina e Madrugada)
+    // Lanternas e Faróis aparecem tanto na Noite quanto na Neblina/Chuva
+    if (nightMode || hasFog) {
+        // LANTERNAS TRASEIRAS VERMELHAS
         ctx.fillStyle = "#FF0000";
         ctx.fillRect(-w * 0.4, h * 0.3, w * 0.15, h * 0.2); 
         ctx.fillRect(w * 0.25, h * 0.3, w * 0.15, h * 0.2); 
 
-        // FAROIS FRONTAIS DISCRETOS
+        // FARÓIS DISCRETOS
         let lightLength = h * 1.8; 
         let gradient = ctx.createLinearGradient(0, 0, 0, -lightLength);
         gradient.addColorStop(0, "rgba(255, 255, 200, 0.25)"); 
@@ -283,7 +285,7 @@ function update() {
     if (gameTick % 150 === 0 && enemies.length < 100) {
         if (!enemies.some(e => e.z > 3000)) {
             enemies.push({ 
-                lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 11.5, // Aumentado de 8.5 para 11.5
+                lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 11.5, // Velocidade aumentada
                 color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)],
                 isOvertaken: false 
             });
@@ -341,13 +343,15 @@ function draw(colors, isRaining) {
         ctx.fillRect(x + w/2, i, 10*p, 4);
     }
     
-    let specialVis = colors.nightMode || colors.fog > 0;
+    // Define se deve mostrar lanternas/faróis (se for noite OU se houver neblina)
+    let hasFog = colors.fog > 0;
+    
     enemies.sort((a,b) => b.z - a.z).forEach(e => {
-        if (e.lastP > 0 && e.lastP < 0.92) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, specialVis);
+        if (e.lastP > 0 && e.lastP < 0.92) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, hasFog);
     });
-    drawF1Car(200, 350, 0.85, "#E00", true, specialVis); 
+    drawF1Car(200, 350, 0.85, "#E00", true, colors.nightMode, hasFog); 
     enemies.forEach(e => {
-        if (e.lastP >= 0.92 && e.lastP < 2) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, specialVis);
+        if (e.lastP >= 0.92 && e.lastP < 2) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, hasFog);
     });
 
     if (colors.fog > 0) { ctx.fillStyle = `rgba(140,145,160,${colors.fog})`; ctx.fillRect(0, 55, 400, 345); }
