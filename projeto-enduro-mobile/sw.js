@@ -1,4 +1,4 @@
-   const CACHE_NAME = 'enduro-mobile-v43'; 
+   const CACHE_NAME = 'enduro-mobile-v44'; 
 const assets = [
   './',
   './index.html',

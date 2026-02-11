@@ -8,7 +8,7 @@ let gameState = "PLAYING";
 let isPaused = false;
 
 const maxSpeed = 16; 
-const STAGE_DURATION = 10800; 
+const STAGE_DURATION = 9000; 
 const DAY_DURATION = STAGE_DURATION * 9; 
 let currentTime = 0; 
 
