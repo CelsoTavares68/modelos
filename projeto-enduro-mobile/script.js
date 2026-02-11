@@ -7,7 +7,7 @@ let dayNumber = 1, baseGoal = 200, carsRemaining = baseGoal;
 let gameState = "PLAYING"; 
 let isPaused = false;
 
-const maxSpeed = 12; 
+const maxSpeed = 16; // Aumentado de 12 para 16
 const STAGE_DURATION = 10800; 
 const DAY_DURATION = STAGE_DURATION * 9; 
 let currentTime = 0; 
@@ -157,7 +157,7 @@ function resetDay() {
 }
 
 // --- DESENHO DO CARRO ---
-function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
+function drawF1Car(x, y, scale, color, isPlayer = false, lowVisMode = false) {
     let s = scale * 1.2;
     if (s < 0.02 || s > 30) return;
     let w = 45 * s; let h = 22 * s;
@@ -165,19 +165,19 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
     ctx.translate(x, y);
     if(isPlayer) ctx.rotate((roadCurve / 40) * Math.PI / 180);
     
-    let carColor = nightMode ? "#000" : color;
+    let carColor = lowVisMode ? "#000" : color;
 
-    if (nightMode) {
-        // LANTERNAS TRASEIRAS VERMELHAS (Fixas na parte de trás)
+    if (lowVisMode) {
+        // LANTERNAS TRASEIRAS VERMELHAS (Ativas em Noite, Neblina e Madrugada)
         ctx.fillStyle = "#FF0000";
-        ctx.fillRect(-w * 0.4, h * 0.3, w * 0.15, h * 0.2); // Esquerda
-        ctx.fillRect(w * 0.25, h * 0.3, w * 0.15, h * 0.2); // Direita
+        ctx.fillRect(-w * 0.4, h * 0.3, w * 0.15, h * 0.2); 
+        ctx.fillRect(w * 0.25, h * 0.3, w * 0.15, h * 0.2); 
 
-        // FAROIS FRONTAIS (Muito discretos e curtos)
+        // FAROIS FRONTAIS DISCRETOS
         let lightLength = h * 1.8; 
         let gradient = ctx.createLinearGradient(0, 0, 0, -lightLength);
-        gradient.addColorStop(0, "rgba(255, 255, 200, 0.29)"); 
-        gradient.addColorStop(1, "rgba(253, 253, 252, 0.08)");
+        gradient.addColorStop(0, "rgba(255, 255, 200, 0.25)"); 
+        gradient.addColorStop(1, "rgba(255, 255, 200, 0)");
         ctx.fillStyle = gradient;
         ctx.beginPath();
         ctx.moveTo(-w * 0.15, 0); 
@@ -210,10 +210,10 @@ function update() {
         case 2: colors.sky = "#ff8c00"; colors.grass = "#145c14"; colors.mt = "#442200"; break; 
         case 3: colors.sky = "#2c3e50"; colors.grass = "#0a2a0a"; colors.mt = "#1a1a1a"; colors.fog = 0.6; break; 
         case 4: colors.sky = "#111144"; colors.grass = "#001100"; colors.mt = "#111"; colors.nightMode = true; break; 
-        case 5: colors.sky = "#1f1f1f"; colors.grass = "#222222"; colors.mt = "#222"; colors.fog = 0.8; colors.nightMode = true; break; 
+        case 5: colors.sky = "#444"; colors.grass = "#333"; colors.mt = "#222"; colors.fog = 0.8; colors.nightMode = true; break; 
         case 6: colors.sky = "#000011"; colors.grass = "#000800"; colors.mt = "#000"; colors.nightMode = true; break; 
-        case 7: colors.sky = "#172c41"; colors.grass = "#0d4d0d"; colors.mt = "#1a1a1a"; colors.fog = 0.7; break; 
-        case 8: colors.sky = "#87CEEB"; colors.grass = "#1a7a1a"; colors.mt = "#555"; colors.snowCaps = true; break; 
+        case 7: colors.sky = "#34495e"; colors.grass = "#0d4d0d"; colors.mt = "#1a1a1a"; colors.fog = 0.7; break; 
+        case 8: colors.sky = "#ade1f2"; colors.grass = "#1a7a1a"; colors.mt = "#555"; colors.snowCaps = true; break; 
     }
 
     if (gameState === "WIN_DAY" || gameState === "GAME_OVER") { 
@@ -283,7 +283,7 @@ function update() {
     if (gameTick % 150 === 0 && enemies.length < 100) {
         if (!enemies.some(e => e.z > 3000)) {
             enemies.push({ 
-                lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 8.5, 
+                lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 11.5, // Aumentado de 8.5 para 11.5
                 color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)],
                 isOvertaken: false 
             });
@@ -341,17 +341,18 @@ function draw(colors, isRaining) {
         ctx.fillRect(x + w/2, i, 10*p, 4);
     }
     
+    let specialVis = colors.nightMode || colors.fog > 0;
     enemies.sort((a,b) => b.z - a.z).forEach(e => {
-        if (e.lastP > 0 && e.lastP < 0.92) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode);
+        if (e.lastP > 0 && e.lastP < 0.92) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, specialVis);
     });
-    drawF1Car(200, 350, 0.85, "#E00", true, colors.nightMode); 
+    drawF1Car(200, 350, 0.85, "#E00", true, specialVis); 
     enemies.forEach(e => {
-        if (e.lastP >= 0.92 && e.lastP < 2) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode);
+        if (e.lastP >= 0.92 && e.lastP < 2) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, specialVis);
     });
 
     if (colors.fog > 0) { ctx.fillStyle = `rgba(140,145,160,${colors.fog})`; ctx.fillRect(0, 55, 400, 345); }
     if (isRaining) {
-        ctx.strokeStyle = "rgba(200, 210, 255, 0.61)"; ctx.lineWidth = 1.2;
+        ctx.strokeStyle = "rgba(200, 210, 255, 0.35)"; ctx.lineWidth = 1.2;
         raindrops.forEach(r => { ctx.beginPath(); ctx.moveTo(r.x, r.y); ctx.lineTo(r.x + 1.5, r.y + 12); ctx.stroke(); });
     }
     if (lightningAlpha > 0) { ctx.fillStyle = `rgba(255, 255, 255, ${lightningAlpha})`; ctx.fillRect(0, 55, 400, 345); }
