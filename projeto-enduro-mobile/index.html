@@ -29,19 +29,37 @@
 </div>
 
 <div id="update-toast" style="display:none; position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#ff0; color:#000; padding:15px; border-radius:10px; font-family:Courier; font-weight:bold; z-index:1000; border:2px solid #000; text-align:center;">
-    NOVA ATUALIZAÇÃO DISPONÍVEL!<br>
-    <button onclick="window.location.reload()" style="margin-top:10px; background:#000; color:#fff; border:none; padding:5px 10px; cursor:pointer;">ATUALIZAR AGORA</button>
+  <button onclick="updateApp()">ATUALIZAR AGORA</button>  
 </div>
 
     <script src="script.js"></script>
 
-    <script>
+     <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js')
-        .then(reg => console.log('App pronto para uso offline!', reg))
-        .catch(err => console.log('Erro ao registrar App:', err));
+      navigator.serviceWorker.register('./sw.js').then(reg => {
+        console.log('SW registrado!');
+
+        // Verifica se já existe uma atualização esperando
+        if (reg.waiting) {
+            showUpdateBtn();
+        }
+
+        // Escuta por novas atualizações que chegam enquanto o app está aberto
+        reg.addEventListener('updatefound', () => {
+          const newWorker = reg.installing;
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              showUpdateBtn();
+            }
+          });
+        });
+      });
     });
+  }
+
+  function showUpdateBtn() {
+    document.getElementById('update-toast').style.display = 'block';
   }
 </script>
 </body>

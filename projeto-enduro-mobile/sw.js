@@ -1,4 +1,5 @@
-   const CACHE_NAME = 'enduro-mobile-v44'; 
+   const CACHE_NAME = 'enduro-mobile-v46'; 
+
 const assets = [
   './',
   './index.html',
@@ -7,14 +8,14 @@ const assets = [
   './manifest.json',
   './chuva.mp3',
   './trovao.mp3',
-  './vitoria.mp3',        // Adicionado para o novo som de vitória
-  './game_over.mp3',      // Adicionado para o novo som de derrota
+  './vitoria.mp3',
+  './game_over.mp3',
   './bandeira_vitoria.mp4',
-  './game_over.mp4'       // Adicionado para o novo vídeo de derrota
+  './game_over.mp4'
 ];
 
 self.addEventListener('install', event => {
-  self.skipWaiting(); 
+  // Isso força a nova versão a ficar "esperando" para ser ativada
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(assets))
   );
@@ -30,14 +31,16 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.open(CACHE_NAME).then(cache => {
-      return cache.match(event.request).then(response => {
-        const fetchPromise = fetch(event.request).then(networkResponse => {
-          cache.put(event.request, networkResponse.clone());
-          return networkResponse;
-        });
-        return response || fetchPromise; 
-      });
+    caches.match(event.request).then(response => {
+      return response || fetch(event.request);
     })
   );
 });
+
+// Escuta a mensagem de "pular espera" vinda do botão de atualizar
+self.addEventListener('message', event => {
+  if (event.data === 'skipWaiting') {
+    self.skipWaiting();
+  }
+});
+ 

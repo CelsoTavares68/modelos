@@ -8,6 +8,7 @@ let gameState = "PLAYING";
 let isPaused = false;
 
 const maxSpeed = 16; 
+// 150 segundos (2.5 min) * 60 frames = 9000
 const STAGE_DURATION = 9000; 
 const DAY_DURATION = STAGE_DURATION * 9; 
 let currentTime = 0; 
@@ -155,7 +156,7 @@ function resetDay() {
     if (btn) btn.innerText = "Pausar";
 }
 
-// --- DESENHO DO CARRO (RETRO ATARI) ---
+// --- DESENHO DO CARRO (ESTILO RETRO ATARI) ---
 function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasFog = false) {
     let s = scale * 1.2;
     if (s < 0.02 || s > 30) return;
@@ -175,12 +176,11 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasF
         gradient.addColorStop(1, "rgba(255, 255, 200, 0)");
         ctx.fillStyle = gradient;
         ctx.beginPath();
-        ctx.moveTo(-w * 0.15, 0); ctx.lineTo(-w * 0.7, -lightLength); 
-        ctx.lineTo(w * 0.7, -lightLength); ctx.lineTo(w * 0.15, 0);
+        ctx.moveTo(-w * 0.15, 0); ctx.lineTo(-w * 0.6, -lightLength); 
+        ctx.lineTo(w * 0.6, -lightLength); ctx.lineTo(w * 0.15, 0);
         ctx.fill();
     }
 
-    // Se for noite, desenha lataria APENAS para o Player. Inimigos ficam invisíveis (só luzes).
     if (!nightMode || isPlayer) {
         ctx.fillStyle = "#111"; // Pneus
         ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8);
@@ -272,7 +272,7 @@ function update() {
     roadCurve += (targetCurve - roadCurve) * 0.02;
 
     enemies.forEach((enemy) => {
-        let effectiveEnemySpeed = (speed < 15) ? 15 : enemy.v; // Te ultrapassam a 15
+        let effectiveEnemySpeed = (speed < 15) ? 15 : enemy.v; 
         enemy.z -= (speed - effectiveEnemySpeed);
         
         let p = 1 - (enemy.z / 4000); 
@@ -291,7 +291,8 @@ function update() {
         enemy.lastY = 200 + (p * 140); enemy.lastX = screenX; enemy.lastP = p;
     });
 
-    if (gameTick % 150 === 0 && enemies.length < 100) {
+    // AJUSTE: Mudei de 150 para 300 para os carros aparecerem com mais calma
+    if (gameTick % 300 === 0 && enemies.length < 100) {
         enemies.push({ 
             lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 11.5, 
             color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)],
@@ -378,3 +379,14 @@ function draw(colors, isRaining) {
     }
 }
 update();
+
+function updateApp() {
+    navigator.serviceWorker.getRegistration().then(reg => {
+        if (reg && reg.waiting) {
+            // Avisa o SW para parar de esperar e ativar a nova versão
+            reg.waiting.postMessage('skipWaiting');
+        }
+        // Recarrega a página para ver as mudanças
+        window.location.reload();
+    });
+}
