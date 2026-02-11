@@ -7,7 +7,7 @@ let dayNumber = 1, baseGoal = 200, carsRemaining = baseGoal;
 let gameState = "PLAYING"; 
 let isPaused = false;
 
-const maxSpeed = 16; // Aumentado de 12 para 16
+const maxSpeed = 18; // Aumentado de 12 para 16
 const STAGE_DURATION = 10800; 
 const DAY_DURATION = STAGE_DURATION * 9; 
 let currentTime = 0; 
