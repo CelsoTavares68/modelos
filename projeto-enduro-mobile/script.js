@@ -7,7 +7,7 @@ let dayNumber = 1, baseGoal = 200, carsRemaining = baseGoal;
 let gameState = "PLAYING"; 
 let isPaused = false;
 
-const maxSpeed = 18; 
+const maxSpeed = 16; 
 const STAGE_DURATION = 10800; 
 const DAY_DURATION = STAGE_DURATION * 9; 
 let currentTime = 0; 
@@ -293,7 +293,7 @@ function update() {
 
     if (gameTick % 150 === 0 && enemies.length < 100) {
         enemies.push({ 
-            lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 10.5, 
+            lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 11.5, 
             color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)],
             isOvertaken: false 
         });
