@@ -176,8 +176,8 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
         // FAROIS FRONTAIS (Muito discretos e curtos)
         let lightLength = h * 1.8; 
         let gradient = ctx.createLinearGradient(0, 0, 0, -lightLength);
-        gradient.addColorStop(0, "rgba(255, 255, 200, 0.25)"); 
-        gradient.addColorStop(1, "rgba(255, 255, 200, 0)");
+        gradient.addColorStop(0, "rgba(255, 255, 200, 0.29)"); 
+        gradient.addColorStop(1, "rgba(253, 253, 252, 0.86)");
         ctx.fillStyle = gradient;
         ctx.beginPath();
         ctx.moveTo(-w * 0.15, 0); 
@@ -212,8 +212,8 @@ function update() {
         case 4: colors.sky = "#111144"; colors.grass = "#001100"; colors.mt = "#111"; colors.nightMode = true; break; 
         case 5: colors.sky = "#444"; colors.grass = "#333"; colors.mt = "#222"; colors.fog = 0.8; colors.nightMode = true; break; 
         case 6: colors.sky = "#000011"; colors.grass = "#000800"; colors.mt = "#000"; colors.nightMode = true; break; 
-        case 7: colors.sky = "#34495e"; colors.grass = "#0d4d0d"; colors.mt = "#1a1a1a"; colors.fog = 0.7; break; 
-        case 8: colors.sky = "#ade1f2"; colors.grass = "#1a7a1a"; colors.mt = "#555"; colors.snowCaps = true; break; 
+        case 7: colors.sky = "#172c41"; colors.grass = "#0d4d0d"; colors.mt = "#1a1a1a"; colors.fog = 0.7; break; 
+        case 8: colors.sky = "#87CEEB"; colors.grass = "#1a7a1a"; colors.mt = "#555"; colors.snowCaps = true; break; 
     }
 
     if (gameState === "WIN_DAY" || gameState === "GAME_OVER") { 
@@ -351,7 +351,7 @@ function draw(colors, isRaining) {
 
     if (colors.fog > 0) { ctx.fillStyle = `rgba(140,145,160,${colors.fog})`; ctx.fillRect(0, 55, 400, 345); }
     if (isRaining) {
-        ctx.strokeStyle = "rgba(200, 210, 255, 0.43)"; ctx.lineWidth = 1.2;
+        ctx.strokeStyle = "rgba(200, 210, 255, 0.47)"; ctx.lineWidth = 1.2;
         raindrops.forEach(r => { ctx.beginPath(); ctx.moveTo(r.x, r.y); ctx.lineTo(r.x + 1.5, r.y + 12); ctx.stroke(); });
     }
     if (lightningAlpha > 0) { ctx.fillStyle = `rgba(255, 255, 255, ${lightningAlpha})`; ctx.fillRect(0, 55, 400, 345); }
