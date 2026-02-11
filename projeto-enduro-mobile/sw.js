@@ -1,5 +1,4 @@
-   const CACHE_NAME = 'enduro-mobile-v46'; 
-
+ const CACHE_NAME = 'enduro-mobile-v3'; // Incremente aqui para disparar o aviso de atualização
 const assets = [
   './',
   './index.html',
@@ -15,7 +14,6 @@ const assets = [
 ];
 
 self.addEventListener('install', event => {
-  // Isso força a nova versão a ficar "esperando" para ser ativada
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(assets))
   );
@@ -29,18 +27,24 @@ self.addEventListener('activate', event => {
   );
 });
 
-self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request).then(response => {
-      return response || fetch(event.request);
-    })
-  );
-});
-
-// Escuta a mensagem de "pular espera" vinda do botão de atualizar
+// Listener para a mensagem 'skipWaiting' enviada pelo script.js
 self.addEventListener('message', event => {
   if (event.data === 'skipWaiting') {
     self.skipWaiting();
   }
+});
+
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.open(CACHE_NAME).then(cache => {
+      return cache.match(event.request).then(response => {
+        const fetchPromise = fetch(event.request).then(networkResponse => {
+          cache.put(event.request, networkResponse.clone());
+          return networkResponse;
+        });
+        return response || fetchPromise; 
+      });
+    })
+  );
 });
  

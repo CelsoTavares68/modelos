@@ -8,7 +8,7 @@ let gameState = "PLAYING";
 let isPaused = false;
 
 const maxSpeed = 16; 
-// 150 segundos (2.5 min) * 60 frames = 9000
+// 150 segundos (2.5 min) * 60 frames = 9000 frames por etapa
 const STAGE_DURATION = 9000; 
 const DAY_DURATION = STAGE_DURATION * 9; 
 let currentTime = 0; 
@@ -152,11 +152,8 @@ function resetDay() {
     isPaused = false;
     if (sfxChuva) { sfxChuva.pause(); sfxChuva.currentTime = 0; }
     saveProgress();
-    const btn = document.getElementById('pauseBtn');
-    if (btn) btn.innerText = "Pausar";
 }
 
-// --- DESENHO DO CARRO (ESTILO RETRO ATARI) ---
 function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasFog = false) {
     let s = scale * 1.2;
     if (s < 0.02 || s > 30) return;
@@ -166,7 +163,7 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasF
     if(isPlayer) ctx.rotate((roadCurve / 40) * Math.PI / 180);
     
     if (nightMode || hasFog) {
-        ctx.fillStyle = "#FF0000"; // Lanternas traseiras
+        ctx.fillStyle = "#FF0000";
         ctx.fillRect(-w * 0.35, h * 0.2, w * 0.15, h * 0.25); 
         ctx.fillRect(w * 0.20, h * 0.2, w * 0.15, h * 0.25); 
 
@@ -182,7 +179,7 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasF
     }
 
     if (!nightMode || isPlayer) {
-        ctx.fillStyle = "#111"; // Pneus
+        ctx.fillStyle = "#111"; 
         ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8);
         ctx.fillRect(w * 0.25, -h * 0.1, w * 0.25, h * 0.8);
         ctx.fillStyle = color; 
@@ -274,15 +271,12 @@ function update() {
     enemies.forEach((enemy) => {
         let effectiveEnemySpeed = (speed < 15) ? 15 : enemy.v; 
         enemy.z -= (speed - effectiveEnemySpeed);
-        
         let p = 1 - (enemy.z / 4000); 
         let roadWidth = 20 + p * 800;
         let screenX = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p) + (enemy.lane * roadWidth * 0.5);
-        
         if (p > 0.92 && p < 1.05 && Math.abs(screenX - 200) < 50) { 
             speed = -3; enemy.z += 800; playCrashSound(); 
         }
-
         if (gameState === "PLAYING" || gameState === "GOAL_REACHED") {
             if (enemy.z <= 0 && !enemy.isOvertaken) { carsRemaining--; enemy.isOvertaken = true; }
             if (enemy.z > 0 && enemy.isOvertaken) { carsRemaining++; enemy.isOvertaken = false; }
@@ -291,7 +285,7 @@ function update() {
         enemy.lastY = 200 + (p * 140); enemy.lastX = screenX; enemy.lastP = p;
     });
 
-    // AJUSTE: Mudei de 150 para 300 para os carros aparecerem com mais calma
+    // Ajuste: Inimigos aparecem a cada 5 segundos (300 ticks)
     if (gameTick % 300 === 0 && enemies.length < 100) {
         enemies.push({ 
             lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 11.5, 
@@ -317,10 +311,6 @@ function draw(colors, isRaining) {
         if (colors.snowCaps) { 
             ctx.fillStyle = "white"; 
             ctx.beginPath(); ctx.moveTo(bx, 140); ctx.lineTo(bx - 20, 160); ctx.lineTo(bx + 20, 160); ctx.fill(); 
-        }
-        if (lightningAlpha > 0) {
-            ctx.fillStyle = `rgba(255, 255, 255, ${lightningAlpha * 0.7})`;
-            ctx.beginPath(); ctx.moveTo(bx - 60, 200); ctx.lineTo(bx, 140); ctx.lineTo(bx + 60, 200); ctx.fill();
         }
     }
 
@@ -358,35 +348,15 @@ function draw(colors, isRaining) {
     ctx.fillStyle = "yellow"; ctx.fillText(`DAY: ${dayNumber}`, 160, 35);
     ctx.fillStyle = "#444"; ctx.fillRect(260, 20, 120, 15);
     ctx.fillStyle = "lime"; ctx.fillRect(260, 20, (currentTime/DAY_DURATION) * 120, 15);
-
-    if (gameState === "WIN_DAY") {
-        ctx.fillStyle = "rgba(0,0,0,0.7)"; ctx.fillRect(0, 55, 400, 345);
-        ctx.fillStyle = "lime"; ctx.textAlign = "center";
-        ctx.font = "bold 25px Courier"; ctx.fillText(`DIA ${dayNumber-1} COMPLETO!`, 200, 180);
-        ctx.textAlign = "left";
-    }
-    if (gameState === "GAME_OVER") {
-        ctx.fillStyle = "rgba(200,0,0,0.8)"; ctx.fillRect(0, 55, 400, 345);
-        ctx.fillStyle = "white"; ctx.textAlign = "center";
-        ctx.font = "bold 30px Courier"; ctx.fillText("FIM DE JOGO", 200, 200);
-        ctx.textAlign = "left";
-    }
-    if (isPaused) {
-        ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.fillRect(0, 55, 400, 345);
-        ctx.fillStyle = "white"; ctx.textAlign = "center";
-        ctx.font = "30px Courier"; ctx.fillText("PAUSADO", 200, 200);
-        ctx.textAlign = "left";
-    }
 }
 update();
 
+// Função para o botão de atualização
 function updateApp() {
     navigator.serviceWorker.getRegistration().then(reg => {
         if (reg && reg.waiting) {
-            // Avisa o SW para parar de esperar e ativar a nova versão
             reg.waiting.postMessage('skipWaiting');
         }
-        // Recarrega a página para ver as mudanças
         window.location.reload();
     });
 }
