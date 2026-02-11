@@ -177,7 +177,7 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false) {
         let lightLength = h * 1.8; 
         let gradient = ctx.createLinearGradient(0, 0, 0, -lightLength);
         gradient.addColorStop(0, "rgba(255, 255, 200, 0.29)"); 
-        gradient.addColorStop(1, "rgba(253, 253, 252, 0.86)");
+        gradient.addColorStop(1, "rgba(253, 253, 252, 0.08)");
         ctx.fillStyle = gradient;
         ctx.beginPath();
         ctx.moveTo(-w * 0.15, 0); 
@@ -210,7 +210,7 @@ function update() {
         case 2: colors.sky = "#ff8c00"; colors.grass = "#145c14"; colors.mt = "#442200"; break; 
         case 3: colors.sky = "#2c3e50"; colors.grass = "#0a2a0a"; colors.mt = "#1a1a1a"; colors.fog = 0.6; break; 
         case 4: colors.sky = "#111144"; colors.grass = "#001100"; colors.mt = "#111"; colors.nightMode = true; break; 
-        case 5: colors.sky = "#444"; colors.grass = "#333"; colors.mt = "#222"; colors.fog = 0.8; colors.nightMode = true; break; 
+        case 5: colors.sky = "#1f1f1f"; colors.grass = "#222222"; colors.mt = "#222"; colors.fog = 0.8; colors.nightMode = true; break; 
         case 6: colors.sky = "#000011"; colors.grass = "#000800"; colors.mt = "#000"; colors.nightMode = true; break; 
         case 7: colors.sky = "#172c41"; colors.grass = "#0d4d0d"; colors.mt = "#1a1a1a"; colors.fog = 0.7; break; 
         case 8: colors.sky = "#87CEEB"; colors.grass = "#1a7a1a"; colors.mt = "#555"; colors.snowCaps = true; break; 
