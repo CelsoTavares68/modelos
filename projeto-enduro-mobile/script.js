@@ -7,7 +7,7 @@ let dayNumber = 1, baseGoal = 200, carsRemaining = baseGoal;
 let gameState = "PLAYING"; 
 let isPaused = false;
 
-const maxSpeed = 18; // Velocidade aumentada conforme pedido anterior
+const maxSpeed = 18; 
 const STAGE_DURATION = 10800; 
 const DAY_DURATION = STAGE_DURATION * 9; 
 let currentTime = 0; 
@@ -76,7 +76,6 @@ function loadProgress() {
 }
 loadProgress();
 
-// --- CONTROLES ---
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
 window.addEventListener('keydown', e => { 
@@ -156,7 +155,7 @@ function resetDay() {
     if (btn) btn.innerText = "Pausar";
 }
 
-// --- DESENHO DO CARRO CORRIGIDO ---
+// --- DESENHO DO CARRO (RETRO ATARI) ---
 function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasFog = false) {
     let s = scale * 1.2;
     if (s < 0.02 || s > 30) return;
@@ -165,37 +164,31 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasF
     ctx.translate(x, y);
     if(isPlayer) ctx.rotate((roadCurve / 40) * Math.PI / 180);
     
-    // O carro só fica preto no nightMode (fases 4, 5, 6)
-    let carColor = nightMode ? "#000" : color;
-
-    // Lanternas e Faróis aparecem tanto na Noite quanto na Neblina/Chuva
     if (nightMode || hasFog) {
-        // LANTERNAS TRASEIRAS VERMELHAS
-        ctx.fillStyle = "#FF0000";
-        ctx.fillRect(-w * 0.4, h * 0.3, w * 0.15, h * 0.2); 
-        ctx.fillRect(w * 0.25, h * 0.3, w * 0.15, h * 0.2); 
+        ctx.fillStyle = "#FF0000"; // Lanternas traseiras
+        ctx.fillRect(-w * 0.35, h * 0.2, w * 0.15, h * 0.25); 
+        ctx.fillRect(w * 0.20, h * 0.2, w * 0.15, h * 0.25); 
 
-        // FARÓIS DISCRETOS
-        let lightLength = h * 1.8; 
+        let lightLength = h * 2.5; 
         let gradient = ctx.createLinearGradient(0, 0, 0, -lightLength);
-        gradient.addColorStop(0, "rgba(255, 255, 200, 0.25)"); 
+        gradient.addColorStop(0, "rgba(255, 255, 200, 0.2)"); 
         gradient.addColorStop(1, "rgba(255, 255, 200, 0)");
         ctx.fillStyle = gradient;
         ctx.beginPath();
-        ctx.moveTo(-w * 0.15, 0); 
-        ctx.lineTo(-w * 0.7, -lightLength); 
-        ctx.lineTo(w * 0.7, -lightLength); 
-        ctx.lineTo(w * 0.15, 0);
+        ctx.moveTo(-w * 0.15, 0); ctx.lineTo(-w * 0.7, -lightLength); 
+        ctx.lineTo(w * 0.7, -lightLength); ctx.lineTo(w * 0.15, 0);
         ctx.fill();
     }
 
-    ctx.fillStyle = "#111"; 
-    ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8);
-    ctx.fillRect(w * 0.25, -h * 0.1, w * 0.25, h * 0.8);
-
-    ctx.fillStyle = carColor; 
-    ctx.fillRect(-w * 0.25, h * 0.1, w * 0.5, h * 0.4); 
-    ctx.fillRect(-w * 0.5, -h * 0.3, w, h * 0.2); 
+    // Se for noite, desenha lataria APENAS para o Player. Inimigos ficam invisíveis (só luzes).
+    if (!nightMode || isPlayer) {
+        ctx.fillStyle = "#111"; // Pneus
+        ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8);
+        ctx.fillRect(w * 0.25, -h * 0.1, w * 0.25, h * 0.8);
+        ctx.fillStyle = color; 
+        ctx.fillRect(-w * 0.25, h * 0.1, w * 0.5, h * 0.4); 
+        ctx.fillRect(-w * 0.5, -h * 0.3, w, h * 0.2); 
+    }
     ctx.restore();
 }
 
@@ -233,10 +226,7 @@ function update() {
         if (isRaining && sfxChuva.paused && audioCtx.state === 'running') sfxChuva.play().catch(e => {}); 
         if (Math.random() > 0.996) { 
             lightningAlpha = 0.7; 
-            if (isRaining && audioCtx.state === 'running') {
-                sfxTrovao.currentTime = 0;
-                sfxTrovao.play().catch(e => {});
-            }
+            if (isRaining && audioCtx.state === 'running') sfxTrovao.play().catch(e => {});
         }
     } else { sfxChuva.pause(); }
 
@@ -263,7 +253,6 @@ function update() {
                 gameState = "GAME_OVER"; 
                 sfxDerrota.play();
                 videoDerrota.style.display = 'block'; videoDerrota.play().catch(e => {});
-                localStorage.removeItem('enduro_save'); 
             }
         }
         currentTime = DAY_DURATION - 1; 
@@ -282,22 +271,18 @@ function update() {
     if (--curveTimer <= 0) { targetCurve = (Math.random() - 0.5) * 160; curveTimer = 120; }
     roadCurve += (targetCurve - roadCurve) * 0.02;
 
-    if (gameTick % 150 === 0 && enemies.length < 100) {
-        if (!enemies.some(e => e.z > 3000)) {
-            enemies.push({ 
-                lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 11.5, // Velocidade aumentada
-                color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)],
-                isOvertaken: false 
-            });
-        }
-    }
-
     enemies.forEach((enemy) => {
-        enemy.z -= (speed - enemy.v);
+        let effectiveEnemySpeed = (speed < 15) ? 15 : enemy.v; // Te ultrapassam a 15
+        enemy.z -= (speed - effectiveEnemySpeed);
+        
         let p = 1 - (enemy.z / 4000); 
         let roadWidth = 20 + p * 800;
         let screenX = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p) + (enemy.lane * roadWidth * 0.5);
-        if (p > 0.92 && p < 1.05 && Math.abs(screenX - 200) < 50) { speed = -3; enemy.z += 800; playCrashSound(); }
+        
+        if (p > 0.92 && p < 1.05 && Math.abs(screenX - 200) < 50) { 
+            speed = -3; enemy.z += 800; playCrashSound(); 
+        }
+
         if (gameState === "PLAYING" || gameState === "GOAL_REACHED") {
             if (enemy.z <= 0 && !enemy.isOvertaken) { carsRemaining--; enemy.isOvertaken = true; }
             if (enemy.z > 0 && enemy.isOvertaken) { carsRemaining++; enemy.isOvertaken = false; }
@@ -305,6 +290,14 @@ function update() {
         }
         enemy.lastY = 200 + (p * 140); enemy.lastX = screenX; enemy.lastP = p;
     });
+
+    if (gameTick % 150 === 0 && enemies.length < 100) {
+        enemies.push({ 
+            lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 10.5, 
+            color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)],
+            isOvertaken: false 
+        });
+    }
 
     enemies = enemies.filter(e => e.z > -15000 && e.z < 6000);
     draw(colors, isRaining);
@@ -320,12 +313,10 @@ function draw(colors, isRaining) {
         let bx = (i * 100) + mtShift;
         ctx.fillStyle = colors.mt;
         ctx.beginPath(); ctx.moveTo(bx - 60, 200); ctx.lineTo(bx, 140); ctx.lineTo(bx + 60, 200); ctx.fill();
-        
         if (colors.snowCaps) { 
             ctx.fillStyle = "white"; 
             ctx.beginPath(); ctx.moveTo(bx, 140); ctx.lineTo(bx - 20, 160); ctx.lineTo(bx + 20, 160); ctx.fill(); 
         }
-
         if (lightningAlpha > 0) {
             ctx.fillStyle = `rgba(255, 255, 255, ${lightningAlpha * 0.7})`;
             ctx.beginPath(); ctx.moveTo(bx - 60, 200); ctx.lineTo(bx, 140); ctx.lineTo(bx + 60, 200); ctx.fill();
@@ -343,15 +334,13 @@ function draw(colors, isRaining) {
         ctx.fillRect(x + w/2, i, 10*p, 4);
     }
     
-    // Define se deve mostrar lanternas/faróis (se for noite OU se houver neblina)
     let hasFog = colors.fog > 0;
-    
     enemies.sort((a,b) => b.z - a.z).forEach(e => {
         if (e.lastP > 0 && e.lastP < 0.92) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, hasFog);
     });
     drawF1Car(200, 350, 0.85, "#E00", true, colors.nightMode, hasFog); 
     enemies.forEach(e => {
-        if (e.lastP >= 0.92 && e.lastP < 2) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, hasFog);
+        if (e.lastP >= 0.92) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, hasFog);
     });
 
     if (colors.fog > 0) { ctx.fillStyle = `rgba(140,145,160,${colors.fog})`; ctx.fillRect(0, 55, 400, 345); }
