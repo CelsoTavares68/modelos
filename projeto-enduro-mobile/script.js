@@ -8,15 +8,19 @@ let gameState = "PLAYING";
 let isPaused = false;
 
 const maxSpeed = 16; 
-// 150 segundos (2.5 min) * 60 frames = 9000 frames por etapa
 const STAGE_DURATION = 9000; 
 const DAY_DURATION = STAGE_DURATION * 9; 
 let currentTime = 0; 
 
 let enemies = [];
-let roadCurve = 0, targetCurve = 0, curveTimer = 0;
 
-// --- CLIMA: CHUVA E RELÂMPAGOS ---
+// --- SISTEMA DE CURVAS AVANÇADO ---
+let roadCurve = 0;      // Curvatura atual
+let targetCurve = 0;    // Para onde a curva está indo
+let curveTimer = 0;     // Duração da curva atual
+let curveSpeed = 0.02;  // Suavidade da transição
+
+// --- CLIMA ---
 let raindrops = []; 
 let lightningAlpha = 0; 
 
@@ -27,31 +31,23 @@ sfxChuva.volume = 0.5;
 const sfxTrovao = new Audio('trovao.mp3');
 sfxTrovao.volume = 0.7;
 
-// --- ELEMENTOS DE MÍDIA ---
+// --- MÍDIA ---
 const videoVitoria = document.createElement('video');
 videoVitoria.src = 'bandeira_vitoria.mp4';
 videoVitoria.style.position = 'absolute';
-videoVitoria.style.top = '55px';
-videoVitoria.style.left = '0';
-videoVitoria.style.width = '400px';
-videoVitoria.style.height = '345px';
-videoVitoria.style.display = 'none';
-videoVitoria.style.zIndex = '10';
-videoVitoria.muted = true;
-videoVitoria.load();
+videoVitoria.style.top = '55px'; videoVitoria.style.left = '0';
+videoVitoria.style.width = '400px'; videoVitoria.style.height = '345px';
+videoVitoria.style.display = 'none'; videoVitoria.style.zIndex = '10';
+videoVitoria.muted = true; videoVitoria.load();
 document.body.appendChild(videoVitoria);
 
 const videoDerrota = document.createElement('video');
 videoDerrota.src = 'game_over.mp4';
 videoDerrota.style.position = 'absolute';
-videoDerrota.style.top = '55px';
-videoDerrota.style.left = '0';
-videoDerrota.style.width = '400px';
-videoDerrota.style.height = '345px';
-videoDerrota.style.display = 'none';
-videoDerrota.style.zIndex = '10';
-videoDerrota.muted = true;
-videoDerrota.load();
+videoDerrota.style.top = '55px'; videoDerrota.style.left = '0';
+videoDerrota.style.width = '400px'; videoDerrota.style.height = '345px';
+videoDerrota.style.display = 'none'; videoDerrota.style.zIndex = '10';
+videoDerrota.muted = true; videoDerrota.load();
 document.body.appendChild(videoDerrota);
 
 const sfxDerrota = new Audio('game_over.mp3');
@@ -59,7 +55,6 @@ const sfxVitoriaAudio = new Audio('vitoria.mp3');
 
 const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
 
-// --- SISTEMA DE SAVE ---
 function saveProgress() {
     const data = { dayNumber, carsRemaining, playerDist, currentTime };
     localStorage.setItem('enduro_save', JSON.stringify(data));
@@ -139,8 +134,6 @@ function resetGame() {
     if (audioCtx.state === 'suspended') audioCtx.resume();
     dayNumber = 1; baseGoal = 200; isPaused = false;
     localStorage.removeItem('enduro_save');
-    const btn = document.getElementById('pauseBtn');
-    if (btn) btn.innerText = "Pausar";
     resetDay();
     if (gameState !== "PLAYING") { gameState = "PLAYING"; update(); }
 }
@@ -148,8 +141,7 @@ function resetGame() {
 function resetDay() {
     currentTime = 0; playerDist = 0; speed = 0; enemies = [];
     carsRemaining = baseGoal + (dayNumber - 1) * 10; 
-    gameState = "PLAYING";
-    isPaused = false;
+    gameState = "PLAYING"; isPaused = false;
     if (sfxChuva) { sfxChuva.pause(); sfxChuva.currentTime = 0; }
     saveProgress();
 }
@@ -162,14 +154,11 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasF
     ctx.translate(x, y);
     if(isPlayer) ctx.rotate((roadCurve / 40) * Math.PI / 180);
     
-    // Efeito de luzes (Lanternas e Faróis)
     if (nightMode || hasFog) {
-        // Lanternas traseiras vermelhas
         ctx.fillStyle = "#FF0000";
         ctx.fillRect(-w * 0.35, h * 0.2, w * 0.15, h * 0.25); 
         ctx.fillRect(w * 0.20, h * 0.2, w * 0.15, h * 0.25); 
 
-        // Feixe de luz do farol dianteiro
         let lightLength = h * 2.5; 
         let gradient = ctx.createLinearGradient(0, 0, 0, -lightLength);
         gradient.addColorStop(0, "rgba(255, 255, 200, 0.2)"); 
@@ -181,9 +170,8 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasF
         ctx.fill();
     }
 
-    // O corpo do carro desaparece se estiver de noite ou neblina (incluindo o jogador)
     if (!nightMode && !hasFog) {
-        ctx.fillStyle = "#111"; // Pneus
+        ctx.fillStyle = "#111"; 
         ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8);
         ctx.fillRect(w * 0.25, -h * 0.1, w * 0.25, h * 0.8);
         ctx.fillStyle = color; 
@@ -240,8 +228,7 @@ function update() {
     if (currentTime >= DAY_DURATION) {
         if (gameState === "GOAL_REACHED" || carsRemaining <= 0) {
             if (gameState !== "WIN_DAY") { 
-                gameState = "WIN_DAY"; 
-                sfxVitoriaAudio.play();
+                gameState = "WIN_DAY"; sfxVitoriaAudio.play();
                 videoVitoria.style.display = 'block'; videoVitoria.play().catch(e => {});
                 dayNumber++; 
                 setTimeout(() => { 
@@ -251,8 +238,7 @@ function update() {
             }
         } else { 
             if (gameState !== "GAME_OVER") { 
-                gameState = "GAME_OVER"; 
-                sfxDerrota.play();
+                gameState = "GAME_OVER"; sfxDerrota.play();
                 videoDerrota.style.display = 'block'; videoDerrota.play().catch(e => {});
             }
         }
@@ -264,20 +250,29 @@ function update() {
     else speed = Math.min(speed + ((speed < 5) ? 0.02 : 0.06), maxSpeed);
     
     if (keys.ArrowDown) speed = Math.max(speed - 0.2, 0);
-    playerX -= (roadCurve / 35) * (speed / maxSpeed); 
+
+    // --- NOVA LÓGICA DE MOVIMENTO E CURVA ---
+    playerX -= (roadCurve * 0.1) * (speed / maxSpeed); 
     if (keys.ArrowLeft) playerX -= 4.5;
     if (keys.ArrowRight) playerX += 4.5;
     playerX = Math.max(-450, Math.min(450, playerX));
 
-    if (--curveTimer <= 0) { targetCurve = (Math.random() - 0.5) * 160; curveTimer = 120; }
-    roadCurve += (targetCurve - roadCurve) * 0.02;
+    // Troca de curva aleatória com duração variada
+    if (--curveTimer <= 0) { 
+        targetCurve = (Math.random() - 0.5) * 220; // Curvas mais intensas
+        curveTimer = 60 + Math.random() * 150; 
+    }
+    roadCurve += (targetCurve - roadCurve) * curveSpeed;
 
     enemies.forEach((enemy) => {
         let effectiveEnemySpeed = (speed < 15) ? 15 : enemy.v; 
         enemy.z -= (speed - effectiveEnemySpeed);
         let p = 1 - (enemy.z / 4000); 
         let roadWidth = 20 + p * 800;
+        
+        // Inimigos seguem a curva de forma mais orgânica
         let screenX = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p) + (enemy.lane * roadWidth * 0.5);
+        
         if (p > 0.92 && p < 1.05 && Math.abs(screenX - 200) < 50) { 
             speed = -3; enemy.z += 800; playCrashSound(); 
         }
@@ -306,14 +301,14 @@ function draw(colors, isRaining) {
     ctx.fillStyle = colors.sky; ctx.fillRect(0, 0, 400, 200);
     ctx.fillStyle = colors.grass; ctx.fillRect(0, 200, 400, 200);
     
-    let mtShift = (roadCurve * 0.8);
+    // As montanhas agora se movem com a curva
+    let mtShift = (roadCurve * 0.5);
     for (let i = -2; i < 8; i++) {
         let bx = (i * 100) + mtShift;
         ctx.fillStyle = colors.mt;
         ctx.beginPath(); ctx.moveTo(bx - 60, 200); ctx.lineTo(bx, 140); ctx.lineTo(bx + 60, 200); ctx.fill();
         if (colors.snowCaps) { 
-            ctx.fillStyle = "white"; 
-            ctx.beginPath(); ctx.moveTo(bx, 140); ctx.lineTo(bx - 20, 160); ctx.lineTo(bx + 20, 160); ctx.fill(); 
+            ctx.fillStyle = "white"; ctx.beginPath(); ctx.moveTo(bx, 140); ctx.lineTo(bx - 20, 160); ctx.lineTo(bx + 20, 160); ctx.fill(); 
         }
     }
 
@@ -322,14 +317,13 @@ function draw(colors, isRaining) {
         let x = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p);
         let w = 20 + p * 800;
 
-        // Asfalto ultra escuro para noite
+        // Asfalto escuro na noite
         let asphaltColor1 = colors.nightMode ? "#050505" : "#333"; 
         let asphaltColor2 = colors.nightMode ? "#0a0a0a" : "#3d3d3d";
 
         ctx.fillStyle = Math.sin(i * 0.5 + playerDist * 0.2) > 0 ? asphaltColor1 : asphaltColor2;
         ctx.fillRect(x - w/2, i, w, 4);
 
-        // Zebras mais opacas à noite
         let curbColor1 = colors.nightMode ? "#600" : "red";
         let curbColor2 = colors.nightMode ? "#888" : "white";
         ctx.fillStyle = Math.sin(i * 0.5 + playerDist * 0.2) > 0 ? curbColor1 : curbColor2;
@@ -342,7 +336,6 @@ function draw(colors, isRaining) {
         if (e.lastP > 0 && e.lastP < 0.92) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, hasFog);
     });
     
-    // Jogador respeitando nightMode para sumir o corpo
     drawF1Car(200, 350, 0.85, "#E00", true, colors.nightMode, hasFog); 
     
     enemies.forEach(e => {
@@ -375,9 +368,7 @@ update();
 
 function updateApp() {
     navigator.serviceWorker.getRegistration().then(reg => {
-        if (reg && reg.waiting) {
-            reg.waiting.postMessage('skipWaiting');
-        }
+        if (reg && reg.waiting) { reg.waiting.postMessage('skipWaiting'); }
         window.location.reload();
     });
 }
