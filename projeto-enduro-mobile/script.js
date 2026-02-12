@@ -14,13 +14,13 @@ let currentTime = 0;
 
 let enemies = [];
 
-// --- SISTEMA DE CURVAS AVANÇADO ---
+// --- SISTEMA DE CURVAS AJUSTADO (MENOS FREQUENTE E MAIS SUAVE) ---
 let roadCurve = 0;      
 let targetCurve = 0;    
 let curveTimer = 0;     
-let curveSpeed = 0.025; 
+let curveSpeed = 0.015; // Reduzido de 0.025 para transições mais calmas
 
-// --- VARIÁVEIS PARA O NOVO FREIO ---
+// --- VARIÁVEIS DO FREIO NOS BOTÕES ---
 let leftPressTime = 0;
 let rightPressTime = 0;
 
@@ -156,7 +156,7 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasF
     let w = 45 * s; let h = 22 * s;
     ctx.save();
     ctx.translate(x, y);
-    if(isPlayer) ctx.rotate((roadCurve / 50) * Math.PI / 180);
+    if(isPlayer) ctx.rotate((roadCurve / 80) * Math.PI / 180); // Rotação visual mais leve
     
     if (nightMode || hasFog) {
         ctx.fillStyle = "#FF0000";
@@ -251,27 +251,34 @@ function update() {
 
     let offRoad = Math.abs(playerX) > 380;
     
-    // --- LÓGICA DE ACELERAÇÃO E FREIO NOS BOTÕES DE CURVA ---
     if (keys.ArrowLeft) leftPressTime++; else leftPressTime = 0;
     if (keys.ArrowRight) rightPressTime++; else rightPressTime = 0;
 
-    let isBraking = (leftPressTime > 60 || rightPressTime > 60 || keys.ArrowDown); // 60 frames = 1 segundo
+    let isBraking = (leftPressTime > 60 || rightPressTime > 60 || keys.ArrowDown); 
 
     if (isBraking) {
-        speed = Math.max(speed - 0.15, 0); // Desaceleração ativa
+        speed = Math.max(speed - 0.15, 0); 
     } else {
         if (offRoad) speed = Math.min(speed + 0.01, 2); 
         else speed = Math.min(speed + ((speed < 5) ? 0.02 : 0.06), maxSpeed);
     }
 
-    playerX -= (roadCurve * 0.08) * (speed / maxSpeed); 
+    // --- SENSIBILIDADE DO MOVIMENTO LATERAL ---
+    playerX -= (roadCurve * 0.06) * (speed / maxSpeed); 
     if (keys.ArrowLeft) playerX -= 4.8;
     if (keys.ArrowRight) playerX += 4.8;
     playerX = Math.max(-480, Math.min(480, playerX));
 
+    // --- AJUSTE DE FREQUÊNCIA DE CURVAS (MAIS RETAS, MENOS CURVAS) ---
     if (--curveTimer <= 0) { 
-        targetCurve = (Math.random() - 0.5) * 240; 
-        curveTimer = 40 + Math.random() * 120; 
+        // 40% de chance de ser uma reta (targetCurve = 0)
+        if (Math.random() > 0.6) {
+            targetCurve = 0;
+            curveTimer = 100 + Math.random() * 200; // Retas mais longas
+        } else {
+            targetCurve = (Math.random() - 0.5) * 160; // Curvas menos fechadas (era 240)
+            curveTimer = 80 + Math.random() * 150; 
+        }
     }
     roadCurve += (targetCurve - roadCurve) * curveSpeed;
 
