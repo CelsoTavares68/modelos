@@ -14,13 +14,13 @@ let currentTime = 0;
 
 let enemies = [];
 
-// --- SISTEMA DE CURVAS AJUSTADO (MENOS FREQUENTE E MAIS SUAVE) ---
+// --- SISTEMA DE CURVAS ---
 let roadCurve = 0;      
 let targetCurve = 0;    
 let curveTimer = 0;     
-let curveSpeed = 0.015; // Reduzido de 0.025 para transições mais calmas
+let curveSpeed = 0.015; 
 
-// --- VARIÁVEIS DO FREIO NOS BOTÕES ---
+// --- FREIO ---
 let leftPressTime = 0;
 let rightPressTime = 0;
 
@@ -150,19 +150,22 @@ function resetDay() {
     saveProgress();
 }
 
-function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasFog = false) {
+function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasFog = false, isRainy = false) {
     let s = scale * 1.2;
     if (s < 0.02 || s > 30) return;
     let w = 45 * s; let h = 22 * s;
     ctx.save();
     ctx.translate(x, y);
-    if(isPlayer) ctx.rotate((roadCurve / 80) * Math.PI / 180); // Rotação visual mais leve
+    if(isPlayer) ctx.rotate((roadCurve / 80) * Math.PI / 180);
     
-    if (nightMode || hasFog) {
+    // Lanternas e Faróis (Ligam na NOITE, NEVOEIRO ou CHUVA)
+    if (nightMode || hasFog || isRainy) {
+        // Lanternas traseiras (Vermelho vivo)
         ctx.fillStyle = "#FF0000";
         ctx.fillRect(-w * 0.35, h * 0.2, w * 0.15, h * 0.25); 
         ctx.fillRect(w * 0.20, h * 0.2, w * 0.15, h * 0.25); 
 
+        // Faróis dianteiros (Efeito de luz amarela no chão)
         let lightLength = h * 3; 
         let gradient = ctx.createLinearGradient(0, 0, 0, -lightLength);
         gradient.addColorStop(0, "rgba(255, 255, 200, 0.25)"); 
@@ -174,7 +177,12 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasF
         ctx.fill();
     }
 
-    if (!nightMode && !hasFog) {
+    // DESENHO DO CORPO DO CARRO
+    // Se for noite ou névoa densa, fica silhueta. Se for chuva, mantém a cor.
+    if (nightMode || (hasFog && !isRainy)) {
+        // Silhueta para noite/nevoeiro
+    } else {
+        // Formato normal com cores (Dia e Chuva)
         ctx.fillStyle = "#111"; 
         ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8);
         ctx.fillRect(w * 0.25, -h * 0.1, w * 0.25, h * 0.8);
@@ -196,11 +204,11 @@ function update() {
         case 0: colors.snowCaps = true; break; 
         case 1: colors.sky = "#DDD"; colors.grass = "#FFF"; colors.mt = "#999"; colors.snowCaps = true; break; 
         case 2: colors.sky = "#ff8c00"; colors.grass = "#145c14"; colors.mt = "#442200"; break; 
-        case 3: colors.sky = "#2c3e50"; colors.grass = "#0a2a0a"; colors.mt = "#1a1a1a"; colors.fog = 0.6; break; 
+        case 3: colors.sky = "#2c3e50"; colors.grass = "#0a2a0a"; colors.mt = "#1a1a1a"; colors.fog = 0.5; break; // Chuva
         case 4: colors.sky = "#111144"; colors.grass = "#001100"; colors.mt = "#111"; colors.nightMode = true; break; 
         case 5: colors.sky = "#444"; colors.grass = "#333"; colors.mt = "#222"; colors.fog = 0.8; colors.nightMode = true; break; 
         case 6: colors.sky = "#000011"; colors.grass = "#000800"; colors.mt = "#000"; colors.nightMode = true; break; 
-        case 7: colors.sky = "#34495e"; colors.grass = "#0d4d0d"; colors.mt = "#1a1a1a"; colors.fog = 0.7; break; 
+        case 7: colors.sky = "#34495e"; colors.grass = "#0d4d0d"; colors.mt = "#1a1a1a"; colors.fog = 0.6; break; // Chuva 2
         case 8: colors.sky = "#ade1f2"; colors.grass = "#1a7a1a"; colors.mt = "#555"; colors.snowCaps = true; break; 
     }
 
@@ -213,7 +221,6 @@ function update() {
 
     gameTick++; playerDist += speed; currentTime++; 
     if (gameTick % 4 === 0) playEngineSound();
-    if (gameTick % 60 === 0) saveProgress();
 
     if (isRaining || warningLightning) {
         if (isRaining && sfxChuva.paused && audioCtx.state === 'running') sfxChuva.play().catch(e => {}); 
@@ -235,10 +242,7 @@ function update() {
                 gameState = "WIN_DAY"; sfxVitoriaAudio.play();
                 videoVitoria.style.display = 'block'; videoVitoria.play().catch(e => {});
                 dayNumber++; 
-                setTimeout(() => { 
-                    videoVitoria.style.display = 'none'; videoVitoria.pause();
-                    resetDay(); 
-                }, 4000); 
+                setTimeout(() => { videoVitoria.style.display = 'none'; resetDay(); }, 4000); 
             }
         } else { 
             if (gameState !== "GAME_OVER") { 
@@ -250,35 +254,24 @@ function update() {
     }
 
     let offRoad = Math.abs(playerX) > 380;
-    
     if (keys.ArrowLeft) leftPressTime++; else leftPressTime = 0;
     if (keys.ArrowRight) rightPressTime++; else rightPressTime = 0;
 
     let isBraking = (leftPressTime > 60 || rightPressTime > 60 || keys.ArrowDown); 
-
-    if (isBraking) {
-        speed = Math.max(speed - 0.15, 0); 
-    } else {
+    if (isBraking) speed = Math.max(speed - 0.15, 0); 
+    else {
         if (offRoad) speed = Math.min(speed + 0.01, 2); 
         else speed = Math.min(speed + ((speed < 5) ? 0.02 : 0.06), maxSpeed);
     }
 
-    // --- SENSIBILIDADE DO MOVIMENTO LATERAL ---
     playerX -= (roadCurve * 0.06) * (speed / maxSpeed); 
     if (keys.ArrowLeft) playerX -= 4.8;
     if (keys.ArrowRight) playerX += 4.8;
     playerX = Math.max(-480, Math.min(480, playerX));
 
-    // --- AJUSTE DE FREQUÊNCIA DE CURVAS (MAIS RETAS, MENOS CURVAS) ---
     if (--curveTimer <= 0) { 
-        // 40% de chance de ser uma reta (targetCurve = 0)
-        if (Math.random() > 0.6) {
-            targetCurve = 0;
-            curveTimer = 100 + Math.random() * 200; // Retas mais longas
-        } else {
-            targetCurve = (Math.random() - 0.5) * 160; // Curvas menos fechadas (era 240)
-            curveTimer = 80 + Math.random() * 150; 
-        }
+        if (Math.random() > 0.6) { targetCurve = 0; curveTimer = 100 + Math.random() * 200; }
+        else { targetCurve = (Math.random() - 0.5) * 160; curveTimer = 80 + Math.random() * 150; }
     }
     roadCurve += (targetCurve - roadCurve) * curveSpeed;
 
@@ -288,9 +281,7 @@ function update() {
         let p = 1 - (enemy.z / 4000); 
         let roadWidth = 20 + p * 800;
         let screenX = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p) + (enemy.lane * roadWidth * 0.5);
-        if (p > 0.92 && p < 1.05 && Math.abs(screenX - 200) < 50) { 
-            speed = -4; enemy.z += 800; playCrashSound(); 
-        }
+        if (p > 0.92 && p < 1.05 && Math.abs(screenX - 200) < 50) { speed = -4; enemy.z += 800; playCrashSound(); }
         if (gameState === "PLAYING" || gameState === "GOAL_REACHED") {
             if (enemy.z <= 0 && !enemy.isOvertaken) { carsRemaining--; enemy.isOvertaken = true; }
             if (enemy.z > 0 && enemy.isOvertaken) { carsRemaining++; enemy.isOvertaken = false; }
@@ -321,9 +312,7 @@ function draw(colors, isRaining) {
         let bx = (i * 100) + mtShift;
         ctx.fillStyle = colors.mt;
         ctx.beginPath(); ctx.moveTo(bx - 70, 200); ctx.lineTo(bx, 130); ctx.lineTo(bx + 70, 200); ctx.fill();
-        if (colors.snowCaps) { 
-            ctx.fillStyle = "white"; ctx.beginPath(); ctx.moveTo(bx, 130); ctx.lineTo(bx - 25, 155); ctx.lineTo(bx + 25, 155); ctx.fill(); 
-        }
+        if (colors.snowCaps) { ctx.fillStyle = "white"; ctx.beginPath(); ctx.moveTo(bx, 130); ctx.lineTo(bx - 25, 155); ctx.lineTo(bx + 25, 155); ctx.fill(); }
     }
 
     for (let i = 200; i < 400; i += 4) {
@@ -343,13 +332,13 @@ function draw(colors, isRaining) {
 
     let hasFog = colors.fog > 0;
     enemies.sort((a,b) => b.z - a.z).forEach(e => {
-        if (e.lastP > 0 && e.lastP < 0.92) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, hasFog);
+        if (e.lastP > 0 && e.lastP < 0.92) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, hasFog, isRaining);
     });
     
-    drawF1Car(200, 350, 0.85, "#E00", true, colors.nightMode, hasFog); 
+    drawF1Car(200, 350, 0.85, "#E00", true, colors.nightMode, hasFog, isRaining); 
     
     enemies.forEach(e => {
-        if (e.lastP >= 0.92) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, hasFog);
+        if (e.lastP >= 0.92) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, hasFog, isRaining);
     });
 
     if (colors.fog > 0) { ctx.fillStyle = `rgba(140,145,160,${colors.fog})`; ctx.fillRect(0, 55, 400, 345); }
