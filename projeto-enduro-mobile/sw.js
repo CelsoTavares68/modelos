@@ -1,4 +1,4 @@
- const CACHE_NAME = 'enduro-mobile-v11'; // Incremente aqui para disparar o aviso de atualização
+ const CACHE_NAME = 'enduro-mobile-v12'; // Incremente aqui para disparar o aviso de atualização
 const assets = [
   './',
   './index.html',
