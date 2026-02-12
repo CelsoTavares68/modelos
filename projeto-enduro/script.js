@@ -53,6 +53,31 @@ videoDerrota.style.display = 'none'; videoDerrota.style.zIndex = '10';
 videoDerrota.muted = true; videoDerrota.load();
 document.body.appendChild(videoDerrota);
 
+// --- SISTEMA DE PERSISTÊNCIA (SAVE GAME) ---
+function saveProgress() {
+    const gameData = {
+        dayNumber: dayNumber,
+        carsRemaining: carsRemaining,
+        playerDist: playerDist,
+        currentTime: currentTime
+    };
+    localStorage.setItem('enduro_save_pc', JSON.stringify(gameData));
+}
+
+function loadProgress() {
+    const savedData = localStorage.getItem('enduro_save_pc');
+    if (savedData) {
+        const data = JSON.parse(savedData);
+        dayNumber = data.dayNumber;
+        carsRemaining = data.carsRemaining;
+        playerDist = data.playerDist;
+        currentTime = data.currentTime;
+    }
+}
+
+// Carregar progresso ao iniciar
+loadProgress();
+
 // --- CONTROLES (SETAS DO PC) ---
 const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
 
@@ -93,13 +118,17 @@ function togglePause() {
         isPaused = !isPaused;
         const btn = document.getElementById('pauseBtn');
         if (btn) btn.innerText = isPaused ? "Retomar" : "Pausar";
-        if (isPaused) sfxChuva.pause();
+        if (isPaused) {
+            sfxChuva.pause();
+            saveProgress(); // Salva ao pausar
+        }
         if (!isPaused) { audioCtx.resume(); update(); }
     }
 }
 
 function resetGame() {
     if (audioCtx.state === 'suspended') audioCtx.resume();
+    localStorage.removeItem('enduro_save_pc'); // Limpa o save ao reiniciar
     dayNumber = 1; baseGoal = 200; isPaused = false;
     resetDay();
     if (gameState !== "PLAYING") { gameState = "PLAYING"; update(); }
@@ -110,9 +139,9 @@ function resetDay() {
     carsRemaining = baseGoal + (dayNumber - 1) * 10; 
     gameState = "PLAYING"; isPaused = false;
     if (sfxChuva) { sfxChuva.pause(); sfxChuva.currentTime = 0; }
+    saveProgress();
 }
 
-// --- DESENHO DO CARRO (COM LUZES NA CHUVA) ---
 function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasFog = false, isRainy = false) {
     let s = scale * 1.2;
     if (s < 0.02 || s > 30) return;
@@ -138,7 +167,6 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasF
     }
 
     if (nightMode || (hasFog && !isRainy)) {
-        // Silhueta (Noite)
     } else {
         ctx.fillStyle = "#111"; 
         ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8);
@@ -178,6 +206,9 @@ function update() {
 
     gameTick++; playerDist += speed; currentTime++; 
     if (gameTick % 4 === 0) playEngineSound();
+    
+    // Salva o progresso a cada 5 segundos (aprox 300 ticks)
+    if (gameTick % 300 === 0) saveProgress();
 
     if (isRaining || warningLightning) {
         if (isRaining && sfxChuva.paused && audioCtx.state === 'running') sfxChuva.play().catch(e => {}); 
@@ -199,27 +230,27 @@ function update() {
                 gameState = "WIN_DAY"; sfxVitoriaAudio.play();
                 videoVitoria.style.display = 'block'; videoVitoria.play().catch(e => {});
                 dayNumber++; 
+                saveProgress();
                 setTimeout(() => { videoVitoria.style.display = 'none'; resetDay(); }, 4000); 
             }
         } else { 
             if (gameState !== "GAME_OVER") { 
                 gameState = "GAME_OVER"; sfxDerrota.play();
                 videoDerrota.style.display = 'block'; videoDerrota.play().catch(e => {});
+                localStorage.removeItem('enduro_save_pc');
             }
         }
         currentTime = DAY_DURATION - 1; 
     }
 
-    // --- CONTROLE PC (MANUAL) ---
     let offRoad = Math.abs(playerX) > 380;
-    
     if (keys.ArrowUp) {
         let accel = (speed < 5) ? 0.03 : 0.08;
         speed = Math.min(speed + accel, offRoad ? 2 : maxSpeed);
     } else if (keys.ArrowDown) {
-        speed = Math.max(speed - 0.2, 0); // Freio manual
+        speed = Math.max(speed - 0.2, 0); 
     } else {
-        speed = Math.max(speed - 0.05, 0); // Desaceleração natural
+        speed = Math.max(speed - 0.05, 0); 
     }
 
     playerX -= (roadCurve * 0.06) * (speed / maxSpeed); 
@@ -250,6 +281,7 @@ function update() {
         enemy.lastY = 200 + (p * 140); enemy.lastX = screenX; enemy.lastP = p;
     });
 
+    // Mantida sua alteração de 250 ticks para inimigos
     if (gameTick % 250 === 0 && enemies.length < 100) {
         enemies.push({ 
             lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 11.5, 
@@ -303,6 +335,7 @@ function draw(colors, isRaining) {
 
     if (colors.fog > 0) { ctx.fillStyle = `rgba(140,145,160,${colors.fog})`; ctx.fillRect(0, 55, 400, 345); }
     if (isRaining) {
+        // Mantida sua alteração de cor da chuva (0.49 alpha)
         ctx.strokeStyle = "rgba(200, 210, 255, 0.49)"; ctx.lineWidth = 1.2;
         raindrops.forEach(r => { ctx.beginPath(); ctx.moveTo(r.x, r.y); ctx.lineTo(r.x + 1.5, r.y + 12); ctx.stroke(); });
     }
