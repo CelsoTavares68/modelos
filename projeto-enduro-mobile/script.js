@@ -15,10 +15,10 @@ let currentTime = 0;
 let enemies = [];
 
 // --- SISTEMA DE CURVAS AVANÇADO ---
-let roadCurve = 0;      // Curvatura atual
-let targetCurve = 0;    // Para onde a curva está indo
-let curveTimer = 0;     // Duração da curva atual
-let curveSpeed = 0.02;  // Suavidade da transição
+let roadCurve = 0;      
+let targetCurve = 0;    
+let curveTimer = 0;     
+let curveSpeed = 0.025; // Transição mais rápida para curvas sinuosas
 
 // --- CLIMA ---
 let raindrops = []; 
@@ -31,7 +31,7 @@ sfxChuva.volume = 0.5;
 const sfxTrovao = new Audio('trovao.mp3');
 sfxTrovao.volume = 0.7;
 
-// --- MÍDIA ---
+// --- ELEMENTOS DE MÍDIA ---
 const videoVitoria = document.createElement('video');
 videoVitoria.src = 'bandeira_vitoria.mp4';
 videoVitoria.style.position = 'absolute';
@@ -152,21 +152,21 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasF
     let w = 45 * s; let h = 22 * s;
     ctx.save();
     ctx.translate(x, y);
-    if(isPlayer) ctx.rotate((roadCurve / 40) * Math.PI / 180);
+    if(isPlayer) ctx.rotate((roadCurve / 50) * Math.PI / 180);
     
     if (nightMode || hasFog) {
         ctx.fillStyle = "#FF0000";
         ctx.fillRect(-w * 0.35, h * 0.2, w * 0.15, h * 0.25); 
         ctx.fillRect(w * 0.20, h * 0.2, w * 0.15, h * 0.25); 
 
-        let lightLength = h * 2.5; 
+        let lightLength = h * 3; 
         let gradient = ctx.createLinearGradient(0, 0, 0, -lightLength);
-        gradient.addColorStop(0, "rgba(255, 255, 200, 0.2)"); 
+        gradient.addColorStop(0, "rgba(255, 255, 200, 0.25)"); 
         gradient.addColorStop(1, "rgba(255, 255, 200, 0)");
         ctx.fillStyle = gradient;
         ctx.beginPath();
-        ctx.moveTo(-w * 0.15, 0); ctx.lineTo(-w * 0.7, -lightLength); 
-        ctx.lineTo(w * 0.7, -lightLength); ctx.lineTo(w * 0.15, 0);
+        ctx.moveTo(-w * 0.15, 0); ctx.lineTo(-w * 0.8, -lightLength); 
+        ctx.lineTo(w * 0.8, -lightLength); ctx.lineTo(w * 0.15, 0);
         ctx.fill();
     }
 
@@ -251,16 +251,16 @@ function update() {
     
     if (keys.ArrowDown) speed = Math.max(speed - 0.2, 0);
 
-    // --- NOVA LÓGICA DE MOVIMENTO E CURVA ---
-    playerX -= (roadCurve * 0.1) * (speed / maxSpeed); 
-    if (keys.ArrowLeft) playerX -= 4.5;
-    if (keys.ArrowRight) playerX += 4.5;
-    playerX = Math.max(-450, Math.min(450, playerX));
+    // --- MOVIMENTO BASEADO NA CURVATURA ---
+    playerX -= (roadCurve * 0.08) * (speed / maxSpeed); 
+    if (keys.ArrowLeft) playerX -= 4.8;
+    if (keys.ArrowRight) playerX += 4.8;
+    playerX = Math.max(-480, Math.min(480, playerX));
 
-    // Troca de curva aleatória com duração variada
+    // Troca de curva: Criando o formato sinuoso da imagem
     if (--curveTimer <= 0) { 
-        targetCurve = (Math.random() - 0.5) * 220; // Curvas mais intensas
-        curveTimer = 60 + Math.random() * 150; 
+        targetCurve = (Math.random() - 0.5) * 240; 
+        curveTimer = 40 + Math.random() * 120; 
     }
     roadCurve += (targetCurve - roadCurve) * curveSpeed;
 
@@ -270,11 +270,11 @@ function update() {
         let p = 1 - (enemy.z / 4000); 
         let roadWidth = 20 + p * 800;
         
-        // Inimigos seguem a curva de forma mais orgânica
+        // Inimigos acompanham o movimento da pista
         let screenX = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p) + (enemy.lane * roadWidth * 0.5);
         
         if (p > 0.92 && p < 1.05 && Math.abs(screenX - 200) < 50) { 
-            speed = -3; enemy.z += 800; playCrashSound(); 
+            speed = -4; enemy.z += 800; playCrashSound(); 
         }
         if (gameState === "PLAYING" || gameState === "GOAL_REACHED") {
             if (enemy.z <= 0 && !enemy.isOvertaken) { carsRemaining--; enemy.isOvertaken = true; }
@@ -301,19 +301,20 @@ function draw(colors, isRaining) {
     ctx.fillStyle = colors.sky; ctx.fillRect(0, 0, 400, 200);
     ctx.fillStyle = colors.grass; ctx.fillRect(0, 200, 400, 200);
     
-    // As montanhas agora se movem com a curva
-    let mtShift = (roadCurve * 0.5);
-    for (let i = -2; i < 8; i++) {
+    // Paralaxe das montanhas: Movem conforme a curva
+    let mtShift = (roadCurve * 0.6);
+    for (let i = -3; i < 9; i++) {
         let bx = (i * 100) + mtShift;
         ctx.fillStyle = colors.mt;
-        ctx.beginPath(); ctx.moveTo(bx - 60, 200); ctx.lineTo(bx, 140); ctx.lineTo(bx + 60, 200); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(bx - 70, 200); ctx.lineTo(bx, 130); ctx.lineTo(bx + 70, 200); ctx.fill();
         if (colors.snowCaps) { 
-            ctx.fillStyle = "white"; ctx.beginPath(); ctx.moveTo(bx, 140); ctx.lineTo(bx - 20, 160); ctx.lineTo(bx + 20, 160); ctx.fill(); 
+            ctx.fillStyle = "white"; ctx.beginPath(); ctx.moveTo(bx, 130); ctx.lineTo(bx - 25, 155); ctx.lineTo(bx + 25, 155); ctx.fill(); 
         }
     }
 
+    // DESENHO DA PISTA (EFEITO PSEUDO-3D SINUOSO)
     for (let i = 200; i < 400; i += 4) {
-        let p = (i - 200) / 140;
+        let p = (i - 200) / 140; // Projeção
         let x = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p);
         let w = 20 + p * 800;
 
@@ -324,18 +325,22 @@ function draw(colors, isRaining) {
         ctx.fillStyle = Math.sin(i * 0.5 + playerDist * 0.2) > 0 ? asphaltColor1 : asphaltColor2;
         ctx.fillRect(x - w/2, i, w, 4);
 
+        // Zebras (Curbs)
         let curbColor1 = colors.nightMode ? "#600" : "red";
         let curbColor2 = colors.nightMode ? "#888" : "white";
         ctx.fillStyle = Math.sin(i * 0.5 + playerDist * 0.2) > 0 ? curbColor1 : curbColor2;
-        ctx.fillRect(x - w/2 - 10*p, i, 10*p, 4);
-        ctx.fillRect(x + w/2, i, 10*p, 4); 
+        ctx.fillRect(x - w/2 - 12*p, i, 12*p, 4);
+        ctx.fillRect(x + w/2, i, 12*p, 4); 
     }
+
+    
     
     let hasFog = colors.fog > 0;
     enemies.sort((a,b) => b.z - a.z).forEach(e => {
         if (e.lastP > 0 && e.lastP < 0.92) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, hasFog);
     });
     
+    // Jogador (Respeita visibilidade noturna)
     drawF1Car(200, 350, 0.85, "#E00", true, colors.nightMode, hasFog); 
     
     enemies.forEach(e => {
@@ -349,6 +354,7 @@ function draw(colors, isRaining) {
     }
     if (lightningAlpha > 0) { ctx.fillStyle = `rgba(255, 255, 255, ${lightningAlpha})`; ctx.fillRect(0, 55, 400, 345); }
 
+    // HUD
     ctx.fillStyle = "black"; ctx.fillRect(0, 0, 400, 55);
     ctx.fillStyle = (gameState === "GOAL_REACHED" || gameState === "WIN_DAY") ? "lime" : "yellow";
     ctx.font = "bold 18px Courier";
