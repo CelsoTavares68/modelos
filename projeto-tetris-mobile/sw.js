@@ -1,4 +1,4 @@
- const CACHE_NAME = 'fruit-columns-v2';
+ const CACHE_NAME = 'fruit-columns-v3';
 const assets = [
   './',
   './index.html',
