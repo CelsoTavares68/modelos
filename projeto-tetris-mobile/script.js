@@ -127,13 +127,14 @@ function lockPiece() {
     }
 }
 
-// Sistema de Combinações com Animação (Piscar)
+ // Sistema de Combinações com Animação (Piscar)
 function clearMatches() {
     let toRemove = [];
     for (let r = 0; r < ROWS; r++) {
         for (let c = 0; c < COLS; c++) {
             let val = board[r][c];
             if (val === null) continue;
+            // Horizontal, Vertical e Diagonais
             if (c+2 < COLS && val === board[r][c+1] && val === board[r][c+2]) toRemove.push({r,c},{r,c:c+1},{r,c:c+2});
             if (r+2 < ROWS && val === board[r+1][c] && val === board[r+2][c]) toRemove.push({r,c},{r:r+1,c},{r:r+2,c});
             if (r+2 < ROWS && c+2 < COLS && val === board[r+1][c+1] && val === board[r+2][c+2]) toRemove.push({r,c},{r:r+1,c:c+1},{r:r+2,c:c+2});
@@ -145,6 +146,10 @@ function clearMatches() {
         blinkingBlocks = toRemove;
         isPaused = true; 
 
+        // Toca o som IMEDIATAMENTE quando pares são detectados
+        sfxPares.currentTime = 0; 
+        sfxPares.play();
+
         let flashes = 0;
         let flashInterval = setInterval(() => {
             flashes++;
@@ -152,13 +157,11 @@ function clearMatches() {
             
             if (flashes > 5) {
                 clearInterval(flashInterval);
-                sfxPares.play(); // SOM: Formar pares (combinação concluída)
                 
                 toRemove.forEach(p => board[p.r][p.c] = null);
                 score += toRemove.length * 15;
                 scoreElement.innerText = score;
                 
-                // SOM: Mil pontos conquistados
                 if (Math.floor(score / 1000) > lastMilestone) {
                     sfxMilPontos.play();
                     lastMilestone = Math.floor(score / 1000);
@@ -173,6 +176,10 @@ function clearMatches() {
                 blinkingBlocks = [];
                 isPaused = false;
                 applyGravity();
+                
+                // O segredo está aqui: o setTimeout chama clearMatches de novo.
+                // Se novos pares se formarem após a gravidade, a função rodará 
+                // novamente e o som tocará no início do bloco.
                 setTimeout(clearMatches, 200);
             }
         }, 80);

@@ -18,6 +18,11 @@
 <body>
     <div class="game-container">
         <h1 class="game-title">FRUIT COLUMNS</h1>
+
+        <div class="button-container">
+            <button id="btnPause" onclick="togglePause()">Pausar</button>
+            <button id="btnReset" onclick="resetGame()">Recomeçar</button>
+        </div>
         
         <div id="info">
             <div>Nível: <span id="level">1</span></div>
@@ -26,11 +31,6 @@
         </div>
 
         <canvas id="gameCanvas" width="400" height="600"></canvas>
-
-        <div class="button-container">
-            <button id="btnPause" onclick="togglePause()">Pausar</button>
-            <button id="btnReset" onclick="resetGame()">Recomeçar</button>
-        </div>
 
         <div class="mobile-controls">
             <button class="ctrl-btn" id="btnLeft">⬅️</button>
