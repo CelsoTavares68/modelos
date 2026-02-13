@@ -1,4 +1,4 @@
-  const CACHE_NAME = 'fruit-columns-v4'; // Incremente sempre que mudar algo
+  const CACHE_NAME = 'fruit-columns-v5'; // Incremente sempre que mudar algo
 
 const assets = [
   './',

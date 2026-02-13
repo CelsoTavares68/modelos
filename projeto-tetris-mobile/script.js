@@ -11,6 +11,10 @@ const sfxDescida = new Audio('descida.mp3');
 const sfxPares = new Audio('formarpares.mp3');
 const sfxMilPontos = new Audio('mil-pontos.mp3');
 const sfxFim = new Audio('fim.mp3');
+[sfxAbertura, sfxDescida, sfxPares, sfxMilPontos, sfxFim].forEach(audio => {
+    audio.preload = 'auto';
+    audio.load();
+});
 
 // Configurações do Jogo
 const ROWS = 15;
@@ -114,16 +118,26 @@ function checkCollision(nx, ny) {
     return false;
 }
 
-function lockPiece() {
+ function lockPiece() {
     piece.items.forEach((fruitIdx, i) => {
         board[piece.y + i][piece.x] = fruitIdx;
     });
+    
     clearMatches();
-    piece = randomPiece();
-    if (checkCollision(piece.x, piece.y)) {
-        sfxFim.play(); // SOM: Fim de jogo
-        alert("FIM DE JOGO! Pontos: " + score);
-        resetGame();
+    
+    let nextPiece = randomPiece();
+    // Verifica se a NOVA peça já nasce colidindo (Game Over)
+    if (checkCollision(nextPiece.x, nextPiece.y)) {
+        sfxFim.currentTime = 0;
+        sfxFim.play().catch(e => console.log("Erro ao tocar fim:", e)); // Captura erro de autoplay
+        
+        // Pequeno atraso no alerta para o som poder começar antes do popup travar o JS
+        setTimeout(() => {
+            alert("FIM DE JOGO! Pontos: " + score);
+            resetGame();
+        }, 100);
+    } else {
+        piece = nextPiece;
     }
 }
 
