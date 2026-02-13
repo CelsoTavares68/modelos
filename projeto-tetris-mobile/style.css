@@ -130,6 +130,30 @@ button:active {
     background: #ffcc00;
 }
 
+/* Estilo do aviso de atualização */
+#update-banner {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #ffcc00;
+    color: #000;
+    padding: 15px 25px;
+    border-radius: 50px;
+    font-weight: bold;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    display: none; /* Escondido por padrão */
+    z-index: 1000;
+    cursor: pointer;
+    border: none;
+    animation: slideUp 0.5s ease-out;
+}
+
+@keyframes slideUp {
+    from { bottom: -100px; }
+    to { bottom: 20px; }
+}
+
 /* 8. AJUSTE PARA TELAS MUITO PEQUENAS */
 @media (max-height: 700px) {
     .game-title { font-size: 1.4rem; margin: 2px; }

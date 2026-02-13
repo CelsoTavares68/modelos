@@ -1,4 +1,5 @@
- const CACHE_NAME = 'fruit-columns-v3';
+  const CACHE_NAME = 'fruit-columns-v4'; // Incremente sempre que mudar algo
+
 const assets = [
   './',
   './index.html',
@@ -12,8 +13,8 @@ const assets = [
   './fim.mp3'
 ];
 
-// Instala o Service Worker e guarda os arquivos e áudios no cache
 self.addEventListener('install', event => {
+  self.skipWaiting(); // Força a ativação imediata
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
       return cache.addAll(assets);
@@ -21,11 +22,31 @@ self.addEventListener('install', event => {
   );
 });
 
-// Responde com o cache quando estiver offline
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cache => {
+          if (cache !== CACHE_NAME) {
+            return caches.delete(cache); // Remove caches antigos
+          }
+        })
+      );
+    })
+  );
+});
+
 self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request).then(response => {
       return response || fetch(event.request);
     })
   );
+});
+
+// Escuta o comando de pular espera vindo do navegador
+self.addEventListener('message', event => {
+  if (event.data.action === 'skipWaiting') {
+    self.skipWaiting();
+  }
 });
