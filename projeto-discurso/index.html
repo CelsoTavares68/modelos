@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
@@ -21,11 +21,13 @@
       <div class="toolbar" onmousedown="event.preventDefault()">
         <button onclick="formatar('bold')"><b>B</b></button>
         <button onclick="formatar('italic')"><i>I</i></button>
-        <select onchange="formatar('fontSize', this.value)">
-          <option value="3">Tam.</option>
-          <option value="5">Médio</option>
-          <option value="7">Grande</option>
-        </select>
+        
+         <div class="grupo-tamanho">
+    <button onclick="formatar('fontSize', '3')" title="Normal">A</button>
+    <button onclick="formatar('fontSize', '5')" title="Médio"><span style="font-size: 1.2em;">A</span></button>
+    <button onclick="formatar('fontSize', '7')" title="Grande"><span style="font-size: 1.5em;">A</span></button>
+</div>
+        
         <input type="color" onchange="formatar('foreColor', this.value)">
       </div>
       <div id="editor-principal" class="editor" contenteditable="true"></div>
@@ -34,7 +36,7 @@
     <section id="tela-versiculos" class="painel">
       <div class="header-vers">
         <h2>Detalhes</h2>
-        <button onclick="toggleVers()">Voltar ao Texto</button>
+        <button onclick="toggleVers()">Fechar</button>
       </div>
       <div id="editor-versiculos" class="editor" contenteditable="true"></div>
     </section>
