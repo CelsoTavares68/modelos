@@ -1,12 +1,18 @@
-const CACHE_NAME = 'fruit-columns-v1';
+ const CACHE_NAME = 'fruit-columns-v2';
 const assets = [
   './',
   './index.html',
   './style.css',
-  './script.js'
+  './script.js',
+  './manifest.json',
+  './abertura.mp3',
+  './descida.mp3',
+  './formarpares.mp3',
+  './mil-pontos.mp3',
+  './fim.mp3'
 ];
 
-// Instala o Service Worker e guarda os arquivos no cache
+// Instala o Service Worker e guarda os arquivos e áudios no cache
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {

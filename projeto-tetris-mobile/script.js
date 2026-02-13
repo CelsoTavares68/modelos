@@ -5,6 +5,13 @@ const levelElement = document.getElementById('level');
 const highScoreElement = document.getElementById('highScore');
 const btnPause = document.getElementById('btnPause');
 
+// --- CONFIGURAÇÃO DE ÁUDIOS ---
+const sfxAbertura = new Audio('abertura.mp3');
+const sfxDescida = new Audio('descida.mp3');
+const sfxPares = new Audio('formarpares.mp3');
+const sfxMilPontos = new Audio('mil-pontos.mp3');
+const sfxFim = new Audio('fim.mp3');
+
 // Configurações do Jogo
 const ROWS = 15;
 const COLS = 10;
@@ -17,7 +24,8 @@ let speed = 1000;
 let isPaused = false;
 let gameLoop = null;
 let board = Array(ROWS).fill().map(() => Array(COLS).fill(null));
-let blinkingBlocks = []; // Para a animação de piscar
+let blinkingBlocks = [];
+let lastMilestone = 0; // Controle para o som de 1000 pontos
 
 // Recorde Local
 let highScore = parseInt(localStorage.getItem('fruitColumnsHighScore')) || 0;
@@ -54,7 +62,6 @@ function draw(showBlinking = true) {
     for (let r = 0; r < ROWS; r++) {
         for (let c = 0; c < COLS; c++) {
             if (board[r][c] !== null) {
-                // Lógica de piscar: se o bloco está na lista e showBlinking é falso, pula o desenho
                 const isBlinking = blinkingBlocks.some(b => b.r === r && b.c === c);
                 if (!isBlinking || showBlinking) {
                     drawBlock(c, r, board[r][c]);
@@ -63,7 +70,7 @@ function draw(showBlinking = true) {
         }
     }
 
-    // Desenha Peça Ativa (não pisca)
+    // Desenha Peça Ativa
     piece.items.forEach((fruitIdx, i) => {
         if (piece.y + i < ROWS) {
             drawBlock(piece.x, piece.y + i, fruitIdx);
@@ -114,6 +121,7 @@ function lockPiece() {
     clearMatches();
     piece = randomPiece();
     if (checkCollision(piece.x, piece.y)) {
+        sfxFim.play(); // SOM: Fim de jogo
         alert("FIM DE JOGO! Pontos: " + score);
         resetGame();
     }
@@ -126,7 +134,6 @@ function clearMatches() {
         for (let c = 0; c < COLS; c++) {
             let val = board[r][c];
             if (val === null) continue;
-            // Horizontal, Vertical e Diagonais
             if (c+2 < COLS && val === board[r][c+1] && val === board[r][c+2]) toRemove.push({r,c},{r,c:c+1},{r,c:c+2});
             if (r+2 < ROWS && val === board[r+1][c] && val === board[r+2][c]) toRemove.push({r,c},{r:r+1,c},{r:r+2,c});
             if (r+2 < ROWS && c+2 < COLS && val === board[r+1][c+1] && val === board[r+2][c+2]) toRemove.push({r,c},{r:r+1,c:c+1},{r:r+2,c:c+2});
@@ -136,7 +143,7 @@ function clearMatches() {
 
     if (toRemove.length > 0) {
         blinkingBlocks = toRemove;
-        isPaused = true; // Pausa o jogo durante a animação
+        isPaused = true; 
 
         let flashes = 0;
         let flashInterval = setInterval(() => {
@@ -145,10 +152,18 @@ function clearMatches() {
             
             if (flashes > 5) {
                 clearInterval(flashInterval);
+                sfxPares.play(); // SOM: Formar pares (combinação concluída)
+                
                 toRemove.forEach(p => board[p.r][p.c] = null);
                 score += toRemove.length * 15;
                 scoreElement.innerText = score;
                 
+                // SOM: Mil pontos conquistados
+                if (Math.floor(score / 1000) > lastMilestone) {
+                    sfxMilPontos.play();
+                    lastMilestone = Math.floor(score / 1000);
+                }
+
                 if (score > highScore) {
                     highScore = score;
                     highScoreElement.innerText = highScore;
@@ -200,8 +215,9 @@ window.togglePause = function() {
 }
 
 window.resetGame = function() {
+    sfxAbertura.play(); // SOM: Abertura ao reiniciar
     board = Array(ROWS).fill().map(() => Array(COLS).fill(null));
-    score = 0; level = 1; speed = 1000; isPaused = false;
+    score = 0; level = 1; speed = 1000; isPaused = false; lastMilestone = 0;
     scoreElement.innerText = "0"; levelElement.innerText = "1";
     btnPause.innerText = "Pausar";
     clearInterval(gameLoop);
@@ -213,6 +229,11 @@ window.resetGame = function() {
 // --- CONTROLES MÓVEIS ---
 function handleAction(type) {
     if (isPaused) return;
+
+    // Toca som de descida/movimento para qualquer ação válida
+    sfxDescida.currentTime = 0;
+    sfxDescida.play();
+
     switch(type) {
         case 'left': if (piece.x > 0 && !checkCollision(piece.x - 1, piece.y)) piece.x--; break;
         case 'right': if (piece.x < COLS - 1 && !checkCollision(piece.x + 1, piece.y)) piece.x++; break;
@@ -241,5 +262,7 @@ Object.keys(controls).forEach(id => {
 });
 
 // Inicialização
+// Importante: sfxAbertura.play() aqui pode ser bloqueado pelo navegador 
+// até que o usuário clique em algo (como o botão de Reset).
 startGame();
 draw();
