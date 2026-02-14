@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+   <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
@@ -18,8 +18,8 @@
     <details class="card">
         <summary style="cursor: pointer; font-weight: bold;">⚙️ Configurar Plano de Contas</summary>
         <div class="form-row" style="margin-top:15px;">
-            <input type="text" id="nc-cod" placeholder="Código (Ex: 1.01)" style="max-width: 100px;">
-            <input type="text" id="nc-nome" placeholder="Nome da Conta (Ex: Banco Itaú)">
+            <input type="text" id="nc-cod" placeholder="Código" style="max-width: 100px;">
+            <input type="text" id="nc-nome" placeholder="Nome da Conta" style="flex: 1;">
             <select id="nc-tipo">
                 <option value="A">Ativo</option>
                 <option value="P">Passivo</option>
@@ -29,39 +29,51 @@
             </select>
             <button class="btn btn-salvar" style="background: var(--primaria);" onclick="cadastrarConta()">+ Criar Conta</button>
         </div>
+        <div id="gestao-contas-lista" style="margin-top: 15px; max-height: 200px; overflow-y: auto; border-top: 1px solid #eee; padding-top: 10px;"></div>
     </details>
 
-    <div class="card">
-        <h3>📝 Novo Lançamento</h3>
-        <div class="form-row">
-            <input type="date" id="f-data" style="max-width: 160px;">
-            <input type="text" id="f-desc" placeholder="Histórico/Descrição da operação" style="flex: 2;">
-        </div>
-        <div class="form-row">
-            <input type="text" id="cod-d" class="input-cod" placeholder="Cód. D" oninput="buscarPorCodigo('d')">
-            <select id="f-conta-d" style="flex: 1;" onchange="sincronizarCodigo('d')"></select>
-            
-            <input type="text" id="cod-c" class="input-cod" placeholder="Cód. C" oninput="buscarPorCodigo('c')">
-            <select id="f-conta-c" style="flex: 1;" onchange="sincronizarCodigo('c')"></select>
-
-            <input type="number" id="f-valor" placeholder="Valor R$" step="0.01" style="max-width: 150px;">
-            <button class="btn btn-salvar" onclick="salvarLancamento()">💾 Salvar</button>
-        </div>
+     <div class="card">
+    <h3>📝 Lançamento Contábil</h3>
+    <input type="hidden" id="f-edit-index" value="-1">
+    
+    <div class="form-row">
+        <input type="date" id="f-data" style="max-width: 150px;">
+        <input type="text" id="f-desc" placeholder="Histórico da operação" style="flex: 1;">
+        <input type="number" id="f-valor" placeholder="Valor R$" step="0.01" style="max-width: 130px;">
     </div>
+
+    <div class="form-row" style="background: #f9f9f9; padding: 10px; border-radius: 5px; border: 1px solid #eee;">
+        <div style="display: flex; align-items: center; gap: 5px; flex: 1;">
+            <b style="color: var(--sucesso); font-size: 12px;">DÉBITO:</b>
+            <input type="text" id="cod-d" class="input-cod" placeholder="Cód" oninput="buscarPorCodigo('d')" style="width: 60px;">
+            <select id="f-conta-d" style="flex: 1; min-width: 100px;" onchange="sincronizarCodigo('d')"></select>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 5px; flex: 1;">
+            <b style="color: var(--perigo); font-size: 12px;">CRÉDITO:</b>
+            <input type="text" id="cod-c" class="input-cod" placeholder="Cód" oninput="buscarPorCodigo('c')" style="width: 60px;">
+            <select id="f-conta-c" style="flex: 1; min-width: 100px;" onchange="sincronizarCodigo('c')"></select>
+        </div>
+
+        <button id="btn-salvar-lanc" class="btn btn-salvar" onclick="salvarLancamento()" style="white-space: nowrap;">💾 Salvar</button>
+    </div>
+</div>
 
     <nav style="margin-bottom: 0;">
         <button id="t-diario" class="btn btn-tab active" onclick="setAba('diario')">Livro Diário</button>
         <button id="t-razao" class="btn btn-tab" onclick="setAba('razao')">Razão</button>
         <button id="t-balancete" class="btn btn-tab" onclick="setAba('balancete')">Balancete</button>
+        <button id="t-dre" class="btn btn-tab" onclick="setAba('dre')">DRE</button>
         <button id="t-balanco" class="btn btn-tab" onclick="setAba('balanco')">Balanço Patrimonial</button>
     </nav>
 
-    <div style="background: #fff; border: 1px solid #ddd; padding: 15px; border-radius: 0 0 8px 8px; display: flex; gap: 10px; align-items: center; margin-bottom: 20px;">
+    <div class="filter-bar">
         <span style="font-size: 13px; color: #666;">Período:</span>
         <input type="date" id="filtro-ini" onchange="renderizar()">
         <input type="date" id="filtro-fim" onchange="renderizar()">
-        <select id="filtro-conta-razao" style="display:none; max-width: 200px;" onchange="renderizar()"></select>
-        <button class="btn" style="background: #555; color: white;" onclick="exportarPDF()">📥 Gerar PDF</button>
+        <select id="filtro-conta-razao" style="display:none;" onchange="renderizar()"></select>
+        <button class="btn" style="background: #555; color: white;" onclick="exportarPDF()">📥 PDF</button>
+        <button class="btn" style="background: var(--perigo); color: white;" onclick="UI_executarFechamento()">🔒 Fechar Exercício</button>
     </div>
 
     <div id="tabela-render"></div>
