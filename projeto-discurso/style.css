@@ -162,7 +162,7 @@ header button {
 }
 
 /* --- RESPONSIVIDADE --- */
-@media (max-width: 768px) {
+@media (max-width: 640px) {
     .container.mostrando-vers { flex-direction: column; }
     .container.mostrando-vers #tela-discurso { width: 100%; height: 60%; }
     .container.mostrando-vers #tela-versiculos { width: 100%; height: 40%; border-left: none; border-top: 2px solid #ddd; }
