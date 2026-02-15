@@ -1,0 +1,18 @@
+ {
+  "name": "Meu App de Discurso",
+  "short_name": "Discurso",
+  "description": "Editor de textos e detalhes para discursos.",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0a0538",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

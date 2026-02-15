@@ -59,3 +59,12 @@ function copiarTudo() {
 }
 
 function gerarPDF() { window.print(); }
+
+ // Registro do Service Worker para PWA
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('App pronto para uso offline!'))
+            .catch(err => console.log('Erro ao registrar:', err));
+    });
+}
