@@ -1,45 +1,41 @@
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Entregas Brasil Mobile</title>
-    
+    <title>Entregas Céu Azul - Scanner</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
     <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/html5-qrcode"></script>
 </head>
- <body>
+<body>
     <header>
-        <div class="stats">📦 <span id="count">0</span> / 80</div>
-        <div id="status-gps">📍 GPS OFF</div>
+        <div class="stats">📦 Lidos: <span id="count">0</span></div>
+        <div id="status-gps">📍 Scanner Pronto</div>
     </header>
 
-    <div id="reader"></div>
+    <div id="reader-container">
+        <div id="reader"></div>
+        <p class="instrucao">Aponte para o QR Code ou Código de Barras</p>
+    </div>
 
-    <main id="map"></main>
+    <section id="lista-scan">
+        <div class="lista-header">
+            <h3>Carga Atual - Céu Azul</h3>
+            <button onclick="gerarRota()" class="btn-rota">🗺️ Gerar Rota no Mapa</button>
+        </div>
+        <div id="itens-lidos">
+            </div>
+    </section>
+
+    <main id="map" style="display:none;"></main>
 
     <nav class="mobile-nav">
-        <button onclick="mostrarAba('mapa')">🗺️ Mapa</button>
-        <button onclick="mostrarAba('lista')">📋 Lista</button>
-        <button onclick="mostrarAba('config')">⚙️ Importar</button>
+        <button onclick="mostrarAba('scanner')">📷 Scanner</button>
+        <button onclick="mostrarAba('mapa')">🗺️ Rota</button>
+        <button onclick="limparSessao()" class="text-danger">🗑️ Limpar</button>
     </nav>
 
-    <section id="aba-config" class="aba-content">
-        <h3>Importar Entregas do Dia</h3>
-        <textarea id="dadosEntregas" placeholder="Ex: BR123, Rua Augusta 100, SP"></textarea>
-        <button onclick="importarLista()" class="btn-primary">💾 Guardar Lista</button>
-        <button onclick="limparDados()" class="btn-danger">🗑️ Resetar App</button>
-    </section>
-
-    <section id="aba-lista" class="aba-content">
-        <h3>Próximas Paragens</h3>
-        <div id="list"></div>
-    </section>
-
-    <script src="https://unpkg.com/html5-qrcode"></script>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
     <script src="script.js"></script>
 </body>
-</html>
+</html>  
