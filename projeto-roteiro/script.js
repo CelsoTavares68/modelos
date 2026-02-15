@@ -36,14 +36,31 @@ function identificarSetor(endereco) {
 
 // --- ETAPA 1: SCANNER E LISTA ---
 
-function iniciarScanner() {
-    html5QrCode = new Html5Qrcode("reader");
-    const config = { 
-        fps: 15, 
-        qrbox: { width: 250, height: 150 },
-        aspectRatio: 1.77
-    };
-    html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess);
+ function iniciarScanner() {
+    // Se já houver um scanner rodando, para ele antes de começar
+    if (html5QrCode) {
+        html5QrCode.stop().then(() => {
+            comecar();
+        }).catch(() => {
+            comecar();
+        });
+    } else {
+        comecar();
+    }
+
+    function comecar() {
+        html5QrCode = new Html5Qrcode("reader");
+        const config = { fps: 15, qrbox: { width: 250, height: 150 } };
+
+        html5QrCode.start(
+            { facingMode: "environment" }, 
+            config,
+            onScanSuccess
+        ).catch(err => {
+            alert("Erro na Câmara: " + err); // Isso dirá se o problema é permissão ou falta de HTTPS
+            console.error(err);
+        });
+    }
 }
 
 function onScanSuccess(decodedText) {
