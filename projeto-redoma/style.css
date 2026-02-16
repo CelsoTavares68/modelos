@@ -56,7 +56,7 @@ body {
 .nav-btn {
     background: rgba(255, 255, 255, 0.197);
     border: none;
-    color: white;
+    color: rgb(245, 194, 194);
     font-size: 3rem;
     cursor: pointer;
     padding: 20px;
