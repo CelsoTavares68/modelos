@@ -91,8 +91,8 @@ textarea {
         position: absolute;
         /* Alterado: agora o botão não ocupa mais a altura toda */
         height: auto; 
-        background: rgba(255, 255, 255, 0.2); /* Leve fundo para indicar o botão */
-        color: white; /* Cor visível para a seta */
+        background: rgba(255, 255, 255, 0.39); /* Leve fundo para indicar o botão */
+        color: rgb(241, 156, 156); /* Cor visível para a seta */
         display: flex;
         align-items: center;
         justify-content: center;
