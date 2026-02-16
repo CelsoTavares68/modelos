@@ -1,4 +1,4 @@
- let dataAtual = new Date();
+  let dataAtual = new Date();
 const folha = document.getElementById('folha-agenda');
 const textarea = document.getElementById('anotacao');
 
@@ -23,8 +23,9 @@ function mudarDia(delta) {
     carregarPagina();
 }
 
-// --- EVENTOS DE INTERAÇÃO ---
+// --- EVENTOS DE INTERAÇÃO (APENAS BOTÕES E INPUTS) ---
 
+// Navegação restrita aos botões laterais
 document.getElementById('prevBtn').addEventListener('click', () => mudarDia(-1));
 document.getElementById('nextBtn').addEventListener('click', () => mudarDia(1));
 
@@ -33,20 +34,9 @@ textarea.addEventListener('input', () => {
 });
 
 document.getElementById('busca-data').addEventListener('change', (e) => {
-    // Força meio-dia para evitar problemas de fuso horário na conversão
+    // Força meio-dia para evitar problemas de fuso horário
     dataAtual = new Date(e.target.value + "T12:00:00");
     carregarPagina();
-});
-
-// Suporte a Swipe (Deslizar) no Mobile
-let xDown = null;
-folha.addEventListener('touchstart', e => xDown = e.touches[0].clientX);
-folha.addEventListener('touchend', e => {
-    if (!xDown) return;
-    let xUp = e.changedTouches[0].clientX;
-    let xDiff = xDown - xUp;
-    if (Math.abs(xDiff) > 50) xDiff > 0 ? mudarDia(1) : mudarDia(-1);
-    xDown = null;
 });
 
 // --- SISTEMA DE HORÁRIO E NOTIFICAÇÕES ---
@@ -70,21 +60,20 @@ function verificarAlertaMatinal() {
     const minutos = agora.getMinutes();
     const segundos = agora.getSeconds();
 
-    // Verifica se são 07:00:00
+    // Verifica se são exatas 07:00:00
     if (horas === 7 && minutos === 0 && segundos === 0) {
         if (!notificacaoDisparadaHoje) {
             const hojeChave = formatarDataChave(agora);
             const conteudo = localStorage.getItem(hojeChave);
 
-            // Só avisa se houver algo escrito para hoje
             if (conteudo && conteudo.trim() !== "") {
-                dispararNotificacao("Agenda Redoma: Bom dia!", "Tens anotações para hoje. Toca para conferir.");
+                dispararNotificacao("Agenda Redoma: Bom dia!", "Você tem anotações para hoje. Toque para conferir.");
             }
             notificacaoDisparadaHoje = true;
         }
     }
 
-    // Reset à meia-noite para o dia seguinte
+    // Reseta o gatilho à meia-noite
     if (horas === 0 && minutos === 0 && segundos === 0) {
         notificacaoDisparadaHoje = false;
     }
@@ -97,28 +86,26 @@ function atualizarRelogio() {
         relogioElemento.innerText = agora.toLocaleTimeString('pt-BR');
     }
     
-    // Verifica o alerta a cada segundo junto com o relógio
     verificarAlertaMatinal();
 }
 
 // --- INICIALIZAÇÃO ---
 
-// Inicia o relógio e a página
 atualizarRelogio();
 setInterval(atualizarRelogio, 1000);
 carregarPagina();
 
-// Registo do Service Worker para PWA
+// Registro do Service Worker para PWA
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js')
     .then(() => console.log("App pronto para instalação!"));
 }
 
-// Pedido de permissão para notificações
+// Solicitação de permissão para notificações
 if ("Notification" in window) {
     Notification.requestPermission().then(permission => {
         if (permission === "granted") {
-            console.log("Notificações permitidas!");
+            console.log("Notificações ativas!");
         }
     });
 }
