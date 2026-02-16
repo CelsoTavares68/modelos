@@ -1,0 +1,32 @@
+    <!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Agenda Redoma</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.png">
+<meta name="theme-color" content="#c0392b">
+</head>
+ <body>
+    <div class="redoma-container"> <div class="topo-agenda">
+            <div id="relogio">00:00:00</div>
+            <input type="date" id="busca-data">
+        </div>
+
+        <button id="prevBtn" class="nav-btn">❮</button>
+        
+        <div class="folha" id="folha-agenda">
+            <header>
+                <h2 id="data-display">--/--/----</h2>
+            </header>
+            <textarea id="anotacao" placeholder="Toque para anotar..."></textarea>
+        </div>
+
+        <button id="nextBtn" class="nav-btn">❯</button>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>

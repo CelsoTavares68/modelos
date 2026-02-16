@@ -1,0 +1,108 @@
+  /* Estilos Gerais */
+body {
+    background-color: #1a252f;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    overflow: hidden; /* Evita rolagens estranhas no mobile */
+    font-family: 'Georgia', serif;
+}
+
+ .topo-agenda {
+    position: absolute;
+    top: 20px;
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.7); /* Fundo escuro semi-transparente */
+    padding: 8px 15px;
+    border-radius: 20px;
+    color: white;
+    z-index: 100; /* Garante que fique acima da folha e dos botões */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+#relogio {
+    font-family: monospace;
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+
+.redoma-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
+.folha {
+    width: 500px;
+    height: 600px;
+    background: #fffef0;
+    border-radius: 15px;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    border-left: 15px solid #c0392b;
+    transition: transform 0.2s;
+    z-index: 5;
+}
+
+.nav-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: white;
+    font-size: 3rem;
+    cursor: pointer;
+    padding: 20px;
+    transition: 0.3s;
+    z-index: 10;
+}
+
+textarea {
+    flex-grow: 1;
+    background: transparent;
+    border: none;
+    resize: none;
+    font-size: 1.2rem;
+    line-height: 1.8;
+    outline: none;
+    background-image: linear-gradient(#e1e1e1 1px, transparent 1px);
+    background-size: 100% 1.8em;
+}
+
+/* --- AJUSTES PARA MOBILE E TABLET --- */
+@media (max-width: 1024px) {
+    .folha {
+        width: 100vw;
+        height: 100vh;
+        border-radius: 0;
+        border-left: none;
+        border-top: 10px solid #c0392b; /* No mobile, a borda fica no topo */
+        padding: 60px 20px 20px 20px;
+        padding-top: 80px;
+    }
+
+    .nav-btn {
+        position: absolute;
+        height: 100%;
+        background: transparent; /* Botões totalmente transparentes */
+        color: rgba(0, 0, 0, 0.1); /* Seta quase invisível para não atrapalhar */
+        display: flex;
+        align-items: center;
+    }
+
+    #prevBtn { left: 0; }
+    #nextBtn { right: 0; }
+
+     .topo-agenda {
+        top: 10px;
+        transform: scale(0.9); /* Um pouco menor no celular */
+        background: rgba(192, 57, 43, 0.9); /* Cor combinando com a borda da agenda */
+    }
+}
