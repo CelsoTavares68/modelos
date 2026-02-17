@@ -127,29 +127,61 @@ btnLimpar.addEventListener('click', function() {
 
   btnPDF.addEventListener('click', async function () {
     const { jsPDF } = window.jspdf;
+    // 'l' para paisagem (landscape) para caber todas as colunas
     const doc = new jsPDF('l', 'mm', 'a4');
 
-    // ... (Mantenha seu código de configuração do título e autoTable aqui)
-    
-    // 1. Gerar o PDF como um Blob (em vez de baixar direto)
-    const pdfOutput = doc.output('blob');
-    const arquivo = new File([pdfOutput], "quadro_de_designacoes.pdf", { type: "application/pdf" });
+    // 1. Configuração do Título
+    doc.setFontSize(22);
+    doc.setTextColor(44, 62, 80);
+    const textoTitulo = "Quadro de Designações";
+    const larguraPagina = doc.internal.pageSize.getWidth();
+    const x = (larguraPagina - doc.getTextWidth(textoTitulo)) / 2;
+    doc.text(textoTitulo, x, 20);
 
-    // 2. Verificar se o navegador suporta compartilhamento de arquivos
-    if (navigator.canShare && navigator.canShare({ files: [arquivo] })) {
-        try {
+    // 2. Linha decorativa
+    doc.setDrawColor(44, 62, 80);
+    doc.line(14, 25, larguraPagina - 14, 25);
+
+    // 3. Gerar a Tabela (Usando autoTable explicitamente)
+    // Importante: Usamos o ID da tabela e definimos as colunas para evitar a coluna "Editar"
+    doc.autoTable({
+        html: '#tabela-designacoes',
+        startY: 35,
+        theme: 'grid',
+        headStyles: { fillColor: [44, 62, 60], halign: 'center' },
+        styles: { halign: 'center', fontSize: 10 },
+        // Ignora a última coluna (Editar) no PDF
+        columns: [
+            { header: 'Data', dataKey: '0' },
+            { header: 'Entrada', dataKey: '1' },
+            { header: 'Auditório', dataKey: '2' },
+            { header: 'Volante', dataKey: '3' },
+            { header: 'Leitor', dataKey: '4' },
+            { header: 'Áudio/Vídeo', dataKey: '5' }
+        ]
+    });
+
+    // --- SOLUÇÃO PARA O PDF EM BRANCO ---
+    
+    // 4. Transformar em Blob após a renderização completa
+    const pdfBlob = doc.output('blob'); 
+    const arquivo = new File([pdfBlob], "Designacoes.pdf", { type: "application/pdf" });
+
+    // 5. Lógica de Compartilhamento
+    try {
+        if (navigator.canShare && navigator.canShare({ files: [arquivo] })) {
             await navigator.share({
                 files: [arquivo],
                 title: 'Quadro de Designações',
-                text: 'Segue o quadro de designações atualizado.'
+                text: 'Segue a escala de designações.'
             });
-        } catch (err) {
-            console.error("Erro ao compartilhar:", err);
-            doc.save('quadro_de_designacoes.pdf'); // Fallback: baixa o arquivo se o usuário cancelar
+        } else {
+            // Se não puder compartilhar (ex: PC), ele baixa o arquivo
+            doc.save('quadro_de_designacoes.pdf');
         }
-    } else {
-        // 3. Fallback para PC ou navegadores antigos
-        alert("Seu navegador não suporta compartilhamento direto. O PDF será baixado.");
+    } catch (error) {
+        console.error("Erro ao compartilhar:", error);
+        // Fallback: baixa o arquivo se o compartilhamento for cancelado ou falhar
         doc.save('quadro_de_designacoes.pdf');
     }
 });
