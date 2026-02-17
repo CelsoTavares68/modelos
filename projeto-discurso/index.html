@@ -1,6 +1,6 @@
-  <!DOCTYPE html>
+   <!DOCTYPE html>
 <html lang="pt-br">
- <head>
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Meu App de Discurso</title>
@@ -21,20 +21,17 @@
 
   <main class="container">
     <section id="tela-discurso" class="painel">
-       <div class="toolbar" onmousedown="event.preventDefault()">
-  <div class="grupo-estilo">
-    <button class="btn-tool" onclick="formatar('bold')" title="Negrito"><b>B</b></button>
-    <button class="btn-tool" onclick="formatar('italic')" title="Itálico"><i>I</i></button>
-  </div>
-  
-  <div class="grupo-tamanho">
-    <button onclick="formatar('fontSize', '3')" title="Normal">A</button>
-    <button onclick="formatar('fontSize', '5')" title="Médio"><span>A</span></button>
-    <button onclick="formatar('fontSize', '7')" title="Grande"><span style="font-size: 1.3em;">A</span></button>
-  </div>
-</div>
+      <div class="toolbar" onmousedown="event.preventDefault()">
+        <div class="grupo-estilo">
+          <button class="btn-tool" onclick="formatar('bold')" title="Negrito"><b>B</b></button>
+          <button class="btn-tool" onclick="formatar('italic')" title="Itálico"><i>I</i></button>
+        </div>
         
-        <input type="color" onchange="formatar('foreColor', this.value)">
+        <div class="grupo-tamanho">
+          <button onclick="formatar('fontSize', '3')" title="Normal">A</button>
+          <button onclick="formatar('fontSize', '5')" title="Médio"><span>A</span></button>
+          <button onclick="formatar('fontSize', '7')" title="Grande"><span style="font-size: 1.3em;">A</span></button>
+        </div>
       </div>
       <div id="editor-principal" class="editor" contenteditable="true"></div>
     </section>
