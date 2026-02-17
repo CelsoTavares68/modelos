@@ -125,63 +125,62 @@ btnLimpar.addEventListener('click', function() {
     }
 });
 
-  btnPDF.addEventListener('click', async function () {
-    const { jsPDF } = window.jspdf;
-    // 'l' para paisagem (landscape) para caber todas as colunas
-    const doc = new jsPDF('l', 'mm', 'a4');
-
-    // 1. Configuração do Título
-    doc.setFontSize(22);
-    doc.setTextColor(44, 62, 80);
-    const textoTitulo = "Quadro de Designações";
-    const larguraPagina = doc.internal.pageSize.getWidth();
-    const x = (larguraPagina - doc.getTextWidth(textoTitulo)) / 2;
-    doc.text(textoTitulo, x, 20);
-
-    // 2. Linha decorativa
-    doc.setDrawColor(44, 62, 80);
-    doc.line(14, 25, larguraPagina - 14, 25);
-
-    // 3. Gerar a Tabela (Usando autoTable explicitamente)
-    // Importante: Usamos o ID da tabela e definimos as colunas para evitar a coluna "Editar"
-    doc.autoTable({
-        html: '#tabela-designacoes',
-        startY: 35,
-        theme: 'grid',
-        headStyles: { fillColor: [44, 62, 60], halign: 'center' },
-        styles: { halign: 'center', fontSize: 10 },
-        // Ignora a última coluna (Editar) no PDF
-        columns: [
-            { header: 'Data', dataKey: '0' },
-            { header: 'Entrada', dataKey: '1' },
-            { header: 'Auditório', dataKey: '2' },
-            { header: 'Volante', dataKey: '3' },
-            { header: 'Leitor', dataKey: '4' },
-            { header: 'Áudio/Vídeo', dataKey: '5' }
-        ]
-    });
-
-    // --- SOLUÇÃO PARA O PDF EM BRANCO ---
+   btnPDF.addEventListener('click', async function () {
+    const overlay = document.getElementById('loading-overlay');
     
-    // 4. Transformar em Blob após a renderização completa
-    const pdfBlob = doc.output('blob'); 
-    const arquivo = new File([pdfBlob], "Designacoes.pdf", { type: "application/pdf" });
+    // 1. Mostrar aviso de carregamento
+    overlay.style.display = 'flex';
 
-    // 5. Lógica de Compartilhamento
     try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('l', 'mm', 'a4');
+
+        // Configuração do Título
+        doc.setFontSize(22);
+        doc.setTextColor(44, 62, 80);
+        const larguraPagina = doc.internal.pageSize.getWidth();
+        const textoTitulo = "Quadro de Designações";
+        const x = (larguraPagina - doc.getTextWidth(textoTitulo)) / 2;
+        doc.text(textoTitulo, x, 20);
+
+        // Tabela - Usando os dados do corpo da tabela para garantir que não venha branco
+        doc.autoTable({
+            html: '#tabela-designacoes',
+            startY: 35,
+            theme: 'grid',
+            headStyles: { fillColor: [44, 62, 80], halign: 'center' },
+            styles: { halign: 'center', fontSize: 10 },
+            columns: [
+                { header: 'Data', dataKey: '0' },
+                { header: 'Entrada', dataKey: '1' },
+                { header: 'Auditório', dataKey: '2' },
+                { header: 'Volante', dataKey: '3' },
+                { header: 'Leitor', dataKey: '4' },
+                { header: 'Áudio/Vídeo', dataKey: '5' }
+            ]
+        });
+
+        // Forçar a renderização e criar o arquivo
+        const pdfBlob = doc.output('blob');
+        const arquivo = new File([pdfBlob], "Designacoes.pdf", { type: "application/pdf" });
+
+        // 2. Tentar compartilhar
         if (navigator.canShare && navigator.canShare({ files: [arquivo] })) {
             await navigator.share({
                 files: [arquivo],
-                title: 'Quadro de Designações',
-                text: 'Segue a escala de designações.'
+                title: 'Escala de Designações',
+                text: 'Segue o quadro de designações atualizado.'
             });
         } else {
-            // Se não puder compartilhar (ex: PC), ele baixa o arquivo
+            // Caso seja computador ou navegador sem suporte
             doc.save('quadro_de_designacoes.pdf');
         }
+
     } catch (error) {
-        console.error("Erro ao compartilhar:", error);
-        // Fallback: baixa o arquivo se o compartilhamento for cancelado ou falhar
-        doc.save('quadro_de_designacoes.pdf');
+        console.error("Erro no processo:", error);
+        alert("Houve um erro ao processar o arquivo.");
+    } finally {
+        // 3. Esconder o aviso de carregamento (sempre executa, dando certo ou errado)
+        overlay.style.display = 'none';
     }
 });
