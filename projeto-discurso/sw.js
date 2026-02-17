@@ -1,4 +1,4 @@
- const CACHE_NAME = 'discurso-v2';
+ const CACHE_NAME = 'discurso-v3';
 
 const assets = [
   './',

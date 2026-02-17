@@ -21,14 +21,17 @@
 
   <main class="container">
     <section id="tela-discurso" class="painel">
-      <div class="toolbar" onmousedown="event.preventDefault()">
-        <button onclick="formatar('bold')"><b>B</b></button>
-        <button onclick="formatar('italic')"><i>I</i></button>
-        
-         <div class="grupo-tamanho">
+       <div class="toolbar" onmousedown="event.preventDefault()">
+  <div class="grupo-estilo">
+    <button class="btn-tool" onclick="formatar('bold')" title="Negrito"><b>B</b></button>
+    <button class="btn-tool" onclick="formatar('italic')" title="Itálico"><i>I</i></button>
+  </div>
+  
+  <div class="grupo-tamanho">
     <button onclick="formatar('fontSize', '3')" title="Normal">A</button>
-    <button onclick="formatar('fontSize', '5')" title="Médio"><span style="font-size: 1.2em;">A</span></button>
-    <button onclick="formatar('fontSize', '7')" title="Grande"><span style="font-size: 1.5em;">A</span></button>
+    <button onclick="formatar('fontSize', '5')" title="Médio"><span>A</span></button>
+    <button onclick="formatar('fontSize', '7')" title="Grande"><span style="font-size: 1.3em;">A</span></button>
+  </div>
 </div>
         
         <input type="color" onchange="formatar('foreColor', this.value)">

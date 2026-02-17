@@ -9,7 +9,7 @@ body {
     font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
     background: #fff; 
     height: 100vh; 
-    overflow: hidden; /* Trava a página para o app não "fugir" */
+    overflow: hidden; /* Trava a página para o app não "fugir" no mobile */
 }
 
 /* --- CABEÇALHO --- */
@@ -26,22 +26,7 @@ header {
 
 header, .toolbar {
     position: relative;
-    z-index: 10; /* Coloca os botões na frente de qualquer outra camada */
-}
-
-.toolbar select {
-    cursor: pointer;
-    background-color: white !important;
-    display: inline-block !important;
-    visibility: visible !important;
-    position: relative;
-    z-index: 11;
-}
-
-.toolbar {
-    position: relative;
-    z-index: 999;
-    pointer-events: auto !important;
+    z-index: 10; 
 }
 
 .botoes-esquerda { display: flex; gap: 8px; }
@@ -67,14 +52,14 @@ header button {
 .container { 
     display: flex; 
     width: 100%; 
-    height: calc(100vh - 60px); /* Ocupa o resto da tela */
+    height: calc(100vh - 60px); 
     overflow: hidden;
 }
 
 /* --- CONFIGURAÇÃO DOS PAINÉIS --- */
 .painel { 
     height: 100%; 
-    display: flex;          /* Torna o painel flexbox para o editor esticar */
+    display: flex;          
     flex-direction: column; 
     background: white; 
     transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
@@ -86,11 +71,11 @@ header button {
     z-index: 1;
 }
 
- #tela-versiculos { 
+#tela-versiculos { 
     width: 0%; 
     opacity: 0; 
     visibility: hidden; 
-    pointer-events: none; /* NOVO: Garante que ele não bloqueie cliques se estiver "escondido" */
+    pointer-events: none; 
     display: flex; 
     flex-direction: column;
     background: #f5f5f5; 
@@ -98,77 +83,108 @@ header button {
     transition: width 0.4s ease, opacity 0.3s ease;
 }
 
-/* ATIVO */
+/* ATIVO - QUANDO O PAINEL DE DETALHES ESTÁ ABERTO */
 .container.mostrando-vers #tela-discurso { width: 66.66%; }
 
- .container.mostrando-vers #tela-versiculos { 
+.container.mostrando-vers #tela-versiculos { 
     width: 33.33%; 
     opacity: 1; 
     visibility: visible;
     pointer-events: auto; 
 }
 
-/* --- BARRAS DE FERRAMENTAS --- */
+/* --- BARRAS DE FERRAMENTAS (NOVO ESTILO) --- */
 .toolbar, .header-vers { 
     display: flex; 
-    gap: 10px; 
-    padding: 10px; 
-    background: #f8f9fa; 
+    gap: 15px; 
+    padding: 12px 20px; 
+    background: #ffffff; 
     border-bottom: 1px solid #eee; 
     align-items: center;
-    flex-shrink: 0; /* Impede a barra de ferramentas de sumir */
+    flex-shrink: 0;
+    position: relative;
+    z-index: 999;
+    pointer-events: auto !important;
 }
 
-.header-vers { background: #eeeeee; padding: 15px; }
-.header-vers h2 { font-size: 18px; color: #007bff; }
+.grupo-estilo, .grupo-tamanho {
+    display: flex;
+    gap: 4px;
+    background: #f1f3f4;
+    padding: 4px;
+    border-radius: 10px;
+}
+
+/* Estilo para os botões da toolbar */
+.toolbar button {
+    border: none;
+    background: transparent;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.2s;
+    color: #444;
+}
+
+.toolbar button:hover {
+    background: #e1e3e5;
+    color: #007bff;
+}
+
+.toolbar button:active {
+    background: #d1d3d5;
+    transform: scale(0.95); /* Efeito de clique no tablet */
+}
+
+.header-vers { 
+    background: #f8f9fa; 
+    justify-content: space-between;
+}
+
+.header-vers h2 { 
+    font-size: 16px; 
+    color: #666; 
+    text-transform: uppercase; 
+    letter-spacing: 1px;
+}
+
+.header-vers button {
+    border: none;
+    background: #ffebee;
+    color: #d32f2f;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 12px;
+}
 
 /* --- EDITOR E ROLAGEM --- */
 .editor { 
-    flex: 1;               /* Faz o editor ocupar 100% da altura do painel */
+    flex: 1;               
     padding: 20px; 
     outline: none; 
     font-size: 19px; 
     line-height: 1.6; 
-    overflow-y: auto;      /* ATIVA A ROLAGEM AQUI */
+    overflow-y: auto;      
     -webkit-overflow-scrolling: touch; 
     word-wrap: break-word;
 }
 
 #editor-versiculos { background: #f5f5f5; }
 
-.grupo-tamanho {
-    display: flex;
-    gap: 4px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    padding: 2px;
-    background: #eee;
-}
-
-.grupo-tamanho button {
-    border: none !important;
-    background: white !important;
-    width: 35px !important;
-    height: 35px !important;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.grupo-tamanho button:hover {
-    background: #f0f0f0 !important;
-}
-
-/* --- RESPONSIVIDADE --- */
+/* --- RESPONSIVIDADE PARA CELULAR --- */
 @media (max-width: 600px) {
     .container.mostrando-vers { flex-direction: column; }
     .container.mostrando-vers #tela-discurso { width: 100%; height: 60%; }
     .container.mostrando-vers #tela-versiculos { width: 100%; height: 40%; border-left: none; border-top: 2px solid #ddd; }
 }
 
-/* --- IMPRESSÃO --- */
+/* --- ESTILO DE IMPRESSÃO (PDF) --- */
 @media print {
     header, .toolbar, .header-vers { display: none !important; }
     .painel { position: static !important; height: auto !important; width: 100% !important; }
