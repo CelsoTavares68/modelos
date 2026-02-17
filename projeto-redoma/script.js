@@ -109,3 +109,15 @@ if ("Notification" in window) {
         }
     });
 }
+
+// Atualiza para a data de hoje sempre que a janela ganhar foco ou o app for reaberto
+window.addEventListener('focus', () => {
+    const hoje = new Date().toLocaleDateString('pt-BR');
+    const exibida = dataAtual.toLocaleDateString('pt-BR');
+    
+    // Se a data na tela for diferente da data real de hoje, reseta a agenda
+    if (hoje !== exibida) {
+        dataAtual = new Date();
+        carregarPagina();
+    }
+});

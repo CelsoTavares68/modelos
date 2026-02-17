@@ -103,8 +103,13 @@ textarea {
         transform: translateY(-50%);
     }
 
-    #prevBtn { left: 10px; } /* Pequeno recuo da borda esquerda */
-    #nextBtn { right: 10px; } /* Pequeno recuo da borda direita */
+    #prevBtn { 
+        left: 10px; 
+    } /* Pequeno recuo da borda esquerda */
+
+    #nextBtn { 
+        right: 10px; 
+    } /* Pequeno recuo da borda direita */
 
      .topo-agenda {
         top: 10px;
