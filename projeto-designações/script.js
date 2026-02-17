@@ -125,49 +125,31 @@ btnLimpar.addEventListener('click', function() {
     }
 });
 
- btnPDF.addEventListener('click', function () {
+  btnPDF.addEventListener('click', async function () {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF('l', 'mm', 'a4');
 
-    // Configuração do Título no PDF
-    doc.setFontSize(22);
-    doc.setTextColor(44, 62, 80); // Cor azul escuro combinando com o cabeçalho
+    // ... (Mantenha seu código de configuração do título e autoTable aqui)
     
-    // Centralizando o título "Quadro de Designações"
-    const textoTitulo = "Quadro de Designações";
-    const larguraPagina = doc.internal.pageSize.getWidth();
-    const larguraTexto = doc.getTextWidth(textoTitulo);
-    const x = (larguraPagina - larguraTexto) / 2;
-    
-    doc.text(textoTitulo, x, 20);
+    // 1. Gerar o PDF como um Blob (em vez de baixar direto)
+    const pdfOutput = doc.output('blob');
+    const arquivo = new File([pdfOutput], "quadro_de_designacoes.pdf", { type: "application/pdf" });
 
-    // Linha decorativa abaixo do título
-    doc.setDrawColor(44, 62, 80);
-    doc.line(14, 25, larguraPagina - 14, 25);
-
-    doc.autoTable({
-        html: '#tabela-designacoes',
-        startY: 35, // Começa um pouco mais baixo por causa da linha decorativa
-        theme: 'grid',
-        headStyles: { 
-            fillColor: [44, 62, 80], 
-            halign: 'center',
-            fontSize: 11
-        },
-        styles: { 
-            halign: 'center', 
-            fontSize: 10,
-            cellPadding: 4
-        },
-        columns: [
-            { header: 'Data', dataKey: '0' },
-            { header: 'Indicador Entrada', dataKey: '1' },
-            { header: 'Indicador Auditório', dataKey: '2' },
-            { header: 'Volante-Palco', dataKey: '3' },
-            { header: 'Leitor', dataKey: '4' },
-            { header: 'Áudio e Vídeo', dataKey: '5' }
-        ]
-    });
-
-    doc.save('quadro_de_designacoes.pdf');
+    // 2. Verificar se o navegador suporta compartilhamento de arquivos
+    if (navigator.canShare && navigator.canShare({ files: [arquivo] })) {
+        try {
+            await navigator.share({
+                files: [arquivo],
+                title: 'Quadro de Designações',
+                text: 'Segue o quadro de designações atualizado.'
+            });
+        } catch (err) {
+            console.error("Erro ao compartilhar:", err);
+            doc.save('quadro_de_designacoes.pdf'); // Fallback: baixa o arquivo se o usuário cancelar
+        }
+    } else {
+        // 3. Fallback para PC ou navegadores antigos
+        alert("Seu navegador não suporta compartilhamento direto. O PDF será baixado.");
+        doc.save('quadro_de_designacoes.pdf');
+    }
 });
