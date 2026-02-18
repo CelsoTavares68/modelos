@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fluxo de Caixa</title>
     
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1a73e8">
+    
     <link rel="stylesheet" href="style.css">
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -55,18 +58,18 @@
 </div>
 
 <script>
+  // REGISTO DO SERVICE WORKER E GESTÃO DE ATUALIZAÇÕES
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('./sw.js')
         .then(reg => {
           console.log('Service Worker registado com sucesso!');
           
-          // Lógica para detetar atualizações
           reg.onupdatefound = () => {
             const worker = reg.installing;
             worker.onstatechange = () => {
               if (worker.state === 'installed' && navigator.serviceWorker.controller) {
-                // Aqui o utilizador recebe a mensagem de atualização
+                // Notificação de atualização enviada ao utilizador
                 alert("O Fluxo de Caixa tem uma nova versão! Por favor, recarregue a página.");
                 window.location.reload();
               }
