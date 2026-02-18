@@ -1,4 +1,4 @@
-  <!DOCTYPE html>
+   <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
@@ -19,7 +19,7 @@
 
     <main id="pag-home" class="pagina-conteudo">
         <header class="hero">
-            <img src="https://image.pollinations.ai/prompt/luxury%20hotel%20modern%20architecture%20golden%20hour" alt="Hotel Hero">
+            <img src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=1920" alt="Fachada de luxo do Hotel Excellence">
             <div class="hero-overlay">
                 <h1>Sua Estadia de Luxo</h1>
                 <button class="btn-premium btn-large" onclick="navegar('agendamento')">FAZER RESERVA</button>
@@ -29,10 +29,30 @@
         <section class="container">
             <h2 class="titulo-secao">Nossos Serviços</h2>
             <div class="vitrine-grid">
-                <div class="card"><div class="card-img-box"><img src="https://image.pollinations.ai/prompt/luxury%20hotel%20pool"></div><div class="card-info"><h3>Piscina</h3></div></div>
-                <div class="card"><div class="card-img-box"><img src="https://image.pollinations.ai/prompt/luxury%20hotel%20room"></div><div class="card-info"><h3>Suítes</h3></div></div>
-                <div class="card"><div class="card-img-box"><img src="https://image.pollinations.ai/prompt/luxury%20hotel%20kids"></div><div class="card-info"><h3>Restaurante</h3></div></div>
-                <div class="card"><div class="card-img-box"><img src="https://image.pollinations.ai/prompt/luxury%20hotel%20spa"></div><div class="card-info"><h3>Spa</h3></div></div>
+                <div class="card">
+                    <div class="card-img-box">
+                        <img src="https://images.unsplash.com/photo-1576013551627-0cc20b96c2a7?q=80&w=600" alt="Piscina do Hotel">
+                    </div>
+                    <div class="card-info"><h3>Piscina</h3></div>
+                </div>
+                <div class="card">
+                    <div class="card-img-box">
+                        <img src="https://images.unsplash.com/photo-1631049307264-da0ec9d70304?q=80&w=600" alt="Suítes de Luxo">
+                    </div>
+                    <div class="card-info"><h3>Suítes</h3></div>
+                </div>
+                <div class="card">
+                    <div class="card-img-box">
+                        <img src="https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=600" alt="Restaurante Gourmet">
+                    </div>
+                    <div class="card-info"><h3>Restaurante</h3></div>
+                </div>
+                <div class="card">
+                    <div class="card-img-box">
+                        <img src="https://images.unsplash.com/photo-1540555700478-4be289fbecef?q=80&w=600" alt="Spa e Bem-estar">
+                    </div>
+                    <div class="card-info"><h3>Spa</h3></div>
+                </div>
             </div>
             <div class="espacador"></div>
         </section>
@@ -45,17 +65,23 @@
                 <h2>Finalizar Reserva</h2>
                 
                 <div class="input-group">
-                    <label>Nome Completo</label>
+                    <label for="nome">Nome Completo</label>
                     <input type="text" id="nome" placeholder="Digite seu nome">
                 </div>
 
                 <div class="input-row">
-                    <div class="input-group"><label>Check-in</label><input type="date" id="checkin"></div>
-                    <div class="input-group"><label>Check-out</label><input type="date" id="checkout"></div>
+                    <div class="input-group">
+                        <label for="checkin">Check-in</label>
+                        <input type="date" id="checkin">
+                    </div>
+                    <div class="input-group">
+                        <label for="checkout">Check-out</label>
+                        <input type="date" id="checkout">
+                    </div>
                 </div>
 
                 <div class="input-group">
-                    <label>Forma de Pagamento</label>
+                    <label for="pagamento">Forma de Pagamento</label>
                     <select id="pagamento">
                         <option value="Cartão de Crédito">Cartão de Crédito</option>
                         <option value="Pix">Pix / Transferência</option>
@@ -76,13 +102,13 @@
             
             <div id="grid-predio" class="grid-predio"></div>
 
-             <div class="legenda-mapa">
-    <span><i class="box luxo"></i> Luxo (R$ 1200)</span>
-    <span><i class="box semi"></i> Semi (R$ 850)</span>
-    <span><i class="box premium"></i> Premium (R$ 600)</span>
-    <span><i class="box superior"></i> Superior (R$ 400)</span>
-    <span><i class="box standard"></i> Standard (R$ 250)</span>
-</div>
+            <div class="legenda-mapa">
+                <span><i class="box luxo"></i> Luxo (R$ 1200)</span>
+                <span><i class="box semi"></i> Semi (R$ 850)</span>
+                <span><i class="box premium"></i> Premium (R$ 600)</span>
+                <span><i class="box superior"></i> Superior (R$ 400)</span>
+                <span><i class="box standard"></i> Standard (R$ 250)</span>
+            </div>
             <button onclick="limparReservas()" class="btn-reset">Limpar Memória de Reservas</button>
             <div class="espacador"></div>
         </div>
