@@ -2,7 +2,7 @@
 const folha = document.getElementById('folha-agenda');
 const textarea = document.getElementById('anotacao');
 
-function obterChaveData(d) {
+ function obterChaveData(d) {
     const ano = d.getFullYear();
     const mes = ("0" + (d.getMonth() + 1)).slice(-2);
     const dia = ("0" + d.getDate()).slice(-2);
