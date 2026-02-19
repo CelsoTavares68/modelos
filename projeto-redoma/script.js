@@ -25,10 +25,10 @@ document.getElementById('nextBtn').onclick = () => { dataAtual.setDate(dataAtual
 textarea.oninput = () => { localStorage.setItem(obterChaveData(dataAtual), textarea.value); };
 
 // O SEGREDO PARA O MOBILE:
-   document.getElementById('busca-data').oninput = function(e) {
+    document.getElementById('busca-data').oninput = function(e) {
     if (this.value) {
         const p = this.value.split('-');
-        // Forçamos 12h para evitar que o fuso horário mude o dia no tablet
+        // Criamos a data ao meio-dia para evitar erros de fuso horário no Brasil
         dataAtual = new Date(parseInt(p[0]), parseInt(p[1]) - 1, parseInt(p[2]), 12, 0, 0);
         carregarPagina();
     }
