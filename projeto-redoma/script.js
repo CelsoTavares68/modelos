@@ -1,4 +1,4 @@
- let dataAtual = new Date();
+  let dataAtual = new Date();
 const textarea = document.getElementById('anotacao');
 const campoData = document.getElementById('busca-data');
 
@@ -15,52 +15,45 @@ function carregarPagina() {
         weekday: 'long', day: 'numeric', month: 'long' 
     });
     textarea.value = localStorage.getItem(chave) || "";
-    campoData.value = chave;
+    
+    // Evita loop infinito no mobile
+    if (campoData.value !== chave) {
+        campoData.value = chave;
+    }
 }
 
-// Navegação por botões
-document.getElementById('prevBtn').onclick = () => { 
-    dataAtual.setDate(dataAtual.getDate() - 1); 
-    carregarPagina(); 
-};
+// Navegação
+document.getElementById('prevBtn').onclick = () => { dataAtual.setDate(dataAtual.getDate() - 1); carregarPagina(); };
+document.getElementById('nextBtn').onclick = () => { dataAtual.setDate(dataAtual.getDate() + 1); carregarPagina(); };
 
-document.getElementById('nextBtn').onclick = () => { 
-    dataAtual.setDate(dataAtual.getDate() + 1); 
-    carregarPagina(); 
-};
+textarea.oninput = () => { localStorage.setItem(obterChaveData(dataAtual), textarea.value); };
 
-// Salvar ao digitar
-textarea.oninput = () => { 
-    localStorage.setItem(obterChaveData(dataAtual), textarea.value); 
-};
-
-// CORREÇÃO DEFINITIVA DO CALENDÁRIO PARA MOBILE
- campoData.oninput = function() {
+// RESOLUÇÃO PARA O CALENDÁRIO MOBILE
+campoData.onchange = function() {
     if (this.value) {
-        // Extração garantida: AAAA-MM-DD
-        const ano = parseInt(this.value.substring(0, 4));
-        const mes = parseInt(this.value.substring(5, 7)) - 1; // Mês começa em 0
-        const dia = parseInt(this.value.substring(8, 10));
-        
-        // FORÇAR MEIO-DIA: Isso impede que o fuso horário brasileiro (UTC-3) 
-        // altere o dia ou o mês ao selecionar no calendário
-        dataAtual = new Date(ano, mes, dia, 12, 0, 0);
-        
-        console.log("Data definida com sucesso:", dataAtual);
+        // Quebramos a string AAAA-MM-DD
+        const partes = this.value.split('-');
+        // Criamos a data explicitamente como LOCAL às 12:00:00
+        // Isso impede que o fuso horário (UTC-3) mude o dia ou mês selecionado
+        dataAtual = new Date(
+            parseInt(partes[0]), 
+            parseInt(partes[1]) - 1, 
+            parseInt(partes[2]), 
+            12, 0, 0
+        );
         carregarPagina();
     }
 };
 
-// Relógio em tempo real
+// Relógio
 setInterval(() => {
     const relogio = document.getElementById('relogio');
     if (relogio) relogio.innerText = new Date().toLocaleTimeString('pt-BR');
 }, 1000);
 
-// Inicialização
 carregarPagina();
 
-// Registro do Service Worker (Sincronizado com a versão v104 do index e sw)
+// Registro único do Service Worker (v106 para bater com seu sw.js e index)
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js?v=106');
+    navigator.serviceWorker.register('sw.js?v=107');
 }
