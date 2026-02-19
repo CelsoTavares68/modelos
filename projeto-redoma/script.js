@@ -42,5 +42,5 @@ setInterval(() => {
 carregarPagina();
 
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js?v=100');
+    navigator.serviceWorker.register('sw.js?v=103');
 }

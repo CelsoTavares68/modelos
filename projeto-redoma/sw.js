@@ -1,5 +1,5 @@
-   const cacheName = 'agenda-redoma-v102';
-const assets = ['./', './index.html', './style.css', './script.js?v=100', './manifest.json'];
+   const cacheName = 'agenda-redoma-v103';
+ const assets = ['./', './index.html', './style.css', './script.js?v=102', './manifest.json'];
 
 // Instala e força a atualização
 self.addEventListener('install', e => {
