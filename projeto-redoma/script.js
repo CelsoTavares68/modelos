@@ -19,33 +19,41 @@ function carregarPagina() {
 }
 
 // Navegação por botões
-document.getElementById('prevBtn').onclick = () => { dataAtual.setDate(dataAtual.getDate() - 1); carregarPagina(); };
-document.getElementById('nextBtn').onclick = () => { dataAtual.setDate(dataAtual.getDate() + 1); carregarPagina(); };
+document.getElementById('prevBtn').onclick = () => { 
+    dataAtual.setDate(dataAtual.getDate() - 1); 
+    carregarPagina(); 
+};
 
-textarea.oninput = () => { localStorage.setItem(obterChaveData(dataAtual), textarea.value); };
+document.getElementById('nextBtn').onclick = () => { 
+    dataAtual.setDate(dataAtual.getDate() + 1); 
+    carregarPagina(); 
+};
 
-// CORREÇÃO: Escuta o evento 'input' para o calendário mobile funcionar na hora
- campoData.oninput = function() {
+// Salvar ao digitar
+textarea.oninput = () => { 
+    localStorage.setItem(obterChaveData(dataAtual), textarea.value); 
+};
+
+// CORREÇÃO DEFINITIVA DO CALENDÁRIO PARA MOBILE
+campoData.oninput = function() {
     if (this.value) {
         const partes = this.value.split('-').map(Number);
-        // O uso de parseInt ou Number com 12h é essencial para tablets no Brasil
+        // Criamos a data às 12:00 para evitar que o fuso horário (UTC-3) mude o dia/mês
         dataAtual = new Date(partes[0], partes[1] - 1, partes[2], 12, 0, 0);
         carregarPagina();
     }
 };
 
-// No final do arquivo, confirme se está assim:
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js?v=103');
-}
-
+// Relógio em tempo real
 setInterval(() => {
     const relogio = document.getElementById('relogio');
     if (relogio) relogio.innerText = new Date().toLocaleTimeString('pt-BR');
 }, 1000);
 
+// Inicialização
 carregarPagina();
 
+// Registro do Service Worker (Sincronizado com a versão v104 do index e sw)
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js?v=104');
 }
