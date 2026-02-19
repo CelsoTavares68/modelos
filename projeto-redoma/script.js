@@ -1,4 +1,4 @@
- let dataAtual = new Date();
+  let dataAtual = new Date();
 const textarea = document.getElementById('anotacao');
 const campoData = document.getElementById('busca-data');
 
@@ -9,26 +9,21 @@ function obterChaveData(d) {
     return `${ano}-${mes}-${dia}`;
 }
 
-// A função agora recebe um parâmetro para saber se a mudança veio do calendário
-function carregarPagina(veioDoCalendario = false) {
+function carregarPagina(bloquearInput = false) {
     const chave = obterChaveData(dataAtual);
-    
-    // Atualiza o texto da folha
     document.getElementById('data-display').innerText = dataAtual.toLocaleDateString('pt-BR', { 
         weekday: 'long', day: 'numeric', month: 'long' 
     });
-    
-    // Carrega o texto
     textarea.value = localStorage.getItem(chave) || "";
-
-    // SEGREDO: Se você mudou a data pelo calendário, NÃO reescrevemos o valor dele aqui.
-    // Isso evita que o tablet "resete" a sua escolha por conflito de milissegundos.
-    if (!veioDoCalendario) {
+    
+    // Se estivermos mudando pelo calendário, NÃO tocamos no campo de data agora.
+    // Isso evita que o Android perca o foco e ignore a seleção.
+    if (!bloquearInput) {
         campoData.value = chave;
     }
 }
 
-// Botões de navegação
+// Navegação por botões
 document.getElementById('prevBtn').onclick = () => { 
     dataAtual.setDate(dataAtual.getDate() - 1); 
     carregarPagina(false); 
@@ -39,26 +34,24 @@ document.getElementById('nextBtn').onclick = () => {
     carregarPagina(false); 
 };
 
-// Salvar anotação
 textarea.oninput = () => { 
     localStorage.setItem(obterChaveData(dataAtual), textarea.value); 
 };
 
-// DEFINIÇÃO DE DATA PELO CALENDÁRIO (Lado do Relógio)
-campoData.oninput = function() {
+// A SOLUÇÃO DEFINITIVA: 
+// Usamos 'blur' para garantir que o Android só processe a data após fechar o seletor.
+campoData.addEventListener('change', function() {
     if (this.value) {
-        // Quebra a string AAAA-MM-DD
         const partes = this.value.split('-').map(Number);
-        
-        // Criamos a data forçando 12:00:00. 
-        // Se usar 00:00:00, o fuso horário de Brasília (UTC-3) faz o tablet 
-        // entender que é o dia anterior às 21h, travando a mudança de mês.
+        // Meio-dia (12h) mata o problema de fuso horário no Brasil (UTC-3)
         dataAtual = new Date(partes[0], partes[1] - 1, partes[2], 12, 0, 0);
         
-        // Chamamos a atualização avisando que veio do calendário para não haver conflito
-        carregarPagina(true);
+        // Pequeno delay para o navegador mobile "respirar"
+        setTimeout(() => {
+            carregarPagina(true); 
+        }, 50);
     }
-};
+});
 
 // Relógio
 setInterval(() => {
@@ -66,10 +59,9 @@ setInterval(() => {
     if (relogio) relogio.innerText = new Date().toLocaleTimeString('pt-BR');
 }, 1000);
 
-// Início
 carregarPagina(false);
 
-// Service Worker
+// Service Worker simples
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js');
 }
