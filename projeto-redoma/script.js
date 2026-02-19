@@ -46,8 +46,10 @@ textarea.oninput = () => {
 // Usamos 'oninput' e 'onchange' juntos para garantir que qualquer sistema (Android/iOS) detecte
 const inputData = document.getElementById('busca-data');
 
-const tratarMudancaData = (e) => {
+ const tratarMudancaData = (e) => {
+    alert("O código mudou para: " + e.target.value); // ADICIONE ESTA LINHA
     const novoValor = e.target.value;
+    // ... resto do código
     if (novoValor) {
         const partes = novoValor.split('-');
         // Criamos a data garantindo que seja meio-dia para evitar pulo de dia por fuso
