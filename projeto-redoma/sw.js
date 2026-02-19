@@ -1,21 +1,22 @@
- const cacheName = 'agenda-redoma-v14'; // Mudamos para v14
-const assets = ['./', './index.html', './style.css', './script.js?v=2', './manifest.json', './icon.png'];
+  const cacheName = 'agenda-redoma-v30'; // Mudamos para v15
+const assets = ['./', './index.html', './style.css', './script.js?v=3', './manifest.json', './icon.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(cacheName).then(cache => cache.addAll(assets))
   );
-  self.skipWaiting(); // Força o código novo a assumir o lugar do velho imediatamente
+  self.skipWaiting(); 
 });
 
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys => {
       return Promise.all(keys.map(key => {
-        if (key !== cacheName) return caches.delete(key); // Apaga as sobras da v13
+        if (key !== cacheName) return caches.delete(key);
       }));
     })
   );
+  return self.clients.claim(); // FORÇA o tablet a usar o código novo agora
 });
 
 self.addEventListener('fetch', e => {
