@@ -1,4 +1,4 @@
- let dataAtual = new Date();
+  let dataAtual = new Date();
 const textarea = document.getElementById('anotacao');
 const campoData = document.getElementById('busca-data');
 
@@ -9,21 +9,25 @@ function obterChaveData(d) {
     return `${ano}-${mes}-${dia}`;
 }
 
-function carregarPagina(origemCalendario = false) {
+function carregarPagina(veioDoCalendario = false) {
     const chave = obterChaveData(dataAtual);
+    
+    // Atualiza o texto da data no topo
     document.getElementById('data-display').innerText = dataAtual.toLocaleDateString('pt-BR', { 
         weekday: 'long', day: 'numeric', month: 'long' 
     });
+    
+    // Carrega a anotação
     textarea.value = localStorage.getItem(chave) || "";
     
-    // SÓ atualiza o valor do calendário se a mudança NÃO veio dele próprio
-    // Isso evita que o tablet "resete" a data enquanto você tenta mudar o mês
-    if (!origemCalendario) {
+    // TRAVA DE SEGURANÇA: Se o utilizador mudou a data pelo calendário, 
+    // NÃO deixamos o JS reescrever o valor do campo agora.
+    if (!veioDoCalendario) {
         campoData.value = chave;
     }
 }
 
-// Navegação por botões
+// Botões de navegação
 document.getElementById('prevBtn').onclick = () => { 
     dataAtual.setDate(dataAtual.getDate() - 1); 
     carregarPagina(false); 
@@ -38,25 +42,32 @@ textarea.oninput = () => {
     localStorage.setItem(obterChaveData(dataAtual), textarea.value); 
 };
 
-// MUDANÇA CRÍTICA: Usamos 'change' em vez de 'input' para o Tablet
-// O 'change' só dispara quando você clica em "OK" ou "Definir" no calendário
+// SOLUÇÃO PARA TABLET: Mudamos para 'change' e adicionamos um pequeno atraso
 campoData.onchange = function() {
     if (this.value) {
         const partes = this.value.split('-').map(Number);
-        // Criamos a data ao meio-dia para o fuso horário não quebrar o mês
-        dataAtual = new Date(partes[0], partes[1] - 1, partes[2], 12, 0, 0);
-        carregarPagina(true); // Indica que veio do calendário
+        
+        // Criamos a nova data às 12h00
+        const novaData = new Date(partes[0], partes[1] - 1, partes[2], 12, 0, 0);
+        
+        // Atualizamos a variável global
+        dataAtual = novaData;
+        
+        // Executamos a atualização avisando que o calendário é o "dono" da mudança
+        carregarPagina(true);
     }
 };
 
+// Relógio
 setInterval(() => {
     const relogio = document.getElementById('relogio');
     if (relogio) relogio.innerText = new Date().toLocaleTimeString('pt-BR');
 }, 1000);
 
+// Inicialização inicial
 carregarPagina(false);
 
-// REGISTRO DO SERVICE WORKER (v107 para forçar a limpeza total)
+// Registo do Service Worker (Mantenha sem a versão se o seu ficheiro for apenas 'sw.js')
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js?v=107');
+    navigator.serviceWorker.register('sw.js');
 }
