@@ -5,9 +5,30 @@ const textarea = document.getElementById('anotacao');
 // Variável para evitar que a notificação dispare várias vezes no mesmo segundo
 let notificacaoDisparadaHoje = false;
 
+ // 1. Ajuste na formatação para ignorar o fuso horário UTC do ISOString
 function formatarDataChave(data) {
-    return data.toISOString().split('T')[0];
+    const ano = data.getFullYear();
+    const mes = String(data.getMonth() + 1).padStart(2, '0');
+    const dia = String(data.getDate()).padStart(2, '0');
+    return `${ano}-${mes}-${dia}`;
 }
+
+// 2. Melhore a lógica de mudança de data no input
+document.getElementById('busca-data').addEventListener('change', (e) => {
+    if (e.target.value) {
+        // Criar a data usando partes separadas evita confusão de fuso horário
+        const partes = e.target.value.split('-');
+        dataAtual = new Date(partes[0], partes[1] - 1, partes[2]);
+        carregarPagina();
+    }
+});
+
+// 3. Proteja o reset automático para não ignorar sua navegação manual
+window.addEventListener('focus', () => {
+    const agora = new Date();
+    const hojeFormatado = formatarDataChave(agora);
+    const exibidaFormatada = formatarDataChave(dataAtual);
+});
 
 function carregarPagina() {
     const chave = formatarDataChave(dataAtual);
