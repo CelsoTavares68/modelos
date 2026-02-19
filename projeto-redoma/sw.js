@@ -1,4 +1,4 @@
-const cacheName = 'agenda-redoma-v20';
+const cacheName = 'agenda-redoma-v16';
 const assets = ['./', './index.html', './style.css', './script.js', './manifest.json', './icon.png'];
 
 // Instala o service worker e guarda os arquivos no cache
