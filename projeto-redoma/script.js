@@ -5,29 +5,38 @@ const textarea = document.getElementById('anotacao');
 // Variável para evitar que a notificação dispare várias vezes no mesmo segundo
 let notificacaoDisparadaHoje = false;
 
- // 1. Ajuste na formatação para ignorar o fuso horário UTC do ISOString
-function formatarDataChave(data) {
+  function formatarDataChave(data) {
     const ano = data.getFullYear();
     const mes = String(data.getMonth() + 1).padStart(2, '0');
     const dia = String(data.getDate()).padStart(2, '0');
     return `${ano}-${mes}-${dia}`;
 }
 
-// 2. Melhore a lógica de mudança de data no input
+// 2. Evento de mudança de data otimizado para Mobile
 document.getElementById('busca-data').addEventListener('change', (e) => {
     if (e.target.value) {
-        // Criar a data usando partes separadas evita confusão de fuso horário
         const partes = e.target.value.split('-');
+        // Criar a data desta forma garante que o mobile aceite o mês/ano corretamente
         dataAtual = new Date(partes[0], partes[1] - 1, partes[2]);
         carregarPagina();
     }
 });
 
-// 3. Proteja o reset automático para não ignorar sua navegação manual
+// 3. Ajuste Crítico no Evento de Foco
 window.addEventListener('focus', () => {
     const agora = new Date();
-    const hojeFormatado = formatarDataChave(agora);
-    const exibidaFormatada = formatarDataChave(dataAtual);
+    const hojeChave = formatarDataChave(agora);
+    
+    const chaveExibida = formatarDataChave(dataAtual);
+    
+    const ontem = new Date();
+    ontem.setDate(agora.getDate() - 1);
+    const ontemChave = formatarDataChave(ontem);
+
+    if (chaveExibida === ontemChave) {
+        dataAtual = agora;
+        carregarPagina();
+    }
 });
 
 function carregarPagina() {
