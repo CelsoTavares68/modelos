@@ -1,5 +1,6 @@
  let dataAtual = new Date();
 const textarea = document.getElementById('anotacao');
+const campoData = document.getElementById('busca-data');
 
 function obterChaveData(d) {
     const ano = d.getFullYear();
@@ -14,20 +15,21 @@ function carregarPagina() {
         weekday: 'long', day: 'numeric', month: 'long' 
     });
     textarea.value = localStorage.getItem(chave) || "";
-    document.getElementById('busca-data').value = chave;
+    campoData.value = chave;
 }
 
+// Navegação por botões
 document.getElementById('prevBtn').onclick = () => { dataAtual.setDate(dataAtual.getDate() - 1); carregarPagina(); };
 document.getElementById('nextBtn').onclick = () => { dataAtual.setDate(dataAtual.getDate() + 1); carregarPagina(); };
 
 textarea.oninput = () => { localStorage.setItem(obterChaveData(dataAtual), textarea.value); };
 
-// LÓGICA DE BUSCA: Forçamos o evento 'input' para mobile
-document.getElementById('busca-data').addEventListener('input', function(e) {
+// CORREÇÃO: Escuta o evento 'input' para o calendário mobile funcionar na hora
+campoData.addEventListener('input', function() {
     if (this.value) {
-        const p = this.value.split('-').map(Number);
-        // Criamos a data ao meio-dia para o fuso horário não "pular" o dia
-        dataAtual = new Date(p[0], p[1] - 1, p[2], 12, 0, 0);
+        const partes = this.value.split('-').map(Number);
+        // Forçamos 12h para evitar que o fuso horário mude o dia no Brasil
+        dataAtual = new Date(partes[0], partes[1] - 1, partes[2], 12, 0, 0);
         carregarPagina();
     }
 });
