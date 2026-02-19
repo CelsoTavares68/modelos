@@ -35,11 +35,18 @@ textarea.oninput = () => {
 };
 
 // CORREÇÃO DEFINITIVA DO CALENDÁRIO PARA MOBILE
-campoData.oninput = function() {
+ campoData.oninput = function() {
     if (this.value) {
-        const partes = this.value.split('-').map(Number);
-        // Criamos a data às 12:00 para evitar que o fuso horário (UTC-3) mude o dia/mês
-        dataAtual = new Date(partes[0], partes[1] - 1, partes[2], 12, 0, 0);
+        // Extração garantida: AAAA-MM-DD
+        const ano = parseInt(this.value.substring(0, 4));
+        const mes = parseInt(this.value.substring(5, 7)) - 1; // Mês começa em 0
+        const dia = parseInt(this.value.substring(8, 10));
+        
+        // FORÇAR MEIO-DIA: Isso impede que o fuso horário brasileiro (UTC-3) 
+        // altere o dia ou o mês ao selecionar no calendário
+        dataAtual = new Date(ano, mes, dia, 12, 0, 0);
+        
+        console.log("Data definida com sucesso:", dataAtual);
         carregarPagina();
     }
 };
@@ -55,5 +62,5 @@ carregarPagina();
 
 // Registro do Service Worker (Sincronizado com a versão v104 do index e sw)
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js?v=104');
+    navigator.serviceWorker.register('sw.js?v=106');
 }

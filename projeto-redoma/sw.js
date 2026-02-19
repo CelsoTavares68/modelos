@@ -1,4 +1,4 @@
-    const cacheName = 'agenda-redoma-v105';
+    const cacheName = 'agenda-redoma-v106';
 const assets = ['./', './index.html', './style.css', './script.js?v=105', './manifest.json'];
 
 self.addEventListener('install', e => {
