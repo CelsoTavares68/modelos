@@ -9,34 +9,33 @@ function obterChaveData(d) {
     return `${ano}-${mes}-${dia}`;
 }
 
-function carregarPagina(origemCalendario = false) {
+function carregarPagina(veioDoCalendario = false) {
     const chave = obterChaveData(dataAtual);
-    
     document.getElementById('data-display').innerText = dataAtual.toLocaleDateString('pt-BR', { 
         weekday: 'long', day: 'numeric', month: 'long' 
     });
-    
     textarea.value = localStorage.getItem(chave) || "";
-
-    if (!origemCalendario) {
+    
+    // Se você selecionou no calendário, não deixamos o script reescrever o valor agora
+    if (!veioDoCalendario) {
         campoData.value = chave;
     }
 }
 
-// Corrigido: Evento 'input' é mais rápido que 'change' para calendários mobile
-campoData.addEventListener('input', function() {
+// Evento Change (O mais seguro para Tablets)
+campoData.onchange = function() {
     if (this.value) {
         const partes = this.value.split('-').map(Number);
-        // Criamos a data e forçamos o meio-dia para evitar erros de fuso horário
+        // Meio-dia para evitar erro de fuso
         dataAtual = new Date(partes[0], partes[1] - 1, partes[2], 12, 0, 0);
         
-        // Pequeno atraso para o navegador mobile processar a escolha antes de atualizar a tela
-        setTimeout(() => {
-            carregarPagina(true);
-            this.blur(); 
-        }, 50);
+        // Forçamos o fechamento do seletor
+        this.blur();
+        
+        // Pequeno atraso para o tablet respirar
+        setTimeout(() => carregarPagina(true), 50);
     }
-});
+};
 
 document.getElementById('prevBtn').onclick = () => { dataAtual.setDate(dataAtual.getDate() - 1); carregarPagina(false); };
 document.getElementById('nextBtn').onclick = () => { dataAtual.setDate(dataAtual.getDate() + 1); carregarPagina(false); };

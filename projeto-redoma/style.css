@@ -80,25 +80,30 @@ textarea {
     .folha {
         width: 100vw;
         height: 100vh;
-        border-radius: 0;
-        border-left: none;
-        border-top: 10px solid #c0392b; 
-        padding: 100px 20px 20px 20px; /* Aumentado para não cobrir o topo */
+        padding-top: 140px; /* Aumentado para dar espaço ao topo */
+        border-top: 8px solid #c0392b;
     }
 
     .topo-agenda {
-        top: 15px;
-        transform: scale(1.1); /* Aumentado para facilitar o toque no tablet */
-        background: rgba(192, 57, 43, 1); /* Cor sólida para garantir visibilidade */
-        z-index: 999; /* Força ficar acima de TUDO */
+        top: 0;
+        left: 0;
+        width: 100%;
+        border-radius: 0;
+        justify-content: space-around;
+        padding: 15px 0;
+        background: #1a252f; /* Fundo sólido para não confundir com a folha */
+        box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    }
+
+    #relogio {
+        font-size: 1rem;
     }
 
     #busca-data {
-        min-height: 40px; /* Garante altura mínima para o dedo clicar */
-        cursor: pointer;
+        transform: scale(1.2); /* Facilita o toque */
     }
 
     .nav-btn {
-        z-index: 100; /* Garante que as setas não fiquem em cima do calendário */
+        z-index: 5; /* Garante que as setas não fiquem na frente do calendário */
     }
 }
