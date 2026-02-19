@@ -4,7 +4,7 @@ const textarea = document.getElementById('anotacao');
 
 let notificacaoDisparadaHoje = false;
 
-// Formatação que ignora fusos horários problemáticos no mobile
+// Função de formatação que evita qualquer erro de fuso horário
 function formatarDataChave(data) {
     const ano = data.getFullYear();
     const mes = String(data.getMonth() + 1).padStart(2, '0');
@@ -28,18 +28,27 @@ function mudarDia(delta) {
 
 // --- EVENTOS DE INTERAÇÃO ---
 
-document.getElementById('prevBtn').addEventListener('click', () => mudarDia(-1));
-document.getElementById('nextBtn').addEventListener('click', () => mudarDia(1));
+document.getElementById('prevBtn').addEventListener('click', (e) => {
+    e.preventDefault();
+    mudarDia(-1);
+});
+
+document.getElementById('nextBtn').addEventListener('click', (e) => {
+    e.preventDefault();
+    mudarDia(1);
+});
 
 textarea.addEventListener('input', () => {
     localStorage.setItem(formatarDataChave(dataAtual), textarea.value);
 });
 
-document.getElementById('busca-data').addEventListener('change', (e) => {
-    if (e.target.value) {
-        const partes = e.target.value.split('-');
-        // Criar a data por partes é o método mais seguro para Tablets/Celulares
-        dataAtual = new Date(partes[0], partes[1] - 1, partes[2]);
+// TROCA DE 'CHANGE' POR 'INPUT' - Mais garantido em Tablets e Celulares
+document.getElementById('busca-data').addEventListener('input', (e) => {
+    const valor = e.target.value;
+    if (valor) {
+        const partes = valor.split('-');
+        // Forçamos a criação da data local pura
+        dataAtual = new Date(parseInt(partes[0]), parseInt(partes[1]) - 1, parseInt(partes[2]));
         carregarPagina();
     }
 });
@@ -52,8 +61,7 @@ function dispararNotificacao(titulo, mensagem) {
             registration.showNotification(titulo, {
                 body: mensagem,
                 icon: 'icon.png',
-                vibrate: [200, 100, 200],
-                badge: 'icon.png'
+                vibrate: [200, 100, 200]
             });
         });
     }
@@ -65,13 +73,12 @@ function verificarAlertaMatinal() {
     const minutos = agora.getMinutes();
     const segundos = agora.getSeconds();
 
-    // Notificação às 07:00
     if (horas === 7 && minutos === 0 && segundos === 0) {
         if (!notificacaoDisparadaHoje) {
             const hojeChave = formatarDataChave(agora);
             const conteudo = localStorage.getItem(hojeChave);
             if (conteudo && conteudo.trim() !== "") {
-                dispararNotificacao("Agenda Redoma: Bom dia!", "Você tem anotações para hoje.");
+                dispararNotificacao("Agenda Redoma", "Você tem anotações para hoje.");
             }
             notificacaoDisparadaHoje = true;
         }
@@ -79,14 +86,6 @@ function verificarAlertaMatinal() {
 
     if (horas === 0 && minutos === 0 && segundos === 0) {
         notificacaoDisparadaHoje = false;
-        
-        // AUTO-UPDATE: Se você estiver na página de "Hoje" e passar da meia-noite, 
-        // a agenda vira a folha sozinha para o novo dia.
-        const hojeReal = formatarDataChave(new Date());
-        if (formatarDataChave(dataAtual) !== hojeReal) {
-             dataAtual = new Date();
-             carregarPagina();
-        }
     }
 }
 
