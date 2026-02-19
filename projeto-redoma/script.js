@@ -1,6 +1,7 @@
  let dataAtual = new Date();
 const textarea = document.getElementById('anotacao');
 const campoData = document.getElementById('busca-data');
+const displayData = document.getElementById('data-display');
 
 function obterChaveData(d) {
     const ano = d.getFullYear();
@@ -11,34 +12,39 @@ function obterChaveData(d) {
 
 function carregarPagina(veioDoCalendario = false) {
     const chave = obterChaveData(dataAtual);
-    document.getElementById('data-display').innerText = dataAtual.toLocaleDateString('pt-BR', { 
+    
+    // FORÇA A MUDANÇA NA REDOMA
+    const textoData = dataAtual.toLocaleDateString('pt-BR', { 
         weekday: 'long', day: 'numeric', month: 'long' 
     });
-    textarea.value = localStorage.getItem(chave) || "";
+    displayData.innerText = textoData.charAt(0).toUpperCase() + textoData.slice(1);
     
-    // Se você selecionou no calendário, não deixamos o script reescrever o valor agora
+    textarea.value = localStorage.getItem(chave) || "";
+
+    // SÓ atualiza o valor do input se NÃO veio do calendário
     if (!veioDoCalendario) {
         campoData.value = chave;
     }
 }
 
-// Evento Change (O mais seguro para Tablets)
-campoData.onchange = function() {
+// EVENTO PARA O TABLET
+campoData.addEventListener('change', function() {
     if (this.value) {
         const partes = this.value.split('-').map(Number);
-        // Meio-dia para evitar erro de fuso
+        // 12:00:00 evita que o fuso horário mude o dia no Brasil
         dataAtual = new Date(partes[0], partes[1] - 1, partes[2], 12, 0, 0);
         
-        // Forçamos o fechamento do seletor
-        this.blur();
+        this.blur(); // Fecha o teclado/calendário no Android
         
-        // Pequeno atraso para o tablet respirar
-        setTimeout(() => carregarPagina(true), 50);
+        setTimeout(() => {
+            carregarPagina(true);
+        }, 50);
     }
-};
+});
 
 document.getElementById('prevBtn').onclick = () => { dataAtual.setDate(dataAtual.getDate() - 1); carregarPagina(false); };
 document.getElementById('nextBtn').onclick = () => { dataAtual.setDate(dataAtual.getDate() + 1); carregarPagina(false); };
+
 textarea.oninput = () => { localStorage.setItem(obterChaveData(dataAtual), textarea.value); };
 
 setInterval(() => {

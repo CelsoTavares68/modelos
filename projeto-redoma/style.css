@@ -80,30 +80,27 @@ textarea {
     .folha {
         width: 100vw;
         height: 100vh;
-        padding-top: 140px; /* Aumentado para dar espaço ao topo */
-        border-top: 8px solid #c0392b;
+        border-radius: 0;
+        border-top: 10px solid #c0392b; 
+        /* Aumentamos o padding para a data aparecer abaixo do relógio */
+        padding: 140px 20px 20px 20px; 
     }
 
     .topo-agenda {
+        position: fixed; /* Fixa no topo */
         top: 0;
         left: 0;
         width: 100%;
         border-radius: 0;
-        justify-content: space-around;
+        background: #1a252f; /* Fundo sólido para não ver a data por baixo */
         padding: 15px 0;
-        background: #1a252f; /* Fundo sólido para não confundir com a folha */
-        box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        display: flex;
+        justify-content: space-around;
+        z-index: 1000;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.5);
     }
-
-    #relogio {
-        font-size: 1rem;
-    }
-
+    
     #busca-data {
-        transform: scale(1.2); /* Facilita o toque */
-    }
-
-    .nav-btn {
-        z-index: 5; /* Garante que as setas não fiquem na frente do calendário */
+        transform: scale(1.2); /* Maior para o tablet */
     }
 }
