@@ -76,44 +76,29 @@ textarea {
     background-size: 100% 1.8em;
 }
 
- @media (max-width: 1024px) {
+  @media (max-width: 1024px) {
     .folha {
         width: 100vw;
         height: 100vh;
         border-radius: 0;
         border-left: none;
         border-top: 10px solid #c0392b; 
-        padding: 60px 20px 20px 20px;
-        padding-top: 80px;
+        padding: 100px 20px 20px 20px; /* Aumentado para não cobrir o topo */
+    }
+
+    .topo-agenda {
+        top: 15px;
+        transform: scale(1.1); /* Aumentado para facilitar o toque no tablet */
+        background: rgba(192, 57, 43, 1); /* Cor sólida para garantir visibilidade */
+        z-index: 999; /* Força ficar acima de TUDO */
+    }
+
+    #busca-data {
+        min-height: 40px; /* Garante altura mínima para o dedo clicar */
+        cursor: pointer;
     }
 
     .nav-btn {
-        position: absolute;
-        /* Alterado: agora o botão não ocupa mais a altura toda */
-        height: auto; 
-        background: rgba(255, 255, 255, 0.39); /* Leve fundo para indicar o botão */
-        color: rgb(241, 156, 156); /* Cor visível para a seta */
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 60px; /* Largura definida para o toque */
-        height: 60px; /* Altura definida para o toque */
-        border-radius: 50%; /* Botão circular */
-        top: 50%; /* Centraliza verticalmente */
-        transform: translateY(-50%);
-    }
-
-    #prevBtn { 
-        left: 10px; 
-    } /* Pequeno recuo da borda esquerda */
-
-    #nextBtn { 
-        right: 10px; 
-    } /* Pequeno recuo da borda direita */
-
-     .topo-agenda {
-        top: 10px;
-        transform: scale(0.9);
-        background: rgba(192, 57, 43, 0.9);
+        z-index: 100; /* Garante que as setas não fiquem em cima do calendário */
     }
 }

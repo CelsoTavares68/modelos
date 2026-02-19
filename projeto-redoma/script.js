@@ -9,7 +9,6 @@ function obterChaveData(d) {
     return `${ano}-${mes}-${dia}`;
 }
 
-// Adicionamos um parâmetro para saber se a mudança veio do calendário
 function carregarPagina(origemCalendario = false) {
     const chave = obterChaveData(dataAtual);
     
@@ -19,45 +18,30 @@ function carregarPagina(origemCalendario = false) {
     
     textarea.value = localStorage.getItem(chave) || "";
 
-    // A MUDANÇA ESTÁ AQUI:
-    // Se a mudança veio do calendário, NÃO forçamos o valor para o campo.
-    // Isso permite que o Android termine de processar a escolha sem ser interrompido.
     if (!origemCalendario) {
         campoData.value = chave;
     }
 }
 
-// Botões de navegação
-document.getElementById('prevBtn').onclick = () => { 
-    dataAtual.setDate(dataAtual.getDate() - 1); 
-    carregarPagina(false); 
-};
-
-document.getElementById('nextBtn').onclick = () => { 
-    dataAtual.setDate(dataAtual.getDate() + 1); 
-    carregarPagina(false); 
-};
-
-textarea.oninput = () => { 
-    localStorage.setItem(obterChaveData(dataAtual), textarea.value); 
-};
-
-// Evento de mudança no Calendário
-campoData.addEventListener('change', function() {
+// Corrigido: Evento 'input' é mais rápido que 'change' para calendários mobile
+campoData.addEventListener('input', function() {
     if (this.value) {
         const partes = this.value.split('-').map(Number);
-        // Usamos 12:00 para evitar que fusos horários joguem a data para o dia anterior
+        // Criamos a data e forçamos o meio-dia para evitar erros de fuso horário
         dataAtual = new Date(partes[0], partes[1] - 1, partes[2], 12, 0, 0);
         
-        // Avisamos que a origem é o calendário (true)
-        carregarPagina(true);
-        
-        // Forçamos o campo a perder o foco para confirmar a seleção no mobile
-        this.blur();
+        // Pequeno atraso para o navegador mobile processar a escolha antes de atualizar a tela
+        setTimeout(() => {
+            carregarPagina(true);
+            this.blur(); 
+        }, 50);
     }
 });
 
-// Relógio
+document.getElementById('prevBtn').onclick = () => { dataAtual.setDate(dataAtual.getDate() - 1); carregarPagina(false); };
+document.getElementById('nextBtn').onclick = () => { dataAtual.setDate(dataAtual.getDate() + 1); carregarPagina(false); };
+textarea.oninput = () => { localStorage.setItem(obterChaveData(dataAtual), textarea.value); };
+
 setInterval(() => {
     const relogio = document.getElementById('relogio');
     if (relogio) relogio.innerText = new Date().toLocaleTimeString('pt-BR');
