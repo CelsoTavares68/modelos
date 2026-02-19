@@ -12,22 +12,20 @@ function obterChaveData(d) {
 function carregarPagina(veioDoCalendario = false) {
     const chave = obterChaveData(dataAtual);
     
-    // Atualiza o texto da data no topo
+    // Atualiza o texto visual
     document.getElementById('data-display').innerText = dataAtual.toLocaleDateString('pt-BR', { 
         weekday: 'long', day: 'numeric', month: 'long' 
     });
     
-    // Carrega a anotação
     textarea.value = localStorage.getItem(chave) || "";
-    
-    // TRAVA DE SEGURANÇA: Se o utilizador mudou a data pelo calendário, 
-    // NÃO deixamos o JS reescrever o valor do campo agora.
+
+    // SÓ mexemos no valor do calendário se a mudança veio dos botões ou inicialização
     if (!veioDoCalendario) {
         campoData.value = chave;
     }
 }
 
-// Botões de navegação
+// Navegação por botões (funciona bem em ambos)
 document.getElementById('prevBtn').onclick = () => { 
     dataAtual.setDate(dataAtual.getDate() - 1); 
     carregarPagina(false); 
@@ -42,32 +40,30 @@ textarea.oninput = () => {
     localStorage.setItem(obterChaveData(dataAtual), textarea.value); 
 };
 
-// SOLUÇÃO PARA TABLET: Mudamos para 'change' e adicionamos um pequeno atraso
+// A SOLUÇÃO FINAL PARA O TABLET:
 campoData.onchange = function() {
     if (this.value) {
-        const partes = this.value.split('-').map(Number);
+        const valorSelecionado = this.value;
         
-        // Criamos a nova data às 12h00
-        const novaData = new Date(partes[0], partes[1] - 1, partes[2], 12, 0, 0);
-        
-        // Atualizamos a variável global
-        dataAtual = novaData;
-        
-        // Executamos a atualização avisando que o calendário é o "dono" da mudança
-        carregarPagina(true);
+        // Damos 100 milissegundos para o tablet fechar a janela do calendário
+        // antes de forçarmos a mudança da página. Isso evita o travamento.
+        setTimeout(() => {
+            const partes = valorSelecionado.split('-').map(Number);
+            // Criamos a data ao meio-dia para o fuso horário não interferir
+            dataAtual = new Date(partes[0], partes[1] - 1, partes[2], 12, 0, 0);
+            carregarPagina(true);
+        }, 100);
     }
 };
 
-// Relógio
 setInterval(() => {
     const relogio = document.getElementById('relogio');
     if (relogio) relogio.innerText = new Date().toLocaleTimeString('pt-BR');
 }, 1000);
 
-// Inicialização inicial
 carregarPagina(false);
 
-// Registo do Service Worker (Mantenha sem a versão se o seu ficheiro for apenas 'sw.js')
+// Registo simplificado (sem versões aqui para evitar erros de cache)
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js');
 }
