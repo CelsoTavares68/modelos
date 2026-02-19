@@ -1,113 +1,93 @@
- let dataAtual = new Date();
+ // Força a data inicial sempre como o momento do carregamento
+let dataAtual = new Date();
 const folha = document.getElementById('folha-agenda');
 const textarea = document.getElementById('anotacao');
-
 let notificacaoDisparadaHoje = false;
 
-// Função de formatação que evita qualquer erro de fuso horário
-function formatarDataChave(data) {
-    const ano = data.getFullYear();
-    const mes = String(data.getMonth() + 1).padStart(2, '0');
-    const dia = String(data.getDate()).padStart(2, '0');
+// 1. FUNÇÃO DE DATA À PROVA DE ERROS (Não usa ISOString para evitar fuso horário)
+function obterChaveData(d) {
+    const ano = d.getFullYear();
+    const mes = ("0" + (d.getMonth() + 1)).slice(-2);
+    const dia = ("0" + d.getDate()).slice(-2);
     return `${ano}-${mes}-${dia}`;
 }
 
+// 2. CARREGAMENTO DA PÁGINA
 function carregarPagina() {
-    const chave = formatarDataChave(dataAtual);
+    const chave = obterChaveData(dataAtual);
+    
+    // Atualiza o texto da data no topo
     document.getElementById('data-display').innerText = dataAtual.toLocaleDateString('pt-BR', { 
         weekday: 'long', day: 'numeric', month: 'long' 
     });
+    
+    // Carrega o texto salvo
     textarea.value = localStorage.getItem(chave) || "";
+    
+    // Sincroniza o valor do calendário
     document.getElementById('busca-data').value = chave;
 }
 
+// 3. NAVEGAÇÃO PELAS SETAS
 function mudarDia(delta) {
     dataAtual.setDate(dataAtual.getDate() + delta);
     carregarPagina();
 }
 
-// --- EVENTOS DE INTERAÇÃO ---
+document.getElementById('prevBtn').onclick = () => mudarDia(-1);
+document.getElementById('nextBtn').onclick = () => mudarDia(1);
 
-document.getElementById('prevBtn').addEventListener('click', (e) => {
-    e.preventDefault();
-    mudarDia(-1);
-});
+// 4. SALVAMENTO AUTOMÁTICO
+textarea.oninput = () => {
+    localStorage.setItem(obterChaveData(dataAtual), textarea.value);
+};
 
-document.getElementById('nextBtn').addEventListener('click', (e) => {
-    e.preventDefault();
-    mudarDia(1);
-});
+// 5. SOLUÇÃO DEFINITIVA PARA O CALENDÁRIO NO MOBILE
+// Usamos 'oninput' e 'onchange' juntos para garantir que qualquer sistema (Android/iOS) detecte
+const inputData = document.getElementById('busca-data');
 
-textarea.addEventListener('input', () => {
-    localStorage.setItem(formatarDataChave(dataAtual), textarea.value);
-});
-
-// TROCA DE 'CHANGE' POR 'INPUT' - Mais garantido em Tablets e Celulares
-document.getElementById('busca-data').addEventListener('input', (e) => {
-    const valor = e.target.value;
-    if (valor) {
-        const partes = valor.split('-');
-        // Forçamos a criação da data local pura
-        dataAtual = new Date(parseInt(partes[0]), parseInt(partes[1]) - 1, parseInt(partes[2]));
+const tratarMudancaData = (e) => {
+    const novoValor = e.target.value;
+    if (novoValor) {
+        const partes = novoValor.split('-');
+        // Criamos a data garantindo que seja meio-dia para evitar pulo de dia por fuso
+        dataAtual = new Date(partes[0], partes[1] - 1, partes[2], 12, 0, 0);
         carregarPagina();
     }
-});
+};
 
-// --- SISTEMA DE HORÁRIO E NOTIFICAÇÕES ---
+inputData.oninput = tratarMudancaData;
+inputData.onchange = tratarMudancaData;
 
-function dispararNotificacao(titulo, mensagem) {
-    if (Notification.permission === "granted") {
-        navigator.serviceWorker.ready.then(registration => {
-            registration.showNotification(titulo, {
-                body: mensagem,
-                icon: 'icon.png',
-                vibrate: [200, 100, 200]
-            });
-        });
-    }
-}
-
-function verificarAlertaMatinal() {
+// 6. RELÓGIO E NOTIFICAÇÃO (Sem o evento de 'focus' que estava quebrando tudo)
+function verificarAlerta() {
     const agora = new Date();
-    const horas = agora.getHours();
-    const minutos = agora.getMinutes();
-    const segundos = agora.getSeconds();
-
-    if (horas === 7 && minutos === 0 && segundos === 0) {
+    if (agora.getHours() === 7 && agora.getMinutes() === 0 && agora.getSeconds() === 0) {
         if (!notificacaoDisparadaHoje) {
-            const hojeChave = formatarDataChave(agora);
-            const conteudo = localStorage.getItem(hojeChave);
-            if (conteudo && conteudo.trim() !== "") {
-                dispararNotificacao("Agenda Redoma", "Você tem anotações para hoje.");
+            const textoHoje = localStorage.getItem(obterChaveData(agora));
+            if (textoHoje && textoHoje.trim() !== "") {
+                if (Notification.permission === "granted") {
+                    navigator.serviceWorker.ready.then(reg => {
+                        reg.showNotification("Agenda Redoma", { body: "Você tem tarefas para hoje!" });
+                    });
+                }
             }
             notificacaoDisparadaHoje = true;
         }
     }
-
-    if (horas === 0 && minutos === 0 && segundos === 0) {
-        notificacaoDisparadaHoje = false;
-    }
+    if (agora.getHours() === 0) notificacaoDisparadaHoje = false;
 }
 
-function atualizarRelogio() {
+setInterval(() => {
     const agora = new Date();
-    const relogioElemento = document.getElementById('relogio');
-    if (relogioElemento) {
-        relogioElemento.innerText = agora.toLocaleTimeString('pt-BR');
-    }
-    verificarAlertaMatinal();
-}
+    const relogio = document.getElementById('relogio');
+    if (relogio) relogio.innerText = agora.toLocaleTimeString('pt-BR');
+    verificarAlerta();
+}, 1000);
 
-// --- INICIALIZAÇÃO ---
-
-atualizarRelogio();
-setInterval(atualizarRelogio, 1000);
+// Inicialização
 carregarPagina();
 
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js');
-}
-
-if ("Notification" in window) {
-    Notification.requestPermission();
-}
+// PWA e Notificações
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+if ("Notification" in window) Notification.requestPermission();
