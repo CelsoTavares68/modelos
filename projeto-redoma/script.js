@@ -13,36 +13,32 @@ function obterChaveData(d) {
 function carregarPagina(veioDoCalendario = false) {
     const chave = obterChaveData(dataAtual);
     
-    // ATUALIZAÇÃO FORÇADA DO TEXTO NA REDOMA
+    // ATUALIZAÇÃO DA REDOMA (A FOLHA)
     const opcoes = { weekday: 'long', day: 'numeric', month: 'long' };
     const textoFormatado = dataAtual.toLocaleDateString('pt-BR', opcoes);
     displayData.innerText = textoFormatado.charAt(0).toUpperCase() + textoFormatado.slice(1);
     
-    // Carrega a anotação
+    // Texto salvo
     textarea.value = localStorage.getItem(chave) || "";
 
-    // SÓ atualiza o valor do seletor se NÃO veio do calendário
+    // Só mexe no input se não estivermos usando ele agora
     if (!veioDoCalendario) {
         campoData.value = chave;
     }
 }
 
-// Escutador Robusto para Calendário no Tablet
-campoData.addEventListener('input', function() {
+// O segredo para o tablet: change + blur
+campoData.onchange = function() {
     if (this.value) {
         const partes = this.value.split('-').map(Number);
-        // Meio-dia para evitar erros de fuso horário no mobile
+        // Meio-dia para evitar erros de fuso horário brasileiro (GMT-3)
         dataAtual = new Date(partes[0], partes[1] - 1, partes[2], 12, 0, 0);
         
-        // Força a atualização da redoma imediatamente
-        carregarPagina(true);
-        
-        // Remove o foco para o Android confirmar a escolha e fechar o seletor
-        this.blur();
+        this.blur(); // Fecha o teclado/seletor do Android
+        carregarPagina(true); 
     }
-});
+};
 
-// Botões de navegação
 document.getElementById('prevBtn').onclick = () => { 
     dataAtual.setDate(dataAtual.getDate() - 1); 
     carregarPagina(false); 
@@ -62,5 +58,4 @@ setInterval(() => {
     if (relogio) relogio.innerText = new Date().toLocaleTimeString('pt-BR');
 }, 1000);
 
-// Inicialização
 carregarPagina(false);
