@@ -25,14 +25,19 @@ document.getElementById('nextBtn').onclick = () => { dataAtual.setDate(dataAtual
 textarea.oninput = () => { localStorage.setItem(obterChaveData(dataAtual), textarea.value); };
 
 // CORREÇÃO: Escuta o evento 'input' para o calendário mobile funcionar na hora
-campoData.addEventListener('input', function() {
+ campoData.oninput = function() {
     if (this.value) {
         const partes = this.value.split('-').map(Number);
-        // Forçamos 12h para evitar que o fuso horário mude o dia no Brasil
+        // O uso de parseInt ou Number com 12h é essencial para tablets no Brasil
         dataAtual = new Date(partes[0], partes[1] - 1, partes[2], 12, 0, 0);
         carregarPagina();
     }
-});
+};
+
+// No final do arquivo, confirme se está assim:
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js?v=103');
+}
 
 setInterval(() => {
     const relogio = document.getElementById('relogio');
@@ -42,5 +47,5 @@ setInterval(() => {
 carregarPagina();
 
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js?v=103');
+    navigator.serviceWorker.register('sw.js?v=104');
 }

@@ -1,5 +1,6 @@
-    const cacheName = 'agenda-redoma-v103'; // Versão 103
-const assets = ['./', './index.html', './style.css', './script.js?v=103', './manifest.json']; // Mudei para v103 aqui
+     const cacheName = 'agenda-redoma-v104';
+// MUDANÇA AQUI: de v102 para v103 para bater com o seu index.html
+const assets = ['./', './index.html', './style.css', './script.js?v=103', './manifest.json'];
 
 self.addEventListener('install', e => {
   self.skipWaiting(); 
@@ -14,7 +15,5 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  e.respondWith(
-    fetch(e.request).catch(() => caches.match(e.request))
-  );
+  e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
 });
