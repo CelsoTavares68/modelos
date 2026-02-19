@@ -1,4 +1,4 @@
-  let dataAtual = new Date();
+ let dataAtual = new Date();
 const textarea = document.getElementById('anotacao');
 const campoData = document.getElementById('busca-data');
 
@@ -9,23 +9,26 @@ function obterChaveData(d) {
     return `${ano}-${mes}-${dia}`;
 }
 
+// A função agora recebe um parâmetro para saber se a mudança veio do calendário
 function carregarPagina(veioDoCalendario = false) {
     const chave = obterChaveData(dataAtual);
     
-    // Atualiza o texto visual
+    // Atualiza o texto da folha
     document.getElementById('data-display').innerText = dataAtual.toLocaleDateString('pt-BR', { 
         weekday: 'long', day: 'numeric', month: 'long' 
     });
     
+    // Carrega o texto
     textarea.value = localStorage.getItem(chave) || "";
 
-    // SÓ mexemos no valor do calendário se a mudança veio dos botões ou inicialização
+    // SEGREDO: Se você mudou a data pelo calendário, NÃO reescrevemos o valor dele aqui.
+    // Isso evita que o tablet "resete" a sua escolha por conflito de milissegundos.
     if (!veioDoCalendario) {
         campoData.value = chave;
     }
 }
 
-// Navegação por botões (funciona bem em ambos)
+// Botões de navegação
 document.getElementById('prevBtn').onclick = () => { 
     dataAtual.setDate(dataAtual.getDate() - 1); 
     carregarPagina(false); 
@@ -36,34 +39,37 @@ document.getElementById('nextBtn').onclick = () => {
     carregarPagina(false); 
 };
 
+// Salvar anotação
 textarea.oninput = () => { 
     localStorage.setItem(obterChaveData(dataAtual), textarea.value); 
 };
 
-// A SOLUÇÃO FINAL PARA O TABLET:
-campoData.onchange = function() {
+// DEFINIÇÃO DE DATA PELO CALENDÁRIO (Lado do Relógio)
+campoData.oninput = function() {
     if (this.value) {
-        const valorSelecionado = this.value;
+        // Quebra a string AAAA-MM-DD
+        const partes = this.value.split('-').map(Number);
         
-        // Damos 100 milissegundos para o tablet fechar a janela do calendário
-        // antes de forçarmos a mudança da página. Isso evita o travamento.
-        setTimeout(() => {
-            const partes = valorSelecionado.split('-').map(Number);
-            // Criamos a data ao meio-dia para o fuso horário não interferir
-            dataAtual = new Date(partes[0], partes[1] - 1, partes[2], 12, 0, 0);
-            carregarPagina(true);
-        }, 100);
+        // Criamos a data forçando 12:00:00. 
+        // Se usar 00:00:00, o fuso horário de Brasília (UTC-3) faz o tablet 
+        // entender que é o dia anterior às 21h, travando a mudança de mês.
+        dataAtual = new Date(partes[0], partes[1] - 1, partes[2], 12, 0, 0);
+        
+        // Chamamos a atualização avisando que veio do calendário para não haver conflito
+        carregarPagina(true);
     }
 };
 
+// Relógio
 setInterval(() => {
     const relogio = document.getElementById('relogio');
     if (relogio) relogio.innerText = new Date().toLocaleTimeString('pt-BR');
 }, 1000);
 
+// Início
 carregarPagina(false);
 
-// Registo simplificado (sem versões aqui para evitar erros de cache)
+// Service Worker
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js');
 }
