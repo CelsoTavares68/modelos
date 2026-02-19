@@ -1,5 +1,6 @@
  let dataAtual = new Date();
 const textarea = document.getElementById('anotacao');
+const campoData = document.getElementById('busca-data');
 
 function obterChaveData(d) {
     const ano = d.getFullYear();
@@ -8,53 +9,58 @@ function obterChaveData(d) {
     return `${ano}-${mes}-${dia}`;
 }
 
-function carregarPagina() {
+// Adicionamos um parâmetro para saber se a mudança veio do calendário
+function carregarPagina(origemCalendario = false) {
     const chave = obterChaveData(dataAtual);
     
-    // Atualiza o texto visual
     document.getElementById('data-display').innerText = dataAtual.toLocaleDateString('pt-BR', { 
         weekday: 'long', day: 'numeric', month: 'long' 
     });
     
-    // Carrega o texto
     textarea.value = localStorage.getItem(chave) || "";
 
-    // ATUALIZA O CALENDÁRIO SEM CONFLITO
-    const campoData = document.getElementById('busca-data');
-    if (campoData) {
+    // A MUDANÇA ESTÁ AQUI:
+    // Se a mudança veio do calendário, NÃO forçamos o valor para o campo.
+    // Isso permite que o Android termine de processar a escolha sem ser interrompido.
+    if (!origemCalendario) {
         campoData.value = chave;
     }
 }
 
-// Navegação por botões
-document.getElementById('prevBtn').onclick = () => { dataAtual.setDate(dataAtual.getDate() - 1); carregarPagina(); };
-document.getElementById('nextBtn').onclick = () => { dataAtual.setDate(dataAtual.getDate() + 1); carregarPagina(); };
+// Botões de navegação
+document.getElementById('prevBtn').onclick = () => { 
+    dataAtual.setDate(dataAtual.getDate() - 1); 
+    carregarPagina(false); 
+};
 
-textarea.oninput = () => { localStorage.setItem(obterChaveData(dataAtual), textarea.value); };
+document.getElementById('nextBtn').onclick = () => { 
+    dataAtual.setDate(dataAtual.getDate() + 1); 
+    carregarPagina(false); 
+};
 
-// ESCUTADOR DE EVENTO DIRETO (MÉTODO ROBUSTO)
-document.addEventListener('change', function(e) {
-    if (e.target && e.target.id === 'busca-data') {
-        const valor = e.target.value;
-        if (valor) {
-            const partes = valor.split('-').map(Number);
-            // Meio-dia para evitar bug de fuso horário
-            dataAtual = new Date(partes[0], partes[1] - 1, partes[2], 12, 0, 0);
-            
-            // Forçamos o navegador a "soltar" o campo antes de carregar
-            e.target.blur();
-            
-            // Pequeno atraso para o Android fechar o seletor nativo
-            setTimeout(carregarPagina, 100);
-        }
+textarea.oninput = () => { 
+    localStorage.setItem(obterChaveData(dataAtual), textarea.value); 
+};
+
+// Evento de mudança no Calendário
+campoData.addEventListener('change', function() {
+    if (this.value) {
+        const partes = this.value.split('-').map(Number);
+        // Usamos 12:00 para evitar que fusos horários joguem a data para o dia anterior
+        dataAtual = new Date(partes[0], partes[1] - 1, partes[2], 12, 0, 0);
+        
+        // Avisamos que a origem é o calendário (true)
+        carregarPagina(true);
+        
+        // Forçamos o campo a perder o foco para confirmar a seleção no mobile
+        this.blur();
     }
 });
 
-// Relógio simples
+// Relógio
 setInterval(() => {
     const relogio = document.getElementById('relogio');
     if (relogio) relogio.innerText = new Date().toLocaleTimeString('pt-BR');
 }, 1000);
 
-// Inicia
-carregarPagina();
+carregarPagina(false);
