@@ -1,10 +1,10 @@
-  let dataAtual = new Date();
+ let dataAtual = new Date();
 const folha = document.getElementById('folha-agenda');
 const textarea = document.getElementById('anotacao');
 
 let notificacaoDisparadaHoje = false;
 
-// Formatação robusta para evitar problemas de fuso horário e ISOString
+// Formatação que ignora fusos horários problemáticos no mobile
 function formatarDataChave(data) {
     const ano = data.getFullYear();
     const mes = String(data.getMonth() + 1).padStart(2, '0');
@@ -38,7 +38,7 @@ textarea.addEventListener('input', () => {
 document.getElementById('busca-data').addEventListener('change', (e) => {
     if (e.target.value) {
         const partes = e.target.value.split('-');
-        // Criar a data desta forma garante compatibilidade total com tablets/celulares
+        // Criar a data por partes é o método mais seguro para Tablets/Celulares
         dataAtual = new Date(partes[0], partes[1] - 1, partes[2]);
         carregarPagina();
     }
@@ -65,13 +65,13 @@ function verificarAlertaMatinal() {
     const minutos = agora.getMinutes();
     const segundos = agora.getSeconds();
 
+    // Notificação às 07:00
     if (horas === 7 && minutos === 0 && segundos === 0) {
         if (!notificacaoDisparadaHoje) {
             const hojeChave = formatarDataChave(agora);
             const conteudo = localStorage.getItem(hojeChave);
-
             if (conteudo && conteudo.trim() !== "") {
-                dispararNotificacao("Agenda Redoma: Bom dia!", "Você tem anotações para hoje. Toque para conferir.");
+                dispararNotificacao("Agenda Redoma: Bom dia!", "Você tem anotações para hoje.");
             }
             notificacaoDisparadaHoje = true;
         }
@@ -79,6 +79,14 @@ function verificarAlertaMatinal() {
 
     if (horas === 0 && minutos === 0 && segundos === 0) {
         notificacaoDisparadaHoje = false;
+        
+        // AUTO-UPDATE: Se você estiver na página de "Hoje" e passar da meia-noite, 
+        // a agenda vira a folha sozinha para o novo dia.
+        const hojeReal = formatarDataChave(new Date());
+        if (formatarDataChave(dataAtual) !== hojeReal) {
+             dataAtual = new Date();
+             carregarPagina();
+        }
     }
 }
 
@@ -98,32 +106,9 @@ setInterval(atualizarRelogio, 1000);
 carregarPagina();
 
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js')
-    .then(() => console.log("App pronto!"));
+    navigator.serviceWorker.register('sw.js');
 }
 
 if ("Notification" in window) {
     Notification.requestPermission();
 }
-
-// --- AJUSTE PARA O TABLET ---
-// Removemos o reset forçado por "focus" que estava impedindo o calendário de mudar o mês.
-// Agora, o app só atualiza para o dia seguinte se você realmente estiver na página de hoje.
-window.addEventListener('focus', () => {
-    const agora = new Date();
-    const hojeChave = formatarDataChave(agora);
-    
-    // Pegamos a data que estava na tela antes de perder o foco
-    const ontem = new Date();
-    ontem.setDate(agora.getDate() - 1);
-    const ontemChave = formatarDataChave(ontem);
-
-    const exibidaChave = formatarDataChave(dataAtual);
-
-    // Só reseta se o dia virou (de ontem para hoje) enquanto o app estava aberto.
-    // Isso permite que você navegue para meses futuros sem ser puxado de volta.
-    if (exibidaChave === ontemChave) {
-        dataAtual = agora;
-        carregarPagina();
-    }
-});
