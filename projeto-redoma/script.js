@@ -13,43 +13,54 @@ function obterChaveData(d) {
 function carregarPagina(veioDoCalendario = false) {
     const chave = obterChaveData(dataAtual);
     
-    // FORÇA A MUDANÇA NA REDOMA
-    const textoData = dataAtual.toLocaleDateString('pt-BR', { 
-        weekday: 'long', day: 'numeric', month: 'long' 
-    });
-    displayData.innerText = textoData.charAt(0).toUpperCase() + textoData.slice(1);
+    // ATUALIZAÇÃO FORÇADA DO TEXTO NA REDOMA
+    const opcoes = { weekday: 'long', day: 'numeric', month: 'long' };
+    const textoFormatado = dataAtual.toLocaleDateString('pt-BR', opcoes);
+    displayData.innerText = textoFormatado.charAt(0).toUpperCase() + textoFormatado.slice(1);
     
+    // Carrega a anotação
     textarea.value = localStorage.getItem(chave) || "";
 
-    // SÓ atualiza o valor do input se NÃO veio do calendário
+    // SÓ atualiza o valor do seletor se NÃO veio do calendário
     if (!veioDoCalendario) {
         campoData.value = chave;
     }
 }
 
-// EVENTO PARA O TABLET
-campoData.addEventListener('change', function() {
+// Escutador Robusto para Calendário no Tablet
+campoData.addEventListener('input', function() {
     if (this.value) {
         const partes = this.value.split('-').map(Number);
-        // 12:00:00 evita que o fuso horário mude o dia no Brasil
+        // Meio-dia para evitar erros de fuso horário no mobile
         dataAtual = new Date(partes[0], partes[1] - 1, partes[2], 12, 0, 0);
         
-        this.blur(); // Fecha o teclado/calendário no Android
+        // Força a atualização da redoma imediatamente
+        carregarPagina(true);
         
-        setTimeout(() => {
-            carregarPagina(true);
-        }, 50);
+        // Remove o foco para o Android confirmar a escolha e fechar o seletor
+        this.blur();
     }
 });
 
-document.getElementById('prevBtn').onclick = () => { dataAtual.setDate(dataAtual.getDate() - 1); carregarPagina(false); };
-document.getElementById('nextBtn').onclick = () => { dataAtual.setDate(dataAtual.getDate() + 1); carregarPagina(false); };
+// Botões de navegação
+document.getElementById('prevBtn').onclick = () => { 
+    dataAtual.setDate(dataAtual.getDate() - 1); 
+    carregarPagina(false); 
+};
 
-textarea.oninput = () => { localStorage.setItem(obterChaveData(dataAtual), textarea.value); };
+document.getElementById('nextBtn').onclick = () => { 
+    dataAtual.setDate(dataAtual.getDate() + 1); 
+    carregarPagina(false); 
+};
+
+textarea.oninput = () => { 
+    localStorage.setItem(obterChaveData(dataAtual), textarea.value); 
+};
 
 setInterval(() => {
     const relogio = document.getElementById('relogio');
     if (relogio) relogio.innerText = new Date().toLocaleTimeString('pt-BR');
 }, 1000);
 
+// Inicialização
 carregarPagina(false);

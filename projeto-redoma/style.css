@@ -82,25 +82,33 @@ textarea {
         height: 100vh;
         border-radius: 0;
         border-top: 10px solid #c0392b; 
-        /* Aumentamos o padding para a data aparecer abaixo do relógio */
-        padding: 140px 20px 20px 20px; 
+        /* Espaço garantido para a data aparecer abaixo da barra de topo */
+        padding: 160px 20px 20px 20px; 
+        box-sizing: border-box;
     }
 
     .topo-agenda {
-        position: fixed; /* Fixa no topo */
+        position: fixed; 
         top: 0;
         left: 0;
         width: 100%;
+        height: 120px; /* Altura fixa para controle total */
         border-radius: 0;
-        background: #1a252f; /* Fundo sólido para não ver a data por baixo */
-        padding: 15px 0;
+        background: #1a252f; 
         display: flex;
-        justify-content: space-around;
+        flex-direction: column; /* Organiza relógio em cima e calendário embaixo */
+        justify-content: center;
+        gap: 10px;
         z-index: 1000;
         box-shadow: 0 4px 10px rgba(0,0,0,0.5);
     }
     
+    #relogio {
+        font-size: 1.4rem;
+    }
+
     #busca-data {
-        transform: scale(1.2); /* Maior para o tablet */
+        transform: scale(1.3); /* Aumenta a área de toque no tablet */
+        margin-bottom: 5px;
     }
 }
