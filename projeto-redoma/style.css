@@ -76,14 +76,18 @@ textarea {
     background-size: 100% 1.8em;
 }
 
-  @media (max-width: 1024px) {
+   @media (max-width: 1024px) {
     .folha {
         width: 100vw;
         height: 100vh;
         border-radius: 0;
-        border-top: 10px solid #c0392b; 
-        padding: 180px 20px 20px 20px; /* Espaço extra para a data aparecer */
+        /* Restaurando a borda lateral esquerda igual ao PC */
+        border-left: 15px solid #c0392b; 
+        border-top: none; 
+        /* Ajuste de padding: top para o relógio, left para a borda marrom */
+        padding: 100px 20px 20px 35px; 
         box-sizing: border-box;
+        position: relative;
     }
 
     .topo-agenda {
@@ -91,17 +95,36 @@ textarea {
         top: 0;
         left: 0;
         width: 100%;
-        height: 130px; 
-        background: #1a252f; 
+        height: 70px; 
+        background: rgba(0, 0, 0, 0.85); 
         display: flex;
-        flex-direction: column; 
-        justify-content: center;
-        gap: 10px;
+        flex-direction: row; 
+        justify-content: space-around;
+        align-items: center;
         z-index: 1000;
+        border-radius: 0;
     }
     
-    #busca-data {
-        transform: scale(1.3);
-        margin-bottom: 5px;
+    #relogio {
+        font-size: 1rem;
     }
+
+    #busca-data {
+        transform: scale(1.1);
+        height: 30px;
+    }
+
+    /* Setas de navegação ajustadas para a nova margem */
+    .nav-btn {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 10;
+        background: transparent;
+        font-size: 2.5rem;
+        padding: 10px;
+    }
+
+    #prevBtn { left: 20px; } /* Ajustado para não ficar em cima da borda marrom */
+    #nextBtn { right: 10px; }
 }
