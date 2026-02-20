@@ -1,4 +1,4 @@
-const CACHE_NAME = 'chess-v7';
+ const CACHE_NAME = 'chess-v' + Date.now(); // Nome único força atualização no navegador
 const ASSETS = [
   '/',
   '/index.html',
@@ -9,9 +9,26 @@ const ASSETS = [
 ];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)));
+  self.skipWaiting(); // Força o novo SW a assumir o controle imediatamente
+  e.waitUntil(
+    caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
+  );
 });
 
+self.addEventListener('activate', (e) => {
+  // Limpa caches antigos automaticamente
+  e.waitUntil(
+    caches.keys().then(keys => Promise.all(
+      keys.map(key => {
+        if (key !== CACHE_NAME) return caches.delete(key);
+      })
+    ))
+  );
+});
+
+// Estratégia: Tenta rede primeiro. Se falhar (offline), usa o cache.
 self.addEventListener('fetch', (e) => {
-  e.respondWith(caches.match(e.request).then(res => res || fetch(e.request)));
+  e.respondWith(
+    fetch(e.request).catch(() => caches.match(e.request))
+  );
 });

@@ -90,6 +90,40 @@ select:hover {
     color: #332211;
 }
 
+.btn-ui {
+    padding: 10px 18px;
+    border-radius: 8px;
+    border: 1px solid #886644;
+    background: #332211;
+    color: #f0d9b5;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+
+/* Variante específica para o botão Atualizar */
+.update-variant {
+    background: #2a445c; /* Azul metálico para diferenciar do reset */
+    border-color: #4a6a8a;
+}
+
+/* Efeito Hover (PC) */
+.btn-ui:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    filter: brightness(1.2);
+}
+
+/* Efeito Active (Mobile/Toque) */
+.btn-ui:active {
+    transform: translateY(1px);
+    filter: brightness(0.9);
+}
+
 /* --- 5. ADAPTAÇÃO PARA TABLETS (Ecrãs Médios) --- */
 @media only screen and (min-width: 768px) and (max-width: 1024px) {
     #status-panel {
@@ -115,6 +149,13 @@ select:hover {
         font-size: 18px;
         bottom: 40px;
     }
+
+    .btn-ui {
+        padding: 8px 12px;
+        font-size: 12px;
+        flex-grow: 1; /* Faz os botões dividirem o espaço no telemóvel */
+        margin: 2px;
+    }
 }
 
 /* --- 6. ADAPTAÇÃO PARA TELEMÓVEIS (Ecrãs Pequenos) --- */
@@ -138,6 +179,13 @@ select:hover {
     #reset-button {
         width: 100%;
         margin-top: 5px;
+    }
+
+    .btn-ui {
+        padding: 8px 12px;
+        font-size: 12px;
+        flex-grow: 1; /* Faz os botões dividirem o espaço no telemóvel */
+        margin: 2px;
     }
 }
 
