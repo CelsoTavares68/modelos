@@ -1,44 +1,56 @@
- /* Configurações Gerais da Tela */
+ /* Configurações Gerais */
 body { 
     margin: 0; 
     padding: 0; 
     overflow: hidden; 
     background-color: #223344; 
-    font-family: sans-serif;
-    touch-action: none; /* Importante para mobile: evita zoom acidental */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    touch-action: none; /* Impede zoom e arrastos acidentais do navegador */
+    width: 100vw;
+    height: 100vh;
 }
 
 canvas { 
     display: block; 
+    width: 100% !important;
+    height: 100% !important;
 }
 
-/* Camada de Interface (UI) */
+/* Camada de Interface */
 #ui-overlay {
     position: absolute;
-    top: 10px;
+    top: 0;
+    left: 0;
     width: 100%;
+    pointer-events: none;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
-    pointer-events: none; /* Permite clicar no jogo através da div */
-    z-index: 100;
+    padding-top: 10px;
+    z-index: 10;
 }
 
-/* Painel de Status e Controles */
+/* Painel de Status Compacto */
 #status-panel {
-    background: rgba(0, 0, 0, 0.8);
-    padding: 12px 20px;
-    border-radius: 12px;
-    border: 1px solid #556677;
-    pointer-events: auto; /* Reativa o clique para os selects */
+    background: rgba(0, 0, 0, 0.85);
+    padding: 8px 12px;
+    border-radius: 8px;
+    pointer-events: auto;
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
     color: white;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    width: auto;
+    max-width: 90%;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+}
+
+#turn-indicator {
+    font-weight: bold;
+    font-size: 14px;
+    white-space: nowrap;
 }
 
 /* Estilo dos Seletores */
@@ -46,43 +58,29 @@ select {
     background: #334455;
     color: white;
     border: 1px solid #667788;
-    padding: 6px; 
-    border-radius: 6px; 
-    cursor: pointer;
-    outline: none;
-}
-
-select:font-size {
-    font-size: 14px;
+    padding: 4px; 
+    border-radius: 4px; 
+    font-size: 12px;
 }
 
 /* Log de Mensagens */
 #message-log { 
+    margin-top: 8px;
     color: #ffd700; 
     background: rgba(0, 0, 0, 0.6); 
-    padding: 6px 15px; 
-    border-radius: 20px; 
-    font-size: 14px;
-    font-weight: bold;
-    text-shadow: 1px 1px 2px black;
+    padding: 4px 12px; 
+    border-radius: 15px; 
+    font-size: 12px;
 }
 
-/* Ajustes para Telas Pequenas (Mobile) */
+/* Media Query para Telemóveis (Ecrãs Verticais) */
 @media (max-width: 600px) {
     #status-panel {
-        width: 90%;
-        padding: 10px;
-        font-size: 12px;
+        padding: 6px;
+        gap: 5px;
     }
-    
-    #turn-indicator {
-        width: 100%;
-        text-align: center;
-        margin-bottom: 5px;
-    }
-
     select {
-        flex: 1; /* Faz os selects ocuparem o espaço disponível */
-        min-width: 120px;
+        padding: 2px;
+        font-size: 11px;
     }
 }

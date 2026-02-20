@@ -293,3 +293,54 @@ function animate() {
 createBoard();
 setupPieces();
 animate();
+
+// --- AJUSTE DINÂMICO DA CÂMARA ---
+function onWindowResize() {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    renderer.setSize(width, height);
+    camera.aspect = width / height;
+
+    // Se a altura for maior que a largura (Telemóvel em pé)
+    if (height > width) {
+        // Aumentamos o campo de visão (FOV) ou afastamos a câmara no eixo Y e Z
+        camera.position.set(0, 18, 12); // Mais alto e um pouco mais atrás
+    } else {
+        // Tablet ou PC (Horizontal)
+        camera.position.set(0, 12, 10);
+    }
+    
+    camera.lookAt(0, 0, 0);
+    camera.updateProjectionMatrix();
+}
+
+// Escutar redimensionamento e rotação
+window.addEventListener('resize', onWindowResize);
+
+// Executar uma vez no início
+onWindowResize();
+
+// --- SUPORTE A TOQUE (TOUCH) ---
+// Substitua o seu evento de mousedown por handleInteraction para aceitar ambos
+function handleInteraction(clientX, clientY) {
+    if (isAiThinking) return;
+    
+    const gameMode = document.getElementById('game-mode').value;
+    if (gameMode === 'pve' && turn === 'black') return;
+
+    mouse.x = (clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(clientY / window.innerHeight) * 2 + 1;
+    
+    raycaster.setFromCamera(mouse, camera);
+    // ... resto da sua lógica de clique (pieceHits, tileHits, etc)
+}
+
+// Evento para PC
+window.addEventListener('mousedown', (e) => handleInteraction(e.clientX, e.clientY));
+
+// Evento para Telemóvel
+window.addEventListener('touchstart', (e) => {
+    const touch = e.touches[0];
+    handleInteraction(touch.clientX, touch.clientY);
+}, { passive: false });
