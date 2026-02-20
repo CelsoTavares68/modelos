@@ -1,93 +1,143 @@
- /* Configurações Gerais */
+  /* --- 1. CONFIGURAÇÕES GERAIS --- */
 body { 
     margin: 0; 
-    padding: 0; 
     overflow: hidden; 
-    background-color: #223344; 
+    background-color: #111; 
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    touch-action: none; /* Impede zoom e arrastos acidentais do navegador */
-    width: 100vw;
-    height: 100vh;
+    user-select: none; /* Impede selecionar texto ao clicar no tabuleiro */
+    touch-action: none; /* Melhora a resposta ao toque em dispositivos móveis */
 }
 
- canvas {
-    display: block;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%); /* Centralização matemática perfeita */
-}
-
-/* Ajuste o overlay para não ocupar espaço físico */
-#ui-overlay {
-    position: fixed; /* Troque de absolute para fixed */
-    top: 20px;
-    left: 0;
-    width: 100%;
-    pointer-events: none;
-    z-index: 10;
-}
-
-/* Painel de Status Compacto */
+/* --- 2. PAINEL DE STATUS (BARRA SUPERIOR) --- */
 #status-panel {
-    background: rgba(0, 0, 0, 0.85);
-    padding: 8px 12px;
-    border-radius: 8px;
-    pointer-events: auto;
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 600px;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(5px); /* Efeito moderno de vidro fosco */
+    padding: 10px 15px;
+    border-radius: 12px;
+    border: 1px solid #886644; /* Borda cor de madeira/bronze */
     display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
+    flex-wrap: wrap; /* Permite quebrar linha em ecrãs pequenos */
+    justify-content: space-around;
     align-items: center;
-    gap: 8px;
     color: white;
-    width: auto;
-    max-width: 90%;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    z-index: 100;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
 }
 
 #turn-indicator {
     font-weight: bold;
+    color: #f0d9b5; /* Cor clássica de peças de xadrez */
+    text-shadow: 1px 1px 2px black;
+    margin: 5px;
     font-size: 14px;
-    white-space: nowrap;
 }
 
-/* Estilo dos Seletores */
-select { 
-    background: #334455;
-    color: white;
-    border: 1px solid #667788;
-    padding: 4px; 
-    border-radius: 4px; 
-    font-size: 12px;
+/* --- 3. SELECTS (MODO E DIFICULDADE) --- */
+select {
+    background: #332211;
+    color: #f0d9b5;
+    border: 1px solid #886644;
+    padding: 5px 8px;
+    border-radius: 5px;
+    outline: none;
+    cursor: pointer;
+    font-size: 13px;
+    margin: 2px;
 }
 
-/* Log de Mensagens */
-#message-log { 
-    margin-top: 8px;
-    color: #ffd700; 
-    background: rgba(0, 0, 0, 0.6); 
-    padding: 4px 12px; 
-    border-radius: 15px; 
-    font-size: 12px;
+select:hover {
+    background: #443322;
 }
 
-/* Media Query para Telemóveis (Ecrãs Verticais) */
- @media (max-width: 600px) {
+/* --- 4. LOG DE MENSAGENS (INFERIOR) --- */
+#message-log {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-size: 14px;
+    pointer-events: none; /* Não interfere nos cliques do jogo */
+    transition: opacity 0.3s;
+    text-align: center;
+    min-width: 150px;
+}
+
+/* --- 5. ADAPTAÇÃO PARA TABLETS (Ecrãs Médios) --- */
+@media only screen and (min-width: 768px) and (max-width: 1024px) {
     #status-panel {
-        flex-direction: row; /* Mantém em linha se couber */
-        justify-content: space-evenly;
-        width: 95%;
-        padding: 5px;
+        width: 70%;
+        padding: 15px;
+        top: 20px;
+        border-width: 2px;
     }
-    
+
     #turn-indicator {
-        font-size: 11px;
-        width: 100%; /* Força o texto a ficar numa linha própria no topo se necessário */
+        font-size: 18px;
+        width: 100%;
+        text-align: center;
+        margin-bottom: 10px;
+    }
+
+    select {
+        font-size: 15px;
+        padding: 8px 12px;
+    }
+
+    #message-log {
+        font-size: 18px;
+        bottom: 40px;
+    }
+}
+
+/* --- 6. ADAPTAÇÃO PARA TELEMÓVEIS (Ecrãs Pequenos) --- */
+@media (max-width: 600px) {
+    #status-panel {
+        width: 95%;
+        padding: 8px;
+        gap: 5px;
+    }
+
+    #turn-indicator {
+        font-size: 12px;
+        width: 100%;
         text-align: center;
     }
 
     select {
-        font-size: 10px;
-        padding: 2px;
+        font-size: 11px;
+        flex: 1; /* Faz os selects dividirem o espaço */
+        text-align: center;
     }
+
+    #message-log {
+        width: 80%;
+        font-size: 12px;
+    }
+}
+
+/* --- 7. BOTÃO DE INSTALAR (PWA) --- */
+#install-button {
+    display: none; /* Fica oculto até o navegador disparar o evento de instalação */
+    position: absolute;
+    bottom: 80px;
+    right: 20px;
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 50px;
+    cursor: pointer;
+    font-weight: bold;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    z-index: 200;
 }

@@ -251,12 +251,25 @@ window.addEventListener('touchstart', (e) => {
     if(e.touches.length > 0) handleInteraction(e.touches[0].clientX, e.touches[0].clientY);
 });
 
-function onWindowResize() {
+ function onWindowResize() {
     const w = window.innerWidth, h = window.innerHeight;
     renderer.setSize(w, h);
     camera.aspect = w / h;
-    if (h > w) { camera.fov = 65; camera.position.set(0, 20, 15); } 
-    else { camera.fov = 45; camera.position.set(0, 12, 10); }
+
+    if (h > w) { 
+        // Modo Vertical (Celular)
+        camera.fov = 65; 
+        camera.position.set(0, 20, 15); 
+    } else if (w >= 768 && w <= 1024) {
+        // MODO TABLET (Horizontal ou telas médias)
+        camera.fov = 50; 
+        camera.position.set(0, 14, 12); // Câmera um pouco mais alta e afastada
+    } else { 
+        // Modo Desktop
+        camera.fov = 45; 
+        camera.position.set(0, 12, 10); 
+    }
+    
     camera.lookAt(0, 0, 0);
     camera.updateProjectionMatrix();
 }
