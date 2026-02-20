@@ -17,6 +17,7 @@ scene.add(sun);
 
 let turn = 'white';
 let isAiThinking = false;
+let lastInteractionTime = 0; // Trava para evitar duplo clique em touch
 const pieces = []; 
 const tiles = [];
 const particles = []; 
@@ -62,6 +63,7 @@ function createPiece(x, z, color, type, team) {
     const base = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 0.15, 12), mat);
     group.add(base);
 
+    // Simplificação das formas para performance mobile
     if (type === 'pawn') {
         const body = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.25, 0.6, 8), mat);
         body.position.y = 0.35;
@@ -71,41 +73,31 @@ function createPiece(x, z, color, type, team) {
     } else if (type === 'rook') {
         const tower = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.3, 0.8, 6), mat);
         tower.position.y = 0.45;
-        const top = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.2, 6), mat);
-        top.position.y = 0.9;
-        group.add(tower, top);
+        group.add(tower);
     } else if (type === 'knight') {
         const body = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.7, 8), mat);
         body.position.y = 0.4;
         const head = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.4, 0.5), mat);
         head.position.set(0, 0.8, 0.1);
-        head.rotation.x = -0.4;
         group.add(body, head);
     } else if (type === 'bishop') {
         const body = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.25, 0.9, 8), mat);
         body.position.y = 0.5;
         const mitre = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.4, 8), mat);
         mitre.position.y = 1.0;
-        const ball = new THREE.Mesh(new THREE.SphereGeometry(0.06), mat);
-        ball.position.y = 1.25;
-        group.add(body, mitre, ball);
+        group.add(body, mitre);
     } else if (type === 'queen') {
         const body = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.3, 1.1, 8), mat);
         body.position.y = 0.6;
-        const crownBase = new THREE.Mesh(new THREE.SphereGeometry(0.25, 8, 8), mat);
-        crownBase.position.y = 1.1;
-        const ring = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.05, 8, 16), mat);
-        ring.rotation.x = Math.PI/2;
-        ring.position.y = 1.2;
-        group.add(body, crownBase, ring);
+        const crown = new THREE.Mesh(new THREE.SphereGeometry(0.25, 8, 8), mat);
+        crown.position.y = 1.1;
+        group.add(body, crown);
     } else if (type === 'king') {
         const body = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.3, 1.2, 8), mat);
         body.position.y = 0.65;
-        const crossV = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.4, 0.1), mat);
-        crossV.position.y = 1.4;
-        const crossH = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.1, 0.1), mat);
-        crossH.position.y = 1.4;
-        group.add(body, crossV, crossH);
+        const cross = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.4, 0.1), mat);
+        cross.position.y = 1.4;
+        group.add(body, cross);
     }
 
     group.position.set(x - 3.5, 0.1, z - 3.5);
@@ -145,7 +137,11 @@ function smoothMove(piece, tx, tz, isLegal, callback) {
 
 function tryMove(p, tx, tz) {
     const move = game.move({ from: toAlgebraic(p.userData.gridX, p.userData.gridZ), to: toAlgebraic(tx, tz), promotion: 'q' });
+    
     if (move) {
+        const currentMovingPiece = p;
+        selectedPiece = null; // Limpa seleção imediatamente para evitar conflito touch
+
         if (move.captured) {
             const victim = pieces.find(v => v.userData.gridX === tx && v.userData.gridZ === tz && v !== p);
             if (victim) { 
@@ -154,8 +150,9 @@ function tryMove(p, tx, tz) {
                 pieces.splice(pieces.indexOf(victim), 1); 
             }
         }
-        smoothMove(p, tx, tz, true, () => finalizeTurn(p));
+        smoothMove(currentMovingPiece, tx, tz, true, () => finalizeTurn(currentMovingPiece));
     } else {
+        // Movimento inválido: volta para a origem e limpa seleção
         smoothMove(p, p.userData.gridX, p.userData.gridZ, false, () => {
             deselectPiece(p);
             selectedPiece = null;
@@ -173,23 +170,7 @@ function playAiTurn() {
         if (moves.length === 0) return;
 
         const difficulty = document.getElementById('difficulty-level').value;
-        let selectedMove;
-
-        if (difficulty === 'easy') {
-            selectedMove = moves[Math.floor(Math.random() * moves.length)];
-        } else {
-            const pieceValues = { p: 10, n: 30, b: 30, r: 50, q: 90, k: 900 };
-            selectedMove = moves.sort((a, b) => {
-                let scoreA = 0, scoreB = 0;
-                if (a.captured) scoreA += pieceValues[a.captured];
-                if (b.captured) scoreB += pieceValues[b.captured];
-                if (difficulty === 'hard') {
-                    if (game.is_attacked(a.to, 'w')) scoreA -= pieceValues[a.piece];
-                    if (game.is_attacked(b.to, 'w')) scoreB -= pieceValues[b.piece];
-                }
-                return scoreB - scoreA;
-            })[0];
-        }
+        let selectedMove = difficulty === 'easy' ? moves[Math.floor(Math.random() * moves.length)] : moves[0]; 
 
         game.move(selectedMove);
         const p3d = pieces.find(p => toAlgebraic(p.userData.gridX, p.userData.gridZ) === selectedMove.from);
@@ -211,10 +192,14 @@ function playAiTurn() {
     }, 600);
 }
 
-// --- 5. INTERAÇÃO (TOUCH & MOUSE) ---
+// --- 5. INTERAÇÃO (TOUCH & MOUSE CORRIGIDOS) ---
 function handleInteraction(clientX, clientY) {
     if (isAiThinking || game.game_over()) return;
     
+    const now = Date.now();
+    if (now - lastInteractionTime < 100) return; // Ignora eventos fantasmas (clique após toque)
+    lastInteractionTime = now;
+
     mouse.x = (clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(clientY / window.innerHeight) * 2 + 1;
     raycaster.setFromCamera(mouse, camera);
@@ -237,17 +222,14 @@ function handleInteraction(clientX, clientY) {
     }
 }
 
-// CORREÇÃO PARA TABLETS/MOBILE: Impede conflito de clique e toque
+window.addEventListener('touchstart', (e) => {
+    if(e.touches.length > 0) handleInteraction(e.touches[0].clientX, e.touches[0].clientY);
+}, { passive: true });
+
 window.addEventListener('mousedown', (e) => {
-    if (e.detail === 0) return; // Ignora cliques simulados
+    if (e.detail === 0) return; 
     handleInteraction(e.clientX, e.clientY);
 });
-
-window.addEventListener('touchstart', (e) => {
-    if(e.touches.length > 0) {
-        handleInteraction(e.touches[0].clientX, e.touches[0].clientY);
-    }
-}, { passive: true });
 
 function onWindowResize() {
     const w = window.innerWidth, h = window.innerHeight;
@@ -255,7 +237,7 @@ function onWindowResize() {
     camera.aspect = w / h;
 
     if (h > w) { 
-        // CELULAR (Equilibrado)
+        // CELULAR
         camera.fov = 55; 
         camera.position.set(0, 16, 11); 
     } else if (w >= 768 && w <= 1024) {
@@ -282,7 +264,7 @@ function finalizeTurn(p) {
     
     if (game.game_over()) {
         const winner = game.turn() === 'w' ? 'PRETAS' : 'BRANCAS';
-        turnText.innerText = game.in_checkmate() ? `MATE! VITÓRIA DAS ${winner}` : "EMPATE!";
+        turnText.innerText = game.in_checkmate() ? `MATE! VITÓRIA DAS ${winner}` : "FIM DE JOGO!";
         return;
     }
 
@@ -293,7 +275,7 @@ function finalizeTurn(p) {
 }
 
 function createExplosion(pos, color) {
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 15; i++) {
         const p = new THREE.Mesh(new THREE.SphereGeometry(0.05), new THREE.MeshStandardMaterial({ color }));
         p.position.copy(pos);
         const vel = new THREE.Vector3((Math.random()-0.5)*0.2, Math.random()*0.3, (Math.random()-0.5)*0.2);
@@ -307,7 +289,7 @@ function animate() {
     if (selectedPiece) selectedPiece.position.y = 0.2 + Math.sin(Date.now() * 0.008) * 0.1;
     particles.forEach((p, i) => {
         p.mesh.position.add(p.vel);
-        p.life -= 0.02;
+        p.life -= 0.03;
         p.mesh.material.transparent = true;
         p.mesh.material.opacity = p.life;
         if (p.life <= 0) { scene.remove(p.mesh); particles.splice(i, 1); }
@@ -319,3 +301,27 @@ createBoard();
 setupPieces();
 onWindowResize();
 animate();
+
+function resetGame() {
+    // 1. Reinicia o motor lógico
+    game.reset();
+    
+    // 2. Remove todas as peças 3D da cena
+    pieces.forEach(p => scene.remove(p));
+    pieces.length = 0; // Limpa o array
+    
+    // 3. Reseta variáveis de controle
+    turn = 'white';
+    selectedPiece = null;
+    isAiThinking = false;
+    
+    // 4. Recria as peças na posição inicial
+    setupPieces();
+    
+    // 5. Atualiza a interface
+    turnText.innerText = "VEZ DAS BRANCAS";
+    console.log("Jogo reiniciado!");
+}
+
+// Vincula o clique do botão à função
+document.getElementById('reset-button').addEventListener('click', resetGame);
