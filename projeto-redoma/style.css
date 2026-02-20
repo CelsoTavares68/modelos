@@ -76,15 +76,14 @@ textarea {
     background-size: 100% 1.8em;
 }
 
-   @media (max-width: 1024px) {
+    @media (max-width: 1024px) {
     .folha {
         width: 100vw;
         height: 100vh;
         border-radius: 0;
-        /* Restaurando a borda lateral esquerda igual ao PC */
+        /* Borda lateral característica da Redoma */
         border-left: 15px solid #c0392b; 
         border-top: none; 
-        /* Ajuste de padding: top para o relógio, left para a borda marrom */
         padding: 100px 20px 20px 35px; 
         box-sizing: border-box;
         position: relative;
@@ -96,25 +95,31 @@ textarea {
         left: 0;
         width: 100%;
         height: 70px; 
-        background: rgba(0, 0, 0, 0.85); 
+        /* ALTERAÇÃO: Fundo com a cor oficial #c0392b */
+        background: #c0392b; 
         display: flex;
         flex-direction: row; 
         justify-content: space-around;
         align-items: center;
         z-index: 1000;
         border-radius: 0;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.3);
     }
     
     #relogio {
-        font-size: 1rem;
+        font-size: 1.1rem;
+        color: white; /* Garante que o relógio fique legível no fundo vermelho */
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
     }
 
     #busca-data {
         transform: scale(1.1);
         height: 30px;
+        border: 1px solid rgba(255,255,255,0.5);
+        border-radius: 5px;
+        background: white;
     }
 
-    /* Setas de navegação ajustadas para a nova margem */
     .nav-btn {
         position: absolute;
         top: 50%;
@@ -123,8 +128,9 @@ textarea {
         background: transparent;
         font-size: 2.5rem;
         padding: 10px;
+        color: #c0392b; /* Setas na cor do tema */
     }
 
-    #prevBtn { left: 20px; } /* Ajustado para não ficar em cima da borda marrom */
+    #prevBtn { left: 20px; } 
     #nextBtn { right: 10px; }
 }
