@@ -135,7 +135,7 @@ function tryMove(p, tx, tz) {
     }
 }
 
- function playAiTurn() {
+  function playAiTurn() {
     isAiThinking = true;
     turnText.innerText = "PC ANALISANDO...";
     
@@ -148,23 +148,35 @@ function tryMove(p, tx, tz) {
         let selectedMove;
 
         if (difficulty === 'easy') {
-            // Escolhe um movimento completamente aleatório (IA "bobinha")
             selectedMove = moves[Math.floor(Math.random() * moves.length)];
         } 
-        else if (difficulty === 'medium') {
-            // Prioriza qualquer captura, sem pensar muito no valor
-            selectedMove = moves.sort((a, b) => (b.captured ? 1 : 0) - (a.captured ? 1 : 0))[0];
-        } 
         else {
-            // Difícil: Prioriza capturar peças valiosas (Rainha > Torre > etc)
-            const values = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 90 };
+            // Lógica para Médio e Difícil (com foco em defesa no Difícil)
+            const pieceValues = { p: 10, n: 30, b: 30, r: 50, q: 90, k: 900 };
+            
             selectedMove = moves.sort((a, b) => {
-                const valA = a.captured ? values[a.captured] : 0;
-                const valB = b.captured ? values[b.captured] : 0;
-                return valB - valA;
+                let scoreA = 0;
+                let scoreB = 0;
+
+                // 1. Valor da Captura
+                if (a.captured) scoreA += pieceValues[a.captured];
+                if (b.captured) scoreB += pieceValues[b.captured];
+
+                if (difficulty === 'hard') {
+                    // 2. DEFESA: Penaliza se o movimento coloca a peça em uma casa atacada
+                    if (isSquareAttackedByPlayer(a.to)) scoreA -= pieceValues[a.piece];
+                    if (isSquareAttackedByPlayer(b.to)) scoreB -= pieceValues[b.piece];
+
+                    // 3. FUGA: Se a peça atual já está sob ataque, prioriza movê-la para segurança
+                    if (isSquareAttackedByPlayer(a.from)) scoreA += pieceValues[a.piece] * 0.5;
+                    if (isSquareAttackedByPlayer(b.from)) scoreB += pieceValues[b.piece] * 0.5;
+                }
+
+                return scoreB - scoreA;
             })[0];
         }
 
+        // Executa o movimento escolhido
         game.move(selectedMove);
         const p3d = pieces.find(p => toAlgebraic(p.userData.gridX, p.userData.gridZ) === selectedMove.from);
         const pos = fromAlgebraic(selectedMove.to);
@@ -183,6 +195,17 @@ function tryMove(p, tx, tz) {
             isAiThinking = false;
         });
     }, 600);
+}
+
+// Função Auxiliar: Verifica se o jogador humano pode atacar uma casa específica
+function isSquareAttackedByPlayer(square) {
+    // Simulamos se é a vez do jogador para ver o que ele ataca
+    const history = game.history();
+    const fen = game.fen();
+    
+    // O Chess.js tem uma função interna para verificar ataques
+    // Verificamos se a cor 'w' (Brancas/Jogador) ataca a casa
+    return game.is_attacked(square, 'w');
 }
 
 // --- 5. INTERAÇÃO E RESIZE ---
