@@ -1,4 +1,4 @@
- // --- 1. SETUP DO MOTOR ---
+ // --- 1. SETUP DO MOTOR E CENA ---
 const game = new Chess();
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x223344);
@@ -38,7 +38,7 @@ function fromAlgebraic(s) {
     return { x: s.charCodeAt(0) - 'a'.charCodeAt(0), z: 8 - parseInt(s[1]) };
 }
 
-// --- 3. CRIAÇÃO DO MUNDO ---
+// --- 3. CRIAÇÃO DO MUNDO E PEÇAS DETALHADAS ---
 function createBoard() {
     for (let x = 0; x < 8; x++) {
         for (let z = 0; z < 8; z++) {
@@ -59,7 +59,6 @@ function createBoard() {
 function createPiece(x, z, color, type, team) {
     const group = new THREE.Group();
     const mat = new THREE.MeshStandardMaterial({ color });
-    const detailMat = new THREE.MeshStandardMaterial({ color: team === 'white' ? 0xcccccc : 0x444444 });
     const base = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 0.15, 12), mat);
     group.add(base);
 
@@ -70,19 +69,43 @@ function createPiece(x, z, color, type, team) {
         head.position.y = 0.75;
         group.add(body, head);
     } else if (type === 'rook') {
-        const tower = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.35, 0.9, 6), mat);
-        tower.position.y = 0.5;
-        group.add(tower);
+        const tower = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.3, 0.8, 6), mat);
+        tower.position.y = 0.45;
+        const top = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.2, 6), mat);
+        top.position.y = 0.9;
+        group.add(tower, top);
     } else if (type === 'knight') {
         const body = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.7, 8), mat);
         body.position.y = 0.4;
-        const head = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.4, 0.5), mat);
+        const head = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.4, 0.5), mat);
         head.position.set(0, 0.8, 0.1);
+        head.rotation.x = -0.4;
         group.add(body, head);
-    } else {
-        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 1.0, 8), mat);
+    } else if (type === 'bishop') {
+        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.25, 0.9, 8), mat);
         body.position.y = 0.5;
-        group.add(body);
+        const mitre = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.4, 8), mat);
+        mitre.position.y = 1.0;
+        const ball = new THREE.Mesh(new THREE.SphereGeometry(0.06), mat);
+        ball.position.y = 1.25;
+        group.add(body, mitre, ball);
+    } else if (type === 'queen') {
+        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.3, 1.1, 8), mat);
+        body.position.y = 0.6;
+        const crownBase = new THREE.Mesh(new THREE.SphereGeometry(0.25, 8, 8), mat);
+        crownBase.position.y = 1.1;
+        const ring = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.05, 8, 16), mat);
+        ring.rotation.x = Math.PI/2;
+        ring.position.y = 1.2;
+        group.add(body, crownBase, ring);
+    } else if (type === 'king') {
+        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.3, 1.2, 8), mat);
+        body.position.y = 0.65;
+        const crossV = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.4, 0.1), mat);
+        crossV.position.y = 1.4;
+        const crossH = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.1, 0.1), mat);
+        crossH.position.y = 1.4;
+        group.add(body, crossV, crossH);
     }
 
     group.position.set(x - 3.5, 0.1, z - 3.5);
@@ -101,7 +124,7 @@ function setupPieces() {
     }
 }
 
-// --- 4. MOVIMENTAÇÃO ---
+// --- 4. MOVIMENTAÇÃO E IA CORRIGIDA ---
 function smoothMove(piece, tx, tz, isLegal, callback) {
     const startPos = piece.position.clone();
     const endPos = new THREE.Vector3(tx - 3.5, 0.1, tz - 3.5);
@@ -125,68 +148,66 @@ function tryMove(p, tx, tz) {
     if (move) {
         if (move.captured) {
             const victim = pieces.find(v => v.userData.gridX === tx && v.userData.gridZ === tz && v !== p);
-            if (victim) { createExplosion(victim.position, victim.userData.originalColor); scene.remove(victim); pieces.splice(pieces.indexOf(victim), 1); }
+            if (victim) { 
+                createExplosion(victim.position, victim.userData.originalColor); 
+                scene.remove(victim); 
+                pieces.splice(pieces.indexOf(victim), 1); 
+            }
         }
         smoothMove(p, tx, tz, true, () => finalizeTurn(p));
     } else {
-        smoothMove(p, tx, tz, false, () => {
-            smoothMove(p, p.userData.gridX, p.userData.gridZ, false, () => { deselectPiece(p); selectedPiece = null; });
+        smoothMove(p, p.userData.gridX, p.userData.gridZ, false, () => {
+            deselectPiece(p);
+            selectedPiece = null;
         });
     }
 }
 
-  function playAiTurn() {
+function playAiTurn() {
+    // CORREÇÃO: Se o jogo acabou (Xeque-mate), não analisa nada
+    if (game.game_over()) {
+        isAiThinking = false;
+        return;
+    }
+
     isAiThinking = true;
-    turnText.innerText = "PC ANALISANDO...";
-    
+    turnText.innerText = "PC A ANALISAR...";
     const difficulty = document.getElementById('difficulty-level').value;
 
     setTimeout(() => {
         const moves = game.moves({ verbose: true });
-        if (game.game_over()) return;
+        if (moves.length === 0) { isAiThinking = false; return; }
 
         let selectedMove;
-
         if (difficulty === 'easy') {
             selectedMove = moves[Math.floor(Math.random() * moves.length)];
-        } 
-        else {
-            // Lógica para Médio e Difícil (com foco em defesa no Difícil)
+        } else {
             const pieceValues = { p: 10, n: 30, b: 30, r: 50, q: 90, k: 900 };
-            
             selectedMove = moves.sort((a, b) => {
-                let scoreA = 0;
-                let scoreB = 0;
-
-                // 1. Valor da Captura
+                let scoreA = 0, scoreB = 0;
                 if (a.captured) scoreA += pieceValues[a.captured];
                 if (b.captured) scoreB += pieceValues[b.captured];
-
+                
                 if (difficulty === 'hard') {
-                    // 2. DEFESA: Penaliza se o movimento coloca a peça em uma casa atacada
-                    if (isSquareAttackedByPlayer(a.to)) scoreA -= pieceValues[a.piece];
-                    if (isSquareAttackedByPlayer(b.to)) scoreB -= pieceValues[b.piece];
-
-                    // 3. FUGA: Se a peça atual já está sob ataque, prioriza movê-la para segurança
-                    if (isSquareAttackedByPlayer(a.from)) scoreA += pieceValues[a.piece] * 0.5;
-                    if (isSquareAttackedByPlayer(b.from)) scoreB += pieceValues[b.piece] * 0.5;
+                    if (game.is_attacked(a.to, 'w')) scoreA -= pieceValues[a.piece];
+                    if (game.is_attacked(b.to, 'w')) scoreB -= pieceValues[b.piece];
+                    if (game.is_attacked(a.from, 'w')) scoreA += pieceValues[a.piece] * 0.5;
+                    if (game.is_attacked(b.from, 'w')) scoreB += pieceValues[b.piece] * 0.5;
                 }
-
                 return scoreB - scoreA;
             })[0];
         }
 
-        // Executa o movimento escolhido
         game.move(selectedMove);
         const p3d = pieces.find(p => toAlgebraic(p.userData.gridX, p.userData.gridZ) === selectedMove.from);
         const pos = fromAlgebraic(selectedMove.to);
 
         if (selectedMove.captured) {
             const victim = pieces.find(v => v.userData.gridX === pos.x && v.userData.gridZ === pos.z);
-            if (victim) {
-                createExplosion(victim.position, victim.userData.originalColor);
-                scene.remove(victim);
-                pieces.splice(pieces.indexOf(victim), 1);
+            if (victim) { 
+                createExplosion(victim.position, victim.userData.originalColor); 
+                scene.remove(victim); 
+                pieces.splice(pieces.indexOf(victim), 1); 
             }
         }
 
@@ -197,20 +218,9 @@ function tryMove(p, tx, tz) {
     }, 600);
 }
 
-// Função Auxiliar: Verifica se o jogador humano pode atacar uma casa específica
-function isSquareAttackedByPlayer(square) {
-    // Simulamos se é a vez do jogador para ver o que ele ataca
-    const history = game.history();
-    const fen = game.fen();
-    
-    // O Chess.js tem uma função interna para verificar ataques
-    // Verificamos se a cor 'w' (Brancas/Jogador) ataca a casa
-    return game.is_attacked(square, 'w');
-}
-
-// --- 5. INTERAÇÃO E RESIZE ---
+// --- 5. INTERAÇÃO E CÂMARA ---
 function handleInteraction(clientX, clientY) {
-    if (isAiThinking) return;
+    if (isAiThinking || game.game_over()) return;
     const gameMode = document.getElementById('game-mode').value;
     if (gameMode === 'pve' && turn === 'black') return;
 
@@ -237,7 +247,9 @@ function handleInteraction(clientX, clientY) {
 }
 
 window.addEventListener('mousedown', (e) => handleInteraction(e.clientX, e.clientY));
-window.addEventListener('touchstart', (e) => handleInteraction(e.touches[0].clientX, e.touches[0].clientY));
+window.addEventListener('touchstart', (e) => {
+    if(e.touches.length > 0) handleInteraction(e.touches[0].clientX, e.touches[0].clientY);
+});
 
 function onWindowResize() {
     const w = window.innerWidth, h = window.innerHeight;
@@ -256,10 +268,29 @@ function deselectPiece(p) { if(p) p.traverse(n => { if(n.isMesh) n.material.emis
 function finalizeTurn(p) {
     if(p) deselectPiece(p);
     selectedPiece = null;
+    
+    // CORREÇÃO: Verifica fim de jogo antes de disparar a IA
+    if (game.game_over()) {
+        if (game.in_checkmate()) {
+            const winner = game.turn() === 'w' ? 'PRETAS' : 'BRANCAS';
+            turnText.innerText = `XEQUE-MATE! VITÓRIA DAS ${winner}`;
+            logText.innerText = "Fim da partida.";
+        } else if (game.in_draw()) {
+            turnText.innerText = "EMPATE!";
+            logText.innerText = "Jogo terminado.";
+        }
+        return;
+    }
+
     turn = game.turn() === 'w' ? 'white' : 'black';
     turnText.innerText = `VEZ DAS ${turn === 'white' ? 'BRANCAS' : 'PRETAS'}`;
-    if (game.game_over()) logText.innerText = "FIM DE JOGO!";
-    if (document.getElementById('game-mode').value === 'pve' && turn === 'black') playAiTurn();
+    
+    if (game.in_check()) logText.innerText = "XEQUE!";
+    else logText.innerText = "Toque numa peça";
+
+    if (document.getElementById('game-mode').value === 'pve' && turn === 'black') {
+        playAiTurn();
+    }
 }
 
 function createExplosion(pos, color) {
@@ -278,21 +309,15 @@ function animate() {
     particles.forEach((p, i) => {
         p.mesh.position.add(p.vel);
         p.life -= 0.02;
+        p.mesh.material.transparent = true;
         p.mesh.material.opacity = p.life;
         if (p.life <= 0) { scene.remove(p.mesh); particles.splice(i, 1); }
     });
     renderer.render(scene, camera);
 }
 
-// Init
+// --- INICIALIZAÇÃO ---
 createBoard();
 setupPieces();
 onWindowResize();
 animate();
-
-// --- SERVICE WORKER REGISTRATION ---
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW fail', err));
-    });
-}

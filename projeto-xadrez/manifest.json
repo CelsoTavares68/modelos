@@ -1,11 +1,10 @@
-{
-  "name": "Xadrez Medieval 3D",
+ {
+  "name": "Xadrez 3D Medieval",
   "short_name": "Xadrez3D",
-  "start_url": "/",
+  "start_url": "index.html",
   "display": "standalone",
   "background_color": "#223344",
   "theme_color": "#223344",
-  "orientation": "any",
   "icons": [
     {
       "src": "icon-192.png",
