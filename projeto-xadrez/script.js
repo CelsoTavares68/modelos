@@ -318,29 +318,26 @@ function onWindowResize() {
 // Escutar redimensionamento e rotação
 window.addEventListener('resize', onWindowResize);
 
-// Executar uma vez no início
-onWindowResize();
+ function onWindowResize() {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
 
-// --- SUPORTE A TOQUE (TOUCH) ---
-// Substitua o seu evento de mousedown por handleInteraction para aceitar ambos
-function handleInteraction(clientX, clientY) {
-    if (isAiThinking) return;
-    
-    const gameMode = document.getElementById('game-mode').value;
-    if (gameMode === 'pve' && turn === 'black') return;
+    renderer.setSize(width, height);
+    camera.aspect = width / height;
 
-    mouse.x = (clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(clientY / window.innerHeight) * 2 + 1;
+    if (height > width) {
+        // MODO VERTICAL (Celular)
+        // Aumentamos o FOV para o tabuleiro "encolher" e caber nas laterais
+        camera.fov = 60; 
+        // Posicionamos a câmera mais para trás (z) e para cima (y)
+        camera.position.set(0, 20, 15); 
+    } else {
+        // MODO HORIZONTAL (PC/Tablet)
+        camera.fov = 45;
+        camera.position.set(0, 12, 10);
+    }
     
-    raycaster.setFromCamera(mouse, camera);
-    // ... resto da sua lógica de clique (pieceHits, tileHits, etc)
+    // FORÇA o olhar para o centro exato do tabuleiro
+    camera.lookAt(0, 0, 0); 
+    camera.updateProjectionMatrix();
 }
-
-// Evento para PC
-window.addEventListener('mousedown', (e) => handleInteraction(e.clientX, e.clientY));
-
-// Evento para Telemóvel
-window.addEventListener('touchstart', (e) => {
-    const touch = e.touches[0];
-    handleInteraction(touch.clientX, touch.clientY);
-}, { passive: false });
