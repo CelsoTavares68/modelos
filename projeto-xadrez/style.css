@@ -3,7 +3,7 @@ body {
     margin: 0; 
     overflow: hidden; 
     background-color: #111; 
-     font-family: 'Cinzel', serif;
+    font-family: 'Cinzel', serif;
     user-select: none; /* Impede selecionar texto ao clicar no tabuleiro */
     touch-action: none; /* Melhora a resposta ao toque em dispositivos móveis */
 }
