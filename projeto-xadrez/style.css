@@ -72,13 +72,22 @@ select {
 }
 
 /* Media Query para Telemóveis (Ecrãs Verticais) */
-@media (max-width: 600px) {
+ @media (max-width: 600px) {
     #status-panel {
-        padding: 6px;
-        gap: 5px;
+        flex-direction: row; /* Mantém em linha se couber */
+        justify-content: space-evenly;
+        width: 95%;
+        padding: 5px;
     }
-    select {
-        padding: 2px;
+    
+    #turn-indicator {
         font-size: 11px;
+        width: 100%; /* Força o texto a ficar numa linha própria no topo se necessário */
+        text-align: center;
+    }
+
+    select {
+        font-size: 10px;
+        padding: 2px;
     }
 }
