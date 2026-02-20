@@ -1,0 +1,88 @@
+ /* Configurações Gerais da Tela */
+body { 
+    margin: 0; 
+    padding: 0; 
+    overflow: hidden; 
+    background-color: #223344; 
+    font-family: sans-serif;
+    touch-action: none; /* Importante para mobile: evita zoom acidental */
+}
+
+canvas { 
+    display: block; 
+}
+
+/* Camada de Interface (UI) */
+#ui-overlay {
+    position: absolute;
+    top: 10px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    pointer-events: none; /* Permite clicar no jogo através da div */
+    z-index: 100;
+}
+
+/* Painel de Status e Controles */
+#status-panel {
+    background: rgba(0, 0, 0, 0.8);
+    padding: 12px 20px;
+    border-radius: 12px;
+    border: 1px solid #556677;
+    pointer-events: auto; /* Reativa o clique para os selects */
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    color: white;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
+
+/* Estilo dos Seletores */
+select { 
+    background: #334455;
+    color: white;
+    border: 1px solid #667788;
+    padding: 6px; 
+    border-radius: 6px; 
+    cursor: pointer;
+    outline: none;
+}
+
+select:font-size {
+    font-size: 14px;
+}
+
+/* Log de Mensagens */
+#message-log { 
+    color: #ffd700; 
+    background: rgba(0, 0, 0, 0.6); 
+    padding: 6px 15px; 
+    border-radius: 20px; 
+    font-size: 14px;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px black;
+}
+
+/* Ajustes para Telas Pequenas (Mobile) */
+@media (max-width: 600px) {
+    #status-panel {
+        width: 90%;
+        padding: 10px;
+        font-size: 12px;
+    }
+    
+    #turn-indicator {
+        width: 100%;
+        text-align: center;
+        margin-bottom: 5px;
+    }
+
+    select {
+        flex: 1; /* Faz os selects ocuparem o espaço disponível */
+        min-width: 120px;
+    }
+}

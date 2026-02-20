@@ -1,0 +1,29 @@
+  <!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Xadrez Medieval 3D</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="ui-overlay">
+        <div id="status-panel">
+            <span id="turn-indicator">VEZ DAS BRANCAS</span>
+            <select id="game-mode">
+                <option value="pve">Vs Computador</option>
+                <option value="pvp">2 Jogadores</option>
+            </select>
+            <select id="difficulty-level">
+                <option value="easy">Fácil</option>
+                <option value="medium" selected>Médio</option>
+            </select>
+        </div>
+        <div id="message-log">Toque em uma peça</div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
