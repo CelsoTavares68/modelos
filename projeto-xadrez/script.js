@@ -38,7 +38,7 @@ function fromAlgebraic(s) {
     return { x: s.charCodeAt(0) - 'a'.charCodeAt(0), z: 8 - parseInt(s[1]) };
 }
 
-// --- 3. CRIAÇÃO DO MUNDO E PEÇAS DETALHADAS ---
+// --- 3. CRIAÇÃO DO MUNDO ---
 function createBoard() {
     for (let x = 0; x < 8; x++) {
         for (let z = 0; z < 8; z++) {
@@ -124,7 +124,7 @@ function setupPieces() {
     }
 }
 
-// --- 4. MOVIMENTAÇÃO E IA CORRIGIDA ---
+// --- 4. MOVIMENTAÇÃO E IA ---
 function smoothMove(piece, tx, tz, isLegal, callback) {
     const startPos = piece.position.clone();
     const endPos = new THREE.Vector3(tx - 3.5, 0.1, tz - 3.5);
@@ -164,21 +164,17 @@ function tryMove(p, tx, tz) {
 }
 
 function playAiTurn() {
-    // CORREÇÃO: Se o jogo acabou (Xeque-mate), não analisa nada
-    if (game.game_over()) {
-        isAiThinking = false;
-        return;
-    }
-
+    if (game.game_over()) return;
     isAiThinking = true;
     turnText.innerText = "PC A ANALISAR...";
-    const difficulty = document.getElementById('difficulty-level').value;
-
+    
     setTimeout(() => {
         const moves = game.moves({ verbose: true });
-        if (moves.length === 0) { isAiThinking = false; return; }
+        if (moves.length === 0) return;
 
+        const difficulty = document.getElementById('difficulty-level').value;
         let selectedMove;
+
         if (difficulty === 'easy') {
             selectedMove = moves[Math.floor(Math.random() * moves.length)];
         } else {
@@ -187,12 +183,9 @@ function playAiTurn() {
                 let scoreA = 0, scoreB = 0;
                 if (a.captured) scoreA += pieceValues[a.captured];
                 if (b.captured) scoreB += pieceValues[b.captured];
-                
                 if (difficulty === 'hard') {
                     if (game.is_attacked(a.to, 'w')) scoreA -= pieceValues[a.piece];
                     if (game.is_attacked(b.to, 'w')) scoreB -= pieceValues[b.piece];
-                    if (game.is_attacked(a.from, 'w')) scoreA += pieceValues[a.piece] * 0.5;
-                    if (game.is_attacked(b.from, 'w')) scoreB += pieceValues[b.piece] * 0.5;
                 }
                 return scoreB - scoreA;
             })[0];
@@ -218,12 +211,10 @@ function playAiTurn() {
     }, 600);
 }
 
-// --- 5. INTERAÇÃO E CÂMARA ---
+// --- 5. INTERAÇÃO (TOUCH & MOUSE) ---
 function handleInteraction(clientX, clientY) {
     if (isAiThinking || game.game_over()) return;
-    const gameMode = document.getElementById('game-mode').value;
-    if (gameMode === 'pve' && turn === 'black') return;
-
+    
     mouse.x = (clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(clientY / window.innerHeight) * 2 + 1;
     raycaster.setFromCamera(mouse, camera);
@@ -246,38 +237,42 @@ function handleInteraction(clientX, clientY) {
     }
 }
 
-window.addEventListener('mousedown', (e) => handleInteraction(e.clientX, e.clientY));
-window.addEventListener('touchstart', (e) => {
-    if(e.touches.length > 0) handleInteraction(e.touches[0].clientX, e.touches[0].clientY);
+// CORREÇÃO PARA TABLETS/MOBILE: Impede conflito de clique e toque
+window.addEventListener('mousedown', (e) => {
+    if (e.detail === 0) return; // Ignora cliques simulados
+    handleInteraction(e.clientX, e.clientY);
 });
 
-  function onWindowResize() {
+window.addEventListener('touchstart', (e) => {
+    if(e.touches.length > 0) {
+        handleInteraction(e.touches[0].clientX, e.touches[0].clientY);
+    }
+}, { passive: true });
+
+function onWindowResize() {
     const w = window.innerWidth, h = window.innerHeight;
     renderer.setSize(w, h);
     camera.aspect = w / h;
 
     if (h > w) { 
-        // --- MODO CELULAR (VERTICAL) ---
-        // Diminuímos o FOV para 45 (dá zoom) e baixamos a altura da câmera
-        camera.fov = 45; 
-        camera.position.set(0, 14, 8); 
+        // CELULAR (Equilibrado)
+        camera.fov = 55; 
+        camera.position.set(0, 16, 11); 
     } else if (w >= 768 && w <= 1024) {
-        // MODO TABLET
+        // TABLET
         camera.fov = 50; 
-        camera.position.set(0, 14, 12); 
+        camera.position.set(0, 15, 12); 
     } else { 
-        // MODO DESKTOP
+        // DESKTOP
         camera.fov = 45; 
         camera.position.set(0, 12, 10); 
     }
-    
     camera.lookAt(0, 0, 0);
     camera.updateProjectionMatrix();
 }
-
-
 window.addEventListener('resize', onWindowResize);
 
+// --- 6. FINALIZAÇÃO E ANIMAÇÃO ---
 function selectPiece(p) { p.traverse(n => { if(n.isMesh) n.material.emissive = new THREE.Color(0x004444); }); }
 function deselectPiece(p) { if(p) p.traverse(n => { if(n.isMesh) n.material.emissive = new THREE.Color(0x000000); }); }
 
@@ -285,28 +280,16 @@ function finalizeTurn(p) {
     if(p) deselectPiece(p);
     selectedPiece = null;
     
-    // CORREÇÃO: Verifica fim de jogo antes de disparar a IA
     if (game.game_over()) {
-        if (game.in_checkmate()) {
-            const winner = game.turn() === 'w' ? 'PRETAS' : 'BRANCAS';
-            turnText.innerText = `XEQUE-MATE! VITÓRIA DAS ${winner}`;
-            logText.innerText = "Fim da partida.";
-        } else if (game.in_draw()) {
-            turnText.innerText = "EMPATE!";
-            logText.innerText = "Jogo terminado.";
-        }
+        const winner = game.turn() === 'w' ? 'PRETAS' : 'BRANCAS';
+        turnText.innerText = game.in_checkmate() ? `MATE! VITÓRIA DAS ${winner}` : "EMPATE!";
         return;
     }
 
     turn = game.turn() === 'w' ? 'white' : 'black';
     turnText.innerText = `VEZ DAS ${turn === 'white' ? 'BRANCAS' : 'PRETAS'}`;
     
-    if (game.in_check()) logText.innerText = "XEQUE!";
-    else logText.innerText = "Toque numa peça";
-
-    if (document.getElementById('game-mode').value === 'pve' && turn === 'black') {
-        playAiTurn();
-    }
+    if (document.getElementById('game-mode').value === 'pve' && turn === 'black') playAiTurn();
 }
 
 function createExplosion(pos, color) {
@@ -332,7 +315,6 @@ function animate() {
     renderer.render(scene, camera);
 }
 
-// --- INICIALIZAÇÃO ---
 createBoard();
 setupPieces();
 onWindowResize();

@@ -100,33 +100,21 @@ select:hover {
 }
 
 /* --- 6. ADAPTAÇÃO PARA TELEMÓVEIS (Ecrãs Pequenos) --- */
- @media (max-width: 600px) {
+  @media (max-width: 600px) {
     #status-panel {
-        width: 92%;
-        padding: 12px;
+        width: 88%;
+        padding: 8px;
         top: 5px;
-        gap: 8px;
-        background: rgba(0, 0, 0, 0.9); /* Mais escuro para ler melhor no sol */
     }
 
     #turn-indicator {
-        font-size: 16px; /* Texto maior */
-        width: 100%;
-        text-align: center;
-        margin-bottom: 5px;
+        font-size: 14px; /* Reduzido de 16 para 14 */
+        margin-bottom: 2px;
     }
 
     select {
-        font-size: 14px; /* Mais fácil de clicar */
-        padding: 10px;
-        flex: 1;
-    }
-
-    #message-log {
-        width: 85%;
-        font-size: 16px;
-        bottom: 30px;
-        padding: 12px;
+        font-size: 12px; /* Reduzido de 14 para 12 */
+        padding: 6px;
     }
 }
 
