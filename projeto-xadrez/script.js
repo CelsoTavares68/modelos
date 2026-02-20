@@ -251,21 +251,22 @@ window.addEventListener('touchstart', (e) => {
     if(e.touches.length > 0) handleInteraction(e.touches[0].clientX, e.touches[0].clientY);
 });
 
- function onWindowResize() {
+  function onWindowResize() {
     const w = window.innerWidth, h = window.innerHeight;
     renderer.setSize(w, h);
     camera.aspect = w / h;
 
     if (h > w) { 
-        // Modo Vertical (Celular)
-        camera.fov = 65; 
-        camera.position.set(0, 20, 15); 
+        // --- MODO CELULAR (VERTICAL) ---
+        // Diminuímos o FOV para 45 (dá zoom) e baixamos a altura da câmera
+        camera.fov = 45; 
+        camera.position.set(0, 14, 8); 
     } else if (w >= 768 && w <= 1024) {
-        // MODO TABLET (Horizontal ou telas médias)
+        // MODO TABLET
         camera.fov = 50; 
-        camera.position.set(0, 14, 12); // Câmera um pouco mais alta e afastada
+        camera.position.set(0, 14, 12); 
     } else { 
-        // Modo Desktop
+        // MODO DESKTOP
         camera.fov = 45; 
         camera.position.set(0, 12, 10); 
     }
@@ -273,6 +274,8 @@ window.addEventListener('touchstart', (e) => {
     camera.lookAt(0, 0, 0);
     camera.updateProjectionMatrix();
 }
+
+
 window.addEventListener('resize', onWindowResize);
 
 function selectPiece(p) { p.traverse(n => { if(n.isMesh) n.material.emissive = new THREE.Color(0x004444); }); }
