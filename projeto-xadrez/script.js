@@ -187,52 +187,65 @@ function createPiece(x, z, color, type, team) {
     pieces.push(group);
 }
 
-// --- 4. IA E DIFICULDADE ---
  function playAiTurn() {
     if (game.game_over() || isAiThinking) return;
     isAiThinking = true;
-    
-    // Atualiza a interface
     turnText.innerText = "PC A PENSAR...";
     
     setTimeout(() => {
         const moves = game.moves();
         if (moves.length === 0) return;
 
-        // Recupera o nível de dificuldade do HTML
+        // Pega o valor exato do select de dificuldade no seu index.html
         const level = document.getElementById('difficulty-level').value;
         
         let move;
         if (level === 'hard') {
-            move = getBestMove(); // Usa a lógica de busca de melhor jogada
+            move = getBestMove(); // Chama a lógica inteligente
         } else {
-            move = moves[Math.floor(Math.random() * moves.length)]; // Jogada aleatória
+            move = moves[Math.floor(Math.random() * moves.length)];
         }
 
-        game.move(move);
-        syncBoard();
+        if (move) {
+            game.move(move);
+            syncBoard();
+        }
+        
         isAiThinking = false;
-    }, 600); // Um pequeno delay para parecer que o PC está pensando
+    }, 600);
 }
 
- function getBestMove() {
+function getBestMove() {
     const moves = game.moves();
     
-    // 1. Prioridade: Tentar dar xeque-mate imediatamente
+    // 1. Tenta dar Xeque-Mate imediatamente
     for (let m of moves) {
-        const tempGame = new Chess(game.fen());
-        tempGame.move(m);
-        if (tempGame.in_checkmate()) return m;
+        const temp = new Chess(game.fen());
+        temp.move(m);
+        if (temp.in_checkmate()) return m;
     }
 
-    // 2. Segunda prioridade: Capturar peças (priorizando capturas de peças maiores)
+    // 2. Tenta capturar peças (Prioriza a agressividade)
     const captures = moves.filter(m => m.includes('x'));
+    
     if (captures.length > 0) {
-        // Ordena para pegar a captura mais valiosa se possível (simplificado)
+        // Tabela de valores para capturar peças mais valiosas primeiro
+        const values = { 'q': 9, 'r': 5, 'b': 3, 'n': 3, 'p': 1 };
+        
+        captures.sort((a, b) => {
+            // Identifica a casa de destino da captura
+            const targetSquare = a.includes('=') ? a.split('x')[1].substring(0,2) : a.split('x')[1].replace('#','').replace('+','');
+            const pieceA = game.get(targetSquare)?.type || 'p';
+            
+            const targetSquareB = b.includes('=') ? b.split('x')[1].substring(0,2) : b.split('x')[1].replace('#','').replace('+','');
+            const pieceB = game.get(targetSquareB)?.type || 'p';
+            
+            return values[pieceB] - values[pieceA];
+        });
         return captures[0]; 
     }
 
-    // 3. Se não houver capturas, faz uma jogada aleatória segura
+    // 3. Se não houver capturas, faz uma jogada aleatória
     return moves[Math.floor(Math.random() * moves.length)];
 }
 
