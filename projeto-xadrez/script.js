@@ -10,7 +10,7 @@ renderer.shadowMap.enabled = true;
 document.body.appendChild(renderer.domElement);
 
 scene.add(new THREE.AmbientLight(0xffffff, 0.7)); 
-const sun = new THREE.DirectionalLight(0xffffff, 1.2); 
+const sun = new THREE.DirectionalLight(0xffffff, 1.2);
 sun.position.set(5, 15, 5);
 sun.castShadow = true;
 scene.add(sun);
@@ -50,7 +50,7 @@ function resetGame() {
     syncBoard();
 }
 
-// --- 3. CRIAÇÃO DO TABULEIRO E PEÇAS (MODELAGEM ORIGINAL RESTAURADA) ---
+// --- 3. CRIAÇÃO DO TABULEIRO E PEÇAS (SUA MODELAGEM ORIGINAL RECUPERADA) ---
 function createBoard() {
     for (let i = 0; i < 8; i++) {
         for (let j = 0; j < 8; j++) {
@@ -76,26 +76,27 @@ function createPiece(x, z, color, type, team) {
     group.add(base);
 
     let body;
-    if (type === 'p') { // PEÃO ORIGINAL
+    // RESTAURANDO SEU DESIGN ORIGINAL:
+    if (type === 'p') { 
         body = new THREE.Mesh(new THREE.SphereGeometry(0.25, 12, 12), mat);
         body.position.y = 0.4;
-    } else if (type === 'r') { // TORRE ORIGINAL
+    } else if (type === 'r') { 
         body = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.7, 0.5), mat);
         body.position.y = 0.45;
-    } else if (type === 'n') { // CAVALO ORIGINAL (INCLINADO)
+    } else if (type === 'n') { 
         body = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 0.6, 12), mat);
-        body.rotation.x = Math.PI / 4;
+        body.rotation.x = Math.PI / 4; // Inclinação do cavalo que você criou
         body.position.y = 0.4;
-    } else if (type === 'b') { // BISPO ORIGINAL
+    } else if (type === 'b') { 
         body = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.8, 12), mat);
         body.position.y = 0.5;
-    } else if (type === 'q') { // RAINHA ORIGINAL
+    } else if (type === 'q') { 
         body = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.3, 1, 12), mat);
         body.position.y = 0.5;
         const crown = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8), mat);
         crown.position.y = 0.6;
         body.add(crown);
-    } else if (type === 'k') { // REI ORIGINAL
+    } else if (type === 'k') { 
         body = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 1.1, 12), mat);
         body.position.y = 0.55;
         const cross = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.4, 0.1), mat);
@@ -129,12 +130,13 @@ function syncBoard() {
     turnText.style.color = isWhite ? "#fff" : "#aaa";
 }
 
-// --- 4. IA INTELIGENTE (MINIMAX) ---
-const weights = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
+// --- 4. LÓGICA DE IA E DIFICULDADE ---
+const pieceValues = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
+
 function evaluateBoard(g) {
     let total = 0;
     g.board().forEach(row => row.forEach(p => {
-        if (p) total += (p.color === 'w' ? weights[p.type] : -weights[p.type]);
+        if (p) total += (p.color === 'w' ? pieceValues[p.type] : -pieceValues[p.type]);
     }));
     return total;
 }
@@ -156,7 +158,7 @@ function minimax(g, depth, alpha, beta, isMax) {
         let best = Infinity;
         for (const m of moves) {
             g.move(m);
-            best = min = Math.min(best, minimax(g, depth - 1, alpha, beta, true));
+            best = Math.min(best, minimax(g, depth - 1, alpha, beta, true));
             g.undo();
             beta = Math.min(beta, best);
             if (beta <= alpha) break;
@@ -169,27 +171,35 @@ function playAiTurn() {
     if (game.game_over() || isAiThinking) return;
     isAiThinking = true;
     turnText.innerText = "PC A PENSAR...";
+
     setTimeout(() => {
-        const moves = game.moves();
-        if (moves.length === 0) return;
         const level = document.getElementById('difficulty-level').value;
         const depth = (level === 'hard') ? 3 : 2;
+        const moves = game.moves();
+        
         let bestMove = null;
         let bestValue = -Infinity;
+
         for (const m of moves) {
             game.move(m);
             const val = minimax(game, depth - 1, -100000, 100000, false);
             game.undo();
-            if (val > bestValue) { bestValue = val; bestMove = m; }
+            if (val > bestValue) {
+                bestValue = val;
+                bestMove = m;
+            }
         }
-        game.move(bestMove);
-        syncBoard();
-        saveGame();
+
+        if (bestMove) {
+            game.move(bestMove);
+            syncBoard();
+            saveGame();
+        }
         isAiThinking = false;
     }, 500);
 }
 
-// --- 5. INTERAÇÃO ---
+// --- 5. INTERAÇÃO (REVISADA) ---
 function onInteraction(e) {
     if (isAiThinking || game.game_over()) return;
     const mode = document.getElementById('game-mode').value;
@@ -215,14 +225,16 @@ function onInteraction(e) {
 
             if (selectedPiece) {
                 const from = toAlgebraic(selectedPiece.userData.gridX, selectedPiece.userData.gridZ);
-                const move = game.move({ from, to: square, promotion: 'q' });
-                if (move) {
-                    if (move.captured) createExplosion(clickedTile.position, 0xff0000);
+                if (game.move({ from, to: square, promotion: 'q' })) {
                     selectedPiece = null;
                     syncBoard();
                     saveGame();
-                    if (mode === 'pve') playAiTurn(); // PC JOGA LOGO APÓS VOCÊ
-                } else { selectedPiece = null; syncBoard(); }
+                    // COMANDO QUE FAZ O PC JOGAR LOGO APÓS VOCÊ:
+                    if (mode === 'pve') playAiTurn();
+                } else {
+                    selectedPiece = null;
+                    syncBoard();
+                }
             } else if (pieceOnSquare && pieceOnSquare.userData.team === game.turn()) {
                 selectedPiece = pieceOnSquare;
                 pieceOnSquare.traverse(n => { if(n.isMesh) n.material.emissive.setHex(0x004444); });
@@ -265,6 +277,7 @@ function animate() {
     renderer.render(scene, camera);
 }
 
+// BOTÕES
 document.getElementById('reset-button').addEventListener('click', resetGame);
 document.getElementById('update-button').addEventListener('click', () => {
     window.location.reload(true);
