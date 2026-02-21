@@ -66,9 +66,8 @@ function createExplosion(pos, color) {
         }
     }
 
-    // 2. Identifica e anima APENAS a peça que se moveu (Correção do efeito de grupo)
+    // 2. Identifica quem se moveu ANTES de processar capturas
     pieces.forEach(p => {
-        // Procuramos se existe uma peça EXATAMENTE na posição onde este objeto 3D estava
         const isStillThere = newPositions.find(pos => 
             pos.x === p.userData.gridX && 
             pos.z === p.userData.gridZ && 
@@ -76,12 +75,10 @@ function createExplosion(pos, color) {
             pos.team === p.userData.team
         );
 
-        // Se a peça NÃO está mais na casa antiga, vamos ver para onde ela foi
         if (!isStillThere) {
             const match = newPositions.find(pos => 
                 pos.type === p.userData.type && 
                 pos.team === p.userData.team && 
-                // Garante que não pegamos uma peça que já tem um objeto 3D associado noutra casa
                 !pieces.some(otherP => otherP !== p && otherP.userData.gridX === pos.x && otherP.userData.gridZ === pos.z)
             );
 
@@ -98,25 +95,32 @@ function createExplosion(pos, color) {
         }
     });
 
-    // 3. Remove as peças capturadas e gera explosão
+    // 3. REMOÇÃO E EXPLOSÃO CORRIGIDA
     for (let i = pieces.length - 1; i >= 0; i--) {
         const p = pieces[i];
-        const stillExists = newPositions.some(pos => 
-            pos.x === p.userData.gridX && 
-            pos.z === p.userData.gridZ && 
+        
+        // Uma peça só deve ser removida se ela não existir em NENHUMA posição do novo tabuleiro
+        const existsAnywhere = newPositions.some(pos => 
             pos.type === p.userData.type && 
-            pos.team === p.userData.team
+            pos.team === p.userData.team &&
+            pos.x === p.userData.gridX &&
+            pos.z === p.userData.gridZ
         );
         
-        if (!stillExists) {
-            const particleColor = p.userData.team === 'w' ? 0xffffff : 0x333333;
-            createExplosion(p.position, particleColor);
-            scene.remove(p);
-            pieces.splice(i, 1);
+        if (!existsAnywhere) {
+            // Só explode se não for a peça que estamos a animar (a que se moveu)
+            const isAnimating = animations.some(a => a.obj === p);
+            
+            if (!isAnimating) {
+                const particleColor = p.userData.team === 'w' ? 0xffffff : 0x333333;
+                createExplosion(p.position, particleColor);
+                scene.remove(p);
+                pieces.splice(i, 1);
+            }
         }
     }
 
-    // 4. Cria peças novas (Promoções ou início)
+    // 4. Cria novas peças (Promoções)
     newPositions.forEach(pos => {
         const pieceExists = pieces.some(p => p.userData.gridX === pos.x && p.userData.gridZ === pos.z);
         if (!pieceExists) {
