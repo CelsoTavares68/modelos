@@ -68,35 +68,46 @@ function createBoard() {
     }
 }
 
-function createPiece(x, z, color, type, team) {
+ function createPiece(x, z, color, type, team) {
     const group = new THREE.Group();
-    const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.4, metalness: 0.3 });
+    const mat = new THREE.MeshStandardMaterial({ 
+        color: color,
+        roughness: 0.4,
+        metalness: 0.3
+    });
+
     const base = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 0.15, 16), mat);
     base.castShadow = true;
     group.add(base);
 
     let body;
-    // RESTAURANDO SEU DESIGN ORIGINAL:
-    if (type === 'p') { 
+    if (type === 'p') {
+        // PEÃO: Esfera simples
         body = new THREE.Mesh(new THREE.SphereGeometry(0.25, 12, 12), mat);
         body.position.y = 0.4;
-    } else if (type === 'r') { 
+    } else if (type === 'r') {
+        // TORRE: Bloco retangular
         body = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.7, 0.5), mat);
         body.position.y = 0.45;
-    } else if (type === 'n') { 
+    } else if (type === 'n') {
+        // CAVALO: Cilindro com inclinação específica (PI/4) para parecer uma cabeça
         body = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 0.6, 12), mat);
-        body.rotation.x = Math.PI / 4; // Inclinação do cavalo que você criou
-        body.position.y = 0.4;
-    } else if (type === 'b') { 
+        body.rotation.x = Math.PI / 4; // ESTA É A INCLINAÇÃO QUE VOCÊ CRIOU
+        body.position.y = 0.45;
+        body.position.z = 0.1; 
+    } else if (type === 'b') {
+        // BISPO: Cone pontiagudo
         body = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.8, 12), mat);
         body.position.y = 0.5;
-    } else if (type === 'q') { 
+    } else if (type === 'q') {
+        // RAINHA: Corpo alto com esfera no topo
         body = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.3, 1, 12), mat);
         body.position.y = 0.5;
         const crown = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8), mat);
         crown.position.y = 0.6;
         body.add(crown);
-    } else if (type === 'k') { 
+    } else if (type === 'k') {
+        // REI: Corpo alto com cruz (bloco) no topo
         body = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 1.1, 12), mat);
         body.position.y = 0.55;
         const cross = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.4, 0.1), mat);
@@ -108,6 +119,7 @@ function createPiece(x, z, color, type, team) {
     group.add(body);
     group.position.set(x - 3.5, 0.1, z - 3.5);
     group.userData = { gridX: x, gridZ: z, team, type };
+    
     scene.add(group);
     pieces.push(group);
 }
