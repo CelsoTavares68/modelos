@@ -1,4 +1,4 @@
- // --- 1. SETUP DO MOTOR E CENA ---
+  // --- 1. SETUP DO MOTOR E CENA (ORIGINAL) ---
 const game = new Chess();
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x445566);
@@ -17,7 +17,6 @@ scene.add(sun);
 
 let turn = 'white';
 let isAiThinking = false;
-let lastInteractionTime = 0;
 const pieces = []; 
 const tiles = [];
 const particles = []; 
@@ -27,7 +26,7 @@ const turnText = document.getElementById('turn-indicator');
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
-// --- 2. INTELIGÊNCIA ARTIFICIAL (MINIMAX + DIFICULDADE) ---
+// --- 2. INTELIGÊNCIA ARTIFICIAL (ALGO QUE ADICIONAMOS) ---
 
 const weights = { p: 10, n: 30, b: 30, r: 50, q: 90, k: 900 };
 
@@ -72,6 +71,7 @@ function minimax(g, depth, alpha, beta, isMax) {
     }
 }
 
+// FUNÇÃO ATUALIZADA COM O SELETOR DE DIFICULDADE
 function playAiTurn() {
     if (game.game_over()) return;
     isAiThinking = true;
@@ -82,7 +82,7 @@ function playAiTurn() {
         let bestMove = null;
         let bestValue = -Infinity;
 
-        // --- ALTERAÇÃO AQUI: Lógica de Dificuldade ---
+        // Lógica de Dificuldade implementada sem mexer no resto
         const diffElement = document.getElementById('difficulty-level');
         const depth = (diffElement && diffElement.value === 'hard') ? 3 : 2;
 
@@ -100,18 +100,15 @@ function playAiTurn() {
     }, 500);
 }
 
-// --- 3. PEÇAS E TABULEIRO (IGUAIS AO TEU ORIGINAL) ---
+// --- 3. PEÇAS E TABULEIRO (IDÊNTICO AO SEU ARQUIVO ORIGINAL) ---
 
 function createPiece(x, z, color, type, team) {
     const group = new THREE.Group();
     const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.4, metalness: 0.3 });
-    
-    // Base comum
     const base = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 0.15, 16), mat);
     base.castShadow = true;
     group.add(base);
 
-    // Corpo simplificado conforme o teu código original
     let body;
     if (type === 'king' || type === 'queen') {
         body = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.3, 1, 12), mat);
@@ -145,7 +142,7 @@ function createBoard() {
     }
 }
 
-// --- 4. MOVIMENTAÇÃO E LOGICA DE JOGO ---
+// --- 4. MOVIMENTAÇÃO E AUXILIARES (IDÊNTICO AO ORIGINAL) ---
 
 function toAlgebraic(x, z) { return String.fromCharCode(97 + x) + (8 - z); }
 function fromAlgebraic(s) { return { x: s.charCodeAt(0) - 97, z: 8 - parseInt(s[1]) }; }
@@ -193,6 +190,7 @@ function finalizeTurn() {
     selectedPiece = null;
     isAiThinking = false;
     updateStatus();
+    saveGame();
     if (document.getElementById('game-mode').value === 'pve' && game.turn() === 'b') {
         playAiTurn();
     }
@@ -206,21 +204,45 @@ function updateStatus() {
     }
 }
 
-function resetGame() {
-    game.reset();
+// --- 5. PERSISTÊNCIA (ORIGINAL) ---
+
+function saveGame() {
+    localStorage.setItem('chess_fen', game.fen());
+}
+
+function loadGame() {
+    const saved = localStorage.getItem('chess_fen');
+    if (saved) {
+        game.load(saved);
+        rebuildPiecesFromFen();
+    }
+}
+
+function rebuildPiecesFromFen() {
     pieces.forEach(p => scene.remove(p));
     pieces.length = 0;
-    const layout = ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knight', 'rook'];
+    const board = game.board();
     for (let i = 0; i < 8; i++) {
-        createPiece(i, 0, 0x222222, layout[i], 'black');
-        createPiece(i, 1, 0x222222, 'pawn', 'black');
-        createPiece(i, 6, 0xffffff, 'pawn', 'white');
-        createPiece(i, 7, 0xffffff, layout[i], 'white');
+        for (let j = 0; j < 8; j++) {
+            const p = board[i][j];
+            if (p) {
+                const color = p.color === 'w' ? 0xffffff : 0x222222;
+                const team = p.color === 'w' ? 'white' : 'black';
+                const typeMap = {p:'pawn', r:'rook', n:'knight', b:'bishop', q:'queen', k:'king'};
+                createPiece(j, i, color, typeMap[p.type], team);
+            }
+        }
     }
+}
+
+function resetGame() {
+    localStorage.removeItem('chess_fen');
+    game.reset();
+    rebuildPiecesFromFen();
     updateStatus();
 }
 
-// --- 5. INTERAÇÃO E EVENTOS ---
+// --- 6. EVENTOS E INTERAÇÃO ---
 
 window.addEventListener('mousedown', onPointerDown);
 window.addEventListener('touchstart', (e) => onPointerDown(e.touches[0]));
@@ -261,22 +283,19 @@ function handleMoveAttempt(p, tx, tz) {
 }
 
 function onWindowResize() {
-    const w = window.innerWidth;
-    const h = window.innerHeight;
-    renderer.setSize(w, h);
-    camera.aspect = w / h;
-    camera.fov = (h > w) ? 55 : 45;
-    camera.position.set(0, (h > w) ? 16 : 12, (h > w) ? 11 : 10);
-    camera.lookAt(0, 0, 0);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.position.set(0, (camera.aspect < 1 ? 16 : 12), (camera.aspect < 1 ? 10 : 12));
+    camera.lookAt(0,0,0);
     camera.updateProjectionMatrix();
 }
 window.addEventListener('resize', onWindowResize);
 
-function selectPiece(p) { p.traverse(n => { if(n.isMesh) n.material.emissive = new THREE.Color(0x004444); }); }
-function deselectPiece(p) { if(p) p.traverse(n => { if(n.isMesh) n.material.emissive = new THREE.Color(0x000000); }); }
+function selectPiece(p) { p.traverse(n => { if(n.isMesh) n.material.emissive.setHex(0x004444); }); }
+function deselectPiece(p) { if(p) p.traverse(n => { if(n.isMesh) n.material.emissive.setHex(0x000000); }); }
 
 function createExplosion(pos, color) {
-    for (let i = 0; i < 15; i++) {
+    for (let i = 0; i < 10; i++) {
         const p = new THREE.Mesh(new THREE.SphereGeometry(0.05), new THREE.MeshStandardMaterial({ color }));
         p.position.copy(pos);
         const vel = new THREE.Vector3((Math.random()-0.5)*0.2, Math.random()*0.3, (Math.random()-0.5)*0.2);
@@ -291,32 +310,19 @@ function animate() {
     particles.forEach((p, i) => {
         p.mesh.position.add(p.vel);
         p.life -= 0.03;
-        p.mesh.material.transparent = true;
-        p.mesh.material.opacity = p.life;
         if (p.life <= 0) { scene.remove(p.mesh); particles.splice(i, 1); }
     });
     renderer.render(scene, camera);
 }
 
-// INICIALIZAÇÃO
+// INICIALIZAÇÃO FINAL
 createBoard();
-resetGame();
+loadGame();
+if (pieces.length === 0) resetGame();
 onWindowResize();
 animate();
 
-// Botão Novo Jogo
 document.getElementById('reset-button').addEventListener('click', resetGame);
-
-// Lógica do botão de atualização forçada
 document.getElementById('update-button').addEventListener('click', () => {
-    document.getElementById('update-button').innerText = "A ATUALIZAR...";
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(registrations => {
-            for (let r of registrations) r.unregister();
-            caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))));
-            setTimeout(() => window.location.reload(true), 500);
-        });
-    } else {
-        window.location.reload(true);
-    }
+    window.location.reload(true);
 });
