@@ -17,9 +17,7 @@ sun.position.set(5, 15, 5);
 sun.castShadow = true;
 scene.add(sun);
 
-let turn = 'white';
 let isAiThinking = false;
-let lastInteractionTime = 0;
 const pieces = []; 
 const tiles = [];
 const particles = []; 
@@ -34,12 +32,6 @@ function toAlgebra(x, z) {
     const col = String.fromCharCode(97 + x);
     const row = 8 - z;
     return col + row;
-}
-
-function fromAlgebra(square) {
-    const col = square.charCodeAt(0) - 97;
-    const row = 8 - parseInt(square[1]);
-    return { x: col, z: row };
 }
 
 function saveGame() {
@@ -60,8 +52,10 @@ function resetGame() {
     syncBoard();
 }
 
-// --- 3. CRIAÇÃO DO TABULEIRO E PEÇAS ---
+// --- 3. CRIAÇÃO DO TABULEIRO E PEÇAS (MODELAGEM ORIGINAL) ---
 function createBoard() {
+    tiles.forEach(t => scene.remove(t));
+    tiles.length = 0;
     for (let i = 0; i < 8; i++) {
         for (let j = 0; j < 8; j++) {
             const geo = new THREE.BoxGeometry(1, 0.2, 1);
@@ -80,13 +74,7 @@ function createBoard() {
 
 function createPiece(x, z, color, type, team) {
     const group = new THREE.Group();
-    const mat = new THREE.MeshStandardMaterial({ 
-        color: color,
-        roughness: 0.4,
-        metalness: 0.3
-    });
-
-    // Base comum
+    const mat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.4, metalness: 0.3 });
     const base = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 0.15, 16), mat);
     base.castShadow = true;
     group.add(base);
@@ -99,7 +87,7 @@ function createPiece(x, z, color, type, team) {
         body = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.7, 0.5), mat);
         body.position.y = 0.45;
     } else if (type === 'n') {
-        // O SEU CAVALO ORIGINAL: Cilindro inclinado
+        // CAVALO ORIGINAL (Cilindro inclinado)
         body = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 0.6, 12), mat);
         body.rotation.x = Math.PI / 4;
         body.position.y = 0.4;
@@ -119,12 +107,10 @@ function createPiece(x, z, color, type, team) {
         cross.position.y = 0.7;
         body.add(cross);
     }
-
     body.castShadow = true;
     group.add(body);
     group.position.set(x - 3.5, 0.1, z - 3.5);
-    group.userData = { gridX: x, gridZ: z, team, type, originalColor: color };
-    
+    group.userData = { gridX: x, gridZ: z, team, type };
     scene.add(group);
     pieces.push(group);
 }
@@ -142,34 +128,18 @@ function syncBoard() {
             }
         }
     }
-    updateTurnIndicator();
-    updateEvalBar();
-}
-
-function updateTurnIndicator() {
     const isWhite = game.turn() === 'w';
-    if(turnText) {
-        turnText.innerText = isWhite ? "VEZ DAS BRANCAS" : "VEZ DAS PRETAS";
-        turnText.style.color = isWhite ? "#fff" : "#aaa";
-    }
+    turnText.innerText = isWhite ? "VEZ DAS BRANCAS" : "VEZ DAS PRETAS";
+    turnText.style.color = isWhite ? "#fff" : "#aaa";
 }
 
 // --- 4. IA INTELIGENTE (MINIMAX) ---
-
-const pieceWeights = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
-
+const weights = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
 function evaluateBoard(g) {
     let total = 0;
-    const board = g.board();
-    for (let i = 0; i < 8; i++) {
-        for (let j = 0; j < 8; j++) {
-            const p = board[i][j];
-            if (p) {
-                let val = pieceWeights[p.type];
-                total += (p.color === 'w' ? val : -val);
-            }
-        }
-    }
+    g.board().forEach(row => row.forEach(p => {
+        if (p) total += (p.color === 'w' ? weights[p.type] : -weights[p.type]);
+    }));
     return total;
 }
 
@@ -202,61 +172,33 @@ function minimax(g, depth, alpha, beta, isMax) {
 function playAiTurn() {
     if (game.game_over()) return;
     isAiThinking = true;
-    if(turnText) turnText.innerText = "PC A PENSAR...";
-
+    turnText.innerText = "PC A PENSAR...";
     setTimeout(() => {
         const moves = game.moves();
         let bestMove = null;
         let bestValue = -Infinity;
-
-        const diffSelect = document.getElementById('difficulty-level');
-        const depth = (diffSelect && diffSelect.value === 'hard') ? 3 : 2; 
-
+        const depth = document.getElementById('difficulty-level').value === 'hard' ? 3 : 2;
         for (const m of moves) {
             game.move(m);
             const val = minimax(game, depth - 1, -100000, 100000, false);
             game.undo();
-            if (val > bestValue) {
-                bestValue = val;
-                bestMove = m;
-            }
+            if (val > bestValue) { bestValue = val; bestMove = m; }
         }
-        
-        const moveDetails = game.move(bestMove);
-        executeAiMove(moveDetails);
+        game.move(bestMove);
+        syncBoard();
+        saveGame();
+        isAiThinking = false;
     }, 250);
 }
 
-function executeAiMove(move) {
-    if (move.captured) {
-        const targetPos = new THREE.Vector3(move.to.charCodeAt(0)-97-3.5, 0.5, 8-parseInt(move.to[1])-3.5);
-        createExplosion(targetPos, 0xffaa00);
-    }
-    syncBoard();
-    saveGame();
-    isAiThinking = false;
-}
-
-function updateEvalBar() {
-    const score = evaluateBoard(game);
-    const evalBar = document.getElementById('eval-bar');
-    const evalText = document.getElementById('eval-text');
-    if(!evalBar || !evalText) return;
-    
-    let percentage = 50 - (score / 20); 
-    percentage = Math.max(5, Math.min(95, percentage));
-    evalBar.style.height = percentage + "%";
-    evalText.innerText = (score / 100).toFixed(1);
-}
-
-// --- 5. INTERAÇÃO E EVENTOS ---
+// --- 5. INTERAÇÃO E EVENTOS (TUDO RESTAURADO) ---
 window.addEventListener('mousedown', onMouseDown);
 window.addEventListener('touchstart', (e) => onMouseDown(e.touches[0]));
 
 function onMouseDown(e) {
     if (isAiThinking || game.game_over()) return;
-    const modeSelect = document.getElementById('game-mode');
-    if (modeSelect && modeSelect.value === 'pve' && game.turn() === 'b') return;
+    const mode = document.getElementById('game-mode').value;
+    if (mode === 'pve' && game.turn() === 'b') return;
 
     mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
@@ -270,47 +212,25 @@ function onMouseDown(e) {
                          tiles.find(t => t.userData.x === obj.parent.userData.gridX && t.userData.z === obj.parent.userData.gridZ) : null;
 
         if (clickedTile) {
-            const x = clickedTile.userData.x;
-            const z = clickedTile.userData.z;
-            const square = toAlgebra(x, z);
-            const pieceOnSquare = pieces.find(p => p.userData.gridX === x && p.userData.gridZ === z);
+            const square = toAlgebra(clickedTile.userData.x, clickedTile.userData.z);
+            const pieceOnSquare = pieces.find(p => p.userData.gridX === clickedTile.userData.x && p.userData.gridZ === clickedTile.userData.z);
 
             if (selectedPiece) {
                 const from = toAlgebra(selectedPiece.userData.gridX, selectedPiece.userData.gridZ);
                 const move = game.move({ from, to: square, promotion: 'q' });
                 if (move) {
                     if (move.captured) createExplosion(clickedTile.position, 0xff0000);
-                    deselectPiece(selectedPiece);
                     selectedPiece = null;
                     syncBoard();
                     saveGame();
-                    if (modeSelect && modeSelect.value === 'pve') playAiTurn();
-                } else {
-                    deselectPiece(selectedPiece);
-                    selectedPiece = null;
-                }
+                    if (mode === 'pve') playAiTurn();
+                } else { selectedPiece = null; syncBoard(); }
             } else if (pieceOnSquare && pieceOnSquare.userData.team === game.turn()) {
                 selectedPiece = pieceOnSquare;
-                selectPiece(selectedPiece);
+                pieceOnSquare.traverse(n => { if(n.isMesh) n.material.emissive.setHex(0x004444); });
             }
         }
     }
-}
-
-function selectPiece(p) {
-    p.traverse(n => { if(n.isMesh) n.material.emissive.setHex(0x004444); });
-}
-
-function deselectPiece(p) {
-    if(p) p.traverse(n => { if(n.isMesh) n.material.emissive.setHex(0x000000); });
-}
-
-function onWindowResize() {
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.position.set(0, (camera.aspect < 1 ? 16 : 12), (camera.aspect < 1 ? 10 : 12));
-    camera.lookAt(0,0,0);
-    camera.updateProjectionMatrix();
 }
 
 function createExplosion(pos, color) {
@@ -329,38 +249,27 @@ function animate() {
     particles.forEach((p, i) => {
         p.mesh.position.add(p.vel);
         p.life -= 0.03;
-        p.mesh.material.transparent = true;
         p.mesh.material.opacity = p.life;
+        p.mesh.material.transparent = true;
         if (p.life <= 0) { scene.remove(p.mesh); particles.splice(i, 1); }
     });
     renderer.render(scene, camera);
 }
 
-// INICIALIZAÇÃO E BOTÕES
+// BOTÕES E INICIALIZAÇÃO
+window.addEventListener('resize', () => {
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+});
+
+document.getElementById('reset-button').addEventListener('click', resetGame);
+document.getElementById('update-button').addEventListener('click', () => {
+    document.getElementById('update-button').innerText = "A atualizar...";
+    window.location.reload(true);
+});
+
 createBoard();
 loadGame();
 if (pieces.length === 0) resetGame();
-onWindowResize();
 animate();
-
-window.addEventListener('resize', onWindowResize);
-
-// Conexão dos botões (IDs originais do seu HTML)
-const resetBtn = document.getElementById('reset-button');
-if(resetBtn) resetBtn.addEventListener('click', resetGame);
-
-const updateBtn = document.getElementById('update-button');
-if(updateBtn) {
-    updateBtn.addEventListener('click', () => {
-        updateBtn.innerText = "A atualizar...";
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(registrations => {
-                for (let registration of registrations) registration.unregister();
-                caches.keys().then(keys => Promise.all(keys.map(key => caches.delete(key))));
-                setTimeout(() => window.location.reload(true), 500);
-            });
-        } else {
-            window.location.reload(true);
-        }
-    });
-}
