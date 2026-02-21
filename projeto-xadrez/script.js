@@ -52,7 +52,7 @@ function createExplosion(pos, color) {
     }
 }
 
- function syncBoard() {
+  function syncBoard() {
     const board = game.board();
     const newPositions = [];
 
@@ -66,29 +66,39 @@ function createExplosion(pos, color) {
         }
     }
 
-    // 2. Identifica e anima o movimento (antes de remover as capturadas)
+    // 2. Identifica e anima APENAS a peça que se moveu (Correção do efeito de grupo)
     pieces.forEach(p => {
-        // Procura se esta peça específica ainda existe em QUALQUER lugar do novo tabuleiro
-        const match = newPositions.find(pos => 
+        // Procuramos se existe uma peça EXATAMENTE na posição onde este objeto 3D estava
+        const isStillThere = newPositions.find(pos => 
+            pos.x === p.userData.gridX && 
+            pos.z === p.userData.gridZ && 
             pos.type === p.userData.type && 
-            pos.team === p.userData.team && 
-            (pos.x !== p.userData.gridX || pos.z !== p.userData.gridZ)
+            pos.team === p.userData.team
         );
 
-        // Se ela mudou de casa, inicia animação
-        if (match) {
-            animations.push({
-                obj: p,
-                startPos: p.position.clone(),
-                targetPos: new THREE.Vector3(match.x - 3.5, 0.1, match.z - 3.5),
-                alpha: 0
-            });
-            p.userData.gridX = match.x;
-            p.userData.gridZ = match.z;
+        // Se a peça NÃO está mais na casa antiga, vamos ver para onde ela foi
+        if (!isStillThere) {
+            const match = newPositions.find(pos => 
+                pos.type === p.userData.type && 
+                pos.team === p.userData.team && 
+                // Garante que não pegamos uma peça que já tem um objeto 3D associado noutra casa
+                !pieces.some(otherP => otherP !== p && otherP.userData.gridX === pos.x && otherP.userData.gridZ === pos.z)
+            );
+
+            if (match) {
+                animations.push({
+                    obj: p,
+                    startPos: p.position.clone(),
+                    targetPos: new THREE.Vector3(match.x - 3.5, 0.1, match.z - 3.5),
+                    alpha: 0
+                });
+                p.userData.gridX = match.x;
+                p.userData.gridZ = match.z;
+            }
         }
     });
 
-     // 3. Remove as peças capturadas e GERA EXPLOSÃO
+    // 3. Remove as peças capturadas e gera explosão
     for (let i = pieces.length - 1; i >= 0; i--) {
         const p = pieces[i];
         const stillExists = newPositions.some(pos => 
@@ -99,16 +109,14 @@ function createExplosion(pos, color) {
         );
         
         if (!stillExists) {
-            // Se a peça sumiu, criamos a explosão na posição dela antes de remover
             const particleColor = p.userData.team === 'w' ? 0xffffff : 0x333333;
             createExplosion(p.position, particleColor);
-            
             scene.remove(p);
             pieces.splice(i, 1);
         }
     }
 
-    // 4. Cria peças novas (como promoções de peão)
+    // 4. Cria peças novas (Promoções ou início)
     newPositions.forEach(pos => {
         const pieceExists = pieces.some(p => p.userData.gridX === pos.x && p.userData.gridZ === pos.z);
         if (!pieceExists) {
