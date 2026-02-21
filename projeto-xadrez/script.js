@@ -25,6 +25,8 @@ const turnText = document.getElementById('turn-indicator');
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
+let animations = []; // Lista para controlar as peças que estão deslizando
+
 // --- 2. AUXILIARES ---
 function toAlgebraic(x, z) {
     const col = String.fromCharCode(97 + x);
@@ -32,19 +34,57 @@ function toAlgebraic(x, z) {
     return col + row;
 }
 
-function syncBoard() {
-    pieces.forEach(p => scene.remove(p));
-    pieces.length = 0;
+ function syncBoard() {
     const board = game.board();
-    for (let i = 0; i < 8; i++) {
-        for (let j = 0; j < 8; j++) {
+    const newPositions = [];
+
+    // Mapeia onde as peças deveriam estar
+    for (let j = 0; j < 8; j++) {
+        for (let i = 0; i < 8; i++) {
             const p = board[j][i];
             if (p) {
-                const color = p.color === 'w' ? 0xffffff : 0x333333;
-                createPiece(i, j, color, p.type, p.color);
+                newPositions.push({ x: i, z: j, type: p.type, team: p.color });
             }
         }
     }
+
+    // Remove peças que foram capturadas
+    for (let i = pieces.length - 1; i >= 0; i--) {
+        const p = pieces[i];
+        const exists = newPositions.find(pos => pos.x === p.userData.gridX && pos.z === p.userData.gridZ && pos.type === p.userData.type);
+        if (!exists) {
+            scene.remove(p);
+            pieces.splice(i, 1);
+        }
+    }
+
+    // Atualiza ou cria novas peças com animação
+    newPositions.forEach(pos => {
+        let piece = pieces.find(p => p.userData.gridX === pos.x && p.userData.gridZ === pos.z && p.userData.type === pos.type);
+        
+        if (!piece) {
+            // Se a peça mudou de lugar, ela não será encontrada na casa antiga
+            // Procuramos a peça do mesmo tipo/time que "sumiu" da posição anterior
+            piece = pieces.find(p => p.userData.type === pos.type && p.userData.team === pos.team && 
+                                    !newPositions.find(np => np.x === p.userData.gridX && np.z === p.userData.gridZ && np.type === p.userData.type));
+            
+            if (piece) {
+                // Inicia o deslize suave para a nova casa
+                animations.push({
+                    obj: piece,
+                    targetPos: new THREE.Vector3(pos.x - 3.5, 0.1, pos.z - 3.5),
+                    alpha: 0
+                });
+                piece.userData.gridX = pos.x;
+                piece.userData.gridZ = pos.z;
+            } else {
+                // Se é uma peça nova (promoção ou início), cria do zero
+                const color = pos.team === 'w' ? 0xffffff : 0x333333;
+                createPiece(pos.x, pos.z, color, pos.type, pos.team);
+            }
+        }
+    });
+
     const isWhite = game.turn() === 'w';
     turnText.innerText = isWhite ? "VEZ DAS BRANCAS" : "VEZ DAS PRETAS";
     turnText.style.color = isWhite ? "#fff" : "#aaa";
@@ -198,8 +238,25 @@ function createBoard() {
     }
 }
 
-function animate() {
+ function animate() {
     requestAnimationFrame(animate);
+
+    // Processa os deslizes suaves (Lerp)
+    animations.forEach((anim, index) => {
+        anim.alpha += 0.08; // Velocidade da suavidade (menor = mais lento)
+        anim.obj.position.lerp(anim.targetPos, anim.alpha);
+        
+        if (anim.alpha >= 1) {
+            anim.obj.position.copy(anim.targetPos);
+            animations.splice(index, 1);
+        }
+    });
+
+    // Mantém o efeito de levitação da peça selecionada
+    if (selectedPiece) {
+        selectedPiece.position.y = 0.2 + Math.sin(Date.now() * 0.008) * 0.1;
+    }
+
     renderer.render(scene, camera);
 }
 
