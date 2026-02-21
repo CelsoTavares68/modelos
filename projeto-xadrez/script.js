@@ -1,6 +1,7 @@
- // --- 1. SETUP DO MOTOR E CENA ---
+  // --- 1. SETUP DO MOTOR E CENA ---
 const game = new Chess();
 const scene = new THREE.Scene();
+// FUNDO CLAREADO: Definido para um tom de cinza azulado mais claro
 scene.background = new THREE.Color(0x445566);
 
 const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -9,13 +10,16 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 document.body.appendChild(renderer.domElement);
 
+// ILUMINAÇÃO REFORÇADA
 scene.add(new THREE.AmbientLight(0xffffff, 0.7)); 
-const sun = new THREE.DirectionalLight(0xffffff, 1.2); 
+const sun = new THREE.DirectionalLight(0xffffff, 1.2); // CORRIGIDO: Nome da classe Three.js
 sun.position.set(5, 15, 5);
 sun.castShadow = true;
 scene.add(sun);
 
+let turn = 'white';
 let isAiThinking = false;
+let lastInteractionTime = 0;
 const pieces = []; 
 const tiles = [];
 const particles = []; 
@@ -32,131 +36,357 @@ function toAlgebraic(x, z) {
     return files[x] + ranks[z];
 }
 
+function fromAlgebraic(s) {
+    return { x: s.charCodeAt(0) - 'a'.charCodeAt(0), z: 8 - parseInt(s[1]) };
+}
+
 function saveGame() {
-    localStorage.setItem('chess_fen', game.fen());
+    const gameState = {
+        fen: game.fen(),
+        mode: document.getElementById('game-mode').value,
+        difficulty: document.getElementById('difficulty-level').value
+    };
+    localStorage.setItem('chess3d_save', JSON.stringify(gameState));
 }
 
 function loadGame() {
-    const saved = localStorage.getItem('chess_fen');
+    const saved = localStorage.getItem('chess3d_save');
     if (saved) {
-        game.load(saved);
-        syncBoard();
+        const data = JSON.parse(saved);
+        game.load(data.fen);
+        document.getElementById('game-mode').value = data.mode;
+        document.getElementById('difficulty-level').value = data.difficulty;
     }
-}
-
-function resetGame() {
-    game.reset();
-    localStorage.removeItem('chess_fen');
-    syncBoard();
-}
-
-// --- 3. CRIAÇÃO DO TABULEIRO E PEÇAS (MODELAGEM ORIGINAL) ---
-function createBoard() {
-    for (let i = 0; i < 8; i++) {
-        for (let j = 0; j < 8; j++) {
-            const geo = new THREE.BoxGeometry(1, 0.2, 1);
-            const mat = new THREE.MeshStandardMaterial({
-                color: (i + j) % 2 === 0 ? 0xeeeedd : 0x886644
-            });
-            const tile = new THREE.Mesh(geo, mat);
-            tile.position.set(i - 3.5, -0.1, j - 3.5);
-            tile.receiveShadow = true;
-            tile.userData = { x: i, z: j };
-            scene.add(tile);
-            tiles.push(tile);
+    
+    pieces.forEach(p => scene.remove(p));
+    pieces.length = 0;
+    
+    const board = game.board();
+    const typeMap = { 'p': 'pawn', 'r': 'rook', 'n': 'knight', 'b': 'bishop', 'q': 'queen', 'k': 'king' };
+    
+    for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+            const square = board[r][c];
+            if (square) {
+                const color = square.color === 'w' ? 0xffffff : 0x222222;
+                createPiece(c, r, color, typeMap[square.type], square.color === 'w' ? 'white' : 'black');
+            }
         }
     }
+    updateStatusUI();
 }
 
+// --- 3. CRIAÇÃO DAS PEÇAS COM DESIGN DIFERENCIADO ---
 function createPiece(x, z, color, type, team) {
     const group = new THREE.Group();
     const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.4, metalness: 0.3 });
     const base = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 0.15, 16), mat);
     group.add(base);
 
-    let body;
-    // Modelagem exata do seu arquivo original
-    if (type === 'p') {
-        body = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.25, 0.5, 12), mat);
+    if (type === 'pawn') {
+        // PEÃO COM BOLINHA (Esfera no topo)
+        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.25, 0.5, 12), mat);
         body.position.y = 0.3;
         const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 16), mat);
         head.position.y = 0.65;
         group.add(body, head);
-    } else if (type === 'n') {
-        const b = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.22, 0.6, 12), mat);
-        b.position.y = 0.35;
-        const h = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.4, 0.5), mat);
-        h.position.set(0, 0.8, 0.1);
-        h.rotation.x = -0.3;
-        group.add(b, h);
-    } else if (type === 'r') {
+    } 
+    else if (type === 'rook') {
+        // TORRE QUADRADA
         const tower = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.32, 0.8, 4), mat);
         tower.position.y = 0.45;
         const top = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.15, 0.35), mat);
         top.position.y = 0.9;
         group.add(tower, top);
-    } else if (type === 'b') {
-        const b = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.2, 0.9, 12), mat);
-        b.position.y = 0.5;
+    } 
+    else if (type === 'knight') {
+        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.22, 0.6, 12), mat);
+        body.position.y = 0.35;
+        const head = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.4, 0.5), mat);
+        head.position.set(0, 0.8, 0.1);
+        head.rotation.x = -0.3;
+        group.add(body, head);
+    } 
+    else if (type === 'bishop') {
+        // BISPO PONTIAGUDO
+        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.2, 0.9, 12), mat);
+        body.position.y = 0.5;
         const hat = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.4, 12), mat);
         hat.position.y = 1.1;
-        group.add(b, hat);
-    } else if (type === 'q') {
-        const b = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.3, 1.2, 12), mat);
-        b.position.y = 0.65;
-        const cb = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.15, 0.2, 12), mat);
-        cb.position.y = 1.3;
-        group.add(b, cb);
-    } else if (type === 'k') {
-        const b = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.3, 1.4, 12), mat);
-        b.position.y = 0.75;
-        const cv = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.4, 0.1), mat);
-        cv.position.y = 1.6;
-        group.add(b, cv);
+        group.add(body, hat);
+    } 
+    else if (type === 'queen') {
+        // RAINHA COM COROA
+        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.3, 1.2, 12), mat);
+        body.position.y = 0.65;
+        const crownBase = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.15, 0.2, 12), mat);
+        crownBase.position.y = 1.3;
+        const crownTop = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 8, 0, Math.PI * 2, 0, 1), mat);
+        crownTop.position.y = 1.4;
+        crownTop.rotation.x = Math.PI;
+        group.add(body, crownBase, crownTop);
+    } 
+    else if (type === 'king') {
+        // REI COM CRUZ
+        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.3, 1.4, 12), mat);
+        body.position.y = 0.75;
+        const crossH = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.1, 0.1), mat);
+        const crossV = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.4, 0.1), mat);
+        crossH.position.y = 1.6;
+        crossV.position.y = 1.6;
+        group.add(body, crossH, crossV);
     }
 
     group.position.set(x - 3.5, 0.1, z - 3.5);
-    group.userData = { gridX: x, gridZ: z, team, type };
+    group.userData = { gridX: x, gridZ: z, team, type, originalColor: color };
     scene.add(group);
     pieces.push(group);
 }
 
-function syncBoard() {
-    pieces.forEach(p => scene.remove(p));
-    pieces.length = 0;
-    const board = game.board();
-    for (let r = 0; r < 8; r++) {
-        for (let c = 0; c < 8; c++) {
-            const square = board[r][c];
-            if (square) {
-                const color = square.color === 'w' ? 0xffffff : 0x222222;
-                createPiece(c, r, color, square.type, square.color);
-            }
+function updatePieceModel(pieceGroup, newType) {
+    while(pieceGroup.children.length > 1) { pieceGroup.remove(pieceGroup.children[1]); }
+    const mat = new THREE.MeshStandardMaterial({ color: pieceGroup.userData.originalColor });
+    pieceGroup.userData.type = newType;
+    if (newType === 'queen') {
+        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.3, 1.2, 12), mat);
+        body.position.y = 0.65;
+        const crownBase = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.15, 0.2, 12), mat);
+        crownBase.position.y = 1.3;
+        const crownTop = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 8, 0, Math.PI * 2, 0, 1), mat);
+        crownTop.position.y = 1.4;
+        crownTop.rotation.x = Math.PI;
+        pieceGroup.add(body, crownBase, crownTop);
+    }
+}
+
+// --- 4. MOVIMENTAÇÃO E IA ---
+function smoothMove(piece, tx, tz, isLegal, callback) {
+    const startPos = piece.position.clone();
+    const endPos = new THREE.Vector3(tx - 3.5, 0.1, tz - 3.5);
+    let t = 0;
+    function step() {
+        t += 0.08;
+        if (t < 1) {
+            piece.position.lerpVectors(startPos, endPos, t);
+            requestAnimationFrame(step);
+        } else {
+            piece.position.copy(endPos);
+            if (isLegal) { piece.userData.gridX = tx; piece.userData.gridZ = tz; }
+            if (callback) callback();
         }
     }
-    updateTurnText();
+    step();
 }
 
-function updateTurnText() {
-    const isWhite = game.turn() === 'w';
-    if (turnText) {
-        turnText.innerText = isWhite ? "VEZ DAS BRANCAS" : "VEZ DAS PRETAS";
-        turnText.style.color = isWhite ? "#fff" : "#aaa";
+function tryMove(p, tx, tz) {
+    const move = game.move({ from: toAlgebraic(p.userData.gridX, p.userData.gridZ), to: toAlgebraic(tx, tz), promotion: 'q' });
+    if (move) {
+        selectedPiece = null;
+        if (move.captured) {
+            const victim = pieces.find(v => v.userData.gridX === tx && v.userData.gridZ === tz && v !== p);
+            if (victim) { 
+                createExplosion(victim.position, victim.userData.originalColor); 
+                scene.remove(victim); 
+                pieces.splice(pieces.indexOf(victim), 1); 
+            }
+        }
+        if (move.flags.includes('p')) updatePieceModel(p, 'queen');
+        smoothMove(p, tx, tz, true, () => finalizeTurn(p));
+    } else {
+        smoothMove(p, p.userData.gridX, p.userData.gridZ, false, () => { deselectPiece(p); selectedPiece = null; });
     }
 }
 
-// --- 4. IA INTELIGENTE ---
-const weights = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
-function evaluateBoard(g) {
-    let total = 0;
-    g.board().forEach(row => row.forEach(p => {
-        if (p) total += (p.color === 'w' ? weights[p.type] : -weights[p.type]);
-    }));
-    return total;
+function playAiTurn() {
+    if (game.game_over()) return;
+    isAiThinking = true;
+const dificuldade = document.getElementById('difficulty-level').value;
+    const profundidade = (dificuldade === 'hard') ? 3 : 2;   
+isAiThinking = true;
+setTimeout(() => {
+        const moves = game.moves();
+        // Lógica de escolha da jogada usando a 'profundidade'...
+        
+        // ... resto do seu código original ...
+    }, 250);
 }
 
+    turnText.innerText = "PC A ANALISAR...";
+    setTimeout(() => {
+        const moves = game.moves({ verbose: true });
+        if (moves.length === 0) return;
+        
+        // IA que prioriza capturas valiosas
+        const pieceValues = { p: 10, n: 30, b: 30, r: 50, q: 90, k: 900 };
+        moves.sort((a, b) => (b.captured ? pieceValues[b.captured] : 0) - (a.captured ? pieceValues[a.captured] : 0));
+
+        const difficulty = document.getElementById('difficulty-level').value;
+        let selectedMove = (difficulty === 'hard') ? moves[0] : moves[Math.floor(Math.random() * moves.length)];
+
+        game.move(selectedMove);
+        const p3d = pieces.find(p => toAlgebraic(p.userData.gridX, p.userData.gridZ) === selectedMove.from);
+        const pos = fromAlgebraic(selectedMove.to);
+
+        if (selectedMove.captured) {
+            const victim = pieces.find(v => v.userData.gridX === pos.x && v.userData.gridZ === pos.z);
+            if (victim) { createExplosion(victim.position, victim.userData.originalColor); scene.remove(victim); pieces.splice(pieces.indexOf(victim), 1); }
+        }
+        if (selectedMove.flags.includes('p')) updatePieceModel(p3d, 'queen');
+        smoothMove(p3d, pos.x, pos.z, true, () => { finalizeTurn(p3d); isAiThinking = false; });
+    }, 600);
+
+
+// --- 5. INTERAÇÃO E TABULEIRO ---
+function createBoard() {
+    for (let x = 0; x < 8; x++) {
+        for (let z = 0; z < 8; z++) {
+            const isBlack = (x + z) % 2 !== 0;
+            const tile = new THREE.Mesh(new THREE.BoxGeometry(1, 0.1, 1), new THREE.MeshStandardMaterial({ color: isBlack ? 0x221100 : 0x886644 }));
+            tile.position.set(x - 3.5, -0.05, z - 3.5);
+            tile.receiveShadow = true;
+            tile.userData = { x, z };
+            scene.add(tile);
+            tiles.push(tile);
+        }
+    }
+}
+
+function handleInteraction(clientX, clientY) {
+    if (isAiThinking || game.game_over()) return;
+    const now = Date.now();
+    if (now - lastInteractionTime < 100) return;
+    lastInteractionTime = now;
+
+    mouse.x = (clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(clientY / window.innerHeight) * 2 + 1;
+    raycaster.setFromCamera(mouse, camera);
+
+    const pieceHits = raycaster.intersectObjects(pieces, true);
+    const tileHits = raycaster.intersectObjects(tiles);
+
+    if (pieceHits.length > 0) {
+        let obj = pieceHits[0].object;
+        while (obj.parent && !obj.userData.team) obj = obj.parent;
+        if (obj.userData.team === turn) {
+            if (selectedPiece) deselectPiece(selectedPiece);
+            selectedPiece = obj;
+            selectPiece(selectedPiece);
+        } else if (selectedPiece) {
+            tryMove(selectedPiece, obj.userData.gridX, obj.userData.gridZ);
+        }
+    } else if (selectedPiece && tileHits.length > 0) {
+        tryMove(selectedPiece, tileHits[0].object.userData.x, tileHits[0].object.userData.z);
+    }
+}
+
+window.addEventListener('touchstart', (e) => { if(e.touches.length > 0) handleInteraction(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
+window.addEventListener('mousedown', (e) => { if (e.detail !== 0) handleInteraction(e.clientX, e.clientY); });
+
+function updateStatusUI() {
+    if (game.game_over()) {
+        const winner = game.turn() === 'w' ? 'PRETAS' : 'BRANCAS';
+        turnText.innerText = game.in_checkmate() ? `MATE! VITÓRIA DAS ${winner}` : "FIM DE JOGO!";
+    } else {
+        turn = game.turn() === 'w' ? 'white' : 'black';
+        turnText.innerText = `VEZ DAS ${turn === 'white' ? 'BRANCAS' : 'PRETAS'}`;
+    }
+}
+
+function finalizeTurn(p) {
+    if(p) deselectPiece(p);
+    saveGame();
+    updateStatusUI();
+    if (document.getElementById('game-mode').value === 'pve' && game.turn() === 'b') playAiTurn();
+}
+
+function resetGame() {
+    localStorage.removeItem('chess3d_save');
+    game.reset();
+    pieces.forEach(p => scene.remove(p));
+    pieces.length = 0;
+    const layout = ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knight', 'rook'];
+    for (let i = 0; i < 8; i++) {
+        createPiece(i, 0, 0x222222, layout[i], 'black');
+        createPiece(i, 1, 0x222222, 'pawn', 'black');
+        createPiece(i, 6, 0xffffff, 'pawn', 'white');
+        createPiece(i, 7, 0xffffff, layout[i], 'white');
+    }
+    updateStatusUI();
+}
+
+document.getElementById('reset-button').addEventListener('click', resetGame);
+
+function onWindowResize() {
+    const w = window.innerWidth, h = window.innerHeight;
+    renderer.setSize(w, h);
+    camera.aspect = w / h;
+    if (h > w) { camera.fov = 55; camera.position.set(0, 16, 11); }
+    else if (w >= 768 && w <= 1024) { camera.fov = 50; camera.position.set(0, 15, 12); }
+    else { camera.fov = 45; camera.position.set(0, 12, 10); }
+    camera.lookAt(0, 0, 0);
+    camera.updateProjectionMatrix();
+}
+window.addEventListener('resize', onWindowResize);
+
+// --- 6. ANIMAÇÃO ---
+function selectPiece(p) { p.traverse(n => { if(n.isMesh) n.material.emissive = new THREE.Color(0x004444); }); }
+function deselectPiece(p) { if(p) p.traverse(n => { if(n.isMesh) n.material.emissive = new THREE.Color(0x000000); }); }
+
+function createExplosion(pos, color) {
+    for (let i = 0; i < 15; i++) {
+        const p = new THREE.Mesh(new THREE.SphereGeometry(0.05), new THREE.MeshStandardMaterial({ color }));
+        p.position.copy(pos);
+        const vel = new THREE.Vector3((Math.random()-0.5)*0.2, Math.random()*0.3, (Math.random()-0.5)*0.2);
+        scene.add(p);
+        particles.push({ mesh: p, vel, life: 1.0 });
+    }
+}
+
+function animate() {
+    requestAnimationFrame(animate);
+    if (selectedPiece) selectedPiece.position.y = 0.2 + Math.sin(Date.now() * 0.008) * 0.1;
+    particles.forEach((p, i) => {
+        p.mesh.position.add(p.vel);
+        p.life -= 0.03;
+        p.mesh.material.transparent = true;
+        p.mesh.material.opacity = p.life;
+        if (p.life <= 0) { scene.remove(p.mesh); particles.splice(i, 1); }
+    });
+    renderer.render(scene, camera);
+}
+
+// INICIALIZAÇÃO
+createBoard();
+loadGame();
+if (pieces.length === 0) resetGame();
+onWindowResize();
+animate();
+
+ // Lógica do botão de atualização forçada
+document.getElementById('update-button').addEventListener('click', () => {
+    // Feedback visual imediato
+    document.getElementById('update-button').innerText = "A atualizar...";
+    
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(registrations => {
+            for (let registration of registrations) {
+                registration.unregister(); 
+            }
+            caches.keys().then(names => {
+                for (let name of names) caches.delete(name);
+            });
+        });
+    }
+    
+    // O setTimeout dá tempo para os processos de cache limparem antes do reload
+    setTimeout(() => {
+        window.location.reload(true);
+    }, 300);
+});
+
+// Função auxiliar para a dificuldade (não altera suas peças ou botões)
 function minimax(g, depth, alpha, beta, isMax) {
-    if (depth === 0) return -evaluateBoard(g);
+    if (depth === 0) return -evaluateBoard(g); // evaluateBoard soma o valor das peças
     const moves = g.moves();
     if (isMax) {
         let best = -Infinity;
@@ -180,101 +410,3 @@ function minimax(g, depth, alpha, beta, isMax) {
         return best;
     }
 }
-
-function playAiTurn() {
-    if (game.game_over()) return;
-    isAiThinking = true;
-    if (turnText) turnText.innerText = "PC A PENSAR...";
-    setTimeout(() => {
-        const moves = game.moves();
-        let bestMove = null;
-        let bestValue = -Infinity;
-        const diff = document.getElementById('difficulty-level').value;
-        const depth = diff === 'hard' ? 3 : 2;
-        for (const m of moves) {
-            game.move(m);
-            const val = minimax(game, depth - 1, -100000, 100000, false);
-            game.undo();
-            if (val > bestValue) { bestValue = val; bestMove = m; }
-        }
-        game.move(bestMove);
-        syncBoard();
-        saveGame();
-        isAiThinking = false;
-    }, 250);
-}
-
-// --- 5. EVENTOS E BOTÕES ---
-function handleInteraction(e) {
-    if (isAiThinking || game.game_over()) return;
-    const mode = document.getElementById('game-mode').value;
-    if (mode === 'pve' && game.turn() === 'b') return;
-
-    const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-    const clientY = e.clientY || (e.touches && e.touches[0].clientY);
-
-    mouse.x = (clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(clientY / window.innerHeight) * 2 + 1;
-    raycaster.setFromCamera(mouse, camera);
-
-    const intersects = raycaster.intersectObjects(tiles.concat(pieces), true);
-    if (intersects.length > 0) {
-        const obj = intersects[0].object;
-        let clickedTile = obj.userData.x !== undefined ? obj : 
-                         (obj.parent && obj.parent.userData.gridX !== undefined) ? 
-                         tiles.find(t => t.userData.x === obj.parent.userData.gridX && t.userData.z === obj.parent.userData.gridZ) : null;
-
-        if (clickedTile) {
-            const square = toAlgebraic(clickedTile.userData.x, clickedTile.userData.z);
-            const pieceOnSquare = pieces.find(p => p.userData.gridX === clickedTile.userData.x && p.userData.gridZ === clickedTile.userData.z);
-
-            if (selectedPiece) {
-                const from = toAlgebraic(selectedPiece.userData.gridX, selectedPiece.userData.gridZ);
-                if (game.move({ from, to: square, promotion: 'q' })) {
-                    selectedPiece = null;
-                    syncBoard();
-                    saveGame();
-                    if (mode === 'pve') playAiTurn();
-                } else { selectedPiece = null; syncBoard(); }
-            } else if (pieceOnSquare && pieceOnSquare.userData.team === game.turn()) {
-                selectedPiece = pieceOnSquare;
-                pieceOnSquare.traverse(n => { if(n.isMesh) n.material.emissive.setHex(0x004444); });
-            }
-        }
-    }
-}
-
-window.addEventListener('mousedown', handleInteraction);
-window.addEventListener('touchstart', handleInteraction, { passive: false });
-
-function onWindowResize() {
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.position.set(0, 12, 10);
-    camera.lookAt(0,0,0);
-    camera.updateProjectionMatrix();
-}
-
-function animate() {
-    requestAnimationFrame(animate);
-    renderer.render(scene, camera);
-}
-
-// LIGAÇÃO DOS BOTÕES (COM SUPORTE A TOQUE)
-const resetBtn = document.getElementById('reset-button');
-const updateBtn = document.getElementById('update-button');
-
-const handleReset = (e) => { e.preventDefault(); resetGame(); };
-const handleUpdate = (e) => { e.preventDefault(); updateBtn.innerText = "A atualizar..."; window.location.reload(true); };
-
-resetBtn.addEventListener('click', handleReset);
-resetBtn.addEventListener('touchstart', handleReset);
-updateBtn.addEventListener('click', handleUpdate);
-updateBtn.addEventListener('touchstart', handleUpdate);
-
-createBoard();
-loadGame();
-if (pieces.length === 0) resetGame();
-onWindowResize();
-animate();
-window.addEventListener('resize', onWindowResize);

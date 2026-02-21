@@ -30,25 +30,6 @@ body {
     box-shadow: 0 4px 15px rgba(0,0,0,0.5);
 }
 
-canvas {
-    display: block;
-    width: 100vw !important;
-    height: 100vh !important;
-    touch-action: none; /* Impede zoom acidental ao mover peças */
-}
-
-#ui-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
-
 #turn-indicator {
     font-weight: bold;
     color: #f0d9b5; /* Cor clássica de peças de xadrez */
@@ -143,41 +124,6 @@ select:hover {
     filter: brightness(0.9);
 }
 
-  #eval-container {
-    pointer-events: none; /* Importante para o celular */
-    position: absolute;
-    left: 10px;
-    top: 55%;
-    transform: translateY(-50%);
-    width: 12px;
-    height: 60vh;
-    background: #222;
-    border: 1px solid #864;
-    border-radius: 3px;
-    z-index: 50;
-    display: flex;
-    flex-direction: column-reverse;
-}
-
-#eval-bar {
-    width: 100%;
-    height: 50%;
-    background: #fff;
-    transition: height 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-#eval-text {
-    position: absolute;
-    width: 40px;
-    left: -14px;
-    text-align: center;
-    bottom: -25px;
-    color: #fff;
-    font-size: 12px;
-    font-family: 'Cinzel', serif;
-    text-shadow: 1px 1px 2px #000;
-}
-
 /* --- 5. ADAPTAÇÃO PARA TABLETS (Ecrãs Médios) --- */
 @media only screen and (min-width: 768px) and (max-width: 1024px) {
     #status-panel {
@@ -212,6 +158,50 @@ select:hover {
     }
 }
 
- @media (max-height: 500px) {
-    #eval-container { height: 40vh; left: 5px; }
+/* --- 6. ADAPTAÇÃO PARA TELEMÓVEIS (Ecrãs Pequenos) --- */
+  @media (max-width: 600px) {
+    #status-panel {
+        width: 88%;
+        padding: 8px;
+        top: 5px;
+    }
+
+    #turn-indicator {
+        font-size: 14px; /* Reduzido de 16 para 14 */
+        margin-bottom: 2px;
+    }
+
+    select {
+        font-size: 12px; /* Reduzido de 14 para 12 */
+        padding: 6px;
+    }
+
+    #reset-button {
+        width: 100%;
+        margin-top: 5px;
+    }
+
+    .btn-ui {
+        padding: 8px 12px;
+        font-size: 12px;
+        flex-grow: 1; /* Faz os botões dividirem o espaço no telemóvel */
+        margin: 2px;
+    }
+}
+
+/* --- 7. BOTÃO DE INSTALAR (PWA) --- */
+#install-button {
+    display: none; /* Fica oculto até o navegador disparar o evento de instalação */
+    position: absolute;
+    bottom: 80px;
+    right: 20px;
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 50px;
+    cursor: pointer;
+    font-weight: bold;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    z-index: 200;
 }
