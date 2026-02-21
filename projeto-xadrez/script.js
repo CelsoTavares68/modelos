@@ -1,7 +1,6 @@
  // --- 1. SETUP DO MOTOR E CENA ---
 const game = new Chess();
 const scene = new THREE.Scene();
-// FUNDO CLAREADO: Definido para um tom de cinza azulado mais claro
 scene.background = new THREE.Color(0x445566);
 
 const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -10,16 +9,13 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 document.body.appendChild(renderer.domElement);
 
-// ILUMINAÇÃO REFORÇADA
 scene.add(new THREE.AmbientLight(0xffffff, 0.7)); 
 const sun = new THREE.DirectionalLight(0xffffff, 1.2); 
 sun.position.set(5, 15, 5);
 sun.castShadow = true;
 scene.add(sun);
 
-let turn = 'white';
 let isAiThinking = false;
-let lastInteractionTime = 0;
 const pieces = []; 
 const tiles = [];
 const particles = []; 
@@ -34,12 +30,6 @@ function toAlgebraic(x, z) {
     const col = String.fromCharCode(97 + x);
     const row = 8 - z;
     return col + row;
-}
-
-function fromAlgebraic(square) {
-    const col = square.charCodeAt(0) - 97;
-    const row = 8 - parseInt(square[1]);
-    return { x: col, z: row };
 }
 
 function saveGame() {
@@ -60,7 +50,7 @@ function resetGame() {
     syncBoard();
 }
 
-// --- 3. CRIAÇÃO DO TABULEIRO E PEÇAS ---
+// --- 3. CRIAÇÃO DO TABULEIRO E PEÇAS (MODELAGEM ORIGINAL RESTAURADA) ---
 function createBoard() {
     for (let i = 0; i < 8; i++) {
         for (let j = 0; j < 8; j++) {
@@ -80,37 +70,32 @@ function createBoard() {
 
 function createPiece(x, z, color, type, team) {
     const group = new THREE.Group();
-    const mat = new THREE.MeshStandardMaterial({ 
-        color: color,
-        roughness: 0.4,
-        metalness: 0.3
-    });
-
+    const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.4, metalness: 0.3 });
     const base = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 0.15, 16), mat);
     base.castShadow = true;
     group.add(base);
 
     let body;
-    if (type === 'p') {
+    if (type === 'p') { // PEÃO ORIGINAL
         body = new THREE.Mesh(new THREE.SphereGeometry(0.25, 12, 12), mat);
         body.position.y = 0.4;
-    } else if (type === 'r') {
+    } else if (type === 'r') { // TORRE ORIGINAL
         body = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.7, 0.5), mat);
         body.position.y = 0.45;
-    } else if (type === 'n') {
+    } else if (type === 'n') { // CAVALO ORIGINAL (INCLINADO)
         body = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 0.6, 12), mat);
         body.rotation.x = Math.PI / 4;
         body.position.y = 0.4;
-    } else if (type === 'b') {
+    } else if (type === 'b') { // BISPO ORIGINAL
         body = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.8, 12), mat);
         body.position.y = 0.5;
-    } else if (type === 'q') {
+    } else if (type === 'q') { // RAINHA ORIGINAL
         body = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.3, 1, 12), mat);
         body.position.y = 0.5;
         const crown = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8), mat);
         crown.position.y = 0.6;
         body.add(crown);
-    } else if (type === 'k') {
+    } else if (type === 'k') { // REI ORIGINAL
         body = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 1.1, 12), mat);
         body.position.y = 0.55;
         const cross = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.4, 0.1), mat);
@@ -121,8 +106,7 @@ function createPiece(x, z, color, type, team) {
     body.castShadow = true;
     group.add(body);
     group.position.set(x - 3.5, 0.1, z - 3.5);
-    group.userData = { gridX: x, gridZ: z, team, type, originalColor: color };
-    
+    group.userData = { gridX: x, gridZ: z, team, type };
     scene.add(group);
     pieces.push(group);
 }
@@ -145,13 +129,12 @@ function syncBoard() {
     turnText.style.color = isWhite ? "#fff" : "#aaa";
 }
 
-// --- 4. IA COM DIFICULDADE (MINIMAX) ---
-const pieceWeights = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
-
+// --- 4. IA INTELIGENTE (MINIMAX) ---
+const weights = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
 function evaluateBoard(g) {
     let total = 0;
     g.board().forEach(row => row.forEach(p => {
-        if (p) total += (p.color === 'w' ? pieceWeights[p.type] : -pieceWeights[p.type]);
+        if (p) total += (p.color === 'w' ? weights[p.type] : -weights[p.type]);
     }));
     return total;
 }
@@ -173,7 +156,7 @@ function minimax(g, depth, alpha, beta, isMax) {
         let best = Infinity;
         for (const m of moves) {
             g.move(m);
-            best = Math.min(best, minimax(g, depth - 1, alpha, beta, true));
+            best = min = Math.min(best, minimax(g, depth - 1, alpha, beta, true));
             g.undo();
             beta = Math.min(beta, best);
             if (beta <= alpha) break;
@@ -186,27 +169,19 @@ function playAiTurn() {
     if (game.game_over() || isAiThinking) return;
     isAiThinking = true;
     turnText.innerText = "PC A PENSAR...";
-
     setTimeout(() => {
         const moves = game.moves();
         if (moves.length === 0) return;
-
         const level = document.getElementById('difficulty-level').value;
         const depth = (level === 'hard') ? 3 : 2;
-
         let bestMove = null;
         let bestValue = -Infinity;
-
         for (const m of moves) {
             game.move(m);
             const val = minimax(game, depth - 1, -100000, 100000, false);
             game.undo();
-            if (val > bestValue) {
-                bestValue = val;
-                bestMove = m;
-            }
+            if (val > bestValue) { bestValue = val; bestMove = m; }
         }
-
         game.move(bestMove);
         syncBoard();
         saveGame();
@@ -214,21 +189,20 @@ function playAiTurn() {
     }, 500);
 }
 
-// --- 5. INTERAÇÃO (MOUSE E TOUCH) ---
-window.addEventListener('mousedown', onInteraction);
-window.addEventListener('touchstart', (e) => onInteraction(e.touches[0]));
-
+// --- 5. INTERAÇÃO ---
 function onInteraction(e) {
     if (isAiThinking || game.game_over()) return;
-    
     const mode = document.getElementById('game-mode').value;
     if (mode === 'pve' && game.turn() === 'b') return;
 
-    mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-    raycaster.setFromCamera(mouse, camera);
+    const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+    const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+    mouse.x = (clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(clientY / window.innerHeight) * 2 + 1;
 
+    raycaster.setFromCamera(mouse, camera);
     const intersects = raycaster.intersectObjects(tiles.concat(pieces), true);
+
     if (intersects.length > 0) {
         const obj = intersects[0].object;
         let clickedTile = obj.userData.x !== undefined ? obj : 
@@ -247,12 +221,8 @@ function onInteraction(e) {
                     selectedPiece = null;
                     syncBoard();
                     saveGame();
-                    // CHAMA A IA APÓS A JOGADA
-                    if (mode === 'pve') playAiTurn();
-                } else {
-                    selectedPiece = null;
-                    syncBoard();
-                }
+                    if (mode === 'pve') playAiTurn(); // PC JOGA LOGO APÓS VOCÊ
+                } else { selectedPiece = null; syncBoard(); }
             } else if (pieceOnSquare && pieceOnSquare.userData.team === game.turn()) {
                 selectedPiece = pieceOnSquare;
                 pieceOnSquare.traverse(n => { if(n.isMesh) n.material.emissive.setHex(0x004444); });
@@ -260,6 +230,9 @@ function onInteraction(e) {
         }
     }
 }
+
+window.addEventListener('mousedown', onInteraction);
+window.addEventListener('touchstart', onInteraction, { passive: false });
 
 function onWindowResize() {
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -292,23 +265,14 @@ function animate() {
     renderer.render(scene, camera);
 }
 
-// --- BOTÕES E INICIALIZAÇÃO ---
 document.getElementById('reset-button').addEventListener('click', resetGame);
 document.getElementById('update-button').addEventListener('click', () => {
-    document.getElementById('update-button').innerText = "A atualizar...";
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(regs => {
-            for(let r of regs) r.unregister();
-            caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
-        });
-    }
-    setTimeout(() => window.location.reload(true), 300);
+    window.location.reload(true);
 });
-
-window.addEventListener('resize', onWindowResize);
 
 createBoard();
 loadGame();
 if (pieces.length === 0) resetGame();
 onWindowResize();
 animate();
+window.addEventListener('resize', onWindowResize);
