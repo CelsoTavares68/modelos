@@ -50,7 +50,7 @@ function syncBoard() {
     turnText.style.color = isWhite ? "#fff" : "#aaa";
 }
 
-// --- 3. SUAS PEÇAS ORIGINAIS (RESTAURADAS E PROTEGIDAS) ---
+// --- 3. SUAS PEÇAS ORIGINAIS (RESTAURADAS) ---
 function createPiece(x, z, color, type, team) {
     const group = new THREE.Group();
     const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.4, metalness: 0.3 });
@@ -125,14 +125,16 @@ function getBestMove() {
     return moves[Math.floor(Math.random() * moves.length)];
 }
 
-// --- 5. INTERAÇÃO CORRIGIDA (PC + MOBILE) ---
+// --- 5. INTERAÇÃO (FIX DEFINITIVO) ---
 function onInteraction(e) {
-    // IMPORTANTE: Bloqueia zoom e scroll indesejado ao tocar no tabuleiro
-    if (e.cancelable) e.preventDefault();
+    // CORREÇÃO DOS BOTÕES: Se o clique/toque for em elementos da interface (UI), não faz nada.
+    if (e.target.closest('#ui-overlay') || e.target.tagName === 'BUTTON' || e.target.tagName === 'SELECT') {
+        return; 
+    }
 
+    if (e.cancelable) e.preventDefault();
     if (isAiThinking || game.game_over()) return;
 
-    // Pega as coordenadas corretamente dependendo se é clique ou toque
     let clientX, clientY;
     if (e.touches && e.touches.length > 0) {
         clientX = e.touches[0].clientX;
@@ -150,8 +152,6 @@ function onInteraction(e) {
 
     if (intersects.length > 0) {
         let obj = intersects[0].object;
-        
-        // Encontra o tile (quadrado) correspondente
         let tile = obj.userData.x !== undefined ? obj : null;
         if (!tile && obj.parent) {
             tile = tiles.find(t => t.userData.x === obj.parent.userData.gridX && t.userData.z === obj.parent.userData.gridZ);
@@ -180,7 +180,6 @@ function onInteraction(e) {
     }
 }
 
-// Escuta os eventos. O 'touchstart' precisa do passive: false para funcionar o preventDefault
 window.addEventListener('mousedown', onInteraction);
 window.addEventListener('touchstart', onInteraction, { passive: false });
 
@@ -213,7 +212,16 @@ function onWindowResize() {
 }
 
 window.addEventListener('resize', onWindowResize);
-document.getElementById('reset-button').addEventListener('click', () => { game.reset(); syncBoard(); });
+
+// Eventos de Botão (Garantindo que funcionem no mobile)
+document.getElementById('reset-button').addEventListener('click', (e) => {
+    game.reset(); 
+    syncBoard();
+});
+
+document.getElementById('update-button').addEventListener('click', (e) => {
+    window.location.reload(true);
+});
 
 createBoard();
 syncBoard();
