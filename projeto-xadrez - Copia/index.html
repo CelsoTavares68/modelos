@@ -1,0 +1,34 @@
+   <!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#223344">
+    <title>Xadrez Medieval 3D</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="ui-overlay">
+         <div id="status-panel">
+    <div id="turn-indicator">VEZ DAS BRANCAS</div>
+    <select id="game-mode">
+        <option value="pve">Humano vs PC</option>
+        <option value="pvp">Humano vs Humano</option>
+    </select>
+    <select id="difficulty-level">
+        <option value="easy">Fácil</option>
+        <option value="hard">Difícil</option>
+    </select>
+     <button id="reset-button" class="btn-ui">Novo Jogo</button>
+<button id="update-button" class="btn-ui update-variant">Atualizar</button>
+</div>
+        <div id="message-log">Toque em uma peça</div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
