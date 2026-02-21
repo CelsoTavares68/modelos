@@ -34,11 +34,29 @@ function toAlgebraic(x, z) {
     return col + row;
 }
 
+function createExplosion(pos, color) {
+    for (let i = 0; i < 15; i++) {
+        const p = new THREE.Mesh(
+            new THREE.SphereGeometry(0.05), 
+            new THREE.MeshStandardMaterial({ color, emissive: color })
+        );
+        p.position.copy(pos);
+        // Velocidade aleatória para a explosão
+        const vel = new THREE.Vector3(
+            (Math.random() - 0.5) * 0.1, 
+            Math.random() * 0.2, 
+            (Math.random() - 0.5) * 0.1
+        );
+        scene.add(p);
+        particles.push({ mesh: p, vel, life: 1.0 });
+    }
+}
+
  function syncBoard() {
     const board = game.board();
     const newPositions = [];
 
-    // Mapeia onde as peças deveriam estar
+    // 1. Mapeia o estado atual do motor de xadrez
     for (let j = 0; j < 8; j++) {
         for (let i = 0; i < 8; i++) {
             const p = board[j][i];
@@ -48,40 +66,54 @@ function toAlgebraic(x, z) {
         }
     }
 
-    // Remove peças que foram capturadas
+    // 2. Identifica e anima o movimento (antes de remover as capturadas)
+    pieces.forEach(p => {
+        // Procura se esta peça específica ainda existe em QUALQUER lugar do novo tabuleiro
+        const match = newPositions.find(pos => 
+            pos.type === p.userData.type && 
+            pos.team === p.userData.team && 
+            (pos.x !== p.userData.gridX || pos.z !== p.userData.gridZ)
+        );
+
+        // Se ela mudou de casa, inicia animação
+        if (match) {
+            animations.push({
+                obj: p,
+                startPos: p.position.clone(),
+                targetPos: new THREE.Vector3(match.x - 3.5, 0.1, match.z - 3.5),
+                alpha: 0
+            });
+            p.userData.gridX = match.x;
+            p.userData.gridZ = match.z;
+        }
+    });
+
+     // 3. Remove as peças capturadas e GERA EXPLOSÃO
     for (let i = pieces.length - 1; i >= 0; i--) {
         const p = pieces[i];
-        const exists = newPositions.find(pos => pos.x === p.userData.gridX && pos.z === p.userData.gridZ && pos.type === p.userData.type);
-        if (!exists) {
+        const stillExists = newPositions.some(pos => 
+            pos.x === p.userData.gridX && 
+            pos.z === p.userData.gridZ && 
+            pos.type === p.userData.type && 
+            pos.team === p.userData.team
+        );
+        
+        if (!stillExists) {
+            // Se a peça sumiu, criamos a explosão na posição dela antes de remover
+            const particleColor = p.userData.team === 'w' ? 0xffffff : 0x333333;
+            createExplosion(p.position, particleColor);
+            
             scene.remove(p);
             pieces.splice(i, 1);
         }
     }
 
-    // Atualiza ou cria novas peças com animação
+    // 4. Cria peças novas (como promoções de peão)
     newPositions.forEach(pos => {
-        let piece = pieces.find(p => p.userData.gridX === pos.x && p.userData.gridZ === pos.z && p.userData.type === pos.type);
-        
-        if (!piece) {
-            // Se a peça mudou de lugar, ela não será encontrada na casa antiga
-            // Procuramos a peça do mesmo tipo/time que "sumiu" da posição anterior
-            piece = pieces.find(p => p.userData.type === pos.type && p.userData.team === pos.team && 
-                                    !newPositions.find(np => np.x === p.userData.gridX && np.z === p.userData.gridZ && np.type === p.userData.type));
-            
-            if (piece) {
-                // Inicia o deslize suave para a nova casa
-                animations.push({
-                    obj: piece,
-                    targetPos: new THREE.Vector3(pos.x - 3.5, 0.1, pos.z - 3.5),
-                    alpha: 0
-                });
-                piece.userData.gridX = pos.x;
-                piece.userData.gridZ = pos.z;
-            } else {
-                // Se é uma peça nova (promoção ou início), cria do zero
-                const color = pos.team === 'w' ? 0xffffff : 0x333333;
-                createPiece(pos.x, pos.z, color, pos.type, pos.team);
-            }
+        const pieceExists = pieces.some(p => p.userData.gridX === pos.x && p.userData.gridZ === pos.z);
+        if (!pieceExists) {
+            const color = pos.team === 'w' ? 0xffffff : 0x333333;
+            createPiece(pos.x, pos.z, color, pos.type, pos.team);
         }
     });
 
@@ -238,13 +270,19 @@ function createBoard() {
     }
 }
 
- function animate() {
+  function animate() {
     requestAnimationFrame(animate);
 
-    // Processa os deslizes suaves (Lerp)
     animations.forEach((anim, index) => {
-        anim.alpha += 0.08; // Velocidade da suavidade (menor = mais lento)
-        anim.obj.position.lerp(anim.targetPos, anim.alpha);
+        anim.alpha += 0.04; // Velocidade reduzida para maior suavidade
+        
+        // Movimento horizontal (XZ)
+        anim.obj.position.lerpVectors(anim.startPos, anim.targetPos, anim.alpha);
+        
+        // Efeito de Arco (Salto) - Faz a peça subir e descer durante o percurso
+        // A fórmula Math.sin(anim.alpha * Math.PI) cria uma curva que começa em 0, vai a 1 e volta a 0
+        const jumpHeight = 0.5; 
+        anim.obj.position.y = 0.1 + (Math.sin(anim.alpha * Math.PI) * jumpHeight);
         
         if (anim.alpha >= 1) {
             anim.obj.position.copy(anim.targetPos);
@@ -252,12 +290,27 @@ function createBoard() {
         }
     });
 
-    // Mantém o efeito de levitação da peça selecionada
-    if (selectedPiece) {
+    if (selectedPiece && animations.length === 0) {
         selectedPiece.position.y = 0.2 + Math.sin(Date.now() * 0.008) * 0.1;
     }
 
+    for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.mesh.position.add(p.vel);
+        p.vel.y -= 0.005; // Gravidade nas partículas
+        p.life -= 0.02;   // Desvanece
+        p.mesh.material.transparent = true;
+        p.mesh.material.opacity = p.life;
+        
+        if (p.life <= 0) {
+            scene.remove(p.mesh);
+            particles.splice(i, 1);
+        }
+
     renderer.render(scene, camera);
+    
+    }
+
 }
 
 function onWindowResize() {
