@@ -1,7 +1,6 @@
  // --- 1. SETUP DO MOTOR E CENA ---
 const game = new Chess();
 const scene = new THREE.Scene();
-// FUNDO CLAREADO: Definido para um tom de cinza azulado mais claro
 scene.background = new THREE.Color(0x445566);
 
 const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -10,9 +9,8 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 document.body.appendChild(renderer.domElement);
 
-// ILUMINAÇÃO REFORÇADA
 scene.add(new THREE.AmbientLight(0xffffff, 0.7)); 
-const sun = new THREE.DirectionalLight(0xffffff, 1.2); // CORRIGIDO: Nome da classe Three.js
+const sun = new THREE.DirectionalLight(0xffffff, 1.2); 
 sun.position.set(5, 15, 5);
 sun.castShadow = true;
 scene.add(sun);
@@ -86,7 +84,6 @@ function createPiece(x, z, color, type, team) {
         metalness: 0.3
     });
 
-    // Base comum para todas as peças
     const base = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 0.15, 16), mat);
     base.castShadow = true;
     group.add(base);
@@ -99,6 +96,7 @@ function createPiece(x, z, color, type, team) {
         body = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.7, 0.5), mat);
         body.position.y = 0.45;
     } else if (type === 'n') {
+        // FORMATO DO CAVALO RESTAURADO: Cilindro inclinado
         body = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 0.6, 12), mat);
         body.rotation.x = Math.PI / 4;
         body.position.y = 0.4;
@@ -142,7 +140,6 @@ function syncBoard() {
         }
     }
     updateTurnIndicator();
-    updateEvalBar();
 }
 
 function updateTurnIndicator() {
@@ -151,7 +148,7 @@ function updateTurnIndicator() {
     turnText.style.color = isWhite ? "#fff" : "#aaa";
 }
 
-// --- 4. MOVIMENTAÇÃO E IA (LÓGICA DE DIFICULDADE INJETADA AQUI) ---
+// --- 4. IA OTIMIZADA (MINIMAX ALPHA-BETA) ---
 
 const pieceWeights = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
 
@@ -206,7 +203,6 @@ function playAiTurn() {
         let bestMove = null;
         let bestValue = -Infinity;
 
-        // VERIFICA DIFICULDADE NO SEU HTML
         const diff = document.getElementById('difficulty-level').value;
         const depth = (diff === 'hard') ? 3 : 2; 
 
@@ -226,22 +222,13 @@ function playAiTurn() {
 }
 
 function executeAiMove(move) {
-    createExplosion(new THREE.Vector3(move.to.charCodeAt(0)-97-3.5, 0.5, 8-parseInt(move.to[1])-3.5), 0xffaa00);
+    if (move.captured) {
+        const targetPos = new THREE.Vector3(move.to.charCodeAt(0)-97-3.5, 0.5, 8-parseInt(move.to[1])-3.5);
+        createExplosion(targetPos, 0xffaa00);
+    }
     syncBoard();
     saveGame();
     isAiThinking = false;
-}
-
-function updateEvalBar() {
-    const score = evaluateBoard(game);
-    const evalBar = document.getElementById('eval-bar');
-    const evalText = document.getElementById('eval-text');
-    if(!evalBar || !evalText) return;
-    
-    let percentage = 50 - (score / 20); 
-    percentage = Math.max(5, Math.min(95, percentage));
-    evalBar.style.height = percentage + "%";
-    evalText.innerText = (score / 100).toFixed(1);
 }
 
 // --- 5. INTERAÇÃO ---
@@ -336,11 +323,7 @@ onWindowResize();
 animate();
 
 window.addEventListener('resize', onWindowResize);
-
-// Botão Novo Jogo
 document.getElementById('reset-button').addEventListener('click', resetGame);
-
-// Lógica do botão de atualização forçada
 document.getElementById('update-button').addEventListener('click', () => {
     document.getElementById('update-button').innerText = "A atualizar...";
     if ('serviceWorker' in navigator) {
