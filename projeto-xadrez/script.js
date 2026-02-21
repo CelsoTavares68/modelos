@@ -1,7 +1,6 @@
  // --- 1. SETUP DO MOTOR E CENA ---
 const game = new Chess();
 const scene = new THREE.Scene();
-// FUNDO CLAREADO: Definido para um tom de cinza azulado mais claro
 scene.background = new THREE.Color(0x445566);
 
 const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -10,7 +9,6 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 document.body.appendChild(renderer.domElement);
 
-// ILUMINAÇÃO REFORÇADA
 scene.add(new THREE.AmbientLight(0xffffff, 0.7)); 
 const sun = new THREE.DirectionalLight(0xffffff, 1.2); 
 sun.position.set(5, 15, 5);
@@ -28,34 +26,40 @@ const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
 // --- 2. AUXILIARES E PERSISTÊNCIA ---
-function toAlgebra(x, z) {
-    const col = String.fromCharCode(97 + x);
-    const row = 8 - z;
-    return col + row;
+function toAlgebraic(x, z) {
+    const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+    const ranks = ['8', '7', '6', '5', '4', '3', '2', '1'];
+    return files[x] + ranks[z];
 }
 
 function saveGame() {
-    localStorage.setItem('chess_fen', game.fen());
+    const gameState = {
+        fen: game.fen(),
+        mode: document.getElementById('game-mode').value,
+        difficulty: document.getElementById('difficulty-level').value
+    };
+    localStorage.setItem('chess3d_save', JSON.stringify(gameState));
 }
 
 function loadGame() {
-    const saved = localStorage.getItem('chess_fen');
+    const saved = localStorage.getItem('chess3d_save');
     if (saved) {
-        game.load(saved);
-        syncBoard();
+        const data = JSON.parse(saved);
+        game.load(data.fen);
+        document.getElementById('game-mode').value = data.mode;
+        document.getElementById('difficulty-level').value = data.difficulty;
     }
+    syncBoard();
 }
 
 function resetGame() {
     game.reset();
-    localStorage.removeItem('chess_fen');
+    localStorage.removeItem('chess3d_save');
     syncBoard();
 }
 
-// --- 3. CRIAÇÃO DO TABULEIRO E PEÇAS (MODELAGEM ORIGINAL) ---
+// --- 3. CRIAÇÃO DO TABULEIRO E PEÇAS (ORIGINAIS) ---
 function createBoard() {
-    tiles.forEach(t => scene.remove(t));
-    tiles.length = 0;
     for (let i = 0; i < 8; i++) {
         for (let j = 0; j < 8; j++) {
             const geo = new THREE.BoxGeometry(1, 0.2, 1);
@@ -74,43 +78,53 @@ function createBoard() {
 
 function createPiece(x, z, color, type, team) {
     const group = new THREE.Group();
-    const mat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.4, metalness: 0.3 });
+    const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.4, metalness: 0.3 });
     const base = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 0.15, 16), mat);
-    base.castShadow = true;
     group.add(base);
 
     let body;
-    if (type === 'p') {
-        body = new THREE.Mesh(new THREE.SphereGeometry(0.25, 12, 12), mat);
-        body.position.y = 0.4;
-    } else if (type === 'r') {
-        body = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.7, 0.5), mat);
-        body.position.y = 0.45;
-    } else if (type === 'n') {
-        // CAVALO ORIGINAL (Cilindro inclinado)
-        body = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 0.6, 12), mat);
-        body.rotation.x = Math.PI / 4;
-        body.position.y = 0.4;
-    } else if (type === 'b') {
-        body = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.8, 12), mat);
-        body.position.y = 0.5;
-    } else if (type === 'q') {
-        body = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.3, 1, 12), mat);
-        body.position.y = 0.5;
-        const crown = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8), mat);
-        crown.position.y = 0.6;
-        body.add(crown);
-    } else if (type === 'k') {
-        body = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 1.1, 12), mat);
-        body.position.y = 0.55;
-        const cross = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.4, 0.1), mat);
-        cross.position.y = 0.7;
-        body.add(cross);
+    if (type === 'pawn') {
+        body = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.25, 0.5, 12), mat);
+        body.position.y = 0.3;
+        const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 16), mat);
+        head.position.y = 0.65;
+        group.add(body, head);
+    } else if (type === 'knight') {
+        // Seu design de Cavalo original
+        const b = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.22, 0.6, 12), mat);
+        b.position.y = 0.35;
+        const h = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.4, 0.5), mat);
+        h.position.set(0, 0.8, 0.1);
+        h.rotation.x = -0.3;
+        group.add(b, h);
+    } else if (type === 'rook') {
+        const tower = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.32, 0.8, 4), mat);
+        tower.position.y = 0.45;
+        const top = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.15, 0.35), mat);
+        top.position.y = 0.9;
+        group.add(tower, top);
+    } else if (type === 'bishop') {
+        const b = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.2, 0.9, 12), mat);
+        b.position.y = 0.5;
+        const hat = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.4, 12), mat);
+        hat.position.y = 1.1;
+        group.add(b, hat);
+    } else if (type === 'queen') {
+        const b = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.3, 1.2, 12), mat);
+        b.position.y = 0.65;
+        const cb = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.15, 0.2, 12), mat);
+        cb.position.y = 1.3;
+        group.add(b, cb);
+    } else if (type === 'king') {
+        const b = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.3, 1.4, 12), mat);
+        b.position.y = 0.75;
+        const cv = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.4, 0.1), mat);
+        cv.position.y = 1.6;
+        group.add(b, cv);
     }
-    body.castShadow = true;
-    group.add(body);
+
     group.position.set(x - 3.5, 0.1, z - 3.5);
-    group.userData = { gridX: x, gridZ: z, team, type };
+    group.userData = { gridX: x, gridZ: z, team, type, originalColor: color };
     scene.add(group);
     pieces.push(group);
 }
@@ -119,12 +133,14 @@ function syncBoard() {
     pieces.forEach(p => scene.remove(p));
     pieces.length = 0;
     const board = game.board();
-    for (let i = 0; i < 8; i++) {
-        for (let j = 0; j < 8; j++) {
-            const p = board[j][i];
-            if (p) {
-                const color = p.color === 'w' ? 0xffffff : 0x333333;
-                createPiece(i, j, color, p.type, p.color);
+    const typeMap = { 'p': 'pawn', 'r': 'rook', 'n': 'knight', 'b': 'bishop', 'q': 'queen', 'k': 'king' };
+    
+    for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+            const square = board[r][c];
+            if (square) {
+                const color = square.color === 'w' ? 0xffffff : 0x222222;
+                createPiece(c, r, color, typeMap[square.type], square.color === 'w' ? 'white' : 'black');
             }
         }
     }
@@ -191,7 +207,7 @@ function playAiTurn() {
     }, 250);
 }
 
-// --- 5. INTERAÇÃO E EVENTOS (TUDO RESTAURADO) ---
+// --- 5. EVENTOS ---
 window.addEventListener('mousedown', onMouseDown);
 window.addEventListener('touchstart', (e) => onMouseDown(e.touches[0]));
 
@@ -212,20 +228,20 @@ function onMouseDown(e) {
                          tiles.find(t => t.userData.x === obj.parent.userData.gridX && t.userData.z === obj.parent.userData.gridZ) : null;
 
         if (clickedTile) {
-            const square = toAlgebra(clickedTile.userData.x, clickedTile.userData.z);
-            const pieceOnSquare = pieces.find(p => p.userData.gridX === clickedTile.userData.x && p.userData.gridZ === clickedTile.userData.z);
+            const x = clickedTile.userData.x;
+            const z = clickedTile.userData.z;
+            const square = toAlgebraic(x, z);
+            const pieceOnSquare = pieces.find(p => p.userData.gridX === x && p.userData.gridZ === z);
 
             if (selectedPiece) {
-                const from = toAlgebra(selectedPiece.userData.gridX, selectedPiece.userData.gridZ);
-                const move = game.move({ from, to: square, promotion: 'q' });
-                if (move) {
-                    if (move.captured) createExplosion(clickedTile.position, 0xff0000);
+                const from = toAlgebraic(selectedPiece.userData.gridX, selectedPiece.userData.gridZ);
+                if (game.move({ from, to: square, promotion: 'q' })) {
                     selectedPiece = null;
                     syncBoard();
                     saveGame();
                     if (mode === 'pve') playAiTurn();
                 } else { selectedPiece = null; syncBoard(); }
-            } else if (pieceOnSquare && pieceOnSquare.userData.team === game.turn()) {
+            } else if (pieceOnSquare && pieceOnSquare.userData.team === (game.turn() === 'w' ? 'white' : 'black')) {
                 selectedPiece = pieceOnSquare;
                 pieceOnSquare.traverse(n => { if(n.isMesh) n.material.emissive.setHex(0x004444); });
             }
@@ -233,43 +249,28 @@ function onMouseDown(e) {
     }
 }
 
-function createExplosion(pos, color) {
-    for (let i = 0; i < 10; i++) {
-        const p = new THREE.Mesh(new THREE.SphereGeometry(0.05), new THREE.MeshStandardMaterial({ color }));
-        p.position.copy(pos);
-        const vel = new THREE.Vector3((Math.random()-0.5)*0.2, Math.random()*0.3, (Math.random()-0.5)*0.2);
-        scene.add(p);
-        particles.push({ mesh: p, vel, life: 1.0 });
-    }
+function onWindowResize() {
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.position.set(0, 12, 10);
+    camera.lookAt(0,0,0);
+    camera.updateProjectionMatrix();
 }
 
 function animate() {
     requestAnimationFrame(animate);
-    if (selectedPiece) selectedPiece.position.y = 0.2 + Math.sin(Date.now() * 0.008) * 0.1;
-    particles.forEach((p, i) => {
-        p.mesh.position.add(p.vel);
-        p.life -= 0.03;
-        p.mesh.material.opacity = p.life;
-        p.mesh.material.transparent = true;
-        if (p.life <= 0) { scene.remove(p.mesh); particles.splice(i, 1); }
-    });
     renderer.render(scene, camera);
 }
 
-// BOTÕES E INICIALIZAÇÃO
-window.addEventListener('resize', () => {
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-});
-
-document.getElementById('reset-button').addEventListener('click', resetGame);
-document.getElementById('update-button').addEventListener('click', () => {
-    document.getElementById('update-button').innerText = "A atualizar...";
-    window.location.reload(true);
-});
-
+// INICIALIZAÇÃO E BOTÕES
 createBoard();
 loadGame();
 if (pieces.length === 0) resetGame();
+onWindowResize();
 animate();
+
+window.addEventListener('resize', onWindowResize);
+document.getElementById('reset-button').addEventListener('click', resetGame);
+document.getElementById('update-button').addEventListener('click', () => {
+    window.location.reload(true);
+});
