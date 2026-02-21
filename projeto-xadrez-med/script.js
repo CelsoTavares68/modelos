@@ -47,48 +47,63 @@ const mouse = new THREE.Vector2();
     animate();
 }
 
-function createPiece(x, z, colorHex, type, team) {
+ function createPiece(x, z, colorHex, type, team) {
     const group = new THREE.Group();
     const original = modelCache[type];
 
     if (original) {
         const model = original.clone();
         
-        // --- AJUSTE DE ESCALA INDIVIDUAL (O SEGREDO PARA NÃO BUGAR) ---
-        // Se uma peça ficar gigante, diminua o número. Se sumir, aumente.
-        let s = 0.5; 
-        if (type === 'pawn') s = 0.005; // Alguns modelos vêm em escala enorme
-        if (type === 'king') s = 0.6;
-        if (type === 'knight') s = 0.8;
-        if (type === 'rook') s = 0.1; // Exemplo: se a torre for gigante
-        
-        // Tente uma escala uniforme primeiro, se ficar ruim, ajustamos cada um:
-        model.scale.set(s, s, s);
+        // --- PASSO 1: RESETAR ESCALA ---
+        // Primeiro, ignoramos a escala vinda do arquivo e resetamos para 1
+        model.scale.set(1, 1, 1);
 
-        // --- CENTRALIZAÇÃO ---
-        // Garante que a peça fique em cima do quadrado e não dentro dele
+        // --- PASSO 2: NORMALIZAÇÃO AUTOMÁTICA ---
+        // Calculamos o tamanho real do modelo (Bounding Box)
         const box = new THREE.Box3().setFromObject(model);
-        const center = box.getCenter(new THREE.Vector3());
+        const size = new THREE.Vector3();
+        box.getSize(size);
+
+        // Descobrimos qual é a maior dimensão da peça (altura, largura ou profundidade)
+        const maxDim = Math.max(size.x, size.y, size.z);
+        
+        // Forçamos a peça a caber dentro de 0.8 unidades (um quadrado do tabuleiro tem 1.0)
+        const targetSize = (type === 'king' || type === 'queen') ? 0.9 : 0.7;
+        const scaleFactor = targetSize / maxDim;
+        
+        model.scale.set(scaleFactor, scaleFactor, scaleFactor);
+
+        // --- PASSO 3: CENTRALIZAÇÃO E ALTURA ---
+        // Recalculamos o box com a nova escala para colocar a peça EXATAMENTE no chão
+        const newBox = new THREE.Box3().setFromObject(model);
+        const center = newBox.getCenter(new THREE.Vector3());
+        
         model.position.x = -center.x;
         model.position.z = -center.z;
-        model.position.y = -box.min.y; // Coloca a "base" no chão
+        model.position.y = -newBox.min.y; // Alinha a base da peça com o topo do quadrado
 
+        // Aplicar cor e sombra
         model.traverse(child => {
             if (child.isMesh) {
                 child.material = new THREE.MeshStandardMaterial({ 
                     color: colorHex,
-                    metalness: 0.2,
-                    roughness: 0.8
+                    roughness: 0.7,
+                    metalness: 0.2
                 });
                 child.castShadow = true;
+                child.receiveShadow = true;
             }
         });
+        
         group.add(model);
     } else {
-        // Cubo reserva se o modelo falhar
-        const temp = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.7, 0.4), new THREE.MeshStandardMaterial({color: colorHex}));
-        temp.position.y = 0.35;
-        group.add(temp);
+        // Fallback: se o modelo não carregar, cria um cilindro simples
+        const fallback = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.2, 0.3, 0.7, 12),
+            new THREE.MeshStandardMaterial({ color: colorHex })
+        );
+        fallback.position.y = 0.35;
+        group.add(fallback);
     }
 
     group.position.set(x - 3.5, 0, z - 3.5);
@@ -108,7 +123,7 @@ function createEnvironment() {
 }
 
 const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(0, 8, 8);
+camera.position.set(0, 12, 12);
 camera.lookAt(0, 0, 0);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
