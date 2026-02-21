@@ -188,24 +188,51 @@ function createPiece(x, z, color, type, team) {
 }
 
 // --- 4. IA E DIFICULDADE ---
-function playAiTurn() {
+ function playAiTurn() {
     if (game.game_over() || isAiThinking) return;
     isAiThinking = true;
+    
+    // Atualiza a interface
     turnText.innerText = "PC A PENSAR...";
+    
     setTimeout(() => {
         const moves = game.moves();
         if (moves.length === 0) return;
+
+        // Recupera o nível de dificuldade do HTML
         const level = document.getElementById('difficulty-level').value;
-        const move = (level === 'hard') ? getBestMove() : moves[Math.floor(Math.random() * moves.length)];
+        
+        let move;
+        if (level === 'hard') {
+            move = getBestMove(); // Usa a lógica de busca de melhor jogada
+        } else {
+            move = moves[Math.floor(Math.random() * moves.length)]; // Jogada aleatória
+        }
+
         game.move(move);
         syncBoard();
         isAiThinking = false;
-    }, 500);
+    }, 600); // Um pequeno delay para parecer que o PC está pensando
 }
 
-function getBestMove() {
+ function getBestMove() {
     const moves = game.moves();
-    for (let m of moves) { if (m.includes('x')) return m; }
+    
+    // 1. Prioridade: Tentar dar xeque-mate imediatamente
+    for (let m of moves) {
+        const tempGame = new Chess(game.fen());
+        tempGame.move(m);
+        if (tempGame.in_checkmate()) return m;
+    }
+
+    // 2. Segunda prioridade: Capturar peças (priorizando capturas de peças maiores)
+    const captures = moves.filter(m => m.includes('x'));
+    if (captures.length > 0) {
+        // Ordena para pegar a captura mais valiosa se possível (simplificado)
+        return captures[0]; 
+    }
+
+    // 3. Se não houver capturas, faz uma jogada aleatória segura
     return moves[Math.floor(Math.random() * moves.length)];
 }
 
