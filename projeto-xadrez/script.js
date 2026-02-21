@@ -50,7 +50,7 @@ function syncBoard() {
     turnText.style.color = isWhite ? "#fff" : "#aaa";
 }
 
-// --- 3. SUAS PEÇAS ORIGINAIS (RESTAURADAS) ---
+// --- 3. SUAS PEÇAS ORIGINAIS (RESTAURADAS E PROTEGIDAS) ---
 function createPiece(x, z, color, type, team) {
     const group = new THREE.Group();
     const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.4, metalness: 0.3 });
@@ -121,20 +121,26 @@ function playAiTurn() {
 
 function getBestMove() {
     const moves = game.moves();
-    // Lógica simples de captura para o modo "difícil" sem travar o mobile
     for (let m of moves) { if (m.includes('x')) return m; }
     return moves[Math.floor(Math.random() * moves.length)];
 }
 
-// --- 5. INTERAÇÃO (FIX MOBILE) ---
+// --- 5. INTERAÇÃO CORRIGIDA (PC + MOBILE) ---
 function onInteraction(e) {
-    // Previne comportamento padrão apenas se for toque para não travar o scroll
-    if (e.type === 'touchstart') e.preventDefault();
-    
+    // IMPORTANTE: Bloqueia zoom e scroll indesejado ao tocar no tabuleiro
+    if (e.cancelable) e.preventDefault();
+
     if (isAiThinking || game.game_over()) return;
 
-    const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-    const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+    // Pega as coordenadas corretamente dependendo se é clique ou toque
+    let clientX, clientY;
+    if (e.touches && e.touches.length > 0) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+    } else {
+        clientX = e.clientX;
+        clientY = e.clientY;
+    }
 
     mouse.x = (clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(clientY / window.innerHeight) * 2 + 1;
@@ -143,9 +149,13 @@ function onInteraction(e) {
     const intersects = raycaster.intersectObjects(tiles.concat(pieces), true);
 
     if (intersects.length > 0) {
-        const obj = intersects[0].object;
-        let tile = obj.userData.x !== undefined ? obj : 
-                   tiles.find(t => t.userData.x === obj.parent.userData.gridX && t.userData.z === obj.parent.userData.gridZ);
+        let obj = intersects[0].object;
+        
+        // Encontra o tile (quadrado) correspondente
+        let tile = obj.userData.x !== undefined ? obj : null;
+        if (!tile && obj.parent) {
+            tile = tiles.find(t => t.userData.x === obj.parent.userData.gridX && t.userData.z === obj.parent.userData.gridZ);
+        }
 
         if (tile) {
             const square = toAlgebraic(tile.userData.x, tile.userData.z);
@@ -170,7 +180,7 @@ function onInteraction(e) {
     }
 }
 
-// Escuta mouse e toque separadamente
+// Escuta os eventos. O 'touchstart' precisa do passive: false para funcionar o preventDefault
 window.addEventListener('mousedown', onInteraction);
 window.addEventListener('touchstart', onInteraction, { passive: false });
 
