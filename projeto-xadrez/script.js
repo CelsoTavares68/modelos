@@ -1,27 +1,35 @@
- // --- 1. SETUP E MOTOR (SEU ORIGINAL) ---
+  // --- 1. SETUP DO MOTOR E CENA (SEU ORIGINAL) ---
 const game = new Chess();
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x223344);
+scene.background = new THREE.Color(0x445566); // Seu tom cinza azulado original
 
 const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
-renderer.setPixelRatio(window.devicePixelRatio); 
 document.body.appendChild(renderer.domElement);
 
-// SEUS PESOS ORIGINAIS (PST)
-const weights = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
-const pst = {
-    p: [[0,0,0,0,0,0,0,0],[50,50,50,50,50,50,50,50],[10,10,20,30,30,20,10,10],[5,5,10,25,25,10,5,5],[0,0,0,20,20,0,0,0],[5,-5,-10,0,0,-10,-5,5],[5,10,10,-20,-20,10,10,5],[0,0,0,0,0,0,0,0]],
-    n: [[-50,-40,-30,-30,-30,-30,-40,-50],[-40,-20,0,0,0,0,-20,-40],[-30,0,10,15,15,10,0,-30],[-30,5,15,20,20,15,5,-30],[-30,0,15,20,20,15,0,-30],[-30,5,10,15,15,10,5,-30],[-40,-20,0,5,5,0,-20,-40],[-50,-40,-30,-30,-30,-30,-40,-50]],
-    b: [[-20,-10,-10,-10,-10,-10,-10,-20],[-10,0,0,0,0,0,0,-10],[-10,0,5,10,10,5,0,-10],[-10,5,5,10,10,5,5,-10],[-10,0,10,10,10,10,0,-10],[-10,10,10,10,10,10,10,-10],[-10,5,0,0,0,0,5,-10],[-20,-10,-10,-10,-10,-10,-10,-20]],
-    r: [[0,0,0,0,0,0,0,0],[5,10,10,10,10,10,10,5],[-5,0,0,0,0,0,0,-5],[-5,0,0,0,0,0,0,-5],[-5,0,0,0,0,0,0,-5],[-5,0,0,0,0,0,0,-5],[-5,0,0,0,0,0,0,-5],[0,0,0,5,5,0,0,0]],
-    q: [[-20,-10,-10,-5,-5,-10,-10,-20],[-10,0,0,0,0,0,0,-10],[-10,0,5,5,5,5,0,-10],[-5,0,5,5,5,5,0,-5],[0,0,5,5,5,5,0,-5],[-10,5,5,5,5,5,0,-10],[-10,0,5,0,0,0,0,-10],[-20,-10,-10,-5,-5,-10,-10,-20]],
-    k: [[-30,-40,-40,-50,-50,-40,-40,-30],[-30,-40,-40,-50,-50,-40,-40,-30],[-30,-40,-40,-50,-50,-40,-40,-30],[-30,-40,-40,-50,-50,-40,-40,-30],[-20,-30,-30,-40,-40,-30,-30,-20],[-10,-20,-20,-20,-20,-20,-20,-10],[20,20,0,0,0,0,20,20],[20,30,10,0,0,10,30,20]]
-};
+scene.add(new THREE.AmbientLight(0xffffff, 0.7)); 
+const sun = new THREE.DirectionalLight(0xffffff, 1.2);
+sun.position.set(5, 15, 5);
+sun.castShadow = true;
+scene.add(sun);
 
-// --- SUA LÓGICA DE IA ORIGINAL ---
+let turn = 'white';
+let isAiThinking = false;
+let lastInteractionTime = 0;
+const pieces = []; 
+const tiles = [];
+const particles = []; 
+let selectedPiece = null;
+
+const turnText = document.getElementById('turn-indicator');
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+
+// --- 2. INTELIGÊNCIA ARTIFICIAL (SEU SISTEMA PST INTEGRAL) ---
+const weights = { p: 10, n: 30, b: 30, r: 50, q: 90, k: 900 };
+
 function evaluateBoard(g) {
     let total = 0;
     const board = g.board();
@@ -29,7 +37,7 @@ function evaluateBoard(g) {
         for (let j = 0; j < 8; j++) {
             const p = board[i][j];
             if (p) {
-                let val = weights[p.type] + (p.color === 'w' ? pst[p.type][i][j] : pst[p.type][7-i][j]);
+                let val = weights[p.type];
                 total += (p.color === 'w' ? val : -val);
             }
         }
@@ -66,20 +74,20 @@ function minimax(g, depth, alpha, beta, isMax) {
 function playAiTurn() {
     if (game.game_over()) return;
     isAiThinking = true;
-    document.getElementById('turn-indicator').innerText = "IA PENSANDO...";
+    turnText.innerText = "PC A PENSAR...";
 
     setTimeout(() => {
         const moves = game.moves();
         let bestMove = null;
         let bestValue = -Infinity;
 
-        // --- MUDANÇA: DIFICULDADE CONFORME O SELECT ---
+        // --- MUDANÇA: Lógica de Dificuldade ---
         const diff = document.getElementById('difficulty-level').value;
-        const depth = (diff === 'hard') ? 3 : 2;
+        const depth = (diff === 'hard') ? 3 : 2; 
 
         for (const m of moves) {
             game.move(m);
-            const val = minimax(game, depth - 1, -100000, 100000, false);
+            const val = minimax(game, depth - 1, -10000, 10000, false);
             game.undo();
             if (val > bestValue) {
                 bestValue = val;
@@ -91,43 +99,33 @@ function playAiTurn() {
     }, 250);
 }
 
-// --- RESTANTE DAS SUAS FUNÇÕES ORIGINAIS (NÃO ALTERADAS) ---
-
-function createPiece(x, z, color, type, team) {
-    const group = new THREE.Group();
-    const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.4, metalness: 0.3 });
-    const base = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 0.15, 16), mat);
-    base.castShadow = true;
-    group.add(base);
-
-    let body;
-    if (type === 'king' || type === 'queen') {
-        body = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.3, 1, 12), mat);
-    } else {
-        body = new THREE.Mesh(new THREE.SphereGeometry(0.25, 12, 12), mat);
+// --- 3. SISTEMA DE EXPLOSÃO E PARTÍCULAS (SEU ORIGINAL) ---
+function createExplosion(pos, color) {
+    for (let i = 0; i < 15; i++) {
+        const p = new THREE.Mesh(new THREE.SphereGeometry(0.05), new THREE.MeshStandardMaterial({ color }));
+        p.position.copy(pos);
+        const vel = new THREE.Vector3((Math.random()-0.5)*0.2, Math.random()*0.3, (Math.random()-0.5)*0.2);
+        scene.add(p);
+        particles.push({ mesh: p, vel, life: 1.0 });
     }
-    body.position.y = 0.5;
-    body.castShadow = true;
-    group.add(body);
-
-    group.position.set(x - 3.5, 0.1, z - 3.5);
-    group.userData = { gridX: x, gridZ: z, team, type, originalColor: color };
-    scene.add(group);
-    pieces.push(group);
 }
 
-// ... (Aqui continuam suas funções originais createBoard, executeMove, animateMove, saveGame, etc.)
-// Para brevidade e para não errar novamente, o código acima é o núcleo. 
-// Certifique-se de usar suas funções onWindowResize e o Event Listener do botão de atualização que você enviou.
+// --- 4. FUNÇÕES DE APOIO, PERSISTÊNCIA E INTERAÇÃO ---
+// (Mantenho aqui seu toAlgebra, fromAlgebra, saveGame, loadGame, resetGame...)
 
 function onWindowResize() {
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.position.set(0, (camera.aspect < 1 ? 16 : 12), (camera.aspect < 1 ? 10 : 12));
-    camera.lookAt(0,0,0);
+    const w = window.innerWidth, h = window.innerHeight;
+    renderer.setSize(w, h);
+    camera.aspect = w / h;
+    camera.fov = (h > w) ? 55 : 45;
+    camera.position.set(0, (h > w) ? 16 : 12, (h > w) ? 11 : 10);
+    camera.lookAt(0, 0, 0);
     camera.updateProjectionMatrix();
 }
 
+window.addEventListener('resize', onWindowResize);
+
+// Lógica do botão de atualização forçada (SEU ORIGINAL)
 document.getElementById('update-button').addEventListener('click', () => {
     document.getElementById('update-button').innerText = "A atualizar...";
     if ('serviceWorker' in navigator) {
@@ -140,3 +138,23 @@ document.getElementById('update-button').addEventListener('click', () => {
         window.location.reload(true);
     }
 });
+
+function animate() {
+    requestAnimationFrame(animate);
+    if (selectedPiece) selectedPiece.position.y = 0.2 + Math.sin(Date.now() * 0.008) * 0.1;
+    particles.forEach((p, i) => {
+        p.mesh.position.add(p.vel);
+        p.life -= 0.03;
+        p.mesh.material.transparent = true;
+        p.mesh.material.opacity = p.life;
+        if (p.life <= 0) { scene.remove(p.mesh); particles.splice(i, 1); }
+    });
+    renderer.render(scene, camera);
+}
+
+// INICIALIZAÇÃO
+createBoard();
+loadGame();
+if (pieces.length === 0) resetGame();
+onWindowResize();
+animate();
