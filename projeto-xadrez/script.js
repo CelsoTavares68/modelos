@@ -102,23 +102,73 @@ function playAiTurn() {
 
 // --- 3. PEÇAS E TABULEIRO (IDÊNTICO AO SEU ARQUIVO ORIGINAL) ---
 
-function createPiece(x, z, color, type, team) {
+ function createPiece(x, z, color, type, team) {
     const group = new THREE.Group();
     const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.4, metalness: 0.3 });
+    
+    // 1. BASE (Igual para todas, como no seu original)
     const base = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 0.15, 16), mat);
     base.castShadow = true;
     group.add(base);
 
+    // 2. CORPO (Diferenciado por tipo de peça)
     let body;
-    if (type === 'king' || type === 'queen') {
-        body = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.3, 1, 12), mat);
-    } else {
-        body = new THREE.Mesh(new THREE.SphereGeometry(0.25, 12, 12), mat);
+    switch (type) {
+        case 'king':
+            // Rei: Mais alto e com uma "coroa" quadrada em cima
+            body = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.3, 1.2, 12), mat);
+            const crownK = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.2, 0.3), mat);
+            crownK.position.y = 1.3;
+            group.add(crownK);
+            break;
+            
+        case 'queen':
+            // Rainha: Alta com uma esfera no topo
+            body = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.3, 1.1, 12), mat);
+            const crownQ = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 8), mat);
+            crownQ.position.y = 1.2;
+            group.add(crownQ);
+            break;
+            
+        case 'rook':
+            // Torre: Formato cilíndrico robusto (ameia)
+            body = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.3, 0.8, 12), mat);
+            const topR = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.2, 12), mat);
+            topR.position.y = 0.9;
+            group.add(topR);
+            break;
+            
+        case 'knight':
+            // Cavalo: Usando um cone inclinado para simular a cabeça
+            body = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.3, 0.7, 12), mat);
+            const head = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.5, 8), mat);
+            head.rotation.x = Math.PI / 4;
+            head.position.set(0, 0.8, 0.1);
+            group.add(head);
+            break;
+            
+        case 'bishop':
+            // Bispo: Corpo fino com ponta alongada
+            body = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.3, 0.9, 12), mat);
+            const mitre = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 12), mat);
+            mitre.scale.set(1, 1.5, 1);
+            mitre.position.y = 1.0;
+            group.add(mitre);
+            break;
+            
+        default: // Peão
+            body = new THREE.Mesh(new THREE.SphereGeometry(0.25, 12, 12), mat);
+            const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.2, 0.4, 12), mat);
+            neck.position.y = 0.3;
+            group.add(neck);
+            break;
     }
+
     body.position.y = 0.5;
     body.castShadow = true;
     group.add(body);
 
+    // Posicionamento e dados (Mantendo seu padrão)
     group.position.set(x - 3.5, 0.1, z - 3.5);
     group.userData = { gridX: x, gridZ: z, team, type, originalColor: color };
     scene.add(group);
@@ -282,14 +332,25 @@ function handleMoveAttempt(p, tx, tz) {
     }
 }
 
-function onWindowResize() {
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.position.set(0, (camera.aspect < 1 ? 16 : 12), (camera.aspect < 1 ? 10 : 12));
-    camera.lookAt(0,0,0);
+ function onWindowResize() {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    
+    renderer.setSize(w, h);
+    camera.aspect = w / h;
+
+    // Se a altura for maior que a largura (celular em pé)
+    if (h > w) {
+        camera.fov = 60; // Aumenta o campo de visão para "afastar"
+        camera.position.set(0, 18, 10); // Sobe a câmera (Y de 12 para 18)
+    } else {
+        camera.fov = 45;
+        camera.position.set(0, 12, 12);
+    }
+
+    camera.lookAt(0, 0, 0);
     camera.updateProjectionMatrix();
 }
-window.addEventListener('resize', onWindowResize);
 
 function selectPiece(p) { p.traverse(n => { if(n.isMesh) n.material.emissive.setHex(0x004444); }); }
 function deselectPiece(p) { if(p) p.traverse(n => { if(n.isMesh) n.material.emissive.setHex(0x000000); }); }
