@@ -1,6 +1,7 @@
  // --- 1. SETUP DO MOTOR E CENA ---
 const game = new Chess();
 const scene = new THREE.Scene();
+// FUNDO CLAREADO: Definido para um tom de cinza azulado mais claro
 scene.background = new THREE.Color(0x445566);
 
 const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -9,6 +10,7 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 document.body.appendChild(renderer.domElement);
 
+// ILUMINAÇÃO REFORÇADA
 scene.add(new THREE.AmbientLight(0xffffff, 0.7)); 
 const sun = new THREE.DirectionalLight(0xffffff, 1.2); 
 sun.position.set(5, 15, 5);
@@ -84,6 +86,7 @@ function createPiece(x, z, color, type, team) {
         metalness: 0.3
     });
 
+    // Base comum
     const base = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 0.15, 16), mat);
     base.castShadow = true;
     group.add(base);
@@ -96,7 +99,7 @@ function createPiece(x, z, color, type, team) {
         body = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.7, 0.5), mat);
         body.position.y = 0.45;
     } else if (type === 'n') {
-        // FORMATO DO CAVALO RESTAURADO: Cilindro inclinado
+        // O SEU CAVALO ORIGINAL: Cilindro inclinado
         body = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 0.6, 12), mat);
         body.rotation.x = Math.PI / 4;
         body.position.y = 0.4;
@@ -140,15 +143,18 @@ function syncBoard() {
         }
     }
     updateTurnIndicator();
+    updateEvalBar();
 }
 
 function updateTurnIndicator() {
     const isWhite = game.turn() === 'w';
-    turnText.innerText = isWhite ? "VEZ DAS BRANCAS" : "VEZ DAS PRETAS";
-    turnText.style.color = isWhite ? "#fff" : "#aaa";
+    if(turnText) {
+        turnText.innerText = isWhite ? "VEZ DAS BRANCAS" : "VEZ DAS PRETAS";
+        turnText.style.color = isWhite ? "#fff" : "#aaa";
+    }
 }
 
-// --- 4. IA OTIMIZADA (MINIMAX ALPHA-BETA) ---
+// --- 4. IA INTELIGENTE (MINIMAX) ---
 
 const pieceWeights = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
 
@@ -196,15 +202,15 @@ function minimax(g, depth, alpha, beta, isMax) {
 function playAiTurn() {
     if (game.game_over()) return;
     isAiThinking = true;
-    turnText.innerText = "PC A PENSAR...";
+    if(turnText) turnText.innerText = "PC A PENSAR...";
 
     setTimeout(() => {
         const moves = game.moves();
         let bestMove = null;
         let bestValue = -Infinity;
 
-        const diff = document.getElementById('difficulty-level').value;
-        const depth = (diff === 'hard') ? 3 : 2; 
+        const diffSelect = document.getElementById('difficulty-level');
+        const depth = (diffSelect && diffSelect.value === 'hard') ? 3 : 2; 
 
         for (const m of moves) {
             game.move(m);
@@ -231,13 +237,26 @@ function executeAiMove(move) {
     isAiThinking = false;
 }
 
-// --- 5. INTERAÇÃO ---
+function updateEvalBar() {
+    const score = evaluateBoard(game);
+    const evalBar = document.getElementById('eval-bar');
+    const evalText = document.getElementById('eval-text');
+    if(!evalBar || !evalText) return;
+    
+    let percentage = 50 - (score / 20); 
+    percentage = Math.max(5, Math.min(95, percentage));
+    evalBar.style.height = percentage + "%";
+    evalText.innerText = (score / 100).toFixed(1);
+}
+
+// --- 5. INTERAÇÃO E EVENTOS ---
 window.addEventListener('mousedown', onMouseDown);
 window.addEventListener('touchstart', (e) => onMouseDown(e.touches[0]));
 
 function onMouseDown(e) {
     if (isAiThinking || game.game_over()) return;
-    if (document.getElementById('game-mode').value === 'pve' && game.turn() === 'b') return;
+    const modeSelect = document.getElementById('game-mode');
+    if (modeSelect && modeSelect.value === 'pve' && game.turn() === 'b') return;
 
     mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
@@ -246,7 +265,9 @@ function onMouseDown(e) {
     const intersects = raycaster.intersectObjects(tiles.concat(pieces), true);
     if (intersects.length > 0) {
         const obj = intersects[0].object;
-        let clickedTile = obj.userData.x !== undefined ? obj : obj.parent.userData.gridX !== undefined ? tiles.find(t => t.userData.x === obj.parent.userData.gridX && t.userData.z === obj.parent.userData.gridZ) : null;
+        let clickedTile = obj.userData.x !== undefined ? obj : 
+                         (obj.parent && obj.parent.userData.gridX !== undefined) ? 
+                         tiles.find(t => t.userData.x === obj.parent.userData.gridX && t.userData.z === obj.parent.userData.gridZ) : null;
 
         if (clickedTile) {
             const x = clickedTile.userData.x;
@@ -263,7 +284,7 @@ function onMouseDown(e) {
                     selectedPiece = null;
                     syncBoard();
                     saveGame();
-                    if (document.getElementById('game-mode').value === 'pve') playAiTurn();
+                    if (modeSelect && modeSelect.value === 'pve') playAiTurn();
                 } else {
                     deselectPiece(selectedPiece);
                     selectedPiece = null;
@@ -315,7 +336,7 @@ function animate() {
     renderer.render(scene, camera);
 }
 
-// INICIALIZAÇÃO
+// INICIALIZAÇÃO E BOTÕES
 createBoard();
 loadGame();
 if (pieces.length === 0) resetGame();
@@ -323,16 +344,23 @@ onWindowResize();
 animate();
 
 window.addEventListener('resize', onWindowResize);
-document.getElementById('reset-button').addEventListener('click', resetGame);
-document.getElementById('update-button').addEventListener('click', () => {
-    document.getElementById('update-button').innerText = "A atualizar...";
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(registrations => {
-            for (let registration of registrations) registration.unregister();
-            caches.keys().then(keys => Promise.all(keys.map(key => caches.delete(key))));
-            setTimeout(() => window.location.reload(true), 500);
-        });
-    } else {
-        window.location.reload(true);
-    }
-});
+
+// Conexão dos botões (IDs originais do seu HTML)
+const resetBtn = document.getElementById('reset-button');
+if(resetBtn) resetBtn.addEventListener('click', resetGame);
+
+const updateBtn = document.getElementById('update-button');
+if(updateBtn) {
+    updateBtn.addEventListener('click', () => {
+        updateBtn.innerText = "A atualizar...";
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(registrations => {
+                for (let registration of registrations) registration.unregister();
+                caches.keys().then(keys => Promise.all(keys.map(key => caches.delete(key))));
+                setTimeout(() => window.location.reload(true), 500);
+            });
+        } else {
+            window.location.reload(true);
+        }
+    });
+}
