@@ -270,17 +270,13 @@ function createBoard() {
     }
 }
 
-  function animate() {
+   function animate() {
     requestAnimationFrame(animate);
 
+    // 1. Processa os movimentos das peças (Lerp + Salto)
     animations.forEach((anim, index) => {
-        anim.alpha += 0.04; // Velocidade reduzida para maior suavidade
-        
-        // Movimento horizontal (XZ)
+        anim.alpha += 0.04; 
         anim.obj.position.lerpVectors(anim.startPos, anim.targetPos, anim.alpha);
-        
-        // Efeito de Arco (Salto) - Faz a peça subir e descer durante o percurso
-        // A fórmula Math.sin(anim.alpha * Math.PI) cria uma curva que começa em 0, vai a 1 e volta a 0
         const jumpHeight = 0.5; 
         anim.obj.position.y = 0.1 + (Math.sin(anim.alpha * Math.PI) * jumpHeight);
         
@@ -290,15 +286,17 @@ function createBoard() {
         }
     });
 
+    // 2. Levitação da peça selecionada
     if (selectedPiece && animations.length === 0) {
         selectedPiece.position.y = 0.2 + Math.sin(Date.now() * 0.008) * 0.1;
     }
 
+    // 3. Processa as partículas de explosão
     for (let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i];
         p.mesh.position.add(p.vel);
-        p.vel.y -= 0.005; // Gravidade nas partículas
-        p.life -= 0.02;   // Desvanece
+        p.vel.y -= 0.005; 
+        p.life -= 0.02;   
         p.mesh.material.transparent = true;
         p.mesh.material.opacity = p.life;
         
@@ -306,11 +304,10 @@ function createBoard() {
             scene.remove(p.mesh);
             particles.splice(i, 1);
         }
-
-    renderer.render(scene, camera);
-    
     }
 
+    // 4. RENDERIZAÇÃO (Agora fora de qualquer ciclo, garantindo que o tabuleiro apareça sempre)
+    renderer.render(scene, camera);
 }
 
 function onWindowResize() {
