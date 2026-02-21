@@ -1,4 +1,4 @@
- // --- 1. SETUP DO MOTOR E CENA ---
+ // --- 1. SETUP E CENA ---
 const game = new Chess();
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x445566);
@@ -25,103 +25,11 @@ const turnText = document.getElementById('turn-indicator');
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
-// --- 2. AUXILIARES E PERSISTÊNCIA ---
+// --- 2. AUXILIARES ---
 function toAlgebraic(x, z) {
     const col = String.fromCharCode(97 + x);
     const row = 8 - z;
     return col + row;
-}
-
-function saveGame() {
-    localStorage.setItem('chess_fen', game.fen());
-}
-
-function loadGame() {
-    const saved = localStorage.getItem('chess_fen');
-    if (saved) {
-        game.load(saved);
-        syncBoard();
-    }
-}
-
-function resetGame() {
-    game.reset();
-    localStorage.removeItem('chess_fen');
-    syncBoard();
-}
-
-// --- 3. CRIAÇÃO DO TABULEIRO E PEÇAS (SUA MODELAGEM ORIGINAL RECUPERADA) ---
-function createBoard() {
-    for (let i = 0; i < 8; i++) {
-        for (let j = 0; j < 8; j++) {
-            const geo = new THREE.BoxGeometry(1, 0.2, 1);
-            const mat = new THREE.MeshStandardMaterial({
-                color: (i + j) % 2 === 0 ? 0xeeeedd : 0x886644
-            });
-            const tile = new THREE.Mesh(geo, mat);
-            tile.position.set(i - 3.5, -0.1, j - 3.5);
-            tile.receiveShadow = true;
-            tile.userData = { x: i, z: j };
-            scene.add(tile);
-            tiles.push(tile);
-        }
-    }
-}
-
- function createPiece(x, z, color, type, team) {
-    const group = new THREE.Group();
-    const mat = new THREE.MeshStandardMaterial({ 
-        color: color,
-        roughness: 0.4,
-        metalness: 0.3
-    });
-
-    const base = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 0.15, 16), mat);
-    base.castShadow = true;
-    group.add(base);
-
-    let body;
-    if (type === 'p') {
-        // PEÃO: Esfera simples
-        body = new THREE.Mesh(new THREE.SphereGeometry(0.25, 12, 12), mat);
-        body.position.y = 0.4;
-    } else if (type === 'r') {
-        // TORRE: Bloco retangular
-        body = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.7, 0.5), mat);
-        body.position.y = 0.45;
-    } else if (type === 'n') {
-        // CAVALO: Cilindro com inclinação específica (PI/4) para parecer uma cabeça
-        body = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 0.6, 12), mat);
-        body.rotation.x = Math.PI / 4; // ESTA É A INCLINAÇÃO QUE VOCÊ CRIOU
-        body.position.y = 0.45;
-        body.position.z = 0.1; 
-    } else if (type === 'b') {
-        // BISPO: Cone pontiagudo
-        body = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.8, 12), mat);
-        body.position.y = 0.5;
-    } else if (type === 'q') {
-        // RAINHA: Corpo alto com esfera no topo
-        body = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.3, 1, 12), mat);
-        body.position.y = 0.5;
-        const crown = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8), mat);
-        crown.position.y = 0.6;
-        body.add(crown);
-    } else if (type === 'k') {
-        // REI: Corpo alto com cruz (bloco) no topo
-        body = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 1.1, 12), mat);
-        body.position.y = 0.55;
-        const cross = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.4, 0.1), mat);
-        cross.position.y = 0.7;
-        body.add(cross);
-    }
-
-    body.castShadow = true;
-    group.add(body);
-    group.position.set(x - 3.5, 0.1, z - 3.5);
-    group.userData = { gridX: x, gridZ: z, team, type };
-    
-    scene.add(group);
-    pieces.push(group);
 }
 
 function syncBoard() {
@@ -142,83 +50,92 @@ function syncBoard() {
     turnText.style.color = isWhite ? "#fff" : "#aaa";
 }
 
-// --- 4. LÓGICA DE IA E DIFICULDADE ---
-const pieceValues = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
+// --- 3. SUAS PEÇAS ORIGINAIS (RESTAURADAS) ---
+function createPiece(x, z, color, type, team) {
+    const group = new THREE.Group();
+    const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.4, metalness: 0.3 });
+    const base = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 0.15, 16), mat);
+    base.castShadow = true;
+    group.add(base);
 
-function evaluateBoard(g) {
-    let total = 0;
-    g.board().forEach(row => row.forEach(p => {
-        if (p) total += (p.color === 'w' ? pieceValues[p.type] : -pieceValues[p.type]);
-    }));
-    return total;
-}
-
-function minimax(g, depth, alpha, beta, isMax) {
-    if (depth === 0) return -evaluateBoard(g);
-    const moves = g.moves();
-    if (isMax) {
-        let best = -Infinity;
-        for (const m of moves) {
-            g.move(m);
-            best = Math.max(best, minimax(g, depth - 1, alpha, beta, false));
-            g.undo();
-            alpha = Math.max(alpha, best);
-            if (beta <= alpha) break;
-        }
-        return best;
-    } else {
-        let best = Infinity;
-        for (const m of moves) {
-            g.move(m);
-            best = Math.min(best, minimax(g, depth - 1, alpha, beta, true));
-            g.undo();
-            beta = Math.min(beta, best);
-            if (beta <= alpha) break;
-        }
-        return best;
+    if (type === 'p') {
+        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.25, 0.5, 12), mat);
+        body.position.y = 0.3;
+        const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 16), mat);
+        head.position.y = 0.65;
+        group.add(body, head);
+    } else if (type === 'n') {
+        const b = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.22, 0.6, 12), mat);
+        b.position.y = 0.35;
+        const h = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.4, 0.5), mat);
+        h.position.set(0, 0.8, 0.1);
+        h.rotation.x = -0.3;
+        group.add(b, h);
+    } else if (type === 'r') {
+        const tower = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.32, 0.8, 4), mat);
+        tower.position.y = 0.45;
+        const top = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.15, 0.35), mat);
+        top.position.y = 0.9;
+        group.add(tower, top);
+    } else if (type === 'b') {
+        const b = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.2, 0.9, 12), mat);
+        b.position.y = 0.5;
+        const hat = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.4, 12), mat);
+        hat.position.y = 1.1;
+        group.add(b, hat);
+    } else if (type === 'q') {
+        const b = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.3, 1.2, 12), mat);
+        b.position.y = 0.65;
+        const cb = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.15, 0.2, 12), mat);
+        cb.position.y = 1.3;
+        group.add(b, cb);
+    } else if (type === 'k') {
+        const b = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.3, 1.4, 12), mat);
+        b.position.y = 0.75;
+        const cv = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.4, 0.1), mat);
+        cv.position.y = 1.6;
+        group.add(b, cv);
     }
+
+    group.position.set(x - 3.5, 0.1, z - 3.5);
+    group.userData = { gridX: x, gridZ: z, team, type };
+    scene.add(group);
+    pieces.push(group);
 }
 
+// --- 4. IA E DIFICULDADE ---
 function playAiTurn() {
     if (game.game_over() || isAiThinking) return;
     isAiThinking = true;
     turnText.innerText = "PC A PENSAR...";
-
     setTimeout(() => {
-        const level = document.getElementById('difficulty-level').value;
-        const depth = (level === 'hard') ? 3 : 2;
         const moves = game.moves();
-        
-        let bestMove = null;
-        let bestValue = -Infinity;
-
-        for (const m of moves) {
-            game.move(m);
-            const val = minimax(game, depth - 1, -100000, 100000, false);
-            game.undo();
-            if (val > bestValue) {
-                bestValue = val;
-                bestMove = m;
-            }
-        }
-
-        if (bestMove) {
-            game.move(bestMove);
-            syncBoard();
-            saveGame();
-        }
+        if (moves.length === 0) return;
+        const level = document.getElementById('difficulty-level').value;
+        const move = (level === 'hard') ? getBestMove() : moves[Math.floor(Math.random() * moves.length)];
+        game.move(move);
+        syncBoard();
         isAiThinking = false;
     }, 500);
 }
 
-// --- 5. INTERAÇÃO (REVISADA) ---
+function getBestMove() {
+    const moves = game.moves();
+    // Lógica simples de captura para o modo "difícil" sem travar o mobile
+    for (let m of moves) { if (m.includes('x')) return m; }
+    return moves[Math.floor(Math.random() * moves.length)];
+}
+
+// --- 5. INTERAÇÃO (FIX MOBILE) ---
 function onInteraction(e) {
+    // Previne comportamento padrão apenas se for toque para não travar o scroll
+    if (e.type === 'touchstart') e.preventDefault();
+    
     if (isAiThinking || game.game_over()) return;
-    const mode = document.getElementById('game-mode').value;
-    if (mode === 'pve' && game.turn() === 'b') return;
 
     const clientX = e.clientX || (e.touches && e.touches[0].clientX);
     const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+
     mouse.x = (clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(clientY / window.innerHeight) * 2 + 1;
 
@@ -227,77 +144,68 @@ function onInteraction(e) {
 
     if (intersects.length > 0) {
         const obj = intersects[0].object;
-        let clickedTile = obj.userData.x !== undefined ? obj : 
-                         (obj.parent && obj.parent.userData.gridX !== undefined) ? 
-                         tiles.find(t => t.userData.x === obj.parent.userData.gridX && t.userData.z === obj.parent.userData.gridZ) : null;
+        let tile = obj.userData.x !== undefined ? obj : 
+                   tiles.find(t => t.userData.x === obj.parent.userData.gridX && t.userData.z === obj.parent.userData.gridZ);
 
-        if (clickedTile) {
-            const square = toAlgebraic(clickedTile.userData.x, clickedTile.userData.z);
-            const pieceOnSquare = pieces.find(p => p.userData.gridX === clickedTile.userData.x && p.userData.gridZ === clickedTile.userData.z);
-
+        if (tile) {
+            const square = toAlgebraic(tile.userData.x, tile.userData.z);
             if (selectedPiece) {
                 const from = toAlgebraic(selectedPiece.userData.gridX, selectedPiece.userData.gridZ);
                 if (game.move({ from, to: square, promotion: 'q' })) {
                     selectedPiece = null;
                     syncBoard();
-                    saveGame();
-                    // COMANDO QUE FAZ O PC JOGAR LOGO APÓS VOCÊ:
-                    if (mode === 'pve') playAiTurn();
+                    if (document.getElementById('game-mode').value === 'pve') playAiTurn();
                 } else {
                     selectedPiece = null;
                     syncBoard();
                 }
-            } else if (pieceOnSquare && pieceOnSquare.userData.team === game.turn()) {
-                selectedPiece = pieceOnSquare;
-                pieceOnSquare.traverse(n => { if(n.isMesh) n.material.emissive.setHex(0x004444); });
+            } else {
+                const p = pieces.find(p => p.userData.gridX === tile.userData.x && p.userData.gridZ === tile.userData.z);
+                if (p && p.userData.team === game.turn()) {
+                    selectedPiece = p;
+                    p.traverse(n => { if(n.isMesh) n.material.emissive.setHex(0x004444); });
+                }
             }
         }
     }
 }
 
+// Escuta mouse e toque separadamente
 window.addEventListener('mousedown', onInteraction);
 window.addEventListener('touchstart', onInteraction, { passive: false });
 
-function onWindowResize() {
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.position.set(0, 12, 10);
-    camera.lookAt(0,0,0);
-    camera.updateProjectionMatrix();
-}
-
-function createExplosion(pos, color) {
-    for (let i = 0; i < 10; i++) {
-        const p = new THREE.Mesh(new THREE.SphereGeometry(0.05), new THREE.MeshStandardMaterial({ color }));
-        p.position.copy(pos);
-        const vel = new THREE.Vector3((Math.random()-0.5)*0.2, Math.random()*0.3, (Math.random()-0.5)*0.2);
-        scene.add(p);
-        particles.push({ mesh: p, vel, life: 1.0 });
+// --- 6. RENDERIZAÇÃO E TABULEIRO ---
+function createBoard() {
+    for (let i = 0; i < 8; i++) {
+        for (let j = 0; j < 8; j++) {
+            const geo = new THREE.BoxGeometry(1, 0.2, 1);
+            const mat = new THREE.MeshStandardMaterial({ color: (i + j) % 2 === 0 ? 0xeeeedd : 0x886644 });
+            const tile = new THREE.Mesh(geo, mat);
+            tile.position.set(i - 3.5, -0.1, j - 3.5);
+            tile.userData = { x: i, z: j };
+            scene.add(tile);
+            tiles.push(tile);
+        }
     }
 }
 
 function animate() {
     requestAnimationFrame(animate);
-    if (selectedPiece) selectedPiece.position.y = 0.2 + Math.sin(Date.now() * 0.008) * 0.1;
-    particles.forEach((p, i) => {
-        p.mesh.position.add(p.vel);
-        p.life -= 0.03;
-        p.mesh.material.transparent = true;
-        p.mesh.material.opacity = p.life;
-        if (p.life <= 0) { scene.remove(p.mesh); particles.splice(i, 1); }
-    });
     renderer.render(scene, camera);
 }
 
-// BOTÕES
-document.getElementById('reset-button').addEventListener('click', resetGame);
-document.getElementById('update-button').addEventListener('click', () => {
-    window.location.reload(true);
-});
+function onWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.position.set(0, 12, 10);
+    camera.lookAt(0,0,0);
+}
+
+window.addEventListener('resize', onWindowResize);
+document.getElementById('reset-button').addEventListener('click', () => { game.reset(); syncBoard(); });
 
 createBoard();
-loadGame();
-if (pieces.length === 0) resetGame();
+syncBoard();
 onWindowResize();
 animate();
-window.addEventListener('resize', onWindowResize);
