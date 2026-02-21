@@ -21,30 +21,30 @@ let selectedPiece = null;
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
-async function initGame() {
-    // 1. Criar o mundo primeiro
+ async function initGame() {
     createEnvironment();
     createBoard(); 
-    animate(); 
+    
+    const turnText = document.getElementById('turn-indicator');
+    turnText.innerText = "CARREGANDO BATALHÃO...";
 
-    // 2. Tentar carregar as peças
     const loadPromises = Object.entries(MODEL_FILES).map(([type, url]) => {
         return new Promise((resolve) => {
             loader.load(url, (gltf) => {
                 modelCache[type] = gltf.scene;
                 resolve();
             }, undefined, (err) => {
-                console.error("Arquivo não encontrado ou erro no nome:", url);
-                resolve(); // Não deixa o jogo travar
+                console.error("Erro no arquivo:", url);
+                resolve();
             });
         });
     });
 
     await Promise.all(loadPromises);
     
-    // 3. Colocar as peças no tabuleiro (se carregaram, usam 3D, se não, usam caixas)
     renderPiecesFromFen();
-    document.getElementById('turn-indicator').innerText = "VEZ DAS BRANCAS";
+    turnText.innerText = "VEZ DAS BRANCAS";
+    animate();
 }
 
 function createPiece(x, z, colorHex, type, team) {
@@ -53,29 +53,48 @@ function createPiece(x, z, colorHex, type, team) {
 
     if (original) {
         const model = original.clone();
-        let s = 0.4;
-        if (type === 'king' || type === 'queen') s = 0.55;
+        
+        // --- AJUSTE DE ESCALA INDIVIDUAL (O SEGREDO PARA NÃO BUGAR) ---
+        // Se uma peça ficar gigante, diminua o número. Se sumir, aumente.
+        let s = 0.5; 
+        if (type === 'pawn') s = 0.005; // Alguns modelos vêm em escala enorme
+        if (type === 'king') s = 0.6;
+        if (type === 'knight') s = 0.8;
+        if (type === 'rook') s = 0.1; // Exemplo: se a torre for gigante
+        
+        // Tente uma escala uniforme primeiro, se ficar ruim, ajustamos cada um:
         model.scale.set(s, s, s);
+
+        // --- CENTRALIZAÇÃO ---
+        // Garante que a peça fique em cima do quadrado e não dentro dele
+        const box = new THREE.Box3().setFromObject(model);
+        const center = box.getCenter(new THREE.Vector3());
+        model.position.x = -center.x;
+        model.position.z = -center.z;
+        model.position.y = -box.min.y; // Coloca a "base" no chão
 
         model.traverse(child => {
             if (child.isMesh) {
-                child.material = new THREE.MeshStandardMaterial({ color: colorHex });
+                child.material = new THREE.MeshStandardMaterial({ 
+                    color: colorHex,
+                    metalness: 0.2,
+                    roughness: 0.8
+                });
                 child.castShadow = true;
             }
         });
         group.add(model);
     } else {
-        // Se o arquivo .glb falhar (404), cria um cubo colorido para você poder jogar
-        const tempGeo = new THREE.BoxGeometry(0.5, type === 'king' ? 1.2 : 0.7, 0.5);
-        const tempMat = new THREE.MeshStandardMaterial({ color: colorHex });
-        const tempMesh = new THREE.Mesh(tempGeo, tempMat);
-        tempMesh.position.y = 0.35;
-        group.add(tempMesh);
+        // Cubo reserva se o modelo falhar
+        const temp = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.7, 0.4), new THREE.MeshStandardMaterial({color: colorHex}));
+        temp.position.y = 0.35;
+        group.add(temp);
     }
 
     group.position.set(x - 3.5, 0, z - 3.5);
     group.userData = { gridX: x, gridZ: z, team, type };
     if (team === 'black') group.rotation.y = Math.PI;
+
     scene.add(group);
     pieces.push(group);
 }
