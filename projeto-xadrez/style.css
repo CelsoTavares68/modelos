@@ -124,17 +124,17 @@ select:hover {
     filter: brightness(0.9);
 }
 
- #eval-container {
+  #eval-container {
+    pointer-events: none; /* Importante para o celular */
     position: absolute;
-    left: 10px; /* Mais colado à borda no mobile */
+    left: 10px;
     top: 55%;
     transform: translateY(-50%);
-    width: 12px; /* Mais fina para não atrapalhar o toque */
+    width: 12px;
     height: 60vh;
     background: #222;
     border: 1px solid #864;
     border-radius: 3px;
-    overflow: visible;
     z-index: 50;
     display: flex;
     flex-direction: column-reverse;

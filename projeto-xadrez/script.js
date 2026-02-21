@@ -1,4 +1,4 @@
- // --- 1. CONFIGURAÇÃO E MOTOR ---
+ // --- 1. CONFIGURAÇÃO DO MOTOR E CENA ---
 const game = new Chess();
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x223344);
@@ -10,48 +10,51 @@ renderer.shadowMap.enabled = true;
 renderer.setPixelRatio(window.devicePixelRatio); 
 document.body.appendChild(renderer.domElement);
 
-// Luzes
+// Iluminação
 scene.add(new THREE.AmbientLight(0xffffff, 0.7)); 
 const sun = new THREE.DirectionalLight(0xffffff, 1.2);
 sun.position.set(5, 15, 5);
 sun.castShadow = true;
 scene.add(sun);
 
-// Variáveis de Estado
-let turn = 'white', isAiThinking = false, selectedPiece = null;
-const pieces = [], tiles = [], particles = [];
+// Variáveis de Jogo
+let isAiThinking = false;
+let selectedPiece = null;
+const pieces = []; 
+const tiles = [];
+const particles = [];
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
-// Pesos da IA (Centipawns)
+// Pesos da IA e Tabelas de Posição
 const weights = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
 const pst = {
     p: [[0,0,0,0,0,0,0,0],[50,50,50,50,50,50,50,50],[10,10,20,30,30,20,10,10],[5,5,10,25,25,10,5,5],[0,0,0,20,20,0,0,0],[5,-5,-10,0,0,-10,-5,5],[5,10,10,-20,-20,10,10,5],[0,0,0,0,0,0,0,0]],
     n: [[-50,-40,-30,-30,-30,-30,-40,-50],[-40,-20,0,0,0,0,-20,-40],[-30,0,10,15,15,10,0,-30],[-30,5,15,20,20,15,5,-30],[-30,0,15,20,20,15,0,-30],[-30,5,10,15,15,10,5,-30],[-40,-20,0,5,5,0,-20,-40],[-50,-40,-30,-30,-30,-30,-40,-50]]
 };
 
-// --- 2. IA E BARRA DE AVALIAÇÃO ---
+// --- 2. INTELIGÊNCIA E AVALIAÇÃO ---
 
 function evaluateBoard(g) {
-    let total = 0;
-    const b = g.board();
-    for (let i=0; i<8; i++) {
-        for (let j=0; j<8; j++) {
-            const p = b[i][j];
-            if (p) {
-                const v = weights[p.type] + (pst[p.type] ? pst[p.type][i][j] : 0);
-                total += (p.color === 'w' ? v : -v);
+    let totalEval = 0;
+    const board = g.board();
+    for (let i = 0; i < 8; i++) {
+        for (let j = 0; j < 8; j++) {
+            const piece = board[i][j];
+            if (piece) {
+                const val = weights[piece.type] + (pst[piece.type] ? pst[piece.type][i][j] : 0);
+                totalEval += (piece.color === 'w' ? val : -val);
             }
         }
     }
-    return total;
+    return totalEval;
 }
 
 function updateEvalBar() {
     const score = evaluateBoard(game) / 100;
     const textElem = document.getElementById('eval-text');
     const barElem = document.getElementById('eval-bar');
-    if(textElem && barElem) {
+    if (textElem && barElem) {
         textElem.innerText = (score > 0 ? "+" : "") + score.toFixed(1);
         let pct = 50 + (score * 5);
         barElem.style.height = Math.max(5, Math.min(95, pct)) + "%";
@@ -82,24 +85,24 @@ function minimax(g, depth, alpha, beta, isMax) {
     }
 }
 
-// --- 3. MOVIMENTAÇÃO E JOGO ---
+// --- 3. LÓGICA DE MOVIMENTAÇÃO ---
 
 function playAiTurn() {
     if (game.game_over()) return;
     isAiThinking = true;
-    document.getElementById('turn-indicator').innerText = "IA CALCULANDO...";
+    document.getElementById('turn-indicator').innerText = "IA PENSANDO...";
     
     setTimeout(() => {
         const moves = game.moves();
-        let bestMove = null, bestVal = -Infinity;
-        const diff = document.getElementById('difficulty-level').value;
-        const depth = diff === 'hard' ? 3 : 2;
+        let bestMove = null;
+        let bestValue = -Infinity;
+        const depth = document.getElementById('difficulty-level').value === 'hard' ? 3 : 2;
 
         for (const m of moves) {
             game.move(m);
-            const val = minimax(game, depth-1, -10000, 10000, false);
+            const val = minimax(game, depth - 1, -10000, 10000, false);
             game.undo();
-            if (val > bestVal) { bestVal = val; bestMove = m; }
+            if (val > bestValue) { bestValue = val; bestMove = m; }
         }
         const details = game.move(bestMove);
         executeMoveVisuals(details);
@@ -108,10 +111,10 @@ function playAiTurn() {
 
 function executeMoveVisuals(details) {
     const p3d = pieces.find(p => toAlgebraic(p.userData.gridX, p.userData.gridZ) === details.from);
-    const target = fromAlgebraic(details.to);
-    
+    const pos = fromAlgebraic(details.to);
+
     if (details.captured) {
-        const victim = pieces.find(v => v.userData.gridX === target.x && v.userData.gridZ === target.z && v !== p3d);
+        const victim = pieces.find(v => v.userData.gridX === pos.x && v.userData.gridZ === pos.z && v !== p3d);
         if (victim) { 
             createExplosion(victim.position, victim.userData.originalColor); 
             scene.remove(victim); 
@@ -119,8 +122,8 @@ function executeMoveVisuals(details) {
         }
     }
     
-    smoothMove(p3d, target.x, target.z, true, () => {
-        finalizeTurn(p3d);
+    smoothMove(p3d, pos.x, pos.z, true, () => { 
+        finalizeTurn(p3d); 
         isAiThinking = false;
         updateEvalBar();
     });
@@ -159,7 +162,7 @@ function tryUserMove(p, tx, tz) {
     }
 }
 
-// --- 4. FUNÇÕES AUXILIARES ---
+// --- 4. CRIAÇÃO E UTILITÁRIOS ---
 
 function createPiece(x, z, color, type, team) {
     const group = new THREE.Group();
@@ -205,6 +208,8 @@ function updateStatusUI() {
 }
 
 function createBoard() {
+    tiles.forEach(t => scene.remove(t));
+    tiles.length = 0;
     for (let x = 0; x < 8; x++) {
         for (let z = 0; z < 8; z++) {
             const tile = new THREE.Mesh(new THREE.BoxGeometry(1, 0.1, 1), new THREE.MeshStandardMaterial({ color: (x+z)%2?0x221100:0x886644 }));
@@ -231,14 +236,6 @@ function resetGame() {
     updateEvalBar();
 }
 
-function onWindowResize() {
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.position.set(0, (camera.aspect < 1 ? 16 : 12), (camera.aspect < 1 ? 10 : 12));
-    camera.lookAt(0,0,0);
-    camera.updateProjectionMatrix();
-}
-
 function createExplosion(pos, color) {
     for (let i = 0; i < 10; i++) {
         const p = new THREE.Mesh(new THREE.SphereGeometry(0.05), new THREE.MeshStandardMaterial({ color }));
@@ -252,6 +249,19 @@ function createExplosion(pos, color) {
 function selectPiece(p) { p.traverse(n => { if(n.isMesh) n.material.emissive.setHex(0x004444); }); }
 function deselectPiece(p) { if(p) p.traverse(n => { if(n.isMesh) n.material.emissive.setHex(0x000000); }); }
 
+// --- 5. INICIALIZAÇÃO E EVENTOS ---
+
+function onWindowResize() {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    renderer.setSize(w, h);
+    camera.aspect = w / h;
+    if (h > w) { camera.position.set(0, 16, 12); } // Mobile
+    else { camera.position.set(0, 12, 10); } // Desktop
+    camera.lookAt(0, 0, 0);
+    camera.updateProjectionMatrix();
+}
+
 function animate() {
     requestAnimationFrame(animate);
     if (selectedPiece) selectedPiece.position.y = 0.2 + Math.sin(Date.now() * 0.008) * 0.05;
@@ -263,37 +273,32 @@ function animate() {
     renderer.render(scene, camera);
 }
 
-// --- 5. EVENTOS E INICIALIZAÇÃO ---
-
-// Escuta de Cliques/Toques
+// Registro de eventos
 window.addEventListener('mousedown', (e) => handleInput(e.clientX, e.clientY));
-window.addEventListener('touchstart', (e) => handleInput(e.touches[0].clientX, e.touches[0].clientY));
+window.addEventListener('touchstart', (e) => { if(e.touches[0]) handleInput(e.touches[0].clientX, e.touches[0].clientY); });
 window.addEventListener('resize', onWindowResize);
 
-// Botão Novo Jogo
-document.getElementById('reset-button').addEventListener('click', resetGame);
+// Botões da Interface
+document.getElementById('reset-button').onclick = resetGame;
 
-// LÓGICA DO BOTÃO ATUALIZAR (CORREÇÃO)
-document.getElementById('update-button').addEventListener('click', () => {
-    const btn = document.getElementById('update-button');
-    btn.innerText = "ATUALIZANDO...";
-    
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(registrations => {
-            for (let registration of registrations) {
-                registration.unregister();
-            }
-            caches.keys().then(names => {
-                for (let name of names) caches.delete(name);
+const updateBtn = document.getElementById('update-button');
+if (updateBtn) {
+    updateBtn.onclick = () => {
+        updateBtn.innerText = "ATUALIZANDO...";
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(registrations => {
+                for (let r of registrations) r.unregister();
+                caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+                setTimeout(() => window.location.reload(true), 500);
             });
-            setTimeout(() => { window.location.reload(true); }, 500);
-        });
-    } else {
-        window.location.reload(true);
-    }
-});
+        } else {
+            window.location.reload(true);
+        }
+    };
+}
 
+// Start
 createBoard();
-resetGame();
 onWindowResize();
+resetGame();
 animate();
