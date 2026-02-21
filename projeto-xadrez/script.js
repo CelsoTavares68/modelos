@@ -87,23 +87,38 @@ function minimax(g, depth, alpha, beta, isMax) {
 
 // --- 3. LÓGICA DE MOVIMENTAÇÃO ---
 
-function playAiTurn() {
+ function playAiTurn() {
     if (game.game_over()) return;
     isAiThinking = true;
-    document.getElementById('turn-indicator').innerText = "IA PENSANDO...";
     
+    // Atualiza o texto da interface para o usuário
+    const turnIndicator = document.getElementById('turn-indicator');
+    if (turnIndicator) turnIndicator.innerText = "IA PENSANDO...";
+
     setTimeout(() => {
         const moves = game.moves();
         let bestMove = null;
         let bestValue = -Infinity;
-        const depth = document.getElementById('difficulty-level').value === 'hard' ? 3 : 2;
 
+        // Captura a dificuldade do elemento HTML
+        const difficulty = document.getElementById('difficulty-level').value;
+        
+        // Define a profundidade: Fácil (2 jogadas à frente), Difícil (3 jogadas à frente)
+        const depth = (difficulty === 'hard') ? 3 : 2;
+
+        // Algoritmo Minimax para encontrar a melhor jogada
         for (const m of moves) {
             game.move(m);
+            // Chama o minimax com a profundidade definida e poda alfa-beta
             const val = minimax(game, depth - 1, -10000, 10000, false);
             game.undo();
-            if (val > bestValue) { bestValue = val; bestMove = m; }
+            if (val > bestValue) {
+                bestValue = val;
+                bestMove = m;
+            }
         }
+
+        // Executa a jogada escolhida e inicia as animações visuais
         const details = game.move(bestMove);
         executeMoveVisuals(details);
     }, 250);
