@@ -1,9 +1,8 @@
- const game = new Chess();
+  const game = new Chess();
 const scene = new THREE.Scene();
 const loader = new THREE.GLTFLoader();
 const modelCache = {};
 
-// IMPORTANTE: Verifique se os nomes abaixo são IDENTICOS aos seus arquivos no GitHub
 const MODEL_FILES = {
     'pawn': 'peao.glb',
     'rook': 'torre.glb',
@@ -14,27 +13,26 @@ const MODEL_FILES = {
 };
 
 let turn = 'white';
-let isAiThinking = false;
 const pieces = []; 
 const tiles = [];
-let selectedPiece = null;
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
- async function initGame() {
+async function initGame() {
     createEnvironment();
     createBoard(); 
     
     const turnText = document.getElementById('turn-indicator');
-    turnText.innerText = "CARREGANDO BATALHÃO...";
+    turnText.innerText = "A RECRUTAR EXÉRCITO...";
 
+    // Carregamento Seguro
     const loadPromises = Object.entries(MODEL_FILES).map(([type, url]) => {
         return new Promise((resolve) => {
             loader.load(url, (gltf) => {
                 modelCache[type] = gltf.scene;
                 resolve();
             }, undefined, (err) => {
-                console.error("Erro no arquivo:", url);
+                console.error("Não encontrei o ficheiro:", url);
                 resolve();
             });
         });
@@ -47,66 +45,54 @@ const mouse = new THREE.Vector2();
     animate();
 }
 
- function createPiece(x, z, colorHex, type, team) {
+function createPiece(x, z, colorHex, type, team) {
     const group = new THREE.Group();
     const original = modelCache[type];
 
     if (original) {
         const model = original.clone();
         
-        // --- PASSO 1: RESETAR ESCALA ---
-        // Primeiro, ignoramos a escala vinda do arquivo e resetamos para 1
-        model.scale.set(1, 1, 1);
-
-        // --- PASSO 2: NORMALIZAÇÃO AUTOMÁTICA ---
-        // Calculamos o tamanho real do modelo (Bounding Box)
+        // --- MOTOR DE REDIMENSIONAMENTO AUTOMÁTICO ---
+        // Isto impede o erro das "listras" (peças gigantes)
         const box = new THREE.Box3().setFromObject(model);
         const size = new THREE.Vector3();
         box.getSize(size);
-
-        // Descobrimos qual é a maior dimensão da peça (altura, largura ou profundidade)
         const maxDim = Math.max(size.x, size.y, size.z);
         
-        // Forçamos a peça a caber dentro de 0.8 unidades (um quadrado do tabuleiro tem 1.0)
-        const targetSize = (type === 'king' || type === 'queen') ? 0.9 : 0.7;
-        const scaleFactor = targetSize / maxDim;
-        
-        model.scale.set(scaleFactor, scaleFactor, scaleFactor);
+        // Define o tamanho final no tabuleiro (0.7 para peças normais, 0.9 para reis)
+        const targetSize = (type === 'king' || type === 'queen') ? 0.85 : 0.65;
+        const scale = targetSize / maxDim;
+        model.scale.set(scale, scale, scale);
 
-        // --- PASSO 3: CENTRALIZAÇÃO E ALTURA ---
-        // Recalculamos o box com a nova escala para colocar a peça EXATAMENTE no chão
-        const newBox = new THREE.Box3().setFromObject(model);
-        const center = newBox.getCenter(new THREE.Vector3());
-        
+        // --- MOTOR DE POSICIONAMENTO ---
+        // Garante que a base da peça toque no topo do tabuleiro
+        const updatedBox = new THREE.Box3().setFromObject(model);
+        const center = updatedBox.getCenter(new THREE.Vector3());
         model.position.x = -center.x;
         model.position.z = -center.z;
-        model.position.y = -newBox.min.y; // Alinha a base da peça com o topo do quadrado
+        model.position.y = -updatedBox.min.y; 
 
-        // Aplicar cor e sombra
         model.traverse(child => {
             if (child.isMesh) {
                 child.material = new THREE.MeshStandardMaterial({ 
                     color: colorHex,
-                    roughness: 0.7,
-                    metalness: 0.2
+                    metalness: 0.3,
+                    roughness: 0.7
                 });
                 child.castShadow = true;
-                child.receiveShadow = true;
             }
         });
-        
         group.add(model);
     } else {
-        // Fallback: se o modelo não carregar, cria um cilindro simples
-        const fallback = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.2, 0.3, 0.7, 12),
-            new THREE.MeshStandardMaterial({ color: colorHex })
-        );
-        fallback.position.y = 0.35;
-        group.add(fallback);
+        // Fallback: Se o GLB falhar, cria um cilindro para não crashar o jogo
+        const geometry = new THREE.CylinderGeometry(0.25, 0.35, 0.8, 16);
+        const material = new THREE.MeshStandardMaterial({ color: colorHex });
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.position.y = 0.4;
+        group.add(mesh);
     }
 
-    group.position.set(x - 3.5, 0, z - 3.5);
+    group.position.set(x - 3.5, 0.05, z - 3.5); // 0.05 para ficar em cima do tile
     group.userData = { gridX: x, gridZ: z, team, type };
     if (team === 'black') group.rotation.y = Math.PI;
 
@@ -114,20 +100,24 @@ const mouse = new THREE.Vector2();
     pieces.push(group);
 }
 
-// --- RESTO DO CÓDIGO (Ambiente, Render, Board) ---
+// --- CONFIGURAÇÃO VISUAL ---
 function createEnvironment() {
+    scene.background = new THREE.Color(0x222222); // Fundo escuro para destacar
     scene.add(new THREE.AmbientLight(0xffffff, 0.8));
     const sun = new THREE.DirectionalLight(0xffffff, 1);
     sun.position.set(5, 10, 5);
+    sun.castShadow = true;
     scene.add(sun);
 }
 
 const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(0, 12, 12);
+// Câmara mais afastada e alta para garantir que vês o tabuleiro
+camera.position.set(0, 12, 10);
 camera.lookAt(0, 0, 0);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
 document.body.appendChild(renderer.domElement);
 
 function createBoard() {
@@ -153,7 +143,7 @@ function renderPiecesFromFen() {
         for (let c = 0; c < 8; c++) {
             const sq = board[r][c];
             if (sq) {
-                createPiece(c, r, sq.color === 'w' ? 0xffffff : 0x222222, typeMap[sq.type], sq.color === 'w' ? 'white' : 'black');
+                createPiece(c, r, sq.color === 'w' ? 0xeeeeee : 0x222222, typeMap[sq.type], sq.color === 'w' ? 'white' : 'black');
             }
         }
     }
