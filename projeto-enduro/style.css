@@ -64,51 +64,38 @@ canvas {
     margin-top: 10px;
 }
 
+ /* Estilo dos Botões */
 button {
     padding: 12px 24px;
     font-family: 'Courier New', Courier, monospace;
     font-weight: bold;
-    font-size: 14px;
     text-transform: uppercase;
     cursor: pointer;
     background: #222;
     color: #fff;
     border: 2px solid #555;
     border-radius: 4px;
-    position: relative;
-    transition: all 0.2s ease;
-    box-shadow: 0 4px 0 #000; /* Efeito de profundidade 8-bit */
+    box-shadow: 0 4px 0 #000;
+    transition: all 0.2s;
 }
+#pauseBtn { border-color: #0088ff; color: #0088ff; }
+#pauseBtn:hover { background: #004488; color: #fff; }
+#resetBtn { border-color: #ff4444; color: #ff4444; }
+#resetBtn:hover { background: #882222; color: #fff; }
 
-/* Efeito ao passar o mouse */
-button:hover {
-    background: #444;
-    border-color: #fff;
-    color: #ffff00; /* Amarelo clássico do jogo */
-    transform: translateY(-2px);
-    box-shadow: 0 6px 0 #000;
+/* Dashboard */
+.dashboard-externa {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 15px;
 }
-
-/* Efeito ao clicar */
-button:active {
-    transform: translateY(2px);
-    box-shadow: 0 2px 0 #000;
+.stat-box {
+    background: #222;
+    padding: 10px;
+    border: 1px solid #444;
+    text-align: center;
 }
-
-/* Estilo específico para o botão Pausar (Azul) */
-#pauseBtn {
-    border-color: #0088ff;
-}
-#pauseBtn:hover {
-    background: #004488;
-    color: #fff;
-}
-
-/* Estilo específico para o botão Reiniciar (Vermelho) */
-button[onclick="resetGame()"] {
-    border-color: #ff4444;
-}
-button[onclick="resetGame()"]:hover {
-    background: #882222;
-    color: #fff;
-}
+.stat-box .label { font-size: 10px; display: block; color: #aaa; }
+.stat-box .value { font-size: 18px; color: #ffff00; font-weight: bold; }
+.stat-box.total { border-color: #00ff00; grid-column: span 2; }

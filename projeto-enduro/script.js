@@ -1,4 +1,4 @@
-  const canvas = document.getElementById('gameCanvas');
+ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 canvas.width = 400; canvas.height = 400;
 
@@ -7,9 +7,10 @@ let dayNumber = 1, baseGoal = 200, carsRemaining = baseGoal;
 let gameState = "PLAYING"; 
 let isPaused = false;
 
-// --- RECORDES E CONTROLE ---
-let highSpeedRecord = 0;   // Odômetro Total
-let dayBestRecord = 0;     // Recorde do Dia
+// --- SISTEMA DE RECORDES (ESTRUTURA COMPLETA) ---
+let dayBestRecord = 0;     // Maior distância em um único dia (Persistente)
+let odometerNow = 0;       // Soma de todos os dias da partida atual (Reseta no Game Over)
+let totalBestRecord = 0;   // Recorde histórico do Odômetro (Persistente)
 let hasPlayedGoalMedia = false; 
 
 // --- CONFIGURAÇÕES DE VELOCIDADE E TEMPO ---
@@ -20,7 +21,7 @@ let currentTime = 0;
 
 let enemies = [];
 
-// --- SISTEMA DE CURVAS SUAVIZADO ---
+// --- SISTEMA DE CURVAS ---
 let roadCurve = 0;      
 let targetCurve = 0;    
 let curveTimer = 0;     
@@ -58,30 +59,32 @@ videoDerrota.style.display = 'none'; videoDerrota.style.zIndex = '10';
 videoDerrota.muted = true; videoDerrota.load();
 document.body.appendChild(videoDerrota);
 
-// --- PERSISTÊNCIA ---
+// --- PERSISTÊNCIA REVISADA ---
 function saveProgress() {
     const gameData = {
         dayNumber: dayNumber,
         carsRemaining: carsRemaining,
         playerDist: playerDist,
         currentTime: currentTime,
-        highSpeedRecord: highSpeedRecord,
+        odometerNow: odometerNow,
         dayBestRecord: dayBestRecord,
+        totalBestRecord: totalBestRecord,
         hasPlayedGoalMedia: hasPlayedGoalMedia
     };
-    localStorage.setItem('enduro_save_pc', JSON.stringify(gameData));
+    localStorage.setItem('enduro_pro_data', JSON.stringify(gameData));
 }
 
 function loadProgress() {
-    const savedData = localStorage.getItem('enduro_save_pc');
+    const savedData = localStorage.getItem('enduro_pro_data');
     if (savedData) {
         const data = JSON.parse(savedData);
         dayNumber = data.dayNumber;
         carsRemaining = data.carsRemaining;
         playerDist = data.playerDist;
         currentTime = data.currentTime;
-        highSpeedRecord = data.highSpeedRecord || 0;
+        odometerNow = data.odometerNow || 0;
         dayBestRecord = data.dayBestRecord || 0;
+        totalBestRecord = data.totalBestRecord || 0;
         hasPlayedGoalMedia = data.hasPlayedGoalMedia || false;
     }
 }
@@ -131,9 +134,10 @@ function togglePause() {
 }
 
 function resetGame() {
-    localStorage.removeItem('enduro_save_pc'); 
-    dayNumber = 1; baseGoal = 200; isPaused = false;
-    highSpeedRecord = 0; dayBestRecord = 0;
+    // Game Over ou Reinício: Zera o dia e o odômetro atual, mas MANTÉM os recordes Best
+    dayNumber = 1; 
+    baseGoal = 200; 
+    odometerNow = 0; 
     resetDay();
     if (gameState !== "PLAYING") { gameState = "PLAYING"; update(); }
 }
@@ -214,21 +218,25 @@ function update() {
     if (speed > 0) {
         let delta = (speed / 10);
         playerDist += delta;
-        highSpeedRecord += delta; // Soma no Odômetro Total
+        odometerNow += delta; // Odômetro da sessão atual
     }
     currentTime++; 
     if (gameTick % 4 === 0) playEngineSound();
     
-    // Day Best trava no recorde e só sobe se superado
+    // Atualização dos Recordes Best
     if (playerDist > dayBestRecord) dayBestRecord = playerDist;
+    if (odometerNow > totalBestRecord) totalBestRecord = odometerNow;
 
-    // Atualiza HTML Externo
+    // Atualiza HTML Externo (Dashboard)
     const uiDist = document.getElementById('ui-dist');
     const uiDayBest = document.getElementById('ui-day-best');
+    const uiTotalNow = document.getElementById('ui-total-now');
     const uiTotalBest = document.getElementById('ui-total-best');
+    
     if(uiDist) uiDist.innerText = (playerDist / 100).toFixed(1) + " KM";
     if(uiDayBest) uiDayBest.innerText = (dayBestRecord / 100).toFixed(1) + " KM";
-    if(uiTotalBest) uiTotalBest.innerText = (highSpeedRecord / 100).toFixed(1) + " KM";
+    if(uiTotalNow) uiTotalNow.innerText = (odometerNow / 100).toFixed(1) + " KM";
+    if(uiTotalBest) uiTotalBest.innerText = (totalBestRecord / 100).toFixed(1) + " KM";
 
     if (gameTick % 300 === 0) saveProgress();
 
@@ -270,7 +278,8 @@ function update() {
             if (gameState !== "GAME_OVER") { 
                 gameState = "GAME_OVER"; sfxDerrota.play();
                 videoDerrota.style.display = 'block'; videoDerrota.play().catch(e => {});
-                localStorage.removeItem('enduro_save_pc');
+                // No Game Over, apenas salvamos para registrar o recorde total atingido
+                saveProgress(); 
             }
         }
         currentTime = DAY_DURATION - 1; 
@@ -374,7 +383,7 @@ function draw(colors, isRaining) {
     }
     if (lightningAlpha > 0) { ctx.fillStyle = `rgba(255, 255, 255, ${lightningAlpha})`; ctx.fillRect(0, 55, 400, 345); }
 
-    // UI Superior
+    // UI Superior (Interna do Canvas)
     ctx.fillStyle = "black"; ctx.fillRect(0, 0, 400, 55);
     ctx.fillStyle = (hasPlayedGoalMedia) ? "lime" : "yellow";
     ctx.font = "bold 18px Courier";
