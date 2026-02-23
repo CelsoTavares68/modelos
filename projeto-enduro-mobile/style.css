@@ -1,120 +1,112 @@
- /* 1. Reset e Bloqueio de Scroll */
+ /* 1. Reset Total para tirar margens fantasmas */
 body, html { 
     margin: 0; 
     padding: 0; 
     width: 100%; 
     height: 100%; 
-    overflow: hidden; /* Força tudo a caber na tela sem rolar */
-    overscroll-behavior-y: contain; 
+    overflow: hidden; /* Impede qualquer tipo de scroll */
     background: #000; 
+    font-family: 'Courier New', monospace;
+    touch-action: none; /* Melhora a resposta ao toque no celular */
 }
 
+/* 2. Container Principal - Organiza tudo em coluna */
 .game-container { 
-    position: relative; 
     width: 100vw; 
     height: 100vh; 
     display: flex; 
     flex-direction: column; 
+    justify-content: flex-start; 
     align-items: center;
+    box-sizing: border-box;
+    background: #000;
 }
 
-/* 2. Título Compacto */
+/* 3. Título - Ocupa apenas o espaço necessário */
 .jogo-titulo {
-    position: absolute;
-    top: 2px;
     width: 100%;
     text-align: center;
     color: white;
-    font-family: 'Courier New', monospace;
     font-size: 16px;
     font-weight: bold;
-    z-index: 20;
-    text-shadow: 2px 2px #000;
+    padding: 5px 0;
+    background: #111;
+    flex-shrink: 0; /* Impede que o título diminua */
 }
 
-/* 3. Botões Pausar/Reiniciar - AGORA MAIS FINOS */
+/* 4. Botões Superiores - Agora bem FININHOS e sem sobreposição */
 .controles { 
-    position: absolute; 
-    top: 22px; /* Subi um pouco para ganhar espaço */
-    left: 0;
     width: 100%; 
-    display: flex; 
-    z-index: 20; 
+    display: flex;
+    gap: 1px;
+    flex-shrink: 0; 
 }
 
 .controles button { 
     flex: 1; 
-    background: rgba(34, 34, 34, 0.9);
+    background: #222;
     color: white; 
-    border: 1px solid rgba(255,255,255,0.2); 
-    padding: 6px 0; /* REDUZIDO: Botões bem mais finos */
-    font-family: 'Courier New', monospace; 
-    font-size: 11px; /* Fonte menor para combinar */
+    border: 1px solid #444; 
+    padding: 6px 0; /* Reduzido para ser bem fino conforme solicitado */
+    font-size: 11px;
     text-transform: uppercase;
     cursor: pointer;
 }
 
-/* 4. Painel de Recordes (Dashboard) - Ajustado para ser fino */
+/* 5. Dashboard de Recordes - Colado nos botões */
 .dashboard-externa {
-    position: absolute;
-    top: 50px; /* Colado abaixo dos botões */
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 1px;
     width: 100%;
     max-width: 500px;
-    z-index: 20;
+    flex-shrink: 0;
 }
 
 .stat-box {
-    background: rgba(20, 20, 20, 0.9);
+    background: rgba(30, 30, 30, 1);
     border: 1px solid #333;
-    padding: 1px;
+    padding: 2px;
     text-align: center;
 }
 
-.stat-box .label { font-size: 7px; color: #888; display: block; }
-.stat-box .value { font-size: 11px; color: #ffff00; font-weight: bold; }
+.stat-box .label { font-size: 8px; color: #888; display: block; }
+.stat-box .value { font-size: 12px; color: #ffff00; font-weight: bold; }
 
-/* 5. Jogo (Canvas) - CORREÇÃO DE TAMANHO */
+/* 6. O JOGO (Canvas) - Ocupa o espaço central disponível */
 canvas { 
-    display: block; 
-    max-width: 100vw; 
-    /* No Tablet, limitamos a 50% da altura para sobrar espaço para as setas */
-    max-height: 50vh; 
-    width: auto; 
-    height: auto; 
-    margin-top: 85px; /* Começa logo após o dashboard */
-    background: #000; 
-    position: relative;
-    z-index: 1;
-    object-fit: contain;
+    flex: 1; /* Cresce para ocupar o máximo de espaço sem empurrar as setas */
+    min-height: 0; /* Permite que o jogo encolha em tablets para as setas caberem */
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    max-height: 100%;
+    display: block;
+    background: #000;
+    object-fit: contain; /* Mantém a proporção do jogo sem distorcer */
 }
 
-/* 6. Setas de Controle - SUBIRAM PARA APARECER NO TABLET */
+/* 7. Controles Mobile - Sempre colados na parte de baixo */
 .mobile-controls {
-    position: absolute;
-    bottom: 5%; /* Subi de 10% para 5% mas com botões menores */
     width: 100%;
     display: flex;
     justify-content: space-around;
-    padding: 0 20px; 
-    box-sizing: border-box;
-    pointer-events: none;
-    z-index: 100;
+    padding: 10px 0 20px 0; /* Margem extra na base para evitar barras de navegação */
+    background: #000;
+    flex-shrink: 0; 
 }
 
 .touch-btn {
-    pointer-events: auto;
-    width: 70px; /* Reduzi um pouco o tamanho das setas */
-    height: 70px;
-    background: rgba(255, 255, 255, 0.15);
+    width: clamp(65px, 14vh, 85px); /* Ajusta o tamanho das setas pela altura da tela */
+    height: clamp(65px, 14vh, 85px);
+    background: rgba(255, 255, 255, 0.1);
     border: 2px solid #fff;
     border-radius: 50%;
     display: flex;
-    align-items: center;
+    align-items: center; 
     justify-content: center;
     color: #fff;
     font-size: 30px;
     user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
