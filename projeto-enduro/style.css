@@ -83,19 +83,42 @@ button {
 #resetBtn { border-color: #ff4444; color: #ff4444; }
 #resetBtn:hover { background: #882222; color: #fff; }
 
-/* Dashboard */
+ /* Dashboard de Recordes */
 .dashboard-externa {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
+    grid-template-columns: 1fr 1fr; /* Cria duas colunas iguais */
+    gap: 8px;
     margin-bottom: 15px;
+    width: 400px; /* Mesma largura do Canvas */
 }
+
 .stat-box {
-    background: #222;
-    padding: 10px;
+    background: rgba(34, 34, 34, 0.9);
+    padding: 8px;
     border: 1px solid #444;
     text-align: center;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
-.stat-box .label { font-size: 10px; display: block; color: #aaa; }
-.stat-box .value { font-size: 18px; color: #ffff00; font-weight: bold; }
-.stat-box.total { border-color: #00ff00; grid-column: span 2; }
+
+.stat-box .label {
+    font-size: 9px;
+    color: #aaa;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    letter-spacing: 1px;
+}
+
+.stat-box .value {
+    font-size: 16px;
+    color: #ffff00; /* Amarelo clássico do Enduro */
+    font-weight: bold;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+/* Destaque opcional para o Recorde Total (borda verde, mas mesmo tamanho) */
+.stat-box:last-child {
+    border-color: #00ff00;
+}
