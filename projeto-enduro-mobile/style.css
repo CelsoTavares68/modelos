@@ -1,44 +1,40 @@
- /* 1. Reset e Definições de Ecrã Total */
+ /* 1. Reset Total */
 body, html { 
     margin: 0; 
     padding: 0; 
     width: 100%; 
     height: 100%; 
-    overflow: hidden; /* Bloqueia o scroll */
+    overflow: hidden; 
     background: #000; 
     font-family: 'Courier New', monospace;
-    touch-action: none; /* Melhora a resposta ao toque */
+    touch-action: none;
 }
 
-/* 2. Contentor Principal - Organização Vertical */
+/* 2. Container Principal */
 .game-container { 
     width: 100vw; 
     height: 100vh; 
     display: flex; 
     flex-direction: column; 
-    justify-content: flex-start; /* Alinha tudo ao topo */
+    justify-content: flex-start; /* Alinha tudo no topo */
     align-items: center;
     box-sizing: border-box;
 }
 
-/* 3. Título - Curto e Fixo */
+/* 3. Título e Botões Superiores (Finos) */
 .jogo-titulo {
     width: 100%;
     text-align: center;
     color: white;
-    font-size: 16px;
-    font-weight: bold;
-    padding: 4px 0;
+    font-size: 14px;
+    padding: 2px 0;
     background: #111;
-    z-index: 10;
 }
 
-/* 4. Botões Superiores - Finos e Práticos */
 .controles { 
     width: 100%; 
     display: flex;
     gap: 1px;
-    background: #000;
 }
 
 .controles button { 
@@ -46,62 +42,58 @@ body, html {
     background: #222;
     color: white; 
     border: 1px solid #444; 
-    padding: 6px 0; /* Botões bem finos conforme pedido */
-    font-size: 11px;
-    font-weight: bold;
+    padding: 5px 0; /* Bem fino */
+    font-size: 10px;
     text-transform: uppercase;
-    cursor: pointer;
 }
 
-.controles button:active {
-    background: #444;
-}
-
-/* 5. Dashboard de Recordes */
+/* 4. Dashboard (Colado no Jogo) */
 .dashboard-externa {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 1px;
     width: 100%;
     max-width: 500px;
-    background: #000;
+    margin-bottom: 0; /* Remove espaço abaixo dos recordes */
 }
 
 .stat-box {
-    background: rgba(30, 30, 30, 0.9);
+    background: rgba(20, 20, 20, 0.9);
     border: 1px solid #333;
-    padding: 2px;
+    padding: 1px;
     text-align: center;
 }
 
-.stat-box .label { font-size: 8px; color: #888; display: block; text-transform: uppercase; }
-.stat-box .value { font-size: 12px; color: #ffff00; font-weight: bold; }
+.stat-box .label { font-size: 7px; color: #888; display: block; }
+.stat-box .value { font-size: 11px; color: #ffff00; font-weight: bold; }
 
-/* 6. O JOGO (Canvas) - Ocupa o resto do espaço */
+/* 5. O JOGO - AJUSTE PARA ENCOSTAR NO TOPO */
 canvas { 
-    flex: 1; /* Faz o jogo crescer ou encolher para caber no meio */
-    min-height: 0; 
+    flex: 1; /* Ocupa o espaço entre recordes e setas */
+    display: block;
     width: auto;
     max-width: 100%;
     height: auto;
     max-height: 100%;
-    display: block;
+    margin-top: 0; /* GARANTE QUE ENCOSTA NO DASHBOARD */
     background: #000;
-    object-fit: contain; /* Mantém a proporção 1:1 original */
+    object-fit: contain;
+    min-height: 0; /* Permite que o jogo encolha se a tela for pequena */
 }
 
-/* 7. Controlos Mobile (Setas) na Base */
+/* 6. SETAS MOBILE - PUXADAS PARA CIMA */
 .mobile-controls {
     width: 100%;
     display: flex;
     justify-content: space-around;
-    padding: 10px 0;
+    padding: 5px 0 15px 0; /* Padding inferior maior para evitar barras do sistema */
     background: #000;
+    margin-top: -5px; /* "Puxa" os botões levemente para cima se necessário */
 }
 
 .touch-btn {
-    width: clamp(65px, 15vh, 85px); /* Adapta o tamanho das setas à altura da tela */
-    height: clamp(65px, 15vh, 85px);
+    width: clamp(60px, 14vh, 75px); /* Diminuído ligeiramente para caber melhor */
+    height: clamp(60px, 14vh, 75px);
     background: rgba(255, 255, 255, 0.1);
     border: 2px solid #fff;
     border-radius: 50%;
@@ -109,6 +101,6 @@ canvas {
     align-items: center; 
     justify-content: center;
     color: #fff;
-    font-size: 30px;
+    font-size: 25px;
     user-select: none;
 }
