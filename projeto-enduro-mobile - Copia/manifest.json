@@ -1,0 +1,23 @@
+ {
+  "name": "Mini Enduro Mobile",
+  "short_name": "Enduro",
+  "description": "Clássico jogo de corrida retro otimizado para mobile.",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#111111",
+  "theme_color": "#ffff00",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}

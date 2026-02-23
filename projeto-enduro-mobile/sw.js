@@ -1,4 +1,6 @@
- const CACHE_NAME = 'enduro-mobile-v12'; // Incremente aqui para disparar o aviso de atualização
+   const CACHE_NAME = 'enduro-dynamic-cache'; // Nome fixo, não precisa mais mudar
+
+// Lista de arquivos para cache inicial (offline)
 const assets = [
   './',
   './index.html',
@@ -13,38 +15,43 @@ const assets = [
   './game_over.mp4'
 ];
 
+// Instalação: Abre o cache e salva os arquivos
 self.addEventListener('install', event => {
+  self.skipWaiting(); // Força o novo SW a assumir o controle imediatamente
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(assets))
   );
 });
 
+// Ativação: Limpa caches antigos e assume controle das abas
 self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys().then(keys => Promise.all(
-      keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
-    ))
-  );
+  event.waitUntil(self.clients.claim()); 
 });
 
-// Listener para a mensagem 'skipWaiting' enviada pelo script.js
-self.addEventListener('message', event => {
-  if (event.data === 'skipWaiting') {
-    self.skipWaiting();
-  }
-});
-
+// A MÁGICA DA ATUALIZAÇÃO AUTOMÁTICA:
+// Estratégia "Stale-While-Revalidate"
+// Ele entrega o que está no cache rápido (pro jogo abrir na hora), 
+// mas busca a versão nova na rede em segundo plano e atualiza o cache.
 self.addEventListener('fetch', event => {
   event.respondWith(
     caches.open(CACHE_NAME).then(cache => {
       return cache.match(event.request).then(response => {
         const fetchPromise = fetch(event.request).then(networkResponse => {
+          // Atualiza o cache com a nova versão encontrada na rede
           cache.put(event.request, networkResponse.clone());
           return networkResponse;
-        });
-        return response || fetchPromise; 
+        }).catch(() => {}); // Se estiver offline, apenas ignora o erro de rede
+
+        // Retorna a versão do cache (rápida) ou a da rede (se não houver cache)
+        return response || fetchPromise;
       });
     })
   );
 });
- 
+
+// Listener para forçar atualização se o HTML mandar um skipWaiting
+self.addEventListener('message', event => {
+  if (event.data === 'skipWaiting') {
+    self.skipWaiting();
+  }
+});
