@@ -1,4 +1,4 @@
- // --- 1. SETUP E CENA ---
+ // --- 1. SETUP DO MOTOR E CENA ---
 const game = new Chess();
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x445566);
@@ -15,7 +15,9 @@ sun.position.set(5, 15, 5);
 sun.castShadow = true;
 scene.add(sun);
 
+let turn = 'white';
 let isAiThinking = false;
+let lastInteractionTime = 0;
 const pieces = []; 
 const tiles = [];
 const particles = []; 
@@ -25,364 +27,368 @@ const turnText = document.getElementById('turn-indicator');
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
-let animations = []; // Lista para controlar as peças que estão deslizando
+// --- 2. INTELIGÊNCIA ARTIFICIAL (MINIMAX + PESOS) ---
 
-// --- 2. AUXILIARES ---
+// Valores das peças para a IA decidir o que capturar
+const weights = { p: 10, n: 30, b: 30, r: 50, q: 90, k: 900 };
+
+// Tabela de bónus por posição: incentiva as peças a dominarem o centro
+const boardValues = [
+    [5, 5, 5, 5, 5, 5, 5, 5],
+    [4, 10, 10, 10, 10, 10, 10, 4],
+    [2, 5, 15, 20, 20, 15, 5, 2],
+    [0, 5, 20, 25, 25, 20, 5, 0],
+    [0, 5, 20, 25, 25, 20, 5, 0],
+    [2, 5, 15, 20, 20, 15, 5, 2],
+    [4, 10, 10, 10, 10, 10, 10, 4],
+    [5, 5, 5, 5, 5, 5, 5, 5]
+];
+
+function evaluateBoard(currentBoard) {
+    let totalEval = 0;
+    for (let i = 0; i < 8; i++) {
+        for (let j = 0; j < 8; j++) {
+            const piece = currentBoard[i][j];
+            if (piece) {
+                // Soma o valor da peça + o bónus de estar numa posição estratégica
+                const val = weights[piece.type] + boardValues[i][j];
+                totalEval += (piece.color === 'w' ? val : -val);
+            }
+        }
+    }
+    return totalEval;
+}
+
+function minimax(gameInstance, depth, alpha, beta, isMaximizing) {
+    if (depth === 0) return -evaluateBoard(gameInstance.board());
+    
+    const moves = gameInstance.moves();
+    if (isMaximizing) {
+        let bestEval = -9999;
+        for (const move of moves) {
+            gameInstance.move(move);
+            bestEval = Math.max(bestEval, minimax(gameInstance, depth - 1, alpha, beta, false));
+            gameInstance.undo();
+            alpha = Math.max(alpha, bestEval);
+            if (beta <= alpha) break;
+        }
+        return bestEval;
+    } else {
+        let bestEval = 9999;
+        for (const move of moves) {
+            gameInstance.move(move);
+            bestEval = Math.min(bestEval, minimax(gameInstance, depth - 1, alpha, beta, true));
+            gameInstance.undo();
+            beta = Math.min(beta, bestEval);
+            if (beta <= alpha) break;
+        }
+        return bestEval;
+    }
+}
+
+// --- 3. AUXILIARES E PERSISTÊNCIA ---
 function toAlgebraic(x, z) {
-    const col = String.fromCharCode(97 + x);
-    const row = 8 - z;
-    return col + row;
+    const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+    const ranks = ['8', '7', '6', '5', '4', '3', '2', '1'];
+    return files[x] + ranks[z];
 }
 
-function createExplosion(pos, color) {
-    for (let i = 0; i < 15; i++) {
-        const p = new THREE.Mesh(
-            new THREE.SphereGeometry(0.05), 
-            new THREE.MeshStandardMaterial({ color, emissive: color })
-        );
-        p.position.copy(pos);
-        // Velocidade aleatória para a explosão
-        const vel = new THREE.Vector3(
-            (Math.random() - 0.5) * 0.1, 
-            Math.random() * 0.2, 
-            (Math.random() - 0.5) * 0.1
-        );
-        scene.add(p);
-        particles.push({ mesh: p, vel, life: 1.0 });
+function fromAlgebraic(s) {
+    return { x: s.charCodeAt(0) - 'a'.charCodeAt(0), z: 8 - parseInt(s[1]) };
+}
+
+function saveGame() {
+    const gameState = { fen: game.fen(), mode: document.getElementById('game-mode').value };
+    localStorage.setItem('chess3d_save', JSON.stringify(gameState));
+}
+
+function loadGame() {
+    const saved = localStorage.getItem('chess3d_save');
+    if (saved) {
+        const data = JSON.parse(saved);
+        game.load(data.fen);
+        document.getElementById('game-mode').value = data.mode;
     }
-}
-
-  function syncBoard() {
+    pieces.forEach(p => scene.remove(p));
+    pieces.length = 0;
     const board = game.board();
-    const newPositions = [];
-
-    // 1. Mapeia o estado atual do motor de xadrez
-    for (let j = 0; j < 8; j++) {
-        for (let i = 0; i < 8; i++) {
-            const p = board[j][i];
-            if (p) {
-                newPositions.push({ x: i, z: j, type: p.type, team: p.color });
+    const typeMap = { 'p': 'pawn', 'r': 'rook', 'n': 'knight', 'b': 'bishop', 'q': 'queen', 'k': 'king' };
+    for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+            const square = board[r][c];
+            if (square) {
+                const color = square.color === 'w' ? 0xffffff : 0x222222;
+                createPiece(c, r, color, typeMap[square.type], square.color === 'w' ? 'white' : 'black');
             }
         }
     }
-
-    // 2. Identifica quem se moveu ANTES de processar capturas
-    pieces.forEach(p => {
-        const isStillThere = newPositions.find(pos => 
-            pos.x === p.userData.gridX && 
-            pos.z === p.userData.gridZ && 
-            pos.type === p.userData.type && 
-            pos.team === p.userData.team
-        );
-
-        if (!isStillThere) {
-            const match = newPositions.find(pos => 
-                pos.type === p.userData.type && 
-                pos.team === p.userData.team && 
-                !pieces.some(otherP => otherP !== p && otherP.userData.gridX === pos.x && otherP.userData.gridZ === pos.z)
-            );
-
-            if (match) {
-                animations.push({
-                    obj: p,
-                    startPos: p.position.clone(),
-                    targetPos: new THREE.Vector3(match.x - 3.5, 0.1, match.z - 3.5),
-                    alpha: 0
-                });
-                p.userData.gridX = match.x;
-                p.userData.gridZ = match.z;
-            }
-        }
-    });
-
-    // 3. REMOÇÃO E EXPLOSÃO CORRIGIDA
-    for (let i = pieces.length - 1; i >= 0; i--) {
-        const p = pieces[i];
-        
-        // Uma peça só deve ser removida se ela não existir em NENHUMA posição do novo tabuleiro
-        const existsAnywhere = newPositions.some(pos => 
-            pos.type === p.userData.type && 
-            pos.team === p.userData.team &&
-            pos.x === p.userData.gridX &&
-            pos.z === p.userData.gridZ
-        );
-        
-        if (!existsAnywhere) {
-            // Só explode se não for a peça que estamos a animar (a que se moveu)
-            const isAnimating = animations.some(a => a.obj === p);
-            
-            if (!isAnimating) {
-                const particleColor = p.userData.team === 'w' ? 0xffffff : 0x333333;
-                createExplosion(p.position, particleColor);
-                scene.remove(p);
-                pieces.splice(i, 1);
-            }
-        }
-    }
-
-    // 4. Cria novas peças (Promoções)
-    newPositions.forEach(pos => {
-        const pieceExists = pieces.some(p => p.userData.gridX === pos.x && p.userData.gridZ === pos.z);
-        if (!pieceExists) {
-            const color = pos.team === 'w' ? 0xffffff : 0x333333;
-            createPiece(pos.x, pos.z, color, pos.type, pos.team);
-        }
-    });
-
-    const isWhite = game.turn() === 'w';
-    turnText.innerText = isWhite ? "VEZ DAS BRANCAS" : "VEZ DAS PRETAS";
-    turnText.style.color = isWhite ? "#fff" : "#aaa";
+    updateStatusUI();
 }
 
-// --- 3. SUAS PEÇAS ORIGINAIS (RESTAURADAS) ---
+// --- 4. CRIAÇÃO DAS PEÇAS ---
 function createPiece(x, z, color, type, team) {
     const group = new THREE.Group();
     const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.4, metalness: 0.3 });
     const base = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 0.15, 16), mat);
-    base.castShadow = true;
     group.add(base);
 
-    if (type === 'p') {
+    if (type === 'pawn') {
         const body = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.25, 0.5, 12), mat);
         body.position.y = 0.3;
         const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 16), mat);
         head.position.y = 0.65;
         group.add(body, head);
-    } else if (type === 'n') {
-        const b = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.22, 0.6, 12), mat);
-        b.position.y = 0.35;
-        const h = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.4, 0.5), mat);
-        h.position.set(0, 0.8, 0.1);
-        h.rotation.x = -0.3;
-        group.add(b, h);
-    } else if (type === 'r') {
+    } else if (type === 'rook') {
         const tower = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.32, 0.8, 4), mat);
         tower.position.y = 0.45;
         const top = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.15, 0.35), mat);
         top.position.y = 0.9;
         group.add(tower, top);
-    } else if (type === 'b') {
-        const b = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.2, 0.9, 12), mat);
-        b.position.y = 0.5;
+    } else if (type === 'knight') {
+        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.22, 0.6, 12), mat);
+        body.position.y = 0.35;
+        const head = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.4, 0.5), mat);
+        head.position.set(0, 0.8, 0.1);
+        head.rotation.x = -0.3;
+        group.add(body, head);
+    } else if (type === 'bishop') {
+        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.2, 0.9, 12), mat);
+        body.position.y = 0.5;
         const hat = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.4, 12), mat);
         hat.position.y = 1.1;
-        group.add(b, hat);
-    } else if (type === 'q') {
-        const b = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.3, 1.2, 12), mat);
-        b.position.y = 0.65;
-        const cb = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.15, 0.2, 12), mat);
-        cb.position.y = 1.3;
-        group.add(b, cb);
-    } else if (type === 'k') {
-        const b = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.3, 1.4, 12), mat);
-        b.position.y = 0.75;
-        const cv = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.4, 0.1), mat);
-        cv.position.y = 1.6;
-        group.add(b, cv);
+        group.add(body, hat);
+    } else if (type === 'queen') {
+        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.3, 1.2, 12), mat);
+        body.position.y = 0.65;
+        const crownBase = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.15, 0.2, 12), mat);
+        crownBase.position.y = 1.3;
+        const crownTop = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 8, 0, Math.PI * 2, 0, 1), mat);
+        crownTop.position.y = 1.4;
+        crownTop.rotation.x = Math.PI;
+        group.add(body, crownBase, crownTop);
+    } else if (type === 'king') {
+        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.3, 1.4, 12), mat);
+        body.position.y = 0.75;
+        const crossH = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.1, 0.1), mat);
+        const crossV = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.4, 0.1), mat);
+        crossH.position.y = 1.6;
+        crossV.position.y = 1.6;
+        group.add(body, crossH, crossV);
     }
 
     group.position.set(x - 3.5, 0.1, z - 3.5);
-    group.userData = { gridX: x, gridZ: z, team, type };
+    group.userData = { gridX: x, gridZ: z, team, type, originalColor: color };
     scene.add(group);
     pieces.push(group);
 }
 
- function playAiTurn() {
-    if (game.game_over() || isAiThinking) return;
+// --- 5. MOVIMENTAÇÃO E IA ---
+function smoothMove(piece, tx, tz, isLegal, callback) {
+    const startPos = piece.position.clone();
+    const endPos = new THREE.Vector3(tx - 3.5, 0.1, tz - 3.5);
+    let t = 0;
+    function step() {
+        t += 0.08;
+        if (t < 1) {
+            piece.position.lerpVectors(startPos, endPos, t);
+            requestAnimationFrame(step);
+        } else {
+            piece.position.copy(endPos);
+            if (isLegal) { piece.userData.gridX = tx; piece.userData.gridZ = tz; }
+            if (callback) callback();
+        }
+    }
+    step();
+}
+
+function tryMove(p, tx, tz) {
+    const move = game.move({ from: toAlgebraic(p.userData.gridX, p.userData.gridZ), to: toAlgebraic(tx, tz), promotion: 'q' });
+    if (move) {
+        selectedPiece = null;
+        if (move.captured) {
+            const victim = pieces.find(v => v.userData.gridX === tx && v.userData.gridZ === tz && v !== p);
+            if (victim) { 
+                createExplosion(victim.position, victim.userData.originalColor); 
+                scene.remove(victim); 
+                pieces.splice(pieces.indexOf(victim), 1); 
+            }
+        }
+        smoothMove(p, tx, tz, true, () => finalizeTurn(p));
+    } else {
+        smoothMove(p, p.userData.gridX, p.userData.gridZ, false, () => { deselectPiece(p); selectedPiece = null; });
+    }
+}
+
+function playAiTurn() {
+    if (game.game_over()) return;
     isAiThinking = true;
     turnText.innerText = "PC A PENSAR...";
     
     setTimeout(() => {
         const moves = game.moves();
-        if (moves.length === 0) return;
+        let bestMove = null;
+        let bestValue = -9999;
 
-        // Pega o valor exato do select de dificuldade no seu index.html
-        const level = document.getElementById('difficulty-level').value;
-        
-        let move;
-        if (level === 'hard') {
-            move = getBestMove(); // Chama a lógica inteligente
-        } else {
-            move = moves[Math.floor(Math.random() * moves.length)];
-        }
-
-        if (move) {
+        // A IA pensa 3 jogadas à frente (Profundidade 3)
+        for (const move of moves) {
             game.move(move);
-            syncBoard();
-        }
-        
-        isAiThinking = false;
-    }, 600);
-}
-
-function getBestMove() {
-    const moves = game.moves();
-    
-    // 1. Tenta dar Xeque-Mate imediatamente
-    for (let m of moves) {
-        const temp = new Chess(game.fen());
-        temp.move(m);
-        if (temp.in_checkmate()) return m;
-    }
-
-    // 2. Tenta capturar peças (Prioriza a agressividade)
-    const captures = moves.filter(m => m.includes('x'));
-    
-    if (captures.length > 0) {
-        // Tabela de valores para capturar peças mais valiosas primeiro
-        const values = { 'q': 9, 'r': 5, 'b': 3, 'n': 3, 'p': 1 };
-        
-        captures.sort((a, b) => {
-            // Identifica a casa de destino da captura
-            const targetSquare = a.includes('=') ? a.split('x')[1].substring(0,2) : a.split('x')[1].replace('#','').replace('+','');
-            const pieceA = game.get(targetSquare)?.type || 'p';
-            
-            const targetSquareB = b.includes('=') ? b.split('x')[1].substring(0,2) : b.split('x')[1].replace('#','').replace('+','');
-            const pieceB = game.get(targetSquareB)?.type || 'p';
-            
-            return values[pieceB] - values[pieceA];
-        });
-        return captures[0]; 
-    }
-
-    // 3. Se não houver capturas, faz uma jogada aleatória
-    return moves[Math.floor(Math.random() * moves.length)];
-}
-
-// --- 5. INTERAÇÃO (FIX DEFINITIVO) ---
-function onInteraction(e) {
-    // CORREÇÃO DOS BOTÕES: Se o clique/toque for em elementos da interface (UI), não faz nada.
-    if (e.target.closest('#ui-overlay') || e.target.tagName === 'BUTTON' || e.target.tagName === 'SELECT') {
-        return; 
-    }
-
-    if (e.cancelable) e.preventDefault();
-    if (isAiThinking || game.game_over()) return;
-
-    let clientX, clientY;
-    if (e.touches && e.touches.length > 0) {
-        clientX = e.touches[0].clientX;
-        clientY = e.touches[0].clientY;
-    } else {
-        clientX = e.clientX;
-        clientY = e.clientY;
-    }
-
-    mouse.x = (clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(clientY / window.innerHeight) * 2 + 1;
-
-    raycaster.setFromCamera(mouse, camera);
-    const intersects = raycaster.intersectObjects(tiles.concat(pieces), true);
-
-    if (intersects.length > 0) {
-        let obj = intersects[0].object;
-        let tile = obj.userData.x !== undefined ? obj : null;
-        if (!tile && obj.parent) {
-            tile = tiles.find(t => t.userData.x === obj.parent.userData.gridX && t.userData.z === obj.parent.userData.gridZ);
-        }
-
-        if (tile) {
-            const square = toAlgebraic(tile.userData.x, tile.userData.z);
-            if (selectedPiece) {
-                const from = toAlgebraic(selectedPiece.userData.gridX, selectedPiece.userData.gridZ);
-                if (game.move({ from, to: square, promotion: 'q' })) {
-                    selectedPiece = null;
-                    syncBoard();
-                    if (document.getElementById('game-mode').value === 'pve') playAiTurn();
-                } else {
-                    selectedPiece = null;
-                    syncBoard();
-                }
-            } else {
-                const p = pieces.find(p => p.userData.gridX === tile.userData.x && p.userData.gridZ === tile.userData.z);
-                if (p && p.userData.team === game.turn()) {
-                    selectedPiece = p;
-                    p.traverse(n => { if(n.isMesh) n.material.emissive.setHex(0x004444); });
-                }
+            const boardValue = minimax(game, 2, -10000, 10000, false);
+            game.undo();
+            if (boardValue > bestValue) {
+                bestValue = boardValue;
+                bestMove = move;
             }
         }
-    }
+
+        const moveDetails = game.move(bestMove);
+        const p3d = pieces.find(p => toAlgebraic(p.userData.gridX, p.userData.gridZ) === moveDetails.from);
+        const pos = fromAlgebraic(moveDetails.to);
+
+        if (moveDetails.captured) {
+            const victim = pieces.find(v => v.userData.gridX === pos.x && v.userData.gridZ === pos.z);
+            if (victim) { createExplosion(victim.position, victim.userData.originalColor); scene.remove(victim); pieces.splice(pieces.indexOf(victim), 1); }
+        }
+        
+        smoothMove(p3d, pos.x, pos.z, true, () => { finalizeTurn(p3d); isAiThinking = false; });
+    }, 500);
 }
 
-window.addEventListener('mousedown', onInteraction);
-window.addEventListener('touchstart', onInteraction, { passive: false });
-
-// --- 6. RENDERIZAÇÃO E TABULEIRO ---
+// --- 6. INTERAÇÃO E TABULEIRO ---
 function createBoard() {
-    for (let i = 0; i < 8; i++) {
-        for (let j = 0; j < 8; j++) {
-            const geo = new THREE.BoxGeometry(1, 0.2, 1);
-            const mat = new THREE.MeshStandardMaterial({ color: (i + j) % 2 === 0 ? 0xeeeedd : 0x886644 });
-            const tile = new THREE.Mesh(geo, mat);
-            tile.position.set(i - 3.5, -0.1, j - 3.5);
-            tile.userData = { x: i, z: j };
+    for (let x = 0; x < 8; x++) {
+        for (let z = 0; z < 8; z++) {
+            const isBlack = (x + z) % 2 !== 0;
+            const tile = new THREE.Mesh(new THREE.BoxGeometry(1, 0.1, 1), new THREE.MeshStandardMaterial({ color: isBlack ? 0x221100 : 0x886644 }));
+            tile.position.set(x - 3.5, -0.05, z - 3.5);
+            tile.receiveShadow = true;
+            tile.userData = { x, z };
             scene.add(tile);
             tiles.push(tile);
         }
     }
 }
 
-   function animate() {
-    requestAnimationFrame(animate);
+function handleInteraction(clientX, clientY) {
+    if (isAiThinking || game.game_over()) return;
+    const now = Date.now();
+    if (now - lastInteractionTime < 100) return;
+    lastInteractionTime = now;
 
-    // 1. Processa os movimentos das peças (Lerp + Salto)
-    animations.forEach((anim, index) => {
-        anim.alpha += 0.04; 
-        anim.obj.position.lerpVectors(anim.startPos, anim.targetPos, anim.alpha);
-        const jumpHeight = 0.5; 
-        anim.obj.position.y = 0.1 + (Math.sin(anim.alpha * Math.PI) * jumpHeight);
-        
-        if (anim.alpha >= 1) {
-            anim.obj.position.copy(anim.targetPos);
-            animations.splice(index, 1);
+    mouse.x = (clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(clientY / window.innerHeight) * 2 + 1;
+    raycaster.setFromCamera(mouse, camera);
+
+    const pieceHits = raycaster.intersectObjects(pieces, true);
+    const tileHits = raycaster.intersectObjects(tiles);
+
+    if (pieceHits.length > 0) {
+        let obj = pieceHits[0].object;
+        while (obj.parent && !obj.userData.team) obj = obj.parent;
+        if (obj.userData.team === turn) {
+            if (selectedPiece) deselectPiece(selectedPiece);
+            selectedPiece = obj;
+            selectPiece(selectedPiece);
+        } else if (selectedPiece) {
+            tryMove(selectedPiece, obj.userData.gridX, obj.userData.gridZ);
         }
-    });
-
-    // 2. Levitação da peça selecionada
-    if (selectedPiece && animations.length === 0) {
-        selectedPiece.position.y = 0.2 + Math.sin(Date.now() * 0.008) * 0.1;
+    } else if (selectedPiece && tileHits.length > 0) {
+        tryMove(selectedPiece, tileHits[0].object.userData.x, tileHits[0].object.userData.z);
     }
+}
 
-    // 3. Processa as partículas de explosão
-    for (let i = particles.length - 1; i >= 0; i--) {
-        const p = particles[i];
+window.addEventListener('touchstart', (e) => { if(e.touches.length > 0) handleInteraction(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
+window.addEventListener('mousedown', (e) => { if (e.detail !== 0) handleInteraction(e.clientX, e.clientY); });
+
+function updateStatusUI() {
+    if (game.game_over()) {
+        const winner = game.turn() === 'w' ? 'PRETAS' : 'BRANCAS';
+        turnText.innerText = game.in_checkmate() ? `MATE! VITÓRIA DAS ${winner}` : "FIM DE JOGO!";
+    } else {
+        turn = game.turn() === 'w' ? 'white' : 'black';
+        turnText.innerText = `VEZ DAS ${turn === 'white' ? 'BRANCAS' : 'PRETAS'}`;
+    }
+}
+
+function finalizeTurn(p) {
+    if(p) deselectPiece(p);
+    saveGame();
+    updateStatusUI();
+    if (document.getElementById('game-mode').value === 'pve' && game.turn() === 'b') playAiTurn();
+}
+
+function resetGame() {
+    localStorage.removeItem('chess3d_save');
+    game.reset();
+    pieces.forEach(p => scene.remove(p));
+    pieces.length = 0;
+    const layout = ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knight', 'rook'];
+    for (let i = 0; i < 8; i++) {
+        createPiece(i, 0, 0x222222, layout[i], 'black');
+        createPiece(i, 1, 0x222222, 'pawn', 'black');
+        createPiece(i, 6, 0xffffff, 'pawn', 'white');
+        createPiece(i, 7, 0xffffff, layout[i], 'white');
+    }
+    updateStatusUI();
+}
+
+document.getElementById('reset-button').addEventListener('click', resetGame);
+
+function onWindowResize() {
+    const w = window.innerWidth, h = window.innerHeight;
+    renderer.setSize(w, h);
+    camera.aspect = w / h;
+    camera.fov = (h > w) ? 55 : 45;
+    camera.position.set(0, (h > w) ? 16 : 12, (h > w) ? 11 : 10);
+    camera.lookAt(0, 0, 0);
+    camera.updateProjectionMatrix();
+}
+window.addEventListener('resize', onWindowResize);
+
+function selectPiece(p) { p.traverse(n => { if(n.isMesh) n.material.emissive = new THREE.Color(0x004444); }); }
+function deselectPiece(p) { if(p) p.traverse(n => { if(n.isMesh) n.material.emissive = new THREE.Color(0x000000); }); }
+
+function createExplosion(pos, color) {
+    for (let i = 0; i < 15; i++) {
+        const p = new THREE.Mesh(new THREE.SphereGeometry(0.05), new THREE.MeshStandardMaterial({ color }));
+        p.position.copy(pos);
+        const vel = new THREE.Vector3((Math.random()-0.5)*0.2, Math.random()*0.3, (Math.random()-0.5)*0.2);
+        scene.add(p);
+        particles.push({ mesh: p, vel, life: 1.0 });
+    }
+}
+
+function animate() {
+    requestAnimationFrame(animate);
+    if (selectedPiece) selectedPiece.position.y = 0.2 + Math.sin(Date.now() * 0.008) * 0.1;
+    particles.forEach((p, i) => {
         p.mesh.position.add(p.vel);
-        p.vel.y -= 0.005; 
-        p.life -= 0.02;   
+        p.life -= 0.03;
         p.mesh.material.transparent = true;
         p.mesh.material.opacity = p.life;
-        
-        if (p.life <= 0) {
-            scene.remove(p.mesh);
-            particles.splice(i, 1);
-        }
-    }
-
-    // 4. RENDERIZAÇÃO (Agora fora de qualquer ciclo, garantindo que o tabuleiro apareça sempre)
+        if (p.life <= 0) { scene.remove(p.mesh); particles.splice(i, 1); }
+    });
     renderer.render(scene, camera);
 }
 
-function onWindowResize() {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    camera.position.set(0, 12, 10);
-    camera.lookAt(0,0,0);
-}
-
-window.addEventListener('resize', onWindowResize);
-
-// Eventos de Botão (Garantindo que funcionem no mobile)
-document.getElementById('reset-button').addEventListener('click', (e) => {
-    game.reset(); 
-    syncBoard();
-});
-
-document.getElementById('update-button').addEventListener('click', (e) => {
-    window.location.reload(true);
-});
-
+// INICIALIZAÇÃO
 createBoard();
-syncBoard();
+loadGame();
+if (pieces.length === 0) resetGame();
 onWindowResize();
 animate();
+
+// --- 7. LÓGICA DO BOTÃO ATUALIZAR ---
+
+/**
+ * Adiciona o evento de clique ao botão de atualizar.
+ * O método location.reload(true) força o navegador a recarregar
+ * a página a partir do servidor, ignorando o cache local.
+ */
+document.getElementById('update-button').addEventListener('click', () => {
+    // Exibe uma mensagem rápida no log antes de recarregar
+    const log = document.getElementById('message-log');
+    if (log) log.innerText = "A atualizar jogo...";
+    
+    // Recarrega a página
+    window.location.reload();
+});
