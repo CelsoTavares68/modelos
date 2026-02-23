@@ -333,12 +333,26 @@ function resetGame() {
 
 document.getElementById('reset-button').addEventListener('click', resetGame);
 
-function onWindowResize() {
+ function onWindowResize() {
     const w = window.innerWidth, h = window.innerHeight;
     renderer.setSize(w, h);
     camera.aspect = w / h;
-    camera.fov = (h > w) ? 55 : 45;
-    camera.position.set(0, (h > w) ? 16 : 12, (h > w) ? 11 : 10);
+
+    // Ajuste dinâmico para tablets e telemóveis
+    if (h > w) {
+        // Modo Retrato (Telemóvel/Tablet vertical)
+        camera.fov = 60; 
+        camera.position.set(0, 18, 12);
+    } else if (w < 1100) {
+        // Modo Paisagem em Tablets (Ecrãs médios)
+        camera.fov = 50;
+        camera.position.set(0, 14, 11);
+    } else {
+        // Desktop
+        camera.fov = 45;
+        camera.position.set(0, 12, 10);
+    }
+
     camera.lookAt(0, 0, 0);
     camera.updateProjectionMatrix();
 }
