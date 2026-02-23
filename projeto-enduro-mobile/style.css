@@ -4,98 +4,115 @@ body, html {
     padding: 0; 
     width: 100%; 
     height: 100%; 
-    overflow: hidden; 
+    overflow: hidden; /* Força tudo a caber na tela sem rolar */
+    overscroll-behavior-y: contain; 
     background: #000; 
-    font-family: 'Courier New', monospace;
-    touch-action: none;
 }
 
-/* 2. Container - Ocupa exatamente a altura da tela */
 .game-container { 
+    position: relative; 
     width: 100vw; 
     height: 100vh; 
     display: flex; 
     flex-direction: column; 
     align-items: center;
-    box-sizing: border-box;
 }
 
-/* 3. Áreas de UI - flex-shrink: 0 impede que sumam */
+/* 2. Título Compacto */
 .jogo-titulo {
+    position: absolute;
+    top: 2px;
     width: 100%;
     text-align: center;
     color: white;
-    font-size: 14px;
-    padding: 2px 0;
-    background: #111;
-    flex-shrink: 0; 
+    font-family: 'Courier New', monospace;
+    font-size: 16px;
+    font-weight: bold;
+    z-index: 20;
+    text-shadow: 2px 2px #000;
 }
 
+/* 3. Botões Pausar/Reiniciar - AGORA MAIS FINOS */
 .controles { 
+    position: absolute; 
+    top: 22px; /* Subi um pouco para ganhar espaço */
+    left: 0;
     width: 100%; 
-    display: flex;
-    gap: 1px;
-    flex-shrink: 0;
+    display: flex; 
+    z-index: 20; 
 }
 
 .controles button { 
     flex: 1; 
-    background: #222;
+    background: rgba(34, 34, 34, 0.9);
     color: white; 
-    border: 1px solid #444; 
-    padding: 8px 0; 
-    font-size: 11px;
+    border: 1px solid rgba(255,255,255,0.2); 
+    padding: 6px 0; /* REDUZIDO: Botões bem mais finos */
+    font-family: 'Courier New', monospace; 
+    font-size: 11px; /* Fonte menor para combinar */
     text-transform: uppercase;
+    cursor: pointer;
 }
 
+/* 4. Painel de Recordes (Dashboard) - Ajustado para ser fino */
 .dashboard-externa {
+    position: absolute;
+    top: 50px; /* Colado abaixo dos botões */
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 1px;
     width: 100%;
     max-width: 500px;
-    flex-shrink: 0;
+    z-index: 20;
 }
 
 .stat-box {
     background: rgba(20, 20, 20, 0.9);
     border: 1px solid #333;
-    padding: 2px;
+    padding: 1px;
     text-align: center;
 }
 
 .stat-box .label { font-size: 7px; color: #888; display: block; }
-.stat-box .value { font-size: 12px; color: #ffff00; font-weight: bold; }
+.stat-box .value { font-size: 11px; color: #ffff00; font-weight: bold; }
 
-/* 4. O JOGO (CANVAS) - Agora ele se ajusta sem empurrar nada */
+/* 5. Jogo (Canvas) - CORREÇÃO DE TAMANHO */
 canvas { 
-    flex: 1; 
-    min-height: 0; /* Permite que ele diminua se necessário */
-    width: 100%; 
-    height: 100%;
-    display: block;
-    background: #000;
-    object-fit: contain; /* Mantém a proporção 1:1 no centro */
+    display: block; 
+    max-width: 100vw; 
+    /* No Tablet, limitamos a 50% da altura para sobrar espaço para as setas */
+    max-height: 50vh; 
+    width: auto; 
+    height: auto; 
+    margin-top: 85px; /* Começa logo após o dashboard */
+    background: #000; 
+    position: relative;
+    z-index: 1;
+    object-fit: contain;
 }
 
-/* 5. SETAS MOBILE - Sempre visíveis na base */
+/* 6. Setas de Controle - SUBIRAM PARA APARECER NO TABLET */
 .mobile-controls {
+    position: absolute;
+    bottom: 5%; /* Subi de 10% para 5% mas com botões menores */
     width: 100%;
     display: flex;
     justify-content: space-around;
-    padding: 10px 0 20px 0; /* Espaço extra para não bater na borda da tela */
-    background: #000;
-    flex-shrink: 0;
+    padding: 0 20px; 
+    box-sizing: border-box;
+    pointer-events: none;
+    z-index: 100;
 }
 
 .touch-btn {
-    width: clamp(65px, 15vh, 85px);
-    height: clamp(65px, 15vh, 85px);
-    background: rgba(255, 255, 255, 0.1);
+    pointer-events: auto;
+    width: 70px; /* Reduzi um pouco o tamanho das setas */
+    height: 70px;
+    background: rgba(255, 255, 255, 0.15);
     border: 2px solid #fff;
     border-radius: 50%;
     display: flex;
-    align-items: center; 
+    align-items: center;
     justify-content: center;
     color: #fff;
     font-size: 30px;
