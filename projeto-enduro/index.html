@@ -1,4 +1,4 @@
-   <!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
@@ -10,31 +10,33 @@
     <div class="game-container">
         <div class="instrucoes">
             <h2>MINI ENDURO</h2>
+            <div class="dashboard-externa">
+                <div class="stat-box">
+                    <span class="label">DISTÂNCIA ATUAL</span>
+                    <span id="ui-dist" class="value">0.0 KM</span>
+                </div>
+                <div class="stat-box">
+                    <span class="label">RECORDE DIA</span>
+                    <span id="ui-day-best" class="value">0.0 KM</span>
+                </div>
+                <div class="stat-box">
+                    <span class="label">ODÔMETRO ATUAL</span>
+                    <span id="ui-total-now" class="value">0.0 KM</span>
+                </div>
+                <div class="stat-box total">
+                    <span class="label">RECORDE TOTAL</span>
+                    <span id="ui-total-best" class="value">0.0 KM</span>
+                </div>
+            </div>
         </div>
 
         <canvas id="gameCanvas"></canvas>
 
-        <div class="dashboard-externa">
-            <div class="stat-box">
-                <span class="label">DISTÂNCIA</span>
-                <span id="ui-dist" class="value">0.0 KM</span>
-            </div>
-            <div class="stat-box record">
-                <span class="label">RECORDE DIA</span>
-                <span id="ui-day-best" class="value">0.0 KM</span>
-            </div>
-            <div class="stat-box total">
-                <span class="label">ODÔMETRO TOTAL</span>
-                <span id="ui-total-best" class="value">0.0 KM</span>
-            </div>
-        </div>
-
         <div class="controles">
             <button onclick="togglePause()" id="pauseBtn">Pausar</button>
-            <button onclick="resetGame()">Reiniciar Jogo</button>
+            <button onclick="resetGame()" id="resetBtn">Reiniciar Jogo</button>
         </div>
     </div>
-
     <script src="script.js"></script>
 </body>
 </html>
