@@ -1,4 +1,4 @@
-  <!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
@@ -12,22 +12,10 @@
         <div class="jogo-titulo">MINI ENDURO</div>
 
         <div class="dashboard-externa">
-            <div class="stat-box">
-                <span class="label">DISTÂNCIA</span>
-                <span id="ui-dist" class="value">0.0 KM</span>
-            </div>
-            <div class="stat-box">
-                <span class="label">RECORDE DIA</span>
-                <span id="ui-day-best" class="value">0.0 KM</span>
-            </div>
-            <div class="stat-box">
-                <span class="label">ODÔMETRO</span>
-                <span id="ui-total-now" class="value">0.0 KM</span>
-            </div>
-            <div class="stat-box">
-                <span class="label">RECORDE TOTAL</span>
-                <span id="ui-total-best" class="value">0.0 KM</span>
-            </div>
+            <div class="stat-box"><span class="label">DISTÂNCIA</span><span id="ui-dist" class="value">0.0 KM</span></div>
+            <div class="stat-box"><span class="label">RECORDE DIA</span><span id="ui-day-best" class="value">0.0 KM</span></div>
+            <div class="stat-box"><span class="label">ODÔMETRO</span><span id="ui-total-now" class="value">0.0 KM</span></div>
+            <div class="stat-box"><span class="label">RECORDE TOTAL</span><span id="ui-total-best" class="value">0.0 KM</span></div>
         </div>
 
         <canvas id="gameCanvas"></canvas>
@@ -45,7 +33,6 @@
 
     <script src="script.js"></script>
     <script>
-        // Atualização automática total
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('./sw.js').then(reg => {
                 reg.addEventListener('updatefound', () => {
