@@ -107,8 +107,19 @@ canvas {
     user-select: none;
 }
 
- /* Ajuste específico para Tablet (telas mais quadradas) */
-@media (min-aspect-ratio: 1/1) {
-    canvas { max-height: 50vh; }
-    .mobile-controls { padding-bottom: 40px; }
+ /* 7. MEDIA QUERY ESPECÍFICA PARA TABLETS */
+@media (min-width: 600px) and (min-height: 600px) {
+    canvas {
+        max-height: 45vh; /* Limita o jogo a 45% da altura da tela no tablet */
+        margin-bottom: 20px;
+    }
+    
+    .mobile-controls {
+        padding-bottom: 80px; /* Sobe as setas ainda mais no tablet para garantir visibilidade */
+    }
+    
+    .touch-btn {
+        width: 90px;
+        height: 90px;
+    }
 }
