@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
@@ -8,37 +8,54 @@
 </head>
 <body>
 
-     <div class="app-card">
-    <header>
-        <h2>🎙️ Chat Bilíngue</h2>
-        <select id="foreignLang">
-            <option value="en-US">Inglês (USA)</option>
-            <option value="es-ES">Espanhol (España)</option>
-            <option value="fr-FR">Francês (France)</option>
-        </select>
-    </header>
+    <div class="app-card">
+        <button id="toggleHistory" class="btn-secondary">📜 Ver Histórico</button>
 
-    <div class="chat-container">
-        <div class="message-box">
-            <small id="labelForeign">Estrangeiro diz:</small>
-            <div id="textForeign" class="bubble original">...</div>
-            <div id="textToPt" class="bubble translation">Tradução para PT aparecerá aqui...</div>
-            <button id="btnForeign" class="btn-mic small">🎤 Ouvir Estrangeiro</button>
+        <div id="historyPanel" class="history-hidden">
+            <h3>Histórico de Conversa</h3>
+            <div id="historyList"></div>
+            
+            <div class="history-actions">
+                <button id="downloadPdf" class="btn-pdf">📥 Gerar PDF</button>
+                <button id="clearHistory" class="btn-clear">Limpar Tudo</button>
+            </div>
         </div>
 
-        <hr>
+        <header>
+            <h2>🎙️ Chat Bilíngue</h2>
+            <select id="foreignLang">
+                <option value="en-US">Inglês (USA)</option>
+                <option value="es-ES">Espanhol (España)</option>
+                <option value="fr-FR">Francês (France)</option>
+                <option value="de-DE">Alemão (Deutsch)</option>
+                <option value="it-IT">Italiano (Italia)</option>
+                <option value="zh-CN">Chinês (Mandarin)</option>
+                <option value="ht-HT">Crioulo Haitiano (Kreyòl)</option>
+            </select>
+        </header>
 
-        <div class="message-box">
-            <small>Você diz (Português):</small>
-            <div id="textMe" class="bubble original">...</div>
-            <div id="textToForeign" class="bubble translation">Tradução para o idioma dele...</div>
-            <button id="btnMe" class="btn-mic small btn-pt">🎤 Eu falar (PT)</button>
+        <div class="chat-container">
+            <div class="message-box">
+                <small id="labelForeign">Estrangeiro diz:</small>
+                <div id="textForeign" class="bubble original">...</div>
+                <div id="textToPt" class="bubble translation">Tradução para PT aparecerá aqui...</div>
+                <button id="btnForeign" class="btn-mic small">🎤 Ouvir Estrangeiro</button>
+            </div>
+
+            <hr>
+
+            <div class="message-box">
+                <small>Você diz (Português):</small>
+                <div id="textMe" class="bubble original">...</div>
+                <div id="textToForeign" class="bubble translation">Tradução para o idioma dele...</div>
+                <button id="btnMe" class="btn-mic small btn-pt">🎤 Eu falar (PT)</button>
+            </div>
         </div>
+        
+        <div id="statusLabel" class="status">Escolha quem vai falar</div>
     </div>
-    
-    <div id="statusLabel" class="status">Escolha quem vai falar</div>
-</div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
