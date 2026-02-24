@@ -278,7 +278,7 @@ function update() {
     if (keys.ArrowLeft) leftPressTime++; else leftPressTime = 0;
     if (keys.ArrowRight) rightPressTime++; else rightPressTime = 0;
 
-    let isBraking = (leftPressTime > 90 || rightPressTime > 90 || keys.ArrowDown); 
+    let isBraking = (leftPressTime > 75 || rightPressTime > 75 || keys.ArrowDown); 
     if (isBraking) speed = Math.max(speed - 0.15, 0); 
     else {
         if (offRoad) speed = Math.min(speed + 0.01, 2); 
@@ -286,8 +286,8 @@ function update() {
     }
 
     playerX -= (roadCurve * 0.06) * (speed / maxSpeed); 
-    if (keys.ArrowLeft) playerX -= 3.2;
-    if (keys.ArrowRight) playerX += 3.2;
+    if (keys.ArrowLeft) playerX -= 3.8;
+    if (keys.ArrowRight) playerX += 3.8;
     playerX = Math.max(-480, Math.min(480, playerX));
 
     if (--curveTimer <= 0) { 
