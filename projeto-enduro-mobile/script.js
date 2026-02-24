@@ -286,8 +286,8 @@ function update() {
     }
 
     playerX -= (roadCurve * 0.06) * (speed / maxSpeed); 
-    if (keys.ArrowLeft) playerX -= 3.8;
-    if (keys.ArrowRight) playerX += 3.8;
+    if (keys.ArrowLeft) playerX -= 4.2;
+    if (keys.ArrowRight) playerX += 4.2;
     playerX = Math.max(-480, Math.min(480, playerX));
 
     if (--curveTimer <= 0) { 
