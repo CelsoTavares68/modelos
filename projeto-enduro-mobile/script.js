@@ -278,7 +278,7 @@ function update() {
     if (keys.ArrowLeft) leftPressTime++; else leftPressTime = 0;
     if (keys.ArrowRight) rightPressTime++; else rightPressTime = 0;
 
-    let isBraking = (leftPressTime > 60 || rightPressTime > 60 || keys.ArrowDown); 
+    let isBraking = (leftPressTime > 90 || rightPressTime > 90 || keys.ArrowDown); 
     if (isBraking) speed = Math.max(speed - 0.15, 0); 
     else {
         if (offRoad) speed = Math.min(speed + 0.01, 2); 
