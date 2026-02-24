@@ -77,3 +77,16 @@ select {
 
 .original { background: #f8f9fa; color: #444; }
 .translation { background: #e8f0fe; color: #1a73e8; font-weight: 500; }
+
+.btn-mic.small {
+    width: 100%;
+    height: auto;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 14px;
+    margin-top: 10px;
+    display: block;
+}
+.btn-pt { background: #2ecc71 !important; } /* Verde para o seu lado */
+hr { border: 0; border-top: 1px solid #eee; margin: 20px 0; }
+.message-box { display: flex; flex-direction: column; gap: 5px; }

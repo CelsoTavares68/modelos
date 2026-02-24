@@ -8,39 +8,36 @@
 </head>
 <body>
 
-    <div class="app-card">
-        <header>
-            <h2>🎙️ Voice Translate</h2>
-            <p>Tradução instantânea para Português</p>
-        </header>
-        
-        <div class="input-group">
-            <label for="inputLang">Idioma de entrada:</label>
-            <select id="inputLang">
-                <option value="en-US">Inglês (USA)</option>
-                <option value="es-ES">Espanhol (España)</option>
-                <option value="fr-FR">Francês (France)</option>
-            </select>
+     <div class="app-card">
+    <header>
+        <h2>🎙️ Chat Bilíngue</h2>
+        <select id="foreignLang">
+            <option value="en-US">Inglês (USA)</option>
+            <option value="es-ES">Espanhol (España)</option>
+            <option value="fr-FR">Francês (France)</option>
+        </select>
+    </header>
+
+    <div class="chat-container">
+        <div class="message-box">
+            <small id="labelForeign">Estrangeiro diz:</small>
+            <div id="textForeign" class="bubble original">...</div>
+            <div id="textToPt" class="bubble translation">Tradução para PT aparecerá aqui...</div>
+            <button id="btnForeign" class="btn-mic small">🎤 Ouvir Estrangeiro</button>
         </div>
 
-        <div class="mic-section">
-            <button id="startBtn" class="btn-mic">
-                <span id="micIcon">🎤</span>
-            </button>
-            <div id="statusLabel" class="status">Clique para começar a falar</div>
-        </div>
+        <hr>
 
-        <div class="chat-container">
-            <div class="message-box">
-                <small>Você disse:</small>
-                <div id="textIn" class="bubble original">...</div>
-            </div>
-            <div class="message-box">
-                <small>Tradução:</small>
-                <div id="textOut" class="bubble translation">...</div>
-            </div>
+        <div class="message-box">
+            <small>Você diz (Português):</small>
+            <div id="textMe" class="bubble original">...</div>
+            <div id="textToForeign" class="bubble translation">Tradução para o idioma dele...</div>
+            <button id="btnMe" class="btn-mic small btn-pt">🎤 Eu falar (PT)</button>
         </div>
     </div>
+    
+    <div id="statusLabel" class="status">Escolha quem vai falar</div>
+</div>
 
     <script src="script.js"></script>
 </body>
