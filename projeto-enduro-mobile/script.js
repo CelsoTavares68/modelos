@@ -6,9 +6,8 @@ let playerX = 0, speed = 0, gameTick = 0, playerDist = 0;
 let dayNumber = 1, baseGoal = 200, carsRemaining = baseGoal; 
 let gameState = "PLAYING"; 
 let isPaused = false;
-let vitoriaTocada = false; // TRAVA PARA A MÚSICA DA VITÓRIA
+let vitoriaTocada = false; 
 
-// --- 1. RECORDES (SISTEMA DE PERSISTÊNCIA) ---
 let odometerNow = 0;
 let dayBestRecord = parseFloat(localStorage.getItem('enduro_dayBest')) || 0;
 let totalBestRecord = parseFloat(localStorage.getItem('enduro_totalBest')) || 0;
@@ -19,31 +18,25 @@ const DAY_DURATION = STAGE_DURATION * 9;
 let currentTime = 0; 
 
 let enemies = [];
-
-// --- SISTEMA DE CURVAS ---
 let roadCurve = 0;      
 let targetCurve = 0;    
 let curveTimer = 0;     
 let curveSpeed = 0.015; 
 
-// --- FREIO ---
 let leftPressTime = 0;
 let rightPressTime = 0;
 
-// --- CLIMA ---
 let raindrops = []; 
 let lightningAlpha = 0; 
 
-// --- 2. SONS (TROVÃO BAIXO E VITÓRIA) ---
 const sfxChuva = new Audio('chuva.mp3');
 sfxChuva.loop = true;
 sfxChuva.volume = 0.5; 
 const sfxTrovao = new Audio('trovao.mp3');
-sfxTrovao.volume = 0.2; // VOLUME BAIXO
+sfxTrovao.volume = 0.2; 
 const sfxVitoriaAudio = new Audio('vitoria.mp3');
 const sfxDerrota = new Audio('game_over.mp3');
 
-// --- MÍDIA ---
 const videoVitoria = document.createElement('video');
 videoVitoria.src = 'bandeira_vitoria.mp4';
 videoVitoria.style.position = 'absolute';
@@ -64,7 +57,6 @@ document.body.appendChild(videoDerrota);
 
 const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
 
-// --- 3. BANDEIRADA ---
 function drawFinishLine(y, roadWidth, xPos) {
     const squares = 10;
     const size = roadWidth / squares;
@@ -169,7 +161,7 @@ function resetDay() {
     currentTime = 0; playerDist = 0; speed = 0; enemies = [];
     carsRemaining = baseGoal + (dayNumber - 1) * 10; 
     gameState = "PLAYING"; isPaused = false;
-    vitoriaTocada = false; // RESET DA TRAVA DA MÚSICA
+    vitoriaTocada = false; 
     if (sfxChuva) { sfxChuva.pause(); sfxChuva.currentTime = 0; }
     saveProgress();
 }
@@ -198,8 +190,7 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasF
         ctx.fill();
     }
 
-    if (nightMode || (hasFog && !isRainy)) {
-    } else {
+    if (!(nightMode || (hasFog && !isRainy))) {
         ctx.fillStyle = "#111"; 
         ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8);
         ctx.fillRect(w * 0.25, -h * 0.1, w * 0.25, h * 0.8);
@@ -241,14 +232,14 @@ function update() {
 
     if (isRaining || warningLightning) {
         if (isRaining && sfxChuva.paused && audioCtx.state === 'running') sfxChuva.play().catch(e => {}); 
-         if (Math.random() > 0.996) { 
-    lightningAlpha = 0.7; 
-    if (audioCtx.state === 'running') {
-        // Se for fase de aviso (2 ou 6), volume 0.05. Se for chuva, volume 0.2.
-        sfxTrovao.volume = warningLightning ? 0.05 : 0.2; 
-        sfxTrovao.play().catch(e => {});
-    }
-} else { sfxChuva.pause(); }
+        if (Math.random() > 0.996) { 
+            lightningAlpha = 0.7; 
+            if (audioCtx.state === 'running') {
+                sfxTrovao.volume = warningLightning ? 0.05 : 0.2; 
+                sfxTrovao.play().catch(e => {});
+            }
+        }
+    } else { sfxChuva.pause(); }
 
     if (isRaining) {
         for (let i = 0; i < 12; i++) raindrops.push({ x: Math.random() * 400, y: -20, s: Math.random() * 10 + 22 });
@@ -316,11 +307,10 @@ function update() {
             if (enemy.z <= 0 && !enemy.isOvertaken) { 
                 carsRemaining--; 
                 enemy.isOvertaken = true; 
-                // CORREÇÃO: SÓ TOCA SE A TRAVA ESTIVER FALSA
                 if (carsRemaining <= 0 && !vitoriaTocada) { 
                     gameState = "GOAL_REACHED"; 
                     sfxVitoriaAudio.play().catch(e => {}); 
-                    vitoriaTocada = true; // ATIVA A TRAVA
+                    vitoriaTocada = true; 
                 }
             }
             if (enemy.z > 0 && enemy.isOvertaken) { carsRemaining++; enemy.isOvertaken = false; }
