@@ -107,12 +107,8 @@ canvas {
     user-select: none;
 }
 
- /* Ajuste para telas de Tablet (proporção mais quadrada) */
-@media (min-width: 600px) and (min-aspect-ratio: 4/3) {
-    canvas {
-        max-height: 55vh; /* Diminui o jogo para sobrar espaço embaixo */
-    }
-    .mobile-controls {
-        bottom: 15%; /* Sobe as setas para não fugirem da tela */
-    }
+ /* Ajuste específico para Tablet (telas mais quadradas) */
+@media (min-aspect-ratio: 1/1) {
+    canvas { max-height: 50vh; }
+    .mobile-controls { padding-bottom: 40px; }
 }
