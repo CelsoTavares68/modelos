@@ -296,8 +296,8 @@ function update() {
     }
 
     playerX -= (roadCurve * 0.06) * (speed / maxSpeed); 
-    if (keys.ArrowLeft) playerX -= 6;
-    if (keys.ArrowRight) playerX += 6;
+    if (keys.ArrowLeft) playerX -= 5;
+    if (keys.ArrowRight) playerX += 5;
     playerX = Math.max(-480, Math.min(480, playerX));
 
     if (--curveTimer <= 0) { 
@@ -333,7 +333,7 @@ function update() {
         });
     }
 
-    enemies = enemies.filter(e => e.z > -15000 && e.z < 6000);
+    enemies = enemies.filter(e => e.z > -18000 && e.z < 6000);
     draw(colors, isRaining);
     requestAnimationFrame(update);
 }
