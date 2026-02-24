@@ -69,7 +69,7 @@ body, html {
 .stat-box .label { font-size: 7px; color: #888; display: block; }
 .stat-box .value { font-size: 11px; color: #ffff00; font-weight: bold; }
 
-/* 5. O JOGO - AJUSTE DINÂMICO */
+ /* 5. O JOGO - AJUSTE DINÂMICO */
 canvas { 
     flex: 1; 
     display: block;
@@ -83,13 +83,12 @@ canvas {
     min-height: 0; 
 }
 
-/* 6. SETAS MOBILE - SUBIDAS EM 50PX */
+/* 6. SETAS MOBILE - POSICIONAMENTO */
 .mobile-controls {
     width: 100%;
     display: flex;
     justify-content: space-around;
-    /* Aumentei o padding inferior para empurrar os botões para cima */
-    padding: 10px 0 60px 0; 
+    padding: 10px 0 60px 0; /* Sobe os botões os 50px solicitados */
     background: #000;
     flex-shrink: 0;
 }
@@ -106,4 +105,21 @@ canvas {
     color: #fff;
     font-size: 25px;
     user-select: none;
+}
+
+/* 7. MEDIA QUERY ESPECÍFICA PARA TABLETS */
+@media (min-width: 600px) and (min-height: 600px) {
+    canvas {
+        max-height: 45vh; /* Limita o jogo a 45% da altura da tela no tablet */
+        margin-bottom: 20px;
+    }
+    
+    .mobile-controls {
+        padding-bottom: 80px; /* Sobe as setas ainda mais no tablet para garantir visibilidade */
+    }
+    
+    .touch-btn {
+        width: 90px;
+        height: 90px;
+    }
 }
