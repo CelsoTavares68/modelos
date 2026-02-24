@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tradutor de Voz Poliglota</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="app-card">
+        <header>
+            <h2>🎙️ Voice Translate</h2>
+            <p>Tradução instantânea para Português</p>
+        </header>
+        
+        <div class="input-group">
+            <label for="inputLang">Idioma de entrada:</label>
+            <select id="inputLang">
+                <option value="en-US">Inglês (USA)</option>
+                <option value="es-ES">Espanhol (España)</option>
+                <option value="fr-FR">Francês (France)</option>
+            </select>
+        </div>
+
+        <div class="mic-section">
+            <button id="startBtn" class="btn-mic">
+                <span id="micIcon">🎤</span>
+            </button>
+            <div id="statusLabel" class="status">Clique para começar a falar</div>
+        </div>
+
+        <div class="chat-container">
+            <div class="message-box">
+                <small>Você disse:</small>
+                <div id="textIn" class="bubble original">...</div>
+            </div>
+            <div class="message-box">
+                <small>Tradução:</small>
+                <div id="textOut" class="bubble translation">...</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
