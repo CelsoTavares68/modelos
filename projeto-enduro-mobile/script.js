@@ -7,7 +7,7 @@ let dayNumber = 1, baseGoal = 200, carsRemaining = baseGoal;
 let gameState = "PLAYING"; 
 let isPaused = false;
 
-// --- 1. RECORDES (VARIÁVEIS ADICIONADAS) ---
+// --- 1. ALTERAÇÃO: SISTEMA DE RECORDES ---
 let odometerNow = 0;
 let dayBestRecord = parseFloat(localStorage.getItem('enduro_dayBest')) || 0;
 let totalBestRecord = parseFloat(localStorage.getItem('enduro_totalBest')) || 0;
@@ -33,12 +33,14 @@ let rightPressTime = 0;
 let raindrops = []; 
 let lightningAlpha = 0; 
 
-// --- SONS ---
+// --- 2. ALTERAÇÃO: SONS (TROVÃO BAIXO E VITÓRIA) ---
 const sfxChuva = new Audio('chuva.mp3');
 sfxChuva.loop = true;
 sfxChuva.volume = 0.5; 
 const sfxTrovao = new Audio('trovao.mp3');
-sfxTrovao.volume = 0.2; // 2. SOM DE TROVÃO BEM BAIXO
+sfxTrovao.volume = 0.2; // Volume baixo como pedido
+const sfxVitoriaAudio = new Audio('vitoria.mp3'); 
+const sfxDerrota = new Audio('game_over.mp3');
 
 // --- MÍDIA ---
 const videoVitoria = document.createElement('video');
@@ -59,12 +61,9 @@ videoDerrota.style.display = 'none'; videoDerrota.style.zIndex = '10';
 videoDerrota.muted = true; videoDerrota.load();
 document.body.appendChild(videoDerrota);
 
-const sfxDerrota = new Audio('game_over.mp3');
-const sfxVitoriaAudio = new Audio('vitoria.mp3');
-
 const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
 
-// --- 3. FUNÇÃO DA BANDEIRADA ---
+// --- 3. ALTERAÇÃO: FUNÇÃO DA LINHA DE CHEGADA ---
 function drawFinishLine(y, roadWidth, xPos) {
     const squares = 10;
     const size = roadWidth / squares;
@@ -74,7 +73,7 @@ function drawFinishLine(y, roadWidth, xPos) {
     }
 }
 
-// --- ATUALIZAÇÃO DA UI DE RECORDES ---
+// ATUALIZAÇÃO DA UI DE RECORDES
 function updateUI() {
     if(document.getElementById('ui-dist')) document.getElementById('ui-dist').innerText = (playerDist / 1000).toFixed(1) + " KM";
     if(document.getElementById('ui-day-best')) document.getElementById('ui-day-best').innerText = dayBestRecord.toFixed(1) + " KM";
@@ -160,8 +159,7 @@ function togglePause() {
 
 function resetGame() {
     if (audioCtx.state === 'suspended') audioCtx.resume();
-    dayNumber = 1; baseGoal = 200; isPaused = false;
-    odometerNow = 0; // Reinicia odômetro atual
+    dayNumber = 1; baseGoal = 200; isPaused = false; odometerNow = 0;
     localStorage.removeItem('enduro_save');
     resetDay();
     if (gameState !== "PLAYING") { gameState = "PLAYING"; update(); }
@@ -175,6 +173,7 @@ function resetDay() {
     saveProgress();
 }
 
+// --- SEU DESENHO DO CARRO ORIGINAL (MANTIDO 100%) ---
 function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasFog = false, isRainy = false) {
     let s = scale * 1.2;
     if (s < 0.02 || s > 30) return;
@@ -200,6 +199,7 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasF
     }
 
     if (nightMode || (hasFog && !isRainy)) {
+        // Silhueta
     } else {
         ctx.fillStyle = "#111"; 
         ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8);
@@ -215,7 +215,7 @@ function update() {
     if (isPaused) return; 
     let currentStage = Math.min(Math.floor(currentTime / STAGE_DURATION), 8);
     let isRaining = (currentStage === 3 || currentStage === 7);
-    let warningLightning = (currentStage === 2); // FASE 2
+    let warningLightning = (currentStage === 2 || currentStage === 6); // CORREÇÃO TROVÃO FASE 2
 
     let colors = { sky: "#87CEEB", grass: "#1a7a1a", fog: 0, mt: "#555", nightMode: false, snowCaps: false };
     switch(currentStage) {
@@ -240,7 +240,7 @@ function update() {
     gameTick++; playerDist += speed; odometerNow += speed; currentTime++; 
     if (gameTick % 4 === 0) playEngineSound();
 
-    // --- 2. LOGICA DO TROVÃO (FASE 2 OU CHUVA) ---
+    // LÓGICA DO TROVÃO CORRIGIDA (FASE 2 E CHUVA)
     if (isRaining || warningLightning) {
         if (isRaining && sfxChuva.paused && audioCtx.state === 'running') sfxChuva.play().catch(e => {}); 
         if (Math.random() > 0.996) { 
@@ -255,7 +255,7 @@ function update() {
     raindrops.forEach((r, i) => { r.y += r.s; if (r.y > 400) raindrops.splice(i, 1); });
     if (lightningAlpha > 0) lightningAlpha -= 0.05;
 
-    // --- 1. LÓGICA DE RECORDES ---
+    // ATUALIZAÇÃO DOS RECORDES
     if (playerDist / 1000 > dayBestRecord) {
         dayBestRecord = playerDist / 1000;
         localStorage.setItem('enduro_dayBest', dayBestRecord);
@@ -316,10 +316,9 @@ function update() {
             if (enemy.z <= 0 && !enemy.isOvertaken) { 
                 carsRemaining--; 
                 enemy.isOvertaken = true; 
-                // --- 3. SOM DA VITÓRIA AO ATINGIR META ---
-                if (carsRemaining === 0) {
-                    gameState = "GOAL_REACHED";
-                    sfxVitoriaAudio.play().catch(e => {});
+                if (carsRemaining === 0) { // SOM DA VITÓRIA AO BATER A META
+                    gameState = "GOAL_REACHED"; 
+                    sfxVitoriaAudio.play().catch(e => {}); 
                 }
             }
             if (enemy.z > 0 && enemy.isOvertaken) { carsRemaining++; enemy.isOvertaken = false; }
@@ -341,6 +340,7 @@ function update() {
     requestAnimationFrame(update);
 }
 
+// --- SUA FUNÇÃO DRAW ORIGINAL (MANTIDA 100% COM ADIÇÃO DA LINHA) ---
 function draw(colors, isRaining) {
     ctx.fillStyle = colors.sky; ctx.fillRect(0, 0, 400, 200);
     ctx.fillStyle = colors.grass; ctx.fillRect(0, 200, 400, 200);
@@ -358,7 +358,7 @@ function draw(colors, isRaining) {
         let x = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p);
         let w = 20 + p * 800;
 
-        // --- 3. DESENHA BANDEIRADA NA PISTA ---
+        // BANDEIRADA NA PISTA QUANDO BATE A META
         if (carsRemaining <= 0 && i > 250 && i < 265) {
             drawFinishLine(i, w, x);
         }
