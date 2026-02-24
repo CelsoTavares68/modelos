@@ -241,11 +241,14 @@ function update() {
 
     if (isRaining || warningLightning) {
         if (isRaining && sfxChuva.paused && audioCtx.state === 'running') sfxChuva.play().catch(e => {}); 
-        if (Math.random() > 0.996) { 
-            lightningAlpha = 0.7; 
-            if (audioCtx.state === 'running') sfxTrovao.play().catch(e => {});
-        }
-    } else { sfxChuva.pause(); }
+         if (Math.random() > 0.996) { 
+    lightningAlpha = 0.7; 
+    if (audioCtx.state === 'running') {
+        // Se for fase de aviso (2 ou 6), volume 0.05. Se for chuva, volume 0.2.
+        sfxTrovao.volume = warningLightning ? 0.05 : 0.2; 
+        sfxTrovao.play().catch(e => {});
+    }
+} else { sfxChuva.pause(); }
 
     if (isRaining) {
         for (let i = 0; i < 12; i++) raindrops.push({ x: Math.random() * 400, y: -20, s: Math.random() * 10 + 22 });
@@ -292,8 +295,8 @@ function update() {
     }
 
     playerX -= (roadCurve * 0.06) * (speed / maxSpeed); 
-    if (keys.ArrowLeft) playerX -= 4.8;
-    if (keys.ArrowRight) playerX += 4.8;
+    if (keys.ArrowLeft) playerX -= 3.2;
+    if (keys.ArrowRight) playerX += 3.2;
     playerX = Math.max(-480, Math.min(480, playerX));
 
     if (--curveTimer <= 0) { 
