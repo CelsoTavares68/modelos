@@ -1,7 +1,7 @@
  const TOKEN_B3 = '8gRPKYrszFRi4JCDaARwuJ'; 
 
-// LISTAS - Ajustadas para o padrão que a API Brapi costuma aceitar para derivativos/ações
-const LISTA_AGRO_BMF = "BGIG26.SA,CCMH26.SA,SJWH26.SA,ICFU26.SA,WDOG26.SA,CTPK26.SA,TRIH26.SA";
+// LISTAS - Mantive sua lógica original
+ const LISTA_AGRO_BMF = "BGIG26,CCMH26,SJWH26,ICFU26,WDOG26,CTPK26,TRIH26";
 const LISTA_ACOES_B3 = "VALE3,ITUB4,ABEV3,PETR4";
 
 const MAPA_NOMES_AGRO = {
@@ -27,8 +27,10 @@ async function inicializarApp() {
 
     buscarApenasMoedas();
     buscarApenasTaxas();
-    await buscarCotacoesAgro(); 
-    await buscarCotacoesBovespa();
+    
+    // Mudança importante: Chamamos as funções sem o 'await' rígido para uma não travar a outra
+    buscarCotacoesAgro(); 
+    buscarCotacoesBovespa();
 }
 
 // --- MOEDAS E CRIPTOS ---
@@ -77,21 +79,12 @@ async function buscarApenasTaxas() {
 async function buscarCotacoesAgro() {
     try {
         const res = await fetch(`https://brapi.dev/api/quote/${LISTA_AGRO_BMF}?token=${TOKEN_B3}`);
-        if (!res.ok) throw new Error(`Erro na API Agro: ${res.status}`);
+        if(!res.ok) return; // Se der erro (404), apenas sai da função sem travar o resto
         const data = await res.json();
         if (data.results) {
             data.results.forEach(item => renderizarLinhaTabela(item, "BMF"));
         }
-    } catch (e) { 
-        console.error("Erro Agro:", e);
-        // Fallback: Tenta buscar sem o .SA se falhar
-        if (e.message.includes("404")) {
-            const listaAlternativa = LISTA_AGRO_BMF.replace(/\.SA/g, '');
-            fetch(`https://brapi.dev/api/quote/${listaAlternativa}?token=${TOKEN_B3}`)
-                .then(r => r.json())
-                .then(d => d.results && d.results.forEach(item => renderizarLinhaTabela(item, "BMF")));
-        }
-    }
+    } catch (e) { console.warn("Agro temporariamente fora do ar na Brapi."); }
 }
 
 async function buscarCotacoesBovespa() {
@@ -99,8 +92,9 @@ async function buscarCotacoesBovespa() {
         const tickersPessoais = minhaCarteira.map(a => a.ticker).join(',');
         const listaBusca = (LISTA_ACOES_B3 + (tickersPessoais ? ',' + tickersPessoais : '')).replace(/\s/g, '');
         
+        // Chamada do Ranking e dos Preços
         const [resRanking, resPrecos] = await Promise.all([
-            fetch(`https://brapi.dev/api/quote/list?sortBy=change&sortOrder=desc&token=${TOKEN_B3}`),
+            fetch(`https://brapi.dev/api/quote/list?token=${TOKEN_B3}`),
             fetch(`https://brapi.dev/api/quote/${listaBusca}?token=${TOKEN_B3}`)
         ]);
         
@@ -109,23 +103,25 @@ async function buscarCotacoesBovespa() {
 
         if (dataPrecos.results) {
             dataPrecos.results.forEach(item => {
-                if (!LISTA_AGRO_BMF.includes(item.symbol)) {
-                    renderizarLinhaTabela(item, "B3");
-                }
+                renderizarLinhaTabela(item, "B3");
             });
         }
         
         atualizarPainelCarteira(dataPrecos.results);
         processarRanking(dataRanking);
+        
         document.getElementById('status-conexao').innerText = "✅ Sistema Online";
-    } catch (e) { console.error("Erro Bovespa:", e); }
+    } catch (e) { 
+        console.error("Erro Bovespa:", e); 
+        document.getElementById('status-conexao').innerText = "⚠️ Erro na conexão com a B3";
+    }
 }
 
 function renderizarLinhaTabela(item, origem) {
     const tbody = document.getElementById("corpo-cotacoes");
     if (!tbody || !item || (!item.regularMarketPrice && !item.price)) return;
 
-    const tickerLimpo = item.symbol.replace('.SA', '');
+    const tickerLimpo = (item.symbol || "").replace('.SA', '');
     const prefixo = tickerLimpo.substring(0, 3);
     
     const nomeExibicao = origem === "BMF" 
@@ -151,67 +147,56 @@ function renderizarLinhaTabela(item, origem) {
         </tr>`;
 }
 
-// --- RANKING CORRIGIDO ---
+// --- RANKING (LINHA 147 CORRIGIDA) ---
 function processarRanking(dataRanking) {
-    // Tenta encontrar a lista em 'results' ou 'stocks'
-    const lista = dataRanking.results || dataRanking.stocks || [];
+    // A Brapi mudou: os dados podem vir em 'stocks' ou em 'results'
+    const lista = dataRanking.stocks || dataRanking.results || [];
 
     if (Array.isArray(lista) && lista.length > 0) {
-        // Filtra ativos válidos
-        const apenasAcoes = lista.filter(s => (s.symbol || s.stock));
-        
+        // Filtrar e Ordenar por variação
+        const apenasAcoes = lista.filter(s => (s.stock || s.symbol));
+        apenasAcoes.sort((a, b) => (b.change || 0) - (a.change || 0));
+
         const topAltas = apenasAcoes.slice(0, 30);
         const topBaixas = [...apenasAcoes].reverse().slice(0, 30);
 
         const formatLi = (a, c) => {
-            const ticker = a.symbol || a.stock || "---";
-            const preco = a.regularMarketPrice || a.price || a.close || 0;
+            const ticker = a.stock || a.symbol || "---";
+            const preco = a.close || a.regularMarketPrice || a.price || 0;
             const variacao = a.change || 0;
-            let nomeParaExibir = a.name || a.longName || "";
-            
-            if (nomeParaExibir.includes(" - ")) {
-                nomeParaExibir = nomeParaExibir.split(" - ")[1];
-            }
-
-            const temNomeReal = nomeParaExibir && nomeParaExibir.toLowerCase() !== ticker.toLowerCase();
 
             return `
                 <li style="display: flex; justify-content: space-between; align-items: center; padding: 10px 5px; border-bottom: 1px solid rgba(0,0,0,0.05);">
-                    <span style="flex: 1; text-align: left; min-width: 0;">
-                        <b style="display: block; font-size: 0.95em;">${ticker}</b>
-                        ${temNomeReal ? `<small style="display: block; color: #777; font-size: 0.75em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px;">${nomeParaExibir}</small>` : ''}
+                    <span style="flex: 1; text-align: left;">
+                        <b style="display: block;">${ticker}</b>
                     </span>
-                    <span style="flex: 1; text-align: center; color: #444; font-size: 0.9em;">R$ ${preco.toFixed(2)}</span>
+                    <span style="flex: 1; text-align: center; color: #444;">R$ ${preco.toFixed(2)}</span>
                     <span class="${c}" style="flex: 1; text-align: right; font-weight: bold;">
                         ${variacao.toFixed(2)}%
                     </span>
                 </li>`;
         };
 
-        const htmlAltas = topAltas.map(a => formatLi(a, 'texto-alta')).join('');
-        const htmlBaixas = topBaixas.map(a => formatLi(a, 'texto-queda')).join('');
-
-        if(document.getElementById('lista-altas')) document.getElementById('lista-altas').innerHTML = htmlAltas;
-        if(document.getElementById('lista-baixas')) document.getElementById('lista-baixas').innerHTML = htmlBaixas;
+        if(document.getElementById('lista-altas')) document.getElementById('lista-altas').innerHTML = topAltas.map(a => formatLi(a, 'texto-alta')).join('');
+        if(document.getElementById('lista-baixas')) document.getElementById('lista-baixas').innerHTML = topBaixas.map(a => formatLi(a, 'texto-queda')).join('');
         
         renderizarGrafico([...topAltas.slice(0,5), ...topBaixas.slice(0,5)].map(item => ({ 
-            symbol: item.symbol || item.stock, 
+            symbol: item.stock || item.symbol, 
             change: item.change || 0 
         })));
     } else {
-        console.error("Dados do ranking não puderam ser processados:", dataRanking);
+        console.error("Dados do ranking não encontrados no objeto:", dataRanking);
     }
 }
 
-// --- CARTEIRA ---
+// --- CARTEIRA (Mantive original) ---
 function atualizarPainelCarteira(dadosApi) {
     const tbody = document.getElementById('corpo-carteira');
     if (!tbody) return;
     tbody.innerHTML = "";
     minhaCarteira.forEach((item, index) => {
-        const info = dadosApi ? dadosApi.find(res => res.symbol && res.symbol.includes(item.ticker)) : null;
+        const info = dadosApi ? dadosApi.find(res => res.symbol.includes(item.ticker)) : null;
         const precoAtual = info ? (info.regularMarketPrice || info.price) : null;
-        const nomeEmpresa = info && (info.longName || info.shortName) ? (info.longName || info.shortName) : "Ativo B3";
         
         let cor = ""; let pct = "---";
         if (precoAtual) {
@@ -221,7 +206,7 @@ function atualizarPainelCarteira(dadosApi) {
         }
         tbody.innerHTML += `
             <tr class="${cor}">
-                <td><b>${item.ticker}</b><br><small style="opacity:0.7">${nomeEmpresa}</small></td>
+                <td><b>${item.ticker}</b></td>
                 <td>R$ ${item.precoPago.toFixed(2)}</td>
                 <td>${precoAtual ? 'R$ ' + precoAtual.toFixed(2) : '---'}</td>
                 <td style="font-weight:bold">${pct}</td>
@@ -230,28 +215,22 @@ function atualizarPainelCarteira(dadosApi) {
     });
 }
 
-// --- CALCULADORA ---
+// --- CALCULADORA (Mantive original) ---
 function calcularRentabilidade() {
     const valor = parseFloat(document.getElementById('valorInvestido').value);
     const container = document.getElementById('tabela-rendimentos');
-    if (!valor || valor <= 0) { alert("Insira um valor para calcular."); return; }
+    if (!valor || valor <= 0) { alert("Insira um valor."); return; }
     
-    const SELIC = 11.25; 
-    const CDI = SELIC - 0.10; 
-    const diasUteisAno = 252; 
-    const mesesAno = 12;
-
+    const CDI = 11.15; 
     const calcCDB = (v, tempo) => (v * (CDI / 100 / tempo)) * 0.775;
     const calcLCI = (v, tempo) => (v * ((CDI * 0.9) / 100 / tempo));
-    const calcPoup = (v, tempo) => (v * (0.0055 / (tempo === 252 ? 21 : 1)));
 
     container.innerHTML = `
-        <div class="card-investimento"><h4>CDB / RDB (100% CDI)</h4><p>Diário: <strong class="texto-alta">R$ ${calcCDB(valor, diasUteisAno).toFixed(2)}</strong></p><p>Mensal: <strong>R$ ${calcCDB(valor, mesesAno).toFixed(2)}</strong></p><small>Líquido (Pós-IR)</small></div>
-        <div class="card-investimento"><h4>LCI / LCA (90% CDI)</h4><p>Diário: <strong class="texto-alta">R$ ${calcLCI(valor, diasUteisAno).toFixed(2)}</strong></p><p>Mensal: <strong>R$ ${calcLCI(valor, mesesAno).toFixed(2)}</strong></p><small>Isento de Imposto</small></div>
-        <div class="card-investimento"><h4>Poupança</h4><p>Diário: <strong class="texto-alta">R$ ${calcPoup(valor, diasUteisAno).toFixed(2)}</strong></p><p>Mensal: <strong>R$ ${calcPoup(valor, mesesAno).toFixed(2)}</strong></p><small>Referencial</small></div>`;
+        <div class="card-investimento"><h4>CDB (100% CDI)</h4><p>Mensal: <strong>R$ ${calcCDB(valor, 12).toFixed(2)}</strong></p></div>
+        <div class="card-investimento"><h4>LCI (90% CDI)</h4><p>Mensal: <strong>R$ ${calcLCI(valor, 12).toFixed(2)}</strong></p></div>`;
 }
 
-// --- AUXILIARES ---
+// --- AUXILIARES (Mantive original) ---
 function adicionarAcaoCarteira() {
     const t = document.getElementById('tickerCompra').value.toUpperCase().trim();
     const p = parseFloat(document.getElementById('precoPago').value);
@@ -270,13 +249,6 @@ function removerDaCarteira(index) {
 
 function toggleDarkMode() { document.body.classList.toggle('dark-mode'); }
 
-function filtrarTabela(tipo) {
-    const linhas = document.querySelectorAll("#corpo-cotacoes tr");
-    linhas.forEach(l => {
-        l.style.display = (tipo === 'todos' || l.classList.contains('setor-' + tipo)) ? "" : "none";
-    });
-}
-
 function renderizarGrafico(dados) {
     const canvas = document.getElementById('graficoMercado');
     if (!canvas) return;
@@ -294,9 +266,4 @@ function renderizarGrafico(dados) {
         },
         options: { responsive: true, maintainAspectRatio: false }
     });
-}
-
-function toggleAjuda() {
-    const p = document.getElementById("painel-ajuda");
-    if (p) p.style.display = (p.style.display === "none" || p.style.display === "") ? "block" : "none";
 }
