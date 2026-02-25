@@ -1,6 +1,6 @@
  const TOKEN_B3 = '8gRPKYrszFRi4JCDaARwuJ'; 
 
-// LISTAS - Adicionado .SA para compatibilidade com a API Brapi
+// LISTAS - Ajustadas para o padrão que a API Brapi costuma aceitar para derivativos/ações
 const LISTA_AGRO_BMF = "BGIG26.SA,CCMH26.SA,SJWH26.SA,ICFU26.SA,WDOG26.SA,CTPK26.SA,TRIH26.SA";
 const LISTA_ACOES_B3 = "VALE3,ITUB4,ABEV3,PETR4";
 
@@ -77,11 +77,21 @@ async function buscarApenasTaxas() {
 async function buscarCotacoesAgro() {
     try {
         const res = await fetch(`https://brapi.dev/api/quote/${LISTA_AGRO_BMF}?token=${TOKEN_B3}`);
+        if (!res.ok) throw new Error(`Erro na API Agro: ${res.status}`);
         const data = await res.json();
         if (data.results) {
             data.results.forEach(item => renderizarLinhaTabela(item, "BMF"));
         }
-    } catch (e) { console.error("Erro Agro:", e); }
+    } catch (e) { 
+        console.error("Erro Agro:", e);
+        // Fallback: Tenta buscar sem o .SA se falhar
+        if (e.message.includes("404")) {
+            const listaAlternativa = LISTA_AGRO_BMF.replace(/\.SA/g, '');
+            fetch(`https://brapi.dev/api/quote/${listaAlternativa}?token=${TOKEN_B3}`)
+                .then(r => r.json())
+                .then(d => d.results && d.results.forEach(item => renderizarLinhaTabela(item, "BMF")));
+        }
+    }
 }
 
 async function buscarCotacoesBovespa() {
@@ -113,7 +123,7 @@ async function buscarCotacoesBovespa() {
 
 function renderizarLinhaTabela(item, origem) {
     const tbody = document.getElementById("corpo-cotacoes");
-    if (!tbody || !item) return;
+    if (!tbody || !item || (!item.regularMarketPrice && !item.price)) return;
 
     const tickerLimpo = item.symbol.replace('.SA', '');
     const prefixo = tickerLimpo.substring(0, 3);
@@ -143,22 +153,21 @@ function renderizarLinhaTabela(item, origem) {
 
 // --- RANKING CORRIGIDO ---
 function processarRanking(dataRanking) {
-    // A API Brapi usa .results para a lista de ranking
+    // Tenta encontrar a lista em 'results' ou 'stocks'
     const lista = dataRanking.results || dataRanking.stocks || [];
 
-    if (lista.length > 0) {
-        // Filtra para garantir que temos o código do ativo
-        const apenasAcoes = lista.filter(s => (s.symbol || s.stock) && (s.symbol || s.stock).length <= 6);
+    if (Array.isArray(lista) && lista.length > 0) {
+        // Filtra ativos válidos
+        const apenasAcoes = lista.filter(s => (s.symbol || s.stock));
         
-        // As 30 maiores altas e baixas
         const topAltas = apenasAcoes.slice(0, 30);
         const topBaixas = [...apenasAcoes].reverse().slice(0, 30);
 
         const formatLi = (a, c) => {
-            const ticker = a.symbol || a.stock;
-            const preco = a.regularMarketPrice || a.price || 0;
+            const ticker = a.symbol || a.stock || "---";
+            const preco = a.regularMarketPrice || a.price || a.close || 0;
             const variacao = a.change || 0;
-            let nomeParaExibir = a.name || "";
+            let nomeParaExibir = a.name || a.longName || "";
             
             if (nomeParaExibir.includes(" - ")) {
                 nomeParaExibir = nomeParaExibir.split(" - ")[1];
@@ -179,15 +188,18 @@ function processarRanking(dataRanking) {
                 </li>`;
         };
 
-        document.getElementById('lista-altas').innerHTML = topAltas.map(a => formatLi(a, 'texto-alta')).join('');
-        document.getElementById('lista-baixas').innerHTML = topBaixas.map(a => formatLi(a, 'texto-queda')).join('');
+        const htmlAltas = topAltas.map(a => formatLi(a, 'texto-alta')).join('');
+        const htmlBaixas = topBaixas.map(a => formatLi(a, 'texto-queda')).join('');
+
+        if(document.getElementById('lista-altas')) document.getElementById('lista-altas').innerHTML = htmlAltas;
+        if(document.getElementById('lista-baixas')) document.getElementById('lista-baixas').innerHTML = htmlBaixas;
         
         renderizarGrafico([...topAltas.slice(0,5), ...topBaixas.slice(0,5)].map(item => ({ 
             symbol: item.symbol || item.stock, 
-            change: item.change 
+            change: item.change || 0 
         })));
     } else {
-        console.error("Dados do ranking não encontrados:", dataRanking);
+        console.error("Dados do ranking não puderam ser processados:", dataRanking);
     }
 }
 
@@ -197,9 +209,9 @@ function atualizarPainelCarteira(dadosApi) {
     if (!tbody) return;
     tbody.innerHTML = "";
     minhaCarteira.forEach((item, index) => {
-        const info = dadosApi ? dadosApi.find(res => res.symbol.includes(item.ticker)) : null;
+        const info = dadosApi ? dadosApi.find(res => res.symbol && res.symbol.includes(item.ticker)) : null;
         const precoAtual = info ? (info.regularMarketPrice || info.price) : null;
-        const nomeEmpresa = info && (info.longName || info.shortName) ? (info.longName || info.shortName) : "Empresa B3";
+        const nomeEmpresa = info && (info.longName || info.shortName) ? (info.longName || info.shortName) : "Ativo B3";
         
         let cor = ""; let pct = "---";
         if (precoAtual) {
