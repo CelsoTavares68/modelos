@@ -1,7 +1,7 @@
  const TOKEN_B3 = '8gRPKYrszFRi4JCDaARwuJ'; 
 
-// LISTAS - Agro sem .SA para evitar erro na API / Ações normais
- const LISTA_AGRO_BMF = "BGIG26,CCMH26,SJWH26,ICFU26,WDOG26,CTPK26,TRIH26";
+// LISTAS - Adicionado .SA para compatibilidade com a API Brapi
+const LISTA_AGRO_BMF = "BGIG26.SA,CCMH26.SA,SJWH26.SA,ICFU26.SA,WDOG26.SA,CTPK26.SA,TRIH26.SA";
 const LISTA_ACOES_B3 = "VALE3,ITUB4,ABEV3,PETR4";
 
 const MAPA_NOMES_AGRO = {
@@ -99,8 +99,7 @@ async function buscarCotacoesBovespa() {
 
         if (dataPrecos.results) {
             dataPrecos.results.forEach(item => {
-                // Filtra para não repetir ativos que já estão no Agro
-                if (!LISTA_AGRO_BMF.includes(item.symbol.replace('.SA', ''))) {
+                if (!LISTA_AGRO_BMF.includes(item.symbol)) {
                     renderizarLinhaTabela(item, "B3");
                 }
             });
@@ -112,20 +111,19 @@ async function buscarCotacoesBovespa() {
     } catch (e) { console.error("Erro Bovespa:", e); }
 }
 
-  function renderizarLinhaTabela(item, origem) {
+function renderizarLinhaTabela(item, origem) {
     const tbody = document.getElementById("corpo-cotacoes");
     if (!tbody || !item) return;
 
     const tickerLimpo = item.symbol.replace('.SA', '');
     const prefixo = tickerLimpo.substring(0, 3);
     
-    // Para o Agro, prioriza SEMPRE o seu mapa de nomes
     const nomeExibicao = origem === "BMF" 
         ? (MAPA_NOMES_AGRO[prefixo] || tickerLimpo) 
         : tickerLimpo;
 
     const preco = item.regularMarketPrice || item.price || 0;
-    const variacao = item.regularMarketChangePercent || item.changePercent || 0;
+    const variacao = item.regularMarketChangePercent || item.changePercent || item.change || 0;
     const classeSetor = origem === "BMF" ? "setor-bmf" : "setor-b3";
 
     if (document.getElementById(`linha-${tickerLimpo}`)) return;
@@ -143,37 +141,40 @@ async function buscarCotacoesBovespa() {
         </tr>`;
 }
 
-// --- RANKING ---
-    function processarRanking(dataRanking) {
-    if (dataRanking && dataRanking.stocks) {
-        // Filtra para garantir que são ações
-        const apenasAcoes = dataRanking.stocks.filter(s => s.stock.length <= 6);
+// --- RANKING CORRIGIDO ---
+function processarRanking(dataRanking) {
+    // A API Brapi usa .results para a lista de ranking
+    const lista = dataRanking.results || dataRanking.stocks || [];
+
+    if (lista.length > 0) {
+        // Filtra para garantir que temos o código do ativo
+        const apenasAcoes = lista.filter(s => (s.symbol || s.stock) && (s.symbol || s.stock).length <= 6);
         
+        // As 30 maiores altas e baixas
         const topAltas = apenasAcoes.slice(0, 30);
-        const topBaixas = apenasAcoes.slice(-30).reverse();
+        const topBaixas = [...apenasAcoes].reverse().slice(0, 30);
 
         const formatLi = (a, c) => {
-            // O SEGREDO ESTÁ AQUI:
-            // Tentamos pegar o 'name'. Se ele vier como "VALE3 - Vale S.A.", cortamos o ticker.
+            const ticker = a.symbol || a.stock;
+            const preco = a.regularMarketPrice || a.price || 0;
+            const variacao = a.change || 0;
             let nomeParaExibir = a.name || "";
             
             if (nomeParaExibir.includes(" - ")) {
                 nomeParaExibir = nomeParaExibir.split(" - ")[1];
             }
 
-            // Se depois de limpar, o nome ainda for igual ao Ticker (ex: VALE3), 
-            // ou se estiver vazio, nós não mostramos nada na linha de baixo para não duplicar.
-            const temNomeReal = nomeParaExibir && nomeParaExibir.toLowerCase() !== a.stock.toLowerCase();
+            const temNomeReal = nomeParaExibir && nomeParaExibir.toLowerCase() !== ticker.toLowerCase();
 
             return `
                 <li style="display: flex; justify-content: space-between; align-items: center; padding: 10px 5px; border-bottom: 1px solid rgba(0,0,0,0.05);">
                     <span style="flex: 1; text-align: left; min-width: 0;">
-                        <b style="display: block; font-size: 0.95em;">${a.stock}</b>
+                        <b style="display: block; font-size: 0.95em;">${ticker}</b>
                         ${temNomeReal ? `<small style="display: block; color: #777; font-size: 0.75em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px;">${nomeParaExibir}</small>` : ''}
                     </span>
-                    <span style="flex: 1; text-align: center; color: #444; font-size: 0.9em;">R$ ${a.close.toFixed(2)}</span>
+                    <span style="flex: 1; text-align: center; color: #444; font-size: 0.9em;">R$ ${preco.toFixed(2)}</span>
                     <span class="${c}" style="flex: 1; text-align: right; font-weight: bold;">
-                        ${(a.change || 0).toFixed(2)}%
+                        ${variacao.toFixed(2)}%
                     </span>
                 </li>`;
         };
@@ -181,7 +182,12 @@ async function buscarCotacoesBovespa() {
         document.getElementById('lista-altas').innerHTML = topAltas.map(a => formatLi(a, 'texto-alta')).join('');
         document.getElementById('lista-baixas').innerHTML = topBaixas.map(a => formatLi(a, 'texto-queda')).join('');
         
-        renderizarGrafico([...topAltas, ...topBaixas].map(item => ({ symbol: item.stock, change: item.change })));
+        renderizarGrafico([...topAltas.slice(0,5), ...topBaixas.slice(0,5)].map(item => ({ 
+            symbol: item.symbol || item.stock, 
+            change: item.change 
+        })));
+    } else {
+        console.error("Dados do ranking não encontrados:", dataRanking);
     }
 }
 
