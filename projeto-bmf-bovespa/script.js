@@ -77,7 +77,6 @@ async function buscarApenasTaxas() {
 async function buscarCotacoesAgro() {
     try {
         const res = await fetch(`https://brapi.dev/api/quote/${LISTA_AGRO_BMF}?token=${TOKEN_B3}`);
-        // CORREÇÃO: Se a API der 404 para o Agro, não deixamos o erro travar o script
         if (!res.ok) { console.warn("Dados Agro não disponíveis."); return; }
         
         const data = await res.json();
@@ -93,7 +92,7 @@ async function buscarCotacoesBovespa() {
         const listaBusca = (LISTA_ACOES_B3 + (tickersPessoais ? ',' + tickersPessoais : '')).replace(/\s/g, '');
         
         const [resRanking, resPrecos] = await Promise.all([
-            fetch(`https://brapi.dev/api/quote/list?sortBy=change&sortOrder=desc&token=${TOKEN_B3}`),
+            fetch(`https://brapi.dev/api/quote/list?token=${TOKEN_B3}`),
             fetch(`https://brapi.dev/api/quote/${listaBusca}?token=${TOKEN_B3}`)
         ]);
         
@@ -146,34 +145,26 @@ function renderizarLinhaTabela(item, origem) {
 
 // --- RANKING ---
 function processarRanking(dataRanking) {
-    // CORREÇÃO: Mudado de .stocks para .results para aceitar o novo padrão da API
-    if (dataRanking && dataRanking.results) {
-        // Filtrar e garantir que s.symbol existe (Brapi usa symbol em vez de stock agora)
-        const apenasAcoes = dataRanking.results.filter(s => s.symbol && s.symbol.length <= 6);
+    // AJUSTE: A API agora envia em .results
+    const lista = dataRanking.results || dataRanking.stocks || [];
+
+    if (lista.length > 0) {
+        const apenasAcoes = lista.filter(s => s.symbol || s.stock);
         
         const topAltas = apenasAcoes.slice(0, 30);
         const topBaixas = [...apenasAcoes].reverse().slice(0, 30);
 
         const formatLi = (a, c) => {
-            let nomeParaExibir = a.name || "";
-            
-            if (nomeParaExibir.includes(" - ")) {
-                nomeParaExibir = nomeParaExibir.split(" - ")[1];
-            }
-
-            const ticker = a.symbol;
-            const preco = a.regularMarketPrice || a.price || 0;
+            const ticker = a.symbol || a.stock;
+            const preco = a.regularMarketPrice || a.price || a.close || 0;
             const variacao = a.change || 0;
-
-            const temNomeReal = nomeParaExibir && nomeParaExibir.toLowerCase() !== ticker.toLowerCase();
 
             return `
                 <li style="display: flex; justify-content: space-between; align-items: center; padding: 10px 5px; border-bottom: 1px solid rgba(0,0,0,0.05);">
-                    <span style="flex: 1; text-align: left; min-width: 0;">
-                        <b style="display: block; font-size: 0.95em;">${ticker}</b>
-                        ${temNomeReal ? `<small style="display: block; color: #777; font-size: 0.75em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px;">${nomeParaExibir}</small>` : ''}
+                    <span style="flex: 1; text-align: left;">
+                        <b style="display: block;">${ticker}</b>
                     </span>
-                    <span style="flex: 1; text-align: center; color: #444; font-size: 0.9em;">R$ ${preco.toFixed(2)}</span>
+                    <span style="flex: 1; text-align: center; color: #444;">R$ ${preco.toFixed(2)}</span>
                     <span class="${c}" style="flex: 1; text-align: right; font-weight: bold;">
                         ${variacao.toFixed(2)}%
                     </span>
@@ -183,7 +174,10 @@ function processarRanking(dataRanking) {
         document.getElementById('lista-altas').innerHTML = topAltas.map(a => formatLi(a, 'texto-alta')).join('');
         document.getElementById('lista-baixas').innerHTML = topBaixas.map(a => formatLi(a, 'texto-queda')).join('');
         
-        renderizarGrafico([...topAltas, ...topBaixas].map(item => ({ symbol: item.symbol, change: item.change })));
+        renderizarGrafico([...topAltas.slice(0,5), ...topBaixas.slice(0,5)].map(item => ({ 
+            symbol: item.symbol || item.stock, 
+            change: item.change 
+        })));
     } else {
         console.error("Dados do ranking não encontrados no objeto:", dataRanking);
     }
@@ -197,7 +191,6 @@ function atualizarPainelCarteira(dadosApi) {
     minhaCarteira.forEach((item, index) => {
         const info = dadosApi ? dadosApi.find(res => res.symbol.includes(item.ticker)) : null;
         const precoAtual = info ? (info.regularMarketPrice || info.price) : null;
-        const nomeEmpresa = info && (info.longName || info.shortName) ? (info.longName || info.shortName) : "Empresa B3";
         
         let cor = ""; let pct = "---";
         if (precoAtual) {
@@ -207,7 +200,7 @@ function atualizarPainelCarteira(dadosApi) {
         }
         tbody.innerHTML += `
             <tr class="${cor}">
-                <td><b>${item.ticker}</b><br><small style="opacity:0.7">${nomeEmpresa}</small></td>
+                <td><b>${item.ticker}</b></td>
                 <td>R$ ${item.precoPago.toFixed(2)}</td>
                 <td>${precoAtual ? 'R$ ' + precoAtual.toFixed(2) : '---'}</td>
                 <td style="font-weight:bold">${pct}</td>
@@ -216,7 +209,7 @@ function atualizarPainelCarteira(dadosApi) {
     });
 }
 
-// --- CALCULADORA (RESTAURADA ORIGINAL) ---
+// --- CALCULADORA (SUA ORIGINAL) ---
 function calcularRentabilidade() {
     const valor = parseFloat(document.getElementById('valorInvestido').value);
     const container = document.getElementById('tabela-rendimentos');
@@ -232,9 +225,9 @@ function calcularRentabilidade() {
     const calcPoup = (v, tempo) => (v * (0.0055 / (tempo === 252 ? 21 : 1)));
 
     container.innerHTML = `
-        <div class="card-investimento"><h4>CDB / RDB (100% CDI)</h4><p>Diário: <strong class=\"texto-alta\">R$ ${calcCDB(valor, diasUteisAno).toFixed(2)}</strong></p><p>Mensal: <strong>R$ ${calcCDB(valor, mesesAno).toFixed(2)}</strong></p><small>Líquido (Pós-IR)</small></div>
-        <div class="card-investimento"><h4>LCI / LCA (90% CDI)</h4><p>Diário: <strong class=\"texto-alta\">R$ ${calcLCI(valor, diasUteisAno).toFixed(2)}</strong></p><p>Mensal: <strong>R$ ${calcLCI(valor, mesesAno).toFixed(2)}</strong></p><small>Isento de Imposto</small></div>
-        <div class="card-investimento"><h4>Poupança</h4><p>Diário: <strong class=\"texto-alta\">R$ ${calcPoup(valor, diasUteisAno).toFixed(2)}</strong></p><p>Mensal: <strong>R$ ${calcPoup(valor, mesesAno).toFixed(2)}</strong></p><small>Referencial</small></div>`;
+        <div class="card-investimento"><h4>CDB / RDB (100% CDI)</h4><p>Diário: <strong class="texto-alta">R$ ${calcCDB(valor, diasUteisAno).toFixed(2)}</strong></p><p>Mensal: <strong>R$ ${calcCDB(valor, mesesAno).toFixed(2)}</strong></p><small>Líquido (Pós-IR)</small></div>
+        <div class="card-investimento"><h4>LCI / LCA (90% CDI)</h4><p>Diário: <strong class="texto-alta">R$ ${calcLCI(valor, diasUteisAno).toFixed(2)}</strong></p><p>Mensal: <strong>R$ ${calcLCI(valor, mesesAno).toFixed(2)}</strong></p><small>Isento de Imposto</small></div>
+        <div class="card-investimento"><h4>Poupança</h4><p>Diário: <strong class="texto-alta">R$ ${calcPoup(valor, diasUteisAno).toFixed(2)}</strong></p><p>Mensal: <strong>R$ ${calcPoup(valor, mesesAno).toFixed(2)}</strong></p><small>Referencial</small></div>`;
 }
 
 // --- AUXILIARES ---
