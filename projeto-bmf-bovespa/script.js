@@ -1,7 +1,7 @@
  const TOKEN_B3 = '8gRPKYrszFRi4JCDaARwuJ'; 
 
 // LISTAS - Agro sem .SA para evitar erro na API / Ações normais
-const LISTA_AGRO_BMF = "BGIG26,CCMH26,SJWH26,ICFU26,WDOG26,CTPK26,TRIH26";
+ const LISTA_AGRO_BMF = "BGIG26,CCMH26,SJWH26,ICFU26,WDOG26,CTPK26,TRIH26";
 const LISTA_ACOES_B3 = "VALE3,ITUB4,ABEV3,PETR4";
 
 const MAPA_NOMES_AGRO = {
@@ -77,8 +77,6 @@ async function buscarApenasTaxas() {
 async function buscarCotacoesAgro() {
     try {
         const res = await fetch(`https://brapi.dev/api/quote/${LISTA_AGRO_BMF}?token=${TOKEN_B3}`);
-        if (!res.ok) { console.warn("Dados Agro não disponíveis."); return; }
-        
         const data = await res.json();
         if (data.results) {
             data.results.forEach(item => renderizarLinhaTabela(item, "BMF"));
@@ -92,7 +90,7 @@ async function buscarCotacoesBovespa() {
         const listaBusca = (LISTA_ACOES_B3 + (tickersPessoais ? ',' + tickersPessoais : '')).replace(/\s/g, '');
         
         const [resRanking, resPrecos] = await Promise.all([
-            fetch(`https://brapi.dev/api/quote/list?token=${TOKEN_B3}`),
+            fetch(`https://brapi.dev/api/quote/list?sortBy=change&sortOrder=desc&token=${TOKEN_B3}`),
             fetch(`https://brapi.dev/api/quote/${listaBusca}?token=${TOKEN_B3}`)
         ]);
         
@@ -101,7 +99,8 @@ async function buscarCotacoesBovespa() {
 
         if (dataPrecos.results) {
             dataPrecos.results.forEach(item => {
-                if (!LISTA_AGRO_BMF.includes(item.symbol)) {
+                // Filtra para não repetir ativos que já estão no Agro
+                if (!LISTA_AGRO_BMF.includes(item.symbol.replace('.SA', ''))) {
                     renderizarLinhaTabela(item, "B3");
                 }
             });
@@ -113,19 +112,20 @@ async function buscarCotacoesBovespa() {
     } catch (e) { console.error("Erro Bovespa:", e); }
 }
 
-function renderizarLinhaTabela(item, origem) {
+  function renderizarLinhaTabela(item, origem) {
     const tbody = document.getElementById("corpo-cotacoes");
-    if (!tbody || !item || !item.symbol) return;
+    if (!tbody || !item) return;
 
     const tickerLimpo = item.symbol.replace('.SA', '');
     const prefixo = tickerLimpo.substring(0, 3);
     
+    // Para o Agro, prioriza SEMPRE o seu mapa de nomes
     const nomeExibicao = origem === "BMF" 
         ? (MAPA_NOMES_AGRO[prefixo] || tickerLimpo) 
         : tickerLimpo;
 
     const preco = item.regularMarketPrice || item.price || 0;
-    const variacao = item.regularMarketChangePercent || item.changePercent || item.change || 0;
+    const variacao = item.regularMarketChangePercent || item.changePercent || 0;
     const classeSetor = origem === "BMF" ? "setor-bmf" : "setor-b3";
 
     if (document.getElementById(`linha-${tickerLimpo}`)) return;
@@ -143,46 +143,45 @@ function renderizarLinhaTabela(item, origem) {
         </tr>`;
 }
 
-// --- RANKING (FIX DEFINITIVO) ---
-function processarRanking(dataRanking) {
-    // A Brapi está retornando a lista dentro de 'stocks' ou 'results'. 
-    // Vamos garantir que pegamos a correta.
-    const lista = dataRanking.stocks || dataRanking.results || [];
-
-    if (Array.isArray(lista) && lista.length > 0) {
-        // Ordenar por variação (change)
-        const ordenada = [...lista].sort((a, b) => (b.change || 0) - (a.change || 0));
+// --- RANKING ---
+    function processarRanking(dataRanking) {
+    if (dataRanking && dataRanking.stocks) {
+        // Filtra para garantir que são ações
+        const apenasAcoes = dataRanking.stocks.filter(s => s.stock.length <= 6);
         
-        const topAltas = ordenada.slice(0, 30);
-        const topBaixas = [...ordenada].reverse().slice(0, 30);
+        const topAltas = apenasAcoes.slice(0, 30);
+        const topBaixas = apenasAcoes.slice(-30).reverse();
 
         const formatLi = (a, c) => {
-            // Alguns campos mudam de nome conforme o endpoint
-            const ticker = a.stock || a.symbol || "---";
-            const preco = a.close || a.regularMarketPrice || a.price || 0;
-            const variacao = a.change || 0;
+            // O SEGREDO ESTÁ AQUI:
+            // Tentamos pegar o 'name'. Se ele vier como "VALE3 - Vale S.A.", cortamos o ticker.
+            let nomeParaExibir = a.name || "";
+            
+            if (nomeParaExibir.includes(" - ")) {
+                nomeParaExibir = nomeParaExibir.split(" - ")[1];
+            }
+
+            // Se depois de limpar, o nome ainda for igual ao Ticker (ex: VALE3), 
+            // ou se estiver vazio, nós não mostramos nada na linha de baixo para não duplicar.
+            const temNomeReal = nomeParaExibir && nomeParaExibir.toLowerCase() !== a.stock.toLowerCase();
 
             return `
                 <li style="display: flex; justify-content: space-between; align-items: center; padding: 10px 5px; border-bottom: 1px solid rgba(0,0,0,0.05);">
-                    <span style="flex: 1; text-align: left;">
-                        <b style="display: block;">${ticker}</b>
+                    <span style="flex: 1; text-align: left; min-width: 0;">
+                        <b style="display: block; font-size: 0.95em;">${a.stock}</b>
+                        ${temNomeReal ? `<small style="display: block; color: #777; font-size: 0.75em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px;">${nomeParaExibir}</small>` : ''}
                     </span>
-                    <span style="flex: 1; text-align: center; color: #444;">R$ ${preco.toFixed(2)}</span>
+                    <span style="flex: 1; text-align: center; color: #444; font-size: 0.9em;">R$ ${a.close.toFixed(2)}</span>
                     <span class="${c}" style="flex: 1; text-align: right; font-weight: bold;">
-                        ${variacao.toFixed(2)}%
+                        ${(a.change || 0).toFixed(2)}%
                     </span>
                 </li>`;
         };
 
-        if(document.getElementById('lista-altas')) document.getElementById('lista-altas').innerHTML = topAltas.map(a => formatLi(a, 'texto-alta')).join('');
-        if(document.getElementById('lista-baixas')) document.getElementById('lista-baixas').innerHTML = topBaixas.map(a => formatLi(a, 'texto-queda')).join('');
+        document.getElementById('lista-altas').innerHTML = topAltas.map(a => formatLi(a, 'texto-alta')).join('');
+        document.getElementById('lista-baixas').innerHTML = topBaixas.map(a => formatLi(a, 'texto-queda')).join('');
         
-        renderizarGrafico([...topAltas.slice(0,5), ...topBaixas.slice(0,5)].map(item => ({ 
-            symbol: item.stock || item.symbol, 
-            change: item.change || 0 
-        })));
-    } else {
-        console.error("Dados do ranking não encontrados no objeto:", dataRanking);
+        renderizarGrafico([...topAltas, ...topBaixas].map(item => ({ symbol: item.stock, change: item.change })));
     }
 }
 
@@ -194,6 +193,7 @@ function atualizarPainelCarteira(dadosApi) {
     minhaCarteira.forEach((item, index) => {
         const info = dadosApi ? dadosApi.find(res => res.symbol.includes(item.ticker)) : null;
         const precoAtual = info ? (info.regularMarketPrice || info.price) : null;
+        const nomeEmpresa = info && (info.longName || info.shortName) ? (info.longName || info.shortName) : "Empresa B3";
         
         let cor = ""; let pct = "---";
         if (precoAtual) {
@@ -203,7 +203,7 @@ function atualizarPainelCarteira(dadosApi) {
         }
         tbody.innerHTML += `
             <tr class="${cor}">
-                <td><b>${item.ticker}</b></td>
+                <td><b>${item.ticker}</b><br><small style="opacity:0.7">${nomeEmpresa}</small></td>
                 <td>R$ ${item.precoPago.toFixed(2)}</td>
                 <td>${precoAtual ? 'R$ ' + precoAtual.toFixed(2) : '---'}</td>
                 <td style="font-weight:bold">${pct}</td>
@@ -212,7 +212,7 @@ function atualizarPainelCarteira(dadosApi) {
     });
 }
 
-// --- CALCULADORA (SUA ORIGINAL) ---
+// --- CALCULADORA ---
 function calcularRentabilidade() {
     const valor = parseFloat(document.getElementById('valorInvestido').value);
     const container = document.getElementById('tabela-rendimentos');
