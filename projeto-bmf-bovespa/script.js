@@ -77,6 +77,7 @@ async function buscarApenasTaxas() {
 async function buscarCotacoesAgro() {
     try {
         const res = await fetch(`https://brapi.dev/api/quote/${LISTA_AGRO_BMF}?token=${TOKEN_B3}`);
+        // Se der 404, apenas avisamos e saímos, permitindo que o Ranking carregue abaixo
         if (!res.ok) { console.warn("Dados Agro não disponíveis."); return; }
         
         const data = await res.json();
@@ -143,12 +144,13 @@ function renderizarLinhaTabela(item, origem) {
         </tr>`;
 }
 
-// --- RANKING ---
+// --- RANKING (CORRIGIDO PARA O NOVO FORMATO DA API) ---
 function processarRanking(dataRanking) {
-    // AJUSTE: A API agora envia em .results
+    // API Brapi mudou o campo de .stocks para .results hoje
     const lista = dataRanking.results || dataRanking.stocks || [];
 
-    if (lista.length > 0) {
+    if (lista && lista.length > 0) {
+        // Filtramos para pegar apenas o que tem símbolo
         const apenasAcoes = lista.filter(s => s.symbol || s.stock);
         
         const topAltas = apenasAcoes.slice(0, 30);
@@ -171,12 +173,12 @@ function processarRanking(dataRanking) {
                 </li>`;
         };
 
-        document.getElementById('lista-altas').innerHTML = topAltas.map(a => formatLi(a, 'texto-alta')).join('');
-        document.getElementById('lista-baixas').innerHTML = topBaixas.map(a => formatLi(a, 'texto-queda')).join('');
+        if(document.getElementById('lista-altas')) document.getElementById('lista-altas').innerHTML = topAltas.map(a => formatLi(a, 'texto-alta')).join('');
+        if(document.getElementById('lista-baixas')) document.getElementById('lista-baixas').innerHTML = topBaixas.map(a => formatLi(a, 'texto-queda')).join('');
         
         renderizarGrafico([...topAltas.slice(0,5), ...topBaixas.slice(0,5)].map(item => ({ 
             symbol: item.symbol || item.stock, 
-            change: item.change 
+            change: item.change || 0 
         })));
     } else {
         console.error("Dados do ranking não encontrados no objeto:", dataRanking);
@@ -209,7 +211,7 @@ function atualizarPainelCarteira(dadosApi) {
     });
 }
 
-// --- CALCULADORA (SUA ORIGINAL) ---
+// --- CALCULADORA (ORIGINAL E INTACTA) ---
 function calcularRentabilidade() {
     const valor = parseFloat(document.getElementById('valorInvestido').value);
     const container = document.getElementById('tabela-rendimentos');
