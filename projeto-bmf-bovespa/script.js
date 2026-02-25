@@ -1,7 +1,7 @@
  const TOKEN_B3 = '8gRPKYrszFRi4JCDaARwuJ'; 
 
 // LISTAS - Agro sem .SA para evitar erro na API / Ações normais
- const LISTA_AGRO_BMF = "BGIG26,CCMH26,SJWH26,ICFU26,WDOG26,CTPK26,TRIH26";
+const LISTA_AGRO_BMF = "BGIG26,CCMH26,SJWH26,ICFU26,WDOG26,CTPK26,TRIH26";
 const LISTA_ACOES_B3 = "VALE3,ITUB4,ABEV3,PETR4";
 
 const MAPA_NOMES_AGRO = {
@@ -77,7 +77,6 @@ async function buscarApenasTaxas() {
 async function buscarCotacoesAgro() {
     try {
         const res = await fetch(`https://brapi.dev/api/quote/${LISTA_AGRO_BMF}?token=${TOKEN_B3}`);
-        // Se der 404, apenas avisamos e saímos, permitindo que o Ranking carregue abaixo
         if (!res.ok) { console.warn("Dados Agro não disponíveis."); return; }
         
         const data = await res.json();
@@ -116,7 +115,7 @@ async function buscarCotacoesBovespa() {
 
 function renderizarLinhaTabela(item, origem) {
     const tbody = document.getElementById("corpo-cotacoes");
-    if (!tbody || !item) return;
+    if (!tbody || !item || !item.symbol) return;
 
     const tickerLimpo = item.symbol.replace('.SA', '');
     const prefixo = tickerLimpo.substring(0, 3);
@@ -144,21 +143,23 @@ function renderizarLinhaTabela(item, origem) {
         </tr>`;
 }
 
-// --- RANKING (CORRIGIDO PARA O NOVO FORMATO DA API) ---
+// --- RANKING (FIX DEFINITIVO) ---
 function processarRanking(dataRanking) {
-    // API Brapi mudou o campo de .stocks para .results hoje
-    const lista = dataRanking.results || dataRanking.stocks || [];
+    // A Brapi está retornando a lista dentro de 'stocks' ou 'results'. 
+    // Vamos garantir que pegamos a correta.
+    const lista = dataRanking.stocks || dataRanking.results || [];
 
-    if (lista && lista.length > 0) {
-        // Filtramos para pegar apenas o que tem símbolo
-        const apenasAcoes = lista.filter(s => s.symbol || s.stock);
+    if (Array.isArray(lista) && lista.length > 0) {
+        // Ordenar por variação (change)
+        const ordenada = [...lista].sort((a, b) => (b.change || 0) - (a.change || 0));
         
-        const topAltas = apenasAcoes.slice(0, 30);
-        const topBaixas = [...apenasAcoes].reverse().slice(0, 30);
+        const topAltas = ordenada.slice(0, 30);
+        const topBaixas = [...ordenada].reverse().slice(0, 30);
 
         const formatLi = (a, c) => {
-            const ticker = a.symbol || a.stock;
-            const preco = a.regularMarketPrice || a.price || a.close || 0;
+            // Alguns campos mudam de nome conforme o endpoint
+            const ticker = a.stock || a.symbol || "---";
+            const preco = a.close || a.regularMarketPrice || a.price || 0;
             const variacao = a.change || 0;
 
             return `
@@ -177,7 +178,7 @@ function processarRanking(dataRanking) {
         if(document.getElementById('lista-baixas')) document.getElementById('lista-baixas').innerHTML = topBaixas.map(a => formatLi(a, 'texto-queda')).join('');
         
         renderizarGrafico([...topAltas.slice(0,5), ...topBaixas.slice(0,5)].map(item => ({ 
-            symbol: item.symbol || item.stock, 
+            symbol: item.stock || item.symbol, 
             change: item.change || 0 
         })));
     } else {
@@ -211,7 +212,7 @@ function atualizarPainelCarteira(dadosApi) {
     });
 }
 
-// --- CALCULADORA (ORIGINAL E INTACTA) ---
+// --- CALCULADORA (SUA ORIGINAL) ---
 function calcularRentabilidade() {
     const valor = parseFloat(document.getElementById('valorInvestido').value);
     const container = document.getElementById('tabela-rendimentos');
