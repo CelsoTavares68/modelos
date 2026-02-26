@@ -9,6 +9,10 @@
     font-family: 'Courier New', Courier, monospace; 
 }
 
+.instrucoes h2 {
+    text-align: center;
+}
+
 .game-container {
     display: flex;
     flex-direction: column;
@@ -78,10 +82,26 @@ button {
     box-shadow: 0 4px 0 #000;
     transition: all 0.2s;
 }
-#pauseBtn { border-color: #0088ff; color: #0088ff; }
-#pauseBtn:hover { background: #004488; color: #fff; }
-#resetBtn { border-color: #ff4444; color: #ff4444; }
-#resetBtn:hover { background: #882222; color: #fff; }
+
+#pauseBtn { 
+    border-color: #0088ff; 
+    color: #0088ff; 
+}
+
+#pauseBtn:hover { 
+    background: #004488; 
+    color: #fff; 
+}
+
+#resetBtn {
+     border-color: #ff4444; 
+     color: #ff4444; 
+    }
+
+#resetBtn:hover { 
+    background: #882222; 
+    color: #fff; 
+}
 
  /* Dashboard de Recordes */
 .dashboard-externa {
