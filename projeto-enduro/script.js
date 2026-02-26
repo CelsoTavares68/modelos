@@ -3,7 +3,7 @@ const ctx = canvas.getContext('2d');
 canvas.width = 400; canvas.height = 400;
 
 let playerX = 0, speed = 0, gameTick = 0, playerDist = 0;
- let dayNumber = 1, baseGoal = 200, carsRemaining = baseGoal;
+let dayNumber = 1, baseGoal = 200, carsRemaining = baseGoal;
 let gameState = "PLAYING"; 
 let isPaused = false;
 
@@ -134,7 +134,6 @@ function togglePause() {
 }
 
 function resetGame() {
-    // Game Over ou Reinício: Zera o dia e o odômetro atual, mas MANTÉM os recordes Best
     dayNumber = 1; 
     baseGoal = 200; 
     odometerNow = 0; 
@@ -142,12 +141,12 @@ function resetGame() {
     if (gameState !== "PLAYING") { gameState = "PLAYING"; update(); }
 }
 
- function resetDay() {
+function resetDay() {
     currentTime = 0; 
     playerDist = 0; 
     speed = 0; 
     enemies = [];
-    // Garante que a contagem comece com o valor progressivo do dia atual
+    // CORREÇÃO: Meta progressiva baseada no dia
     carsRemaining = 200 + ((dayNumber - 1) * 10);
     gameState = "PLAYING"; 
     isPaused = false;
@@ -219,16 +218,14 @@ function update() {
     if (speed > 0) {
         let delta = (speed / 10);
         playerDist += delta;
-        odometerNow += delta; // Odômetro da sessão atual
+        odometerNow += delta; 
     }
     currentTime++; 
     if (gameTick % 4 === 0) playEngineSound();
     
-    // Atualização dos Recordes Best
     if (playerDist > dayBestRecord) dayBestRecord = playerDist;
     if (odometerNow > totalBestRecord) totalBestRecord = odometerNow;
 
-    // Atualiza HTML Externo (Dashboard)
     const uiDist = document.getElementById('ui-dist');
     const uiDayBest = document.getElementById('ui-day-best');
     const uiTotalNow = document.getElementById('ui-total-now');
@@ -258,7 +255,6 @@ function update() {
     raindrops.forEach((r, i) => { r.y += r.s; if (r.y > 400) raindrops.splice(i, 1); });
     if (lightningAlpha > 0) lightningAlpha -= 0.05;
 
-    // Bandeirada
     if (carsRemaining <= 0 && !hasPlayedGoalMedia) {
         hasPlayedGoalMedia = true;
         carsRemaining = 0; 
@@ -273,7 +269,7 @@ function update() {
             if (gameState !== "WIN_DAY") { 
                 gameState = "WIN_DAY"; 
                 dayNumber++; 
-                // Atualiza a base para o próximo resetDay
+                // CORREÇÃO: Atualiza a meta para o próximo dia
                 baseGoal = 200 + ((dayNumber - 1) * 10);
                 saveProgress();
                 setTimeout(() => { resetDay(); }, 4000); 
@@ -282,7 +278,6 @@ function update() {
             if (gameState !== "GAME_OVER") { 
                 gameState = "GAME_OVER"; sfxDerrota.play();
                 videoDerrota.style.display = 'block'; videoDerrota.play().catch(e => {});
-                // No Game Over, apenas salvamos para registrar o recorde total atingido
                 saveProgress(); 
             }
         }
