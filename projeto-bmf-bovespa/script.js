@@ -1,7 +1,7 @@
  const TOKEN_B3 = '8gRPKYrszFRi4JCDaARwuJ'; 
 
 // LISTAS - Agro sem .SA para evitar erro na API / Ações normais
- const LISTA_AGRO_BMF = "BGIG26,CCMH26,SJWH26,ICFU26,WDOG26,CTPK26,TRIH26";
+const LISTA_AGRO_BMF = "BGIH26,CCMH26,SJWH26,ICFH26,WDOH26,CTPH26";
 const LISTA_ACOES_B3 = "VALE3,ITUB4,ABEV3,PETR4";
 
 const MAPA_NOMES_AGRO = {
@@ -25,6 +25,9 @@ async function inicializarApp() {
     const tbody = document.getElementById("corpo-cotacoes");
     if (tbody) tbody.innerHTML = "";
 
+    // CORREÇÃO: Carrega a carteira do localStorage logo no início
+    atualizarPainelCarteira(); 
+    
     buscarApenasMoedas();
     buscarApenasTaxas();
     await buscarCotacoesAgro(); 
@@ -73,183 +76,184 @@ async function buscarApenasTaxas() {
     } catch (e) { console.error("Erro Taxas:", e); }
 }
 
-// --- MERCADO ---
+// --- MERCADO AGRO ---
 async function buscarCotacoesAgro() {
-    try {
-        const res = await fetch(`https://brapi.dev/api/quote/${LISTA_AGRO_BMF}?token=${TOKEN_B3}`);
-        const data = await res.json();
-        if (data.results) {
-            data.results.forEach(item => renderizarLinhaTabela(item, "BMF"));
+    const ativos = LISTA_AGRO_BMF.split(',');
+    const tbody = document.getElementById("corpo-cotacoes");
+    if (!tbody) return;
+
+    for (const ticker of ativos) {
+        try {
+            const tickerLimpo = ticker.trim();
+            const url = `https://brapi.dev/api/quote/${tickerLimpo}.SA?token=${TOKEN_B3}`;
+            const res = await fetch(url);
+            const data = await res.json();
+
+            if (data && data.results && data.results[0]) {
+                const item = data.results[0];
+                if (item.regularMarketPrice !== null) {
+                    renderizarLinhaTabela(item, "BMF");
+                }
+            }
+        } catch (e) {
+            console.error(`Erro ao buscar o ativo individual ${ticker}:`, e);
         }
-    } catch (e) { console.error("Erro Agro:", e); }
+    }
 }
 
+// --- MERCADO BOVESPA ---
 async function buscarCotacoesBovespa() {
     try {
+        const resRanking = await fetch(`https://brapi.dev/api/quote/list?sortBy=change&sortOrder=desc&token=${TOKEN_B3}`);
+        const dataRanking = await resRanking.json();
+
+        if (dataRanking && dataRanking.stocks) {
+            processarRanking(dataRanking);
+        }
+
         const tickersPessoais = minhaCarteira.map(a => a.ticker).join(',');
         const listaBusca = (LISTA_ACOES_B3 + (tickersPessoais ? ',' + tickersPessoais : '')).replace(/\s/g, '');
         
-        const [resRanking, resPrecos] = await Promise.all([
-            fetch(`https://brapi.dev/api/quote/list?sortBy=change&sortOrder=desc&token=${TOKEN_B3}`),
-            fetch(`https://brapi.dev/api/quote/${listaBusca}?token=${TOKEN_B3}`)
-        ]);
-        
-        const dataRanking = await resRanking.json();
+        const resPrecos = await fetch(`https://brapi.dev/api/quote/${listaBusca}?token=${TOKEN_B3}`);
         const dataPrecos = await resPrecos.json();
 
-        if (dataPrecos.results) {
+        if (dataPrecos && dataPrecos.results) {
             dataPrecos.results.forEach(item => {
-                // Filtra para não repetir ativos que já estão no Agro
-                if (!LISTA_AGRO_BMF.includes(item.symbol.replace('.SA', ''))) {
-                    renderizarLinhaTabela(item, "B3");
+                if (item && item.symbol) {
+                    const tickerLimpo = item.symbol.replace('.SA', '');
+                    if (!LISTA_AGRO_BMF.includes(tickerLimpo)) {
+                        renderizarLinhaTabela(item, "B3");
+                    }
                 }
             });
+            atualizarPainelCarteira(dataPrecos.results);
         }
         
-        atualizarPainelCarteira(dataPrecos.results);
-        processarRanking(dataRanking);
         document.getElementById('status-conexao').innerText = "✅ Sistema Online";
-    } catch (e) { console.error("Erro Bovespa:", e); }
+    } catch (e) { 
+        console.error("Erro Bovespa:", e); 
+        document.getElementById('status-conexao').innerText = "⚠️ Erro ao atualizar alguns dados";
+    }
 }
 
-  function renderizarLinhaTabela(item, origem) {
+function renderizarLinhaTabela(item, origem) {
     const tbody = document.getElementById("corpo-cotacoes");
     if (!tbody || !item) return;
 
-    const tickerLimpo = item.symbol.replace('.SA', '');
-    const prefixo = tickerLimpo.substring(0, 3);
-    
-    // Para o Agro, prioriza SEMPRE o seu mapa de nomes
-    const nomeExibicao = origem === "BMF" 
-        ? (MAPA_NOMES_AGRO[prefixo] || tickerLimpo) 
-        : tickerLimpo;
+    const symbolOriginal = item.symbol.replace('.SA', '');
+    const prefixo = symbolOriginal.substring(0, 3);
+    const nomeExibicao = origem === "BMF" ? (MAPA_NOMES_AGRO[prefixo] || symbolOriginal) : symbolOriginal;
 
     const preco = item.regularMarketPrice || item.price || 0;
     const variacao = item.regularMarketChangePercent || item.changePercent || 0;
-    const classeSetor = origem === "BMF" ? "setor-bmf" : "setor-b3";
 
-    if (document.getElementById(`linha-${tickerLimpo}`)) return;
+    if (document.getElementById(`linha-${symbolOriginal}`)) return;
 
     tbody.innerHTML += `
-        <tr id="linha-${tickerLimpo}" class="${classeSetor}">
-            <td>
-                <b>${nomeExibicao}</b><br>
-                <small style="opacity:0.7">${tickerLimpo}</small>
-            </td>
-            <td>R$ ${preco.toFixed(2)}</td>
-            <td class="${variacao >= 0 ? 'texto-alta' : 'texto-queda'}">
-                ${variacao.toFixed(2)}%
-            </td>
+        <tr id="linha-${symbolOriginal}" class="setor-${origem.toLowerCase()}">
+            <td><b>${nomeExibicao}</b><br><small style="opacity:0.7">${symbolOriginal}</small></td>
+            <td>R$ ${preco.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+            <td class="${variacao >= 0 ? 'texto-alta' : 'texto-queda'}">${variacao.toFixed(2)}%</td>
         </tr>`;
 }
 
 // --- RANKING ---
-    function processarRanking(dataRanking) {
-    if (dataRanking && dataRanking.stocks) {
-        // Filtra para garantir que são ações
-        const apenasAcoes = dataRanking.stocks.filter(s => s.stock.length <= 6);
-        
-        const topAltas = apenasAcoes.slice(0, 30);
-        const topBaixas = apenasAcoes.slice(-30).reverse();
+function processarRanking(dataRanking) {
+    const apenasAcoes = dataRanking.stocks.filter(s => s.stock.length <= 6);
+    const topAltas = apenasAcoes.slice(0, 30);
+    const topBaixas = apenasAcoes.slice(-30).reverse();
 
-        const formatLi = (a, c) => {
-            // O SEGREDO ESTÁ AQUI:
-            // Tentamos pegar o 'name'. Se ele vier como "VALE3 - Vale S.A.", cortamos o ticker.
-            let nomeParaExibir = a.name || "";
-            
-            if (nomeParaExibir.includes(" - ")) {
-                nomeParaExibir = nomeParaExibir.split(" - ")[1];
-            }
+    const formatLi = (a, c) => {
+        let nomeParaExibir = a.name || "";
+        if (nomeParaExibir.includes(" - ")) nomeParaExibir = nomeParaExibir.split(" - ")[1];
+        const temNomeReal = nomeParaExibir && nomeParaExibir.toLowerCase() !== a.stock.toLowerCase();
 
-            // Se depois de limpar, o nome ainda for igual ao Ticker (ex: VALE3), 
-            // ou se estiver vazio, nós não mostramos nada na linha de baixo para não duplicar.
-            const temNomeReal = nomeParaExibir && nomeParaExibir.toLowerCase() !== a.stock.toLowerCase();
+        return `
+            <li style="display: flex; justify-content: space-between; align-items: center; padding: 10px 5px; border-bottom: 1px solid rgba(0,0,0,0.05);">
+                <span style="flex: 1; text-align: left; min-width: 0;">
+                    <b style="display: block; font-size: 0.95em;">${a.stock}</b>
+                    ${temNomeReal ? `<small style="display: block; color: #777; font-size: 0.75em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px;">${nomeParaExibir}</small>` : ''}
+                </span>
+                <span style="flex: 1; text-align: center; color: #444; font-size: 0.9em;">R$ ${a.close.toFixed(2)}</span>
+                <span class="${c}" style="flex: 1; text-align: right; font-weight: bold;">${(a.change || 0).toFixed(2)}%</span>
+            </li>`;
+    };
 
-            return `
-                <li style="display: flex; justify-content: space-between; align-items: center; padding: 10px 5px; border-bottom: 1px solid rgba(0,0,0,0.05);">
-                    <span style="flex: 1; text-align: left; min-width: 0;">
-                        <b style="display: block; font-size: 0.95em;">${a.stock}</b>
-                        ${temNomeReal ? `<small style="display: block; color: #777; font-size: 0.75em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px;">${nomeParaExibir}</small>` : ''}
-                    </span>
-                    <span style="flex: 1; text-align: center; color: #444; font-size: 0.9em;">R$ ${a.close.toFixed(2)}</span>
-                    <span class="${c}" style="flex: 1; text-align: right; font-weight: bold;">
-                        ${(a.change || 0).toFixed(2)}%
-                    </span>
-                </li>`;
-        };
-
-        document.getElementById('lista-altas').innerHTML = topAltas.map(a => formatLi(a, 'texto-alta')).join('');
-        document.getElementById('lista-baixas').innerHTML = topBaixas.map(a => formatLi(a, 'texto-queda')).join('');
-        
-        renderizarGrafico([...topAltas, ...topBaixas].map(item => ({ symbol: item.stock, change: item.change })));
-    }
+    document.getElementById('lista-altas').innerHTML = topAltas.map(a => formatLi(a, 'texto-alta')).join('');
+    document.getElementById('lista-baixas').innerHTML = topBaixas.map(a => formatLi(a, 'texto-queda')).join('');
+    renderizarGrafico([...topAltas, ...topBaixas].map(item => ({ symbol: item.stock, change: item.change })));
 }
 
-// --- CARTEIRA ---
-function atualizarPainelCarteira(dadosApi) {
+// --- CARTEIRA (LocalStorage e Monitoramento) ---
+function atualizarPainelCarteira(dadosApi = null) {
     const tbody = document.getElementById('corpo-carteira');
     if (!tbody) return;
+    
     tbody.innerHTML = "";
     minhaCarteira.forEach((item, index) => {
         const info = dadosApi ? dadosApi.find(res => res.symbol.includes(item.ticker)) : null;
         const precoAtual = info ? (info.regularMarketPrice || info.price) : null;
-        const nomeEmpresa = info && (info.longName || info.shortName) ? (info.longName || info.shortName) : "Empresa B3";
+        const nomeEmpresa = info && (info.longName || info.shortName) ? (info.longName || info.shortName) : "Monitorando...";
         
-        let cor = ""; let pct = "---";
+        let cor = ""; let pct = "Carregando...";
         if (precoAtual) {
             const varP = ((precoAtual - item.precoPago) / item.precoPago) * 100;
             pct = (varP >= 0 ? '+' : '') + varP.toFixed(2) + "%";
             cor = varP >= 0 ? "texto-alta" : "texto-queda";
         }
+
         tbody.innerHTML += `
             <tr class="${cor}">
                 <td><b>${item.ticker}</b><br><small style="opacity:0.7">${nomeEmpresa}</small></td>
                 <td>R$ ${item.precoPago.toFixed(2)}</td>
                 <td>${precoAtual ? 'R$ ' + precoAtual.toFixed(2) : '---'}</td>
                 <td style="font-weight:bold">${pct}</td>
-                <td><button onclick="removerDaCarteira(${index})">🗑️</button></td>
+                <td><button class="btn-remover" onclick="removerDaCarteira(${index})">🗑️</button></td>
             </tr>`;
     });
 }
 
-// --- CALCULADORA ---
-function calcularRentabilidade() {
-    const valor = parseFloat(document.getElementById('valorInvestido').value);
-    const container = document.getElementById('tabela-rendimentos');
-    if (!valor || valor <= 0) { alert("Insira um valor para calcular."); return; }
-    
-    const SELIC = 11.25; 
-    const CDI = SELIC - 0.10; 
-    const diasUteisAno = 252; 
-    const mesesAno = 12;
-
-    const calcCDB = (v, tempo) => (v * (CDI / 100 / tempo)) * 0.775;
-    const calcLCI = (v, tempo) => (v * ((CDI * 0.9) / 100 / tempo));
-    const calcPoup = (v, tempo) => (v * (0.0055 / (tempo === 252 ? 21 : 1)));
-
-    container.innerHTML = `
-        <div class="card-investimento"><h4>CDB / RDB (100% CDI)</h4><p>Diário: <strong class="texto-alta">R$ ${calcCDB(valor, diasUteisAno).toFixed(2)}</strong></p><p>Mensal: <strong>R$ ${calcCDB(valor, mesesAno).toFixed(2)}</strong></p><small>Líquido (Pós-IR)</small></div>
-        <div class="card-investimento"><h4>LCI / LCA (90% CDI)</h4><p>Diário: <strong class="texto-alta">R$ ${calcLCI(valor, diasUteisAno).toFixed(2)}</strong></p><p>Mensal: <strong>R$ ${calcLCI(valor, mesesAno).toFixed(2)}</strong></p><small>Isento de Imposto</small></div>
-        <div class="card-investimento"><h4>Poupança</h4><p>Diário: <strong class="texto-alta">R$ ${calcPoup(valor, diasUteisAno).toFixed(2)}</strong></p><p>Mensal: <strong>R$ ${calcPoup(valor, mesesAno).toFixed(2)}</strong></p><small>Referencial</small></div>`;
-}
-
-// --- AUXILIARES ---
 function adicionarAcaoCarteira() {
     const t = document.getElementById('tickerCompra').value.toUpperCase().trim();
     const p = parseFloat(document.getElementById('precoPago').value);
+    
     if (t && !isNaN(p)) {
         minhaCarteira.push({ ticker: t, precoPago: p });
         localStorage.setItem('minhaCarteira', JSON.stringify(minhaCarteira));
+        document.getElementById('tickerCompra').value = "";
+        document.getElementById('precoPago').value = "";
+        atualizarPainelCarteira(); 
         buscarCotacoesBovespa();
+    } else {
+        alert("Preencha o Ticker e o Preço corretamente.");
     }
 }
 
 function removerDaCarteira(index) {
     minhaCarteira.splice(index, 1);
     localStorage.setItem('minhaCarteira', JSON.stringify(minhaCarteira));
+    atualizarPainelCarteira();
     buscarCotacoesBovespa();
 }
 
+// --- CALCULADORA ---
+function calcularRentabilidade() {
+    const valor = parseFloat(document.getElementById('valorInvestido').value);
+    const container = document.getElementById('tabela-rendimentos');
+    if (!valor || valor <= 0) { alert("Insira um valor."); return; }
+    
+    const SELIC = 11.25; const CDI = SELIC - 0.10; 
+    const calcCDB = (v, tempo) => (v * (CDI / 100 / tempo)) * 0.775;
+    const calcLCI = (v, tempo) => (v * ((CDI * 0.9) / 100 / tempo));
+    const calcPoup = (v, tempo) => (v * (0.0055 / (tempo === 252 ? 21 : 1)));
+
+    container.innerHTML = `
+        <div class="card-investimento"><h4>CDB (100% CDI)</h4><p>Mensal: <strong>R$ ${calcCDB(valor, 12).toFixed(2)}</strong></p></div>
+        <div class="card-investimento"><h4>LCI (90% CDI)</h4><p>Mensal: <strong>R$ ${calcLCI(valor, 12).toFixed(2)}</strong></p></div>
+        <div class="card-investimento"><h4>Poupança</h4><p>Mensal: <strong>R$ ${calcPoup(valor, 1).toFixed(2)}</strong></p></div>`;
+}
+
+// --- UTILITÁRIOS ---
 function toggleDarkMode() { document.body.classList.toggle('dark-mode'); }
 
 function filtrarTabela(tipo) {

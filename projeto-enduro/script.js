@@ -3,7 +3,7 @@ const ctx = canvas.getContext('2d');
 canvas.width = 400; canvas.height = 400;
 
 let playerX = 0, speed = 0, gameTick = 0, playerDist = 0;
-let dayNumber = 1, baseGoal = 200, carsRemaining = baseGoal; 
+ let dayNumber = 1, baseGoal = 200, carsRemaining = baseGoal;
 let gameState = "PLAYING"; 
 let isPaused = false;
 
@@ -142,12 +142,13 @@ function resetGame() {
     if (gameState !== "PLAYING") { gameState = "PLAYING"; update(); }
 }
 
-function resetDay() {
+ function resetDay() {
     currentTime = 0; 
     playerDist = 0; 
     speed = 0; 
     enemies = [];
-    carsRemaining = baseGoal; 
+    // Garante que a contagem comece com o valor progressivo do dia atual
+    carsRemaining = 200 + ((dayNumber - 1) * 10);
     gameState = "PLAYING"; 
     isPaused = false;
     hasPlayedGoalMedia = false;
@@ -267,10 +268,13 @@ function update() {
         setTimeout(() => { videoVitoria.style.display = 'none'; }, 4000);
     }
 
-    if (currentTime >= DAY_DURATION) {
+     if (currentTime >= DAY_DURATION) {
         if (carsRemaining <= 0) {
             if (gameState !== "WIN_DAY") { 
-                gameState = "WIN_DAY"; dayNumber++; 
+                gameState = "WIN_DAY"; 
+                dayNumber++; 
+                // Atualiza a base para o próximo resetDay
+                baseGoal = 200 + ((dayNumber - 1) * 10);
                 saveProgress();
                 setTimeout(() => { resetDay(); }, 4000); 
             }
