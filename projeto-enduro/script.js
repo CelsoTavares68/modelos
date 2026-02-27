@@ -184,47 +184,20 @@ function resetDay() {
  function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasFog = false, isRainy = false) {
     let s = scale * 1.2;
     if (s < 0.02 || s > 30) return;
+    let w = 45 * s; let h = 22 * s;
     
-    // Mantemos as proporções base
-    let w = 45 * s; 
-    let h = 22 * s;
-    
-    // Aqui definimos o "1mm" extra (ajustado pela escala s) para frente e para trás
-    let depthExtra = 5 * s; 
-
     ctx.save();
     ctx.translate(x, y);
-
-    // Inclinação suave para o jogador ao fazer curvas
     if(isPlayer) ctx.rotate((roadCurve / 80) * Math.PI / 180);
     
-    // --- DESENHO DO CORPO CÚBICO ---
-    
-    // 1. Face Traseira/Sombra (Dá a impressão de que o carro continua para trás)
-    ctx.fillStyle = "#000"; // Cor mais escura para o fundo
-    // Desenhamos um retângulo levemente deslocado para trás (-depthExtra)
-    ctx.fillRect(-w * 0.5, -h * 0.2, w, h * 0.8 + depthExtra);
-
-    // 2. Face Principal (O "Cubo" colorido)
-    ctx.fillStyle = color;
-    // O corpo principal do carro. Note que ele começa um pouco antes e termina um pouco depois
-    // para criar a área de 1mm (depthExtra) que você pediu.
-    ctx.fillRect(-w * 0.4, -h * 0.3, w * 0.8, h * 0.6); 
-
-    // 3. Detalhe do Topo (Dá o efeito 3D de caixa)
-    ctx.fillStyle = "rgba(255,255,255,0.2)"; // Um brilho no topo para parecer um volume
-    ctx.fillRect(-w * 0.4, -h * 0.3, w * 0.8, h * 0.1);
-
-    // --- SISTEMA DE LUZES (Mantido para visibilidade noturna) ---
+    // --- LÓGICA DE ILUMINAÇÃO (Original) ---
     if (nightMode || hasFog || isRainy) {
-        ctx.fillStyle = "#FF0000"; // Lanternas traseiras
-        ctx.fillRect(-w * 0.35, h * 0.1, w * 0.15, h * 0.2); 
-        ctx.fillRect(w * 0.20, h * 0.1, w * 0.15, h * 0.2); 
-        
-        // Efeito de brilho do farol (apenas se necessário)
+        ctx.fillStyle = "#FF0000"; 
+        ctx.fillRect(-w * 0.35, h * 0.2, w * 0.15, h * 0.25); 
+        ctx.fillRect(w * 0.20, h * 0.2, w * 0.15, h * 0.25); 
         let lightLength = h * 3; 
         let gradient = ctx.createLinearGradient(0, 0, 0, -lightLength);
-        gradient.addColorStop(0, "rgba(255, 255, 200, 0.2)"); 
+        gradient.addColorStop(0, "rgba(255, 255, 200, 0.25)"); 
         gradient.addColorStop(1, "rgba(255, 255, 200, 0)");
         ctx.fillStyle = gradient;
         ctx.beginPath();
@@ -233,6 +206,24 @@ function resetDay() {
         ctx.fill();
     }
 
+    // --- DESENHO ORIGINAL COM "EXTENSÃO DE BATIDA" ---
+    if (!(nightMode || (hasFog && !isRainy))) {
+        // 1. Rodas (Originais)
+        ctx.fillStyle = "#111"; 
+        ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8);
+        ctx.fillRect(w * 0.25, -h * 0.1, w * 0.25, h * 0.8);
+
+        // 2. EXTENSÃO PARA BATIDA (O seu "1mm" extra para frente e trás)
+        // Desenhamos um retângulo extra da mesma cor que une as rodas
+        ctx.fillStyle = color;
+        let extra = 4 * s; // Representa o "1mm" proporcional à escala
+        ctx.fillRect(-w * 0.25, h * 0.1 - extra, w * 0.5, h * 0.4 + (extra * 2));
+
+        // 3. Corpo e Aerofólio (Originais)
+        ctx.fillStyle = color; 
+        ctx.fillRect(-w * 0.25, h * 0.1, w * 0.5, h * 0.4); // Cockpit
+        ctx.fillRect(-w * 0.5, -h * 0.3, w, h * 0.2);       // Aerofólio traseiro
+    }
     ctx.restore();
 }
 
