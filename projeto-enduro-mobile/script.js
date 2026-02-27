@@ -339,7 +339,7 @@ function update() {
             color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)],
             isOvertaken: false 
         });
-    }
+    }}
 
 function draw(colors, isRaining) {
     ctx.fillStyle = colors.sky; ctx.fillRect(0, 0, 400, 200);
