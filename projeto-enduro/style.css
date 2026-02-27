@@ -1,4 +1,4 @@
-  body { 
+ body { 
     margin: 0; 
     background: #111; 
     display: flex; 
@@ -7,6 +7,11 @@
     height: 100vh; 
     color: white; 
     font-family: 'Courier New', Courier, monospace; 
+}
+
+.instrucoes h2 {
+    text-align: center;
+    color: gold;
 }
 
 .game-container {
@@ -21,7 +26,7 @@ canvas {
     background: #000; 
 }
 
-/* DASHBOARD GERAL */
+/* DASHBOARD GERAL - DUAS LINHAS */
 .dashboard-externa {
     display: flex;
     flex-direction: column;
@@ -34,7 +39,7 @@ canvas {
     box-sizing: border-box;
 }
 
-/* LINHA SUPERIOR (DISTÂNCIAS) */
+/* LINHA SUPERIOR (DISTÂNCIAS) - 4 Colunas */
 .dist-row {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -43,10 +48,10 @@ canvas {
     border-bottom: 1px solid #444;
 }
 
-/* LINHA INFERIOR (PASSES) */
+/* LINHA INFERIOR (PASSES) - Agora também com 4 Colunas para o Odômetro de Passes */
 .passes-row {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 5px;
     padding-top: 5px;
 }
@@ -85,10 +90,10 @@ canvas {
     margin-top: 15px;
 }
 
-/* BOTÃO ESTILO ARCADE (GRANDE E 3D) */
+/* BOTÃO ESTILO ARCADE PROFISSIONAL */
 .btn {
     flex: 1;
-    height: 70px; 
+    height: 75px; 
     font-family: 'Courier New', Courier, monospace;
     font-size: 18px;
     font-weight: 900;

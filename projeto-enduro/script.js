@@ -14,10 +14,10 @@ let totalBestRecord = 0;
 let hasPlayedGoalMedia = false; 
 
 // NOVAS VARIÁVEIS PARA ULTRAPASSAGENS
-let totalPasses = 0;           // PASS
-let dayPassesBest = 0;         // REC.P(D)
-let totalPassesBest = 0;       // REC.P(G)
-
+ let totalPasses = 0;           // Passes no dia atual (zera todo dia)
+let totalPassesOdometer = 0;   // NOVO: Acumulado de todos os dias (não zera)
+let dayPassesBest = 0;         // Recorde de um único dia
+let totalPassesBest = 0;       // Recorde histórico (salvo no LocalStorage)
 // --- CONFIGURAÇÕES DE VELOCIDADE E TEMPO ---
 const maxSpeed = 16; 
 const STAGE_DURATION = 9000; 
@@ -351,15 +351,15 @@ if (keys.ArrowUp) {
         
         // --- LÓGICA DE ULTRAPASSAGENS REVISADA ---
         if (enemy.z <= 0 && !enemy.isOvertaken) { 
-            enemy.isOvertaken = true;
-            totalPasses++; // Incrementa contador atual
-            
-            // Atualiza recordes
-            if (totalPasses > dayPassesBest) dayPassesBest = totalPasses;
-            if (totalPasses > totalPassesBest) totalPassesBest = totalPasses;
-            
-            if (!hasPlayedGoalMedia) carsRemaining--; 
-        }
+        enemy.isOvertaken = true;
+        totalPasses++;         // Sobe o do dia
+        totalPassesOdometer++; // Sobe o acumulado (Odômetro de Passes)
+        
+        if (totalPasses > dayPassesBest) dayPassesBest = totalPasses;
+        if (totalPassesOdometer > totalPassesBest) totalPassesBest = totalPassesOdometer;
+        
+        if (!hasPlayedGoalMedia) carsRemaining--; 
+    }
         
         // Se o carro inimigo voltar a ficar na frente (ex: jogador bateu)
         if (enemy.z > 0 && enemy.isOvertaken) { 
