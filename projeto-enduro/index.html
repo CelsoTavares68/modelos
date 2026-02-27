@@ -1,4 +1,4 @@
-  <!DOCTYPE html>
+   <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
@@ -10,38 +10,30 @@
     <div class="game-container">
         <div class="instrucoes">
             <h2>MINI ENDURO</h2>
-             <div class="dashboard-externa">
-    <div class="stat-box"><span class="label">DIST</span><span id="ui-dist" class="value">0.0</span></div>
-    <div class="stat-box"><span class="label">REC.D</span><span id="ui-day-best" class="value">0.0</span></div>
-    <div class="stat-box"><span class="label">ODO</span><span id="ui-total-now" class="value">0.0</span></div>
-    <div class="stat-box"><span class="label">REC.T</span><span id="ui-total-best" class="value">0.0</span></div>
+            <div class="dashboard-externa">
+    <div class="dist-row">
+        <div class="stat-box"><span class="label">DIST</span><span id="ui-dist" class="value">0.0</span></div>
+        <div class="stat-box"><span class="label">REC.D</span><span id="ui-day-best" class="value">0.0</span></div>
+        <div class="stat-box"><span class="label">ODO</span><span id="ui-total-now" class="value">0.0</span></div>
+        <div class="stat-box"><span class="label">REC.T</span><span id="ui-total-best" class="value">0.0</span></div>
+    </div>
 
-    <div class="stat-box passes-mini"><span class="label">PASS</span><span id="ui-passes" class="value">0</span></div>
-    <div class="stat-box passes-mini"><span class="label">REC.P(D)</span><span id="ui-passes-day-best" class="value">0</span></div>
-    <div class="stat-box passes-mini"><span class="label">REC.P(G)</span><span id="ui-passes-total-best" class="value">0</span></div>
+    <div class="passes-row">
+        <div class="stat-box"><span class="label">PASS</span><span id="ui-passes" class="value">0</span></div>
+        <div class="stat-box"><span class="label">REC.P(D)</span><span id="ui-passes-day-best" class="value">0</span></div>
+        <div class="stat-box"><span class="label">REC.P(G)</span><span id="ui-passes-total-best" class="value">0</span></div>
+    </div>
 </div>
 
-                <div class="stat-box">
-    <span class="label">ULTRAPASSAGENS</span>
-    <span id="ui-passes" class="value">0</span>
-</div>
-<div class="stat-box">
-    <span class="label">RECORDE PASSES (DIA)</span>
-    <span id="ui-passes-day-best" class="value">0</span>
-</div>
-<div class="stat-box">
-    <span class="label">RECORDE PASSES (TOTAL)</span>
-    <span id="ui-passes-total-best" class="value">0</span>
-</div>
-            </div>
-        </div>
+ 
+     
 
         <canvas id="gameCanvas"></canvas>
-
-        <div class="controles">
-            <button onclick="togglePause()" id="pauseBtn">Pausar</button>
-            <button onclick="resetGame()" id="resetBtn">Reiniciar Jogo</button>
-        </div>
+<div class="controles">
+    <button onclick="togglePause()" id="pauseBtn" class="btn">Pausar</button>
+    <button onclick="resetGame()" id="resetBtn" class="btn">Reiniciar</button>
+</div>
+        
     </div>
     <script src="script.js"></script>
 </body>
