@@ -286,8 +286,8 @@ function update() {
     }
 
     playerX -= (roadCurve * 0.06) * (speed / maxSpeed); 
-    if (keys.ArrowLeft) playerX -= 4.2;
-    if (keys.ArrowRight) playerX += 4.2;
+    if (keys.ArrowLeft) playerX -= 4.4;
+    if (keys.ArrowRight) playerX += 4.4;
     playerX = Math.max(-480, Math.min(480, playerX));
 
     if (--curveTimer <= 0) { 
@@ -319,18 +319,27 @@ function update() {
         enemy.lastY = 200 + (p * 140); enemy.lastX = screenX; enemy.lastP = p;
     });
 
+    // Primeiro carro (Posição totalmente aleatória)
     if (gameTick % 250 === 0 && enemies.length < 100) {
         enemies.push({ 
-            lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 11.5, 
+            lane: (Math.random() - 0.5) * 1.8, 
+            z: 4000, 
+            v: 10.5, 
             color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)],
             isOvertaken: false 
         });
     }
 
-    enemies = enemies.filter(e => e.z > -15000 && e.z < 6000);
-    draw(colors, isRaining);
-    requestAnimationFrame(update);
-}
+    // Segundo carro (1 segundo depois, também em posição aleatória)
+    if (gameTick % 250 === 60 && enemies.length < 100) {
+        enemies.push({ 
+            lane: (Math.random() - 0.5) * 1.8, 
+            z: 4000, 
+            v: 10.5, 
+            color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)],
+            isOvertaken: false 
+        });
+    }
 
 function draw(colors, isRaining) {
     ctx.fillStyle = colors.sky; ctx.fillRect(0, 0, 400, 200);
