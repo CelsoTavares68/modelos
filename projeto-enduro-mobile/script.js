@@ -325,10 +325,10 @@ function update() {
     });
 
     if (gameTick % 250 === 0 && enemies.length < 100) {
-        enemies.push({ lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 10.5, color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)], isOvertaken: false });
+        enemies.push({ lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 11.5, color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)], isOvertaken: false });
     }
     if (gameTick % 250 === 60 && enemies.length < 100) {
-        enemies.push({ lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 10.5, color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)], isOvertaken: false });
+        enemies.push({ lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 11.5, color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)], isOvertaken: false });
     }
 
     draw(colors, isRaining);
