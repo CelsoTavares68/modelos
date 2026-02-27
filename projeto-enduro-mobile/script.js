@@ -29,6 +29,7 @@ let rightPressTime = 0;
 let raindrops = []; 
 let lightningAlpha = 0; 
 
+// Áudios
 const sfxChuva = new Audio('chuva.mp3');
 sfxChuva.loop = true;
 sfxChuva.volume = 0.5; 
@@ -37,6 +38,7 @@ sfxTrovao.volume = 0.2;
 const sfxVitoriaAudio = new Audio('vitoria.mp3');
 const sfxDerrota = new Audio('game_over.mp3');
 
+// Vídeos
 const videoVitoria = document.createElement('video');
 videoVitoria.src = 'bandeira_vitoria.mp4';
 videoVitoria.style.position = 'absolute';
@@ -145,7 +147,7 @@ function togglePause() {
         const btn = document.getElementById('pauseBtn');
         if (btn) btn.innerText = isPaused ? "Retomar" : "Pausar";
         if (isPaused) sfxChuva.pause();
-        if (!isPaused) { audioCtx.resume(); update(); }
+        if (!isPaused) { audioCtx.resume(); }
     }
 }
 
@@ -154,7 +156,6 @@ function resetGame() {
     dayNumber = 1; baseGoal = 200; isPaused = false; odometerNow = 0;
     localStorage.removeItem('enduro_save');
     resetDay();
-    if (gameState !== "PLAYING") { gameState = "PLAYING"; update(); }
 }
 
 function resetDay() {
@@ -202,7 +203,11 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasF
 }
 
 function update() {
-    if (isPaused) return; 
+    if (isPaused) {
+        requestAnimationFrame(update);
+        return;
+    }
+
     let currentStage = Math.min(Math.floor(currentTime / STAGE_DURATION), 8);
     let isRaining = (currentStage === 3 || currentStage === 7);
     let warningLightning = (currentStage === 2 || currentStage === 6);
@@ -319,27 +324,16 @@ function update() {
         enemy.lastY = 200 + (p * 140); enemy.lastX = screenX; enemy.lastP = p;
     });
 
-    // Primeiro carro (Posição totalmente aleatória)
     if (gameTick % 250 === 0 && enemies.length < 100) {
-        enemies.push({ 
-            lane: (Math.random() - 0.5) * 1.8, 
-            z: 4000, 
-            v: 10.5, 
-            color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)],
-            isOvertaken: false 
-        });
+        enemies.push({ lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 10.5, color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)], isOvertaken: false });
+    }
+    if (gameTick % 250 === 60 && enemies.length < 100) {
+        enemies.push({ lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 10.5, color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)], isOvertaken: false });
     }
 
-    // Segundo carro (1 segundo depois, também em posição aleatória)
-    if (gameTick % 250 === 60 && enemies.length < 100) {
-        enemies.push({ 
-            lane: (Math.random() - 0.5) * 1.8, 
-            z: 4000, 
-            v: 10.5, 
-            color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)],
-            isOvertaken: false 
-        });
-    }}
+    draw(colors, isRaining);
+    requestAnimationFrame(update);
+}
 
 function draw(colors, isRaining) {
     ctx.fillStyle = colors.sky; ctx.fillRect(0, 0, 400, 200);
@@ -406,4 +400,6 @@ function draw(colors, isRaining) {
         ctx.textAlign = "left";
     }
 }
+
+// Inicia o loop
 update();
