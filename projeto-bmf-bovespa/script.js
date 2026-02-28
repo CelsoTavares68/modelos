@@ -1,12 +1,18 @@
  const TOKEN_B3 = '8gRPKYrszFRi4JCDaARwuJ'; 
 
-// LISTAS - Agro sem .SA para evitar erro na API / Ações normais
-const LISTA_AGRO_BMF = "BGIH26,CCMH26,SJWH26,ICFH26,WDOH26,CTPH26";
+// LISTAS - Substituído contratos BMF por empresas de Proteína (Carne, Frango, Peixe) e Grãos
+const LISTA_AGRO_BMF = "JBSS3,BRFS3,BEEF3,MRFG3,CAML3,SLCE3,AGRO3";
 const LISTA_ACOES_B3 = "VALE3,ITUB4,ABEV3,PETR4";
 
+// Mapa atualizado para identificar as empresas e seus respectivos setores
 const MAPA_NOMES_AGRO = {
-    "BGI": "Boi Gordo", "CCM": "Milho", "SJW": "Soja",
-    "ICF": "Café Arábica", "WDO": "Mini Dólar", "CTP": "Algodão", "TRI": "Trigo"
+    "JBSS3": "JBS (Carnes Diversas)",    // Bovina, Frango, Suína
+    "BRFS3": "BRF (Frango e Suíno)",     // Sadia/Perdigão
+    "BEEF3": "Minerva (Bovinos)",        // Líder em exportação
+    "MRFG3": "Marfrig (Bovinos/Global)",
+    "CAML3": "Camil (Arroz/Peixes)",      // Dona da Coqueiro
+    "SLCE3": "SLC Agrícola (Grãos)",     // Soja/Milho
+    "AGRO3": "BrasilAgro (Grãos/Terras)"
 };
 
 let chartMercado = null;
@@ -76,7 +82,7 @@ async function buscarApenasTaxas() {
     } catch (e) { console.error("Erro Taxas:", e); }
 }
 
-// --- MERCADO AGRO ---
+// --- MERCADO AGRO (Agora buscando empresas do setor) ---
 async function buscarCotacoesAgro() {
     const ativos = LISTA_AGRO_BMF.split(',');
     const tbody = document.getElementById("corpo-cotacoes");
@@ -85,7 +91,7 @@ async function buscarCotacoesAgro() {
     for (const ticker of ativos) {
         try {
             const tickerLimpo = ticker.trim();
-            const url = `https://brapi.dev/api/quote/${tickerLimpo}.SA?token=${TOKEN_B3}`;
+            const url = `https://brapi.dev/api/quote/${tickerLimpo}?token=${TOKEN_B3}`;
             const res = await fetch(url);
             const data = await res.json();
 
@@ -141,8 +147,8 @@ function renderizarLinhaTabela(item, origem) {
     if (!tbody || !item) return;
 
     const symbolOriginal = item.symbol.replace('.SA', '');
-    const prefixo = symbolOriginal.substring(0, 3);
-    const nomeExibicao = origem === "BMF" ? (MAPA_NOMES_AGRO[prefixo] || symbolOriginal) : symbolOriginal;
+    // Busca o nome no mapa para empresas do Agro ou usa o símbolo original
+    const nomeExibicao = origem === "BMF" ? (MAPA_NOMES_AGRO[symbolOriginal] || symbolOriginal) : symbolOriginal;
 
     const preco = item.regularMarketPrice || item.price || 0;
     const variacao = item.regularMarketChangePercent || item.changePercent || 0;
