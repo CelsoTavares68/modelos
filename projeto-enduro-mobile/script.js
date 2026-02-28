@@ -8,12 +8,7 @@ let gameState = "PLAYING";
 let isPaused = false;
 let vitoriaTocada = false; 
 
-// --- SISTEMA DE RECORDES E ODÔMETROS (ADICIONADOS PARA FUNCIONAR COM O TEU HTML) ---
 let odometerNow = 0;
-let totalPassesOdometer = parseFloat(localStorage.getItem('enduro_totalPassesOdo')) || 0;
-let totalPasses = 0;
-let dayPassesBest = parseFloat(localStorage.getItem('enduro_dayPassesBest')) || 0;
-let totalPassesBest = parseFloat(localStorage.getItem('enduro_totalPassesBest')) || 0;
 let dayBestRecord = parseFloat(localStorage.getItem('enduro_dayBest')) || 0;
 let totalBestRecord = parseFloat(localStorage.getItem('enduro_totalBest')) || 0;
 
@@ -34,7 +29,6 @@ let rightPressTime = 0;
 let raindrops = []; 
 let lightningAlpha = 0; 
 
-// Áudios
 const sfxChuva = new Audio('chuva.mp3');
 sfxChuva.loop = true;
 sfxChuva.volume = 0.5; 
@@ -43,7 +37,6 @@ sfxTrovao.volume = 0.2;
 const sfxVitoriaAudio = new Audio('vitoria.mp3');
 const sfxDerrota = new Audio('game_over.mp3');
 
-// Vídeos
 const videoVitoria = document.createElement('video');
 videoVitoria.src = 'bandeira_vitoria.mp4';
 videoVitoria.style.position = 'absolute';
@@ -74,24 +67,14 @@ function drawFinishLine(y, roadWidth, xPos) {
 }
 
 function updateUI() {
-    // Atualização baseada nos IDs do teu index.html
-    if(document.getElementById('ui-dist')) document.getElementById('ui-dist').innerText = (playerDist / 1000).toFixed(1);
-    if(document.getElementById('ui-day-best')) document.getElementById('ui-day-best').innerText = dayBestRecord.toFixed(1);
-    if(document.getElementById('ui-total-now')) document.getElementById('ui-total-now').innerText = (odometerNow / 1000).toFixed(1);
-    if(document.getElementById('ui-total-best')) document.getElementById('ui-total-best').innerText = (totalBestRecord / 1000).toFixed(1);
-    
-    // Novos campos de passes
-    if(document.getElementById('ui-passes')) document.getElementById('ui-passes').innerText = totalPasses;
-    if(document.getElementById('ui-passes-day-best')) document.getElementById('ui-passes-day-best').innerText = dayPassesBest;
-    if(document.getElementById('ui-total-passes-now')) document.getElementById('ui-total-passes-now').innerText = totalPassesOdometer;
-    if(document.getElementById('ui-passes-total-best')) document.getElementById('ui-passes-total-best').innerText = totalPassesBest;
+    if(document.getElementById('ui-dist')) document.getElementById('ui-dist').innerText = (playerDist / 1000).toFixed(1) + " KM";
+    if(document.getElementById('ui-day-best')) document.getElementById('ui-day-best').innerText = dayBestRecord.toFixed(1) + " KM";
+    if(document.getElementById('ui-total-now')) document.getElementById('ui-total-now').innerText = (odometerNow / 1000).toFixed(1) + " KM";
+    if(document.getElementById('ui-total-best')) document.getElementById('ui-total-best').innerText = (totalBestRecord / 1000).toFixed(1) + " KM";
 }
 
 function saveProgress() {
-    const data = { 
-        dayNumber, carsRemaining, playerDist, currentTime, odometerNow, 
-        totalPassesOdometer, dayPassesBest, totalPassesBest 
-    };
+    const data = { dayNumber, carsRemaining, playerDist, currentTime, odometerNow };
     localStorage.setItem('enduro_save', JSON.stringify(data));
 }
 
@@ -104,9 +87,6 @@ function loadProgress() {
         playerDist = data.playerDist;
         currentTime = data.currentTime;
         odometerNow = data.odometerNow || 0;
-        totalPassesOdometer = data.totalPassesOdometer || 0;
-        dayPassesBest = data.dayPassesBest || 0;
-        totalPassesBest = data.totalPassesBest || 0;
     }
 }
 loadProgress();
@@ -118,6 +98,22 @@ window.addEventListener('keydown', e => {
     if (audioCtx.state === 'suspended') audioCtx.resume();
 });
 window.addEventListener('keyup', e => { if (keys.hasOwnProperty(e.code)) keys[e.code] = false; });
+
+function setupMobileControls() {
+    const ids = { 'mobileLeft': 'ArrowLeft', 'mobileRight': 'ArrowRight' };
+    Object.keys(ids).forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) {
+            const press = (e) => { e.preventDefault(); keys[ids[id]] = true; if(audioCtx.state === 'suspended') audioCtx.resume(); };
+            const release = (e) => { e.preventDefault(); keys[ids[id]] = false; };
+            btn.addEventListener('touchstart', press, {passive: false});
+            btn.addEventListener('touchend', release, {passive: false});
+            btn.addEventListener('mousedown', press);
+            btn.addEventListener('mouseup', release);
+        }
+    });
+}
+setupMobileControls();
 
 function playEngineSound() {
     if (isPaused || speed <= 0 || audioCtx.state !== 'running') return;
@@ -148,21 +144,21 @@ function togglePause() {
         isPaused = !isPaused;
         const btn = document.getElementById('pauseBtn');
         if (btn) btn.innerText = isPaused ? "Retomar" : "Pausar";
-        if (isPaused) { sfxChuva.pause(); saveProgress(); }
-        if (!isPaused) { audioCtx.resume(); }
+        if (isPaused) sfxChuva.pause();
+        if (!isPaused) { audioCtx.resume(); update(); }
     }
 }
 
 function resetGame() {
     if (audioCtx.state === 'suspended') audioCtx.resume();
     dayNumber = 1; baseGoal = 200; isPaused = false; odometerNow = 0;
-    totalPassesOdometer = 0;
     localStorage.removeItem('enduro_save');
     resetDay();
+    if (gameState !== "PLAYING") { gameState = "PLAYING"; update(); }
 }
 
 function resetDay() {
-    currentTime = 0; playerDist = 0; speed = 0; enemies = []; totalPasses = 0;
+    currentTime = 0; playerDist = 0; speed = 0; enemies = [];
     carsRemaining = baseGoal + (dayNumber - 1) * 10; 
     gameState = "PLAYING"; isPaused = false;
     vitoriaTocada = false; 
@@ -206,11 +202,7 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasF
 }
 
 function update() {
-    if (isPaused) {
-        requestAnimationFrame(update);
-        return;
-    }
-
+    if (isPaused) return; 
     let currentStage = Math.min(Math.floor(currentTime / STAGE_DURATION), 8);
     let isRaining = (currentStage === 3 || currentStage === 7);
     let warningLightning = (currentStage === 2 || currentStage === 6);
@@ -255,7 +247,6 @@ function update() {
     raindrops.forEach((r, i) => { r.y += r.s; if (r.y > 400) raindrops.splice(i, 1); });
     if (lightningAlpha > 0) lightningAlpha -= 0.05;
 
-    // Recordes de distância
     if (playerDist / 1000 > dayBestRecord) {
         dayBestRecord = playerDist / 1000;
         localStorage.setItem('enduro_dayBest', dayBestRecord);
@@ -264,17 +255,6 @@ function update() {
         totalBestRecord = odometerNow;
         localStorage.setItem('enduro_totalBest', totalBestRecord);
     }
-
-    // Recordes de ultrapassagem
-    if (totalPasses > dayPassesBest) {
-        dayPassesBest = totalPasses;
-        localStorage.setItem('enduro_dayPassesBest', dayPassesBest);
-    }
-    if (totalPassesOdometer > totalPassesBest) {
-        totalPassesBest = totalPassesOdometer;
-        localStorage.setItem('enduro_totalPassesBest', totalPassesBest);
-    }
-    
     updateUI();
 
     if (currentTime >= DAY_DURATION) {
@@ -298,7 +278,7 @@ function update() {
     if (keys.ArrowLeft) leftPressTime++; else leftPressTime = 0;
     if (keys.ArrowRight) rightPressTime++; else rightPressTime = 0;
 
-    let isBraking = (leftPressTime > 75 || rightPressTime > 75 || keys.ArrowDown); 
+    let isBraking = (leftPressTime > 60 || rightPressTime > 60 || keys.ArrowDown); 
     if (isBraking) speed = Math.max(speed - 0.15, 0); 
     else {
         if (offRoad) speed = Math.min(speed + 0.01, 2); 
@@ -306,8 +286,8 @@ function update() {
     }
 
     playerX -= (roadCurve * 0.06) * (speed / maxSpeed); 
-    if (keys.ArrowLeft) playerX -= 4.4;
-    if (keys.ArrowRight) playerX += 4.4;
+    if (keys.ArrowLeft) playerX -= 3.2;
+    if (keys.ArrowRight) playerX += 3.2;
     playerX = Math.max(-480, Math.min(480, playerX));
 
     if (--curveTimer <= 0) { 
@@ -323,13 +303,9 @@ function update() {
         let roadWidth = 20 + p * 800;
         let screenX = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p) + (enemy.lane * roadWidth * 0.5);
         if (p > 0.92 && p < 1.05 && Math.abs(screenX - 200) < 50) { speed = -4; enemy.z += 800; playCrashSound(); }
-        
-        // LÓGICA DE ULTRAPASSAGEM COM ODO.P
         if (gameState === "PLAYING" || gameState === "GOAL_REACHED") {
             if (enemy.z <= 0 && !enemy.isOvertaken) { 
                 carsRemaining--; 
-                totalPasses++;
-                totalPassesOdometer++;
                 enemy.isOvertaken = true; 
                 if (carsRemaining <= 0 && !vitoriaTocada) { 
                     gameState = "GOAL_REACHED"; 
@@ -337,25 +313,21 @@ function update() {
                     vitoriaTocada = true; 
                 }
             }
-            // Perda de ponto se o inimigo te ultrapassar de volta
-            if (enemy.z > 0 && enemy.isOvertaken) { 
-                carsRemaining++; 
-                totalPasses = Math.max(0, totalPasses - 1);
-                totalPassesOdometer = Math.max(0, totalPassesOdometer - 1);
-                enemy.isOvertaken = false; 
-            }
+            if (enemy.z > 0 && enemy.isOvertaken) { carsRemaining++; enemy.isOvertaken = false; }
             if (carsRemaining <= 0) { carsRemaining = 0; gameState = "GOAL_REACHED"; }
         }
         enemy.lastY = 200 + (p * 140); enemy.lastX = screenX; enemy.lastP = p;
     });
 
     if (gameTick % 250 === 0 && enemies.length < 100) {
-        enemies.push({ lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 10.5, color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)], isOvertaken: false });
+        enemies.push({ 
+            lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 11.5, 
+            color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)],
+            isOvertaken: false 
+        });
     }
-     
-    // CORREÇÃO: Inimigos somem logo após saírem da tela (z < -500)
-    enemies = enemies.filter(e => e.z > -18000 && e.z < 6000);
 
+    enemies = enemies.filter(e => e.z > -15000 && e.z < 6000);
     draw(colors, isRaining);
     requestAnimationFrame(update);
 }
@@ -425,6 +397,4 @@ function draw(colors, isRaining) {
         ctx.textAlign = "left";
     }
 }
-
-// Inicia o loop
 update();
