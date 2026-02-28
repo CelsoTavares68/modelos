@@ -1,18 +1,20 @@
- const TOKEN_B3 = '8gRPKYrszFRi4JCDaARwuJ'; 
+  const TOKEN_B3 = '8gRPKYrszFRi4JCDaARwuJ'; 
 
-// LISTAS - Substituído contratos BMF por empresas de Proteína (Carne, Frango, Peixe) e Grãos
-const LISTA_AGRO_BMF = "JBSS3,BRFS3,BEEF3,MRFG3,CAML3,SLCE3,AGRO3";
+// LISTAS - Substituindo apenas os contratos pelos ativos do Agro que negociam na B3
+const LISTA_AGRO_BMF = "JBSS3,BRFS3,BEEF3,MRFG3,CAML3,SLCE3,AGRO3,SMTO3,KEPL3,SOJA3";
 const LISTA_ACOES_B3 = "VALE3,ITUB4,ABEV3,PETR4";
 
-// Mapa atualizado para identificar as empresas e seus respectivos setores
 const MAPA_NOMES_AGRO = {
-    "JBSS3": "JBS (Carnes Diversas)",    // Bovina, Frango, Suína
-    "BRFS3": "BRF (Frango e Suíno)",     // Sadia/Perdigão
-    "BEEF3": "Minerva (Bovinos)",        // Líder em exportação
-    "MRFG3": "Marfrig (Bovinos/Global)",
-    "CAML3": "Camil (Arroz/Peixes)",      // Dona da Coqueiro
-    "SLCE3": "SLC Agrícola (Grãos)",     // Soja/Milho
-    "AGRO3": "BrasilAgro (Grãos/Terras)"
+    "JBSS3": "JBS (Carnes)", 
+    "BRFS3": "BRF (Frango/Suíno)", 
+    "BEEF3": "Minerva (Bovinos)",
+    "MRFG3": "Marfrig (Bovinos)", 
+    "CAML3": "Camil (Arroz/Peixe)", 
+    "SLCE3": "SLC Agrícola (Grãos)",
+    "AGRO3": "BrasilAgro (Grãos)",
+    "SMTO3": "São Martinho (Etanol)",
+    "KEPL3": "Kepler Weber (Silos)",
+    "SOJA3": "Boa Safra (Sementes)"
 };
 
 let chartMercado = null;
@@ -82,7 +84,7 @@ async function buscarApenasTaxas() {
     } catch (e) { console.error("Erro Taxas:", e); }
 }
 
-// --- MERCADO AGRO (Agora buscando empresas do setor) ---
+// --- MERCADO AGRO ---
 async function buscarCotacoesAgro() {
     const ativos = LISTA_AGRO_BMF.split(',');
     const tbody = document.getElementById("corpo-cotacoes");
@@ -147,7 +149,6 @@ function renderizarLinhaTabela(item, origem) {
     if (!tbody || !item) return;
 
     const symbolOriginal = item.symbol.replace('.SA', '');
-    // Busca o nome no mapa para empresas do Agro ou usa o símbolo original
     const nomeExibicao = origem === "BMF" ? (MAPA_NOMES_AGRO[symbolOriginal] || symbolOriginal) : symbolOriginal;
 
     const preco = item.regularMarketPrice || item.price || 0;
