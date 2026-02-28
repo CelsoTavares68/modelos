@@ -278,7 +278,7 @@ function update() {
     if (keys.ArrowLeft) leftPressTime++; else leftPressTime = 0;
     if (keys.ArrowRight) rightPressTime++; else rightPressTime = 0;
 
-    let isBraking = (leftPressTime > 60 || rightPressTime > 60 || keys.ArrowDown); 
+    let isBraking = (leftPressTime > 90 || rightPressTime > 90 || keys.ArrowDown); 
     if (isBraking) speed = Math.max(speed - 0.15, 0); 
     else {
         if (offRoad) speed = Math.min(speed + 0.01, 2); 
@@ -319,15 +319,15 @@ function update() {
         enemy.lastY = 200 + (p * 140); enemy.lastX = screenX; enemy.lastP = p;
     });
 
-    if (gameTick % 250 === 0 && enemies.length < 100) {
+    if (gameTick % 240 === 0 && enemies.length < 100) {
         enemies.push({ 
-            lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 11.5, 
+            lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 10.0, 
             color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)],
             isOvertaken: false 
         });
     }
 
-    enemies = enemies.filter(e => e.z > -15000 && e.z < 6000);
+    enemies = enemies.filter(e => e.z > -18000 && e.z < 6000);
     draw(colors, isRaining);
     requestAnimationFrame(update);
 }
