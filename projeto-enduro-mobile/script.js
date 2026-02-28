@@ -324,12 +324,12 @@ function update() {
         enemy.lastY = 200 + (p * 140); enemy.lastX = screenX; enemy.lastP = p;
     });
 
-    if (gameTick % 240 === 0 && enemies.length < 120) {
+    if (gameTick % 240 === 0 && enemies.length < 500) {
         enemies.push({ lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 10.0, color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)], isOvertaken: false });
     }
 
     for (let i = enemies.length - 1; i >= 0; i--) {
-        if (enemies[i].z < -3000) { 
+        if (enemies[i].z < -10000) { 
             enemies.splice(i, 1);
         }
     }
