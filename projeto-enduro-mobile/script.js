@@ -292,13 +292,13 @@ function update() {
 
     if (gameTick % 300 === 0 && enemies.length < 100) {
         enemies.push({ 
-            lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 11.5, 
+            lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 10.0, 
             color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)],
             isOvertaken: false 
         });
     }
 
-    enemies = enemies.filter(e => e.z > -15000 && e.z < 6000);
+    enemies = enemies.filter(e => e.z > -18800 && e.z < 6000);
     draw(colors, isRaining);
     requestAnimationFrame(update);
 }
