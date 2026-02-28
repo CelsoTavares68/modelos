@@ -1,4 +1,4 @@
- const canvas = document.getElementById('gameCanvas');
+  const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 canvas.width = 400; canvas.height = 400;
 
@@ -144,7 +144,8 @@ function resetGame() {
 
 function resetDay() {
     currentTime = 0; playerDist = 0; speed = 0; enemies = [];
-    carsRemaining = baseGoal + (dayNumber - 1) * 10; 
+    // CORREÇÃO: Meta progressiva (200 + 10 por dia)
+    carsRemaining = 200 + (dayNumber - 1) * 10; 
     gameState = "PLAYING"; isPaused = false;
     if (sfxChuva) { sfxChuva.pause(); sfxChuva.currentTime = 0; }
     saveProgress();
@@ -158,14 +159,11 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasF
     ctx.translate(x, y);
     if(isPlayer) ctx.rotate((roadCurve / 80) * Math.PI / 180);
     
-    // Lanternas e Faróis (Ligam na NOITE, NEVOEIRO ou CHUVA)
     if (nightMode || hasFog || isRainy) {
-        // Lanternas traseiras (Vermelho vivo)
         ctx.fillStyle = "#FF0000";
         ctx.fillRect(-w * 0.35, h * 0.2, w * 0.15, h * 0.25); 
         ctx.fillRect(w * 0.20, h * 0.2, w * 0.15, h * 0.25); 
 
-        // Faróis dianteiros (Efeito de luz amarela no chão)
         let lightLength = h * 3; 
         let gradient = ctx.createLinearGradient(0, 0, 0, -lightLength);
         gradient.addColorStop(0, "rgba(255, 255, 200, 0.25)"); 
@@ -177,12 +175,7 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasF
         ctx.fill();
     }
 
-    // DESENHO DO CORPO DO CARRO
-    // Se for noite ou névoa densa, fica silhueta. Se for chuva, mantém a cor.
-    if (nightMode || (hasFog && !isRainy)) {
-        // Silhueta para noite/nevoeiro
-    } else {
-        // Formato normal com cores (Dia e Chuva)
+    if (!(nightMode || (hasFog && !isRainy))) {
         ctx.fillStyle = "#111"; 
         ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8);
         ctx.fillRect(w * 0.25, -h * 0.1, w * 0.25, h * 0.8);
@@ -204,11 +197,11 @@ function update() {
         case 0: colors.snowCaps = true; break; 
         case 1: colors.sky = "#DDD"; colors.grass = "#FFF"; colors.mt = "#999"; colors.snowCaps = true; break; 
         case 2: colors.sky = "#ff8c00"; colors.grass = "#145c14"; colors.mt = "#442200"; break; 
-        case 3: colors.sky = "#2c3e50"; colors.grass = "#0a2a0a"; colors.mt = "#1a1a1a"; colors.fog = 0.5; break; // Chuva
+        case 3: colors.sky = "#2c3e50"; colors.grass = "#0a2a0a"; colors.mt = "#1a1a1a"; colors.fog = 0.5; break; 
         case 4: colors.sky = "#111144"; colors.grass = "#001100"; colors.mt = "#111"; colors.nightMode = true; break; 
         case 5: colors.sky = "#444"; colors.grass = "#333"; colors.mt = "#222"; colors.fog = 0.8; colors.nightMode = true; break; 
         case 6: colors.sky = "#000011"; colors.grass = "#000800"; colors.mt = "#000"; colors.nightMode = true; break; 
-        case 7: colors.sky = "#34495e"; colors.grass = "#0d4d0d"; colors.mt = "#1a1a1a"; colors.fog = 0.6; break; // Chuva 2
+        case 7: colors.sky = "#34495e"; colors.grass = "#0d4d0d"; colors.mt = "#1a1a1a"; colors.fog = 0.6; break; 
         case 8: colors.sky = "#ade1f2"; colors.grass = "#1a7a1a"; colors.mt = "#555"; colors.snowCaps = true; break; 
     }
 
@@ -363,7 +356,7 @@ function draw(colors, isRaining) {
         ctx.textAlign = "left";
     }
 }
-update();
+update(); // INICIA O JOGO
 
 function updateApp() {
     navigator.serviceWorker.getRegistration().then(reg => {
