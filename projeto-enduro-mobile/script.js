@@ -327,6 +327,12 @@ function update() {
     if (gameTick % 240 === 0 && enemies.length < 100) {
         enemies.push({ lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 10.0, color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)], isOvertaken: false });
     }
+
+    for (let i = enemies.length - 1; i >= 0; i--) {
+        if (enemies[i].z < -500) { 
+            enemies.splice(i, 1);
+        }
+    }
     
     draw(colors, isRaining);
     requestAnimationFrame(update);
