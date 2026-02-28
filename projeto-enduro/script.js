@@ -14,10 +14,11 @@ let totalBestRecord = 0;
 let hasPlayedGoalMedia = false; 
 
 // NOVAS VARIÁVEIS PARA ULTRAPASSAGENS
- let totalPasses = 0;           // Passes no dia atual (zera todo dia)
+let totalPasses = 0;           // Passes no dia atual (zera todo dia)
 let totalPassesOdometer = 0;   // NOVO: Acumulado de todos os dias (não zera)
 let dayPassesBest = 0;         // Recorde de um único dia
 let totalPassesBest = 0;       // Recorde histórico (salvo no LocalStorage)
+
 // --- CONFIGURAÇÕES DE VELOCIDADE E TEMPO ---
 const maxSpeed = 16; 
 const STAGE_DURATION = 9000; 
@@ -64,7 +65,7 @@ videoDerrota.style.display = 'none'; videoDerrota.style.zIndex = '10';
 videoDerrota.muted = true; videoDerrota.load();
 document.body.appendChild(videoDerrota);
 
-// --- PERSISTÊNCIA REVISADA (INCLUINDO PASSES) ---
+// --- PERSISTÊNCIA REVISADA (INCLUINDO ODO.P) ---
 function saveProgress() {
     const gameData = {
         dayNumber: dayNumber,
@@ -76,7 +77,8 @@ function saveProgress() {
         totalBestRecord: totalBestRecord,
         hasPlayedGoalMedia: hasPlayedGoalMedia,
         dayPassesBest: dayPassesBest,
-        totalPassesBest: totalPassesBest
+        totalPassesBest: totalPassesBest,
+        totalPassesOdometer: totalPassesOdometer // Alteração: Salva ODO.P
     };
     localStorage.setItem('enduro_pro_data', JSON.stringify(gameData));
 }
@@ -95,6 +97,7 @@ function loadProgress() {
         hasPlayedGoalMedia = data.hasPlayedGoalMedia || false;
         dayPassesBest = data.dayPassesBest || 0;
         totalPassesBest = data.totalPassesBest || 0;
+        totalPassesOdometer = data.totalPassesOdometer || 0; // Alteração: Carrega ODO.P
     }
 }
 loadProgress();
@@ -132,7 +135,7 @@ function playCrashSound() {
     osc.start(); osc.stop(audioCtx.currentTime + 0.4);
 }
 
-  function togglePause() {
+function togglePause() {
     if (gameState === "PLAYING") {
         isPaused = !isPaused;
         const btn = document.getElementById('pauseBtn');
@@ -143,7 +146,7 @@ function playCrashSound() {
             saveProgress(); 
         } else { 
             audioCtx.resume(); 
-            update(); // <--- ESSA LINHA FAZ O JOGO VOLTAR A RODAR
+            update(); 
         }
     }
 }
@@ -152,17 +155,17 @@ function resetGame() {
     dayNumber = 1; 
     baseGoal = 200; 
     odometerNow = 0; 
-    totalPasses = 0; // Reinicia contador de ultrapassagens
+    totalPassesOdometer = 0; 
     resetDay();
     if (gameState !== "PLAYING") { gameState = "PLAYING"; update(); }
 }
 
- function resetDay() {
+function resetDay() {
     currentTime = 0; 
     playerDist = 0; 
     speed = 0; 
     enemies = [];
-    totalPasses = 0; // Reinicia ultrapassagens do dia
+    totalPasses = 0; 
     
     videoDerrota.style.display = 'none';
     videoDerrota.pause();
@@ -256,16 +259,17 @@ function update() {
     const uiPasses = document.getElementById('ui-passes');
     const uiPassesDay = document.getElementById('ui-passes-day-best');
     const uiPassesTotal = document.getElementById('ui-passes-total-best');
+    const uiOdoPassesNow = document.getElementById('ui-total-passes-now'); // Alteração: ODO.P
     
     if(uiDist) uiDist.innerText = (playerDist / 100).toFixed(1);
     if(uiDayBest) uiDayBest.innerText = (dayBestRecord / 100).toFixed(1);
     if(uiTotalNow) uiTotalNow.innerText = (odometerNow / 100).toFixed(1);
     if(uiTotalBest) uiTotalBest.innerText = (totalBestRecord / 100).toFixed(1);
     
-    // Atualiza os novos elementos de ultrapassagem
     if(uiPasses) uiPasses.innerText = totalPasses;
     if(uiPassesDay) uiPassesDay.innerText = dayPassesBest;
     if(uiPassesTotal) uiPassesTotal.innerText = totalPassesBest;
+    if(uiOdoPassesNow) uiOdoPassesNow.innerText = totalPassesOdometer; // Alteração: ODO.P
 
     if (gameTick % 300 === 0) saveProgress();
 
@@ -314,18 +318,15 @@ function update() {
         currentTime = DAY_DURATION - 1; 
     }
 
-     let offRoad = Math.abs(playerX) > 380;
-if (keys.ArrowUp) {
-    // Se a velocidade for menor que 5 (incluindo o -4 da batida), acelera bem devagar
-    // Se for maior, usa a aceleração normal
-    let accel = (speed < 5) ? 0.015 : 0.08; 
-    speed = Math.min(speed + accel, offRoad ? 2 : maxSpeed);
-} else if (keys.ArrowDown) {
-    speed = Math.max(speed - 0.2, 0); 
-} else {
-    // Atrito natural (diminuído para não parar o carro bruscamente)
-    speed = Math.max(speed - 0.05, 0); 
-}
+    let offRoad = Math.abs(playerX) > 380;
+    if (keys.ArrowUp) {
+        let accel = (speed < 5) ? 0.015 : 0.08; 
+        speed = Math.min(speed + accel, offRoad ? 2 : maxSpeed);
+    } else if (keys.ArrowDown) {
+        speed = Math.max(speed - 0.2, 0); 
+    } else {
+        speed = Math.max(speed - 0.05, 0); 
+    }
 
     playerX -= (roadCurve * 0.06) * (speed / maxSpeed); 
     if (keys.ArrowLeft) playerX -= 5;
@@ -350,20 +351,19 @@ if (keys.ArrowUp) {
         }
         
         // --- LÓGICA DE ULTRAPASSAGENS REVISADA ---
-        if (enemy.z <= 0 && !enemy.isOvertaken) { 
-        enemy.isOvertaken = true;
-        totalPasses++;         // Sobe o do dia
-        totalPassesOdometer++; // Sobe o acumulado (Odômetro de Passes)
+        if (p > 1.0 && !enemy.isOvertaken) { 
+            enemy.isOvertaken = true;
+            totalPasses++;         
+            totalPassesOdometer++; 
+            if (totalPasses > dayPassesBest) dayPassesBest = totalPasses;
+            if (totalPassesOdometer > totalPassesBest) totalPassesBest = totalPassesOdometer;
+            if (!hasPlayedGoalMedia) carsRemaining--; 
+        } 
         
-        if (totalPasses > dayPassesBest) dayPassesBest = totalPasses;
-        if (totalPassesOdometer > totalPassesBest) totalPassesBest = totalPassesOdometer;
-        
-        if (!hasPlayedGoalMedia) carsRemaining--; 
-    }
-        
-        // Se o carro inimigo voltar a ficar na frente (ex: jogador bateu)
-        if (enemy.z > 0 && enemy.isOvertaken) { 
+        if (p < 1.0 && enemy.isOvertaken) { 
             enemy.isOvertaken = false;
+            totalPasses = Math.max(0, totalPasses - 1);
+            totalPassesOdometer = Math.max(0, totalPassesOdometer - 1);
             if (!hasPlayedGoalMedia) carsRemaining++; 
         }
 
@@ -374,17 +374,17 @@ if (keys.ArrowUp) {
         enemies.push({ 
             lane: (Math.random() - 0.5) * 1.8, 
             z: 4000, 
-            v: 9.5, 
+            v: 10.0, 
             color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)],
             isOvertaken: false 
         });
     }
 
-    if (gameTick % 240 === 90 && enemies.length < 100) {
+    if (gameTick % 240 === 75 && enemies.length < 100) {
         enemies.push({ 
             lane: (Math.random() - 0.5) * 1.8, 
             z: 4000, 
-            v: 9.5, 
+            v: 10.0, 
             color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)],
             isOvertaken: false 
         });
