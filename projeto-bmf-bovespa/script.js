@@ -1,8 +1,8 @@
-  const TOKEN_B3 = '8gRPKYrszFRi4JCDaARwuJ'; 
+   const TOKEN_B3 = '8gRPKYrszFRi4JCDaARwuJ'; 
 
-// LISTAS - Substituindo apenas os contratos pelos ativos do Agro que negociam na B3
+// LISTAS - Mantendo o seu Agro e alterando apenas a Linha 5 para as Estatais
 const LISTA_AGRO_BMF = "JBSS3,BRFS3,BEEF3,MRFG3,CAML3,SLCE3,AGRO3,SMTO3,KEPL3,SOJA3";
-const LISTA_ACOES_B3 = "VALE3,ITUB4,ABEV3,PETR4";
+ const LISTA_ACOES_B3 = "PETR4,BBAS3,SBSP3,CPLE6,CMIG4,ELET3,SAPR11,BANESE3,BMEB4,BNBR3";
 
 const MAPA_NOMES_AGRO = {
     "JBSS3": "JBS (Carnes)", 
