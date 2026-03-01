@@ -144,12 +144,25 @@ async function buscarCotacoesBovespa() {
     }
 }
 
-function renderizarLinhaTabela(item, origem) {
+ function renderizarLinhaTabela(item, origem) {
     const tbody = document.getElementById("corpo-cotacoes");
     if (!tbody || !item) return;
 
     const symbolOriginal = item.symbol.replace('.SA', '');
-    const nomeExibicao = origem === "BMF" ? (MAPA_NOMES_AGRO[symbolOriginal] || symbolOriginal) : symbolOriginal;
+    
+    // Lógica para exibir Nome em Negrito e Ticker/Subnome abaixo
+    let nomePrincipal = symbolOriginal;
+    let subNome = "";
+
+    if (origem === "BMF") {
+        // Para o Agro, busca o nome no seu mapa e coloca o ticker embaixo
+        nomePrincipal = MAPA_NOMES_AGRO[symbolOriginal] || symbolOriginal;
+        subNome = symbolOriginal;
+    } else {
+        // Para as Estatais, coloca o Ticker em destaque e o nome da empresa embaixo
+        nomePrincipal = symbolOriginal;
+        subNome = item.longName || item.shortName || "";
+    }
 
     const preco = item.regularMarketPrice || item.price || 0;
     const variacao = item.regularMarketChangePercent || item.changePercent || 0;
@@ -158,28 +171,31 @@ function renderizarLinhaTabela(item, origem) {
 
     tbody.innerHTML += `
         <tr id="linha-${symbolOriginal}" class="setor-${origem.toLowerCase()}">
-            <td><b>${nomeExibicao}</b><br><small style="opacity:0.7">${symbolOriginal}</small></td>
+            <td><b>${nomePrincipal}</b><br><small style="opacity:0.7">${subNome}</small></td>
             <td>R$ ${preco.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
             <td class="${variacao >= 0 ? 'texto-alta' : 'texto-queda'}">${variacao.toFixed(2)}%</td>
         </tr>`;
 }
 
 // --- RANKING ---
-function processarRanking(dataRanking) {
+ function processarRanking(dataRanking) {
     const apenasAcoes = dataRanking.stocks.filter(s => s.stock.length <= 6);
     const topAltas = apenasAcoes.slice(0, 30);
     const topBaixas = apenasAcoes.slice(-30).reverse();
 
     const formatLi = (a, c) => {
-        let nomeParaExibir = a.name || "";
-        if (nomeParaExibir.includes(" - ")) nomeParaExibir = nomeParaExibir.split(" - ")[1];
-        const temNomeReal = nomeParaExibir && nomeParaExibir.toLowerCase() !== a.stock.toLowerCase();
+        // Pega o nome da empresa enviado pela API
+        let nomeEmpresa = a.name || "";
+        // Se o nome vier com traço (ex: "PETROLEO - PETROBRAS"), tenta limpar para ficar mais curto
+        if (nomeEmpresa.includes(" - ")) nomeEmpresa = nomeEmpresa.split(" - ")[1];
 
         return `
             <li style="display: flex; justify-content: space-between; align-items: center; padding: 10px 5px; border-bottom: 1px solid rgba(0,0,0,0.05);">
                 <span style="flex: 1; text-align: left; min-width: 0;">
                     <b style="display: block; font-size: 0.95em;">${a.stock}</b>
-                    ${temNomeReal ? `<small style="display: block; color: #777; font-size: 0.75em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px;">${nomeParaExibir}</small>` : ''}
+                    <small style="display: block; color: #777; font-size: 0.75em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px;">
+                        ${nomeEmpresa}
+                    </small>
                 </span>
                 <span style="flex: 1; text-align: center; color: #444; font-size: 0.9em;">R$ ${a.close.toFixed(2)}</span>
                 <span class="${c}" style="flex: 1; text-align: right; font-weight: bold;">${(a.change || 0).toFixed(2)}%</span>
@@ -188,11 +204,15 @@ function processarRanking(dataRanking) {
 
     document.getElementById('lista-altas').innerHTML = topAltas.map(a => formatLi(a, 'texto-alta')).join('');
     document.getElementById('lista-baixas').innerHTML = topBaixas.map(a => formatLi(a, 'texto-queda')).join('');
-    renderizarGrafico([...topAltas, ...topBaixas].map(item => ({ symbol: item.stock, change: item.change })));
+    
+    // Mantém a chamada do gráfico se ele existir no seu código
+    if (typeof renderizarGrafico === "function") {
+        renderizarGrafico([...topAltas, ...topBaixas].map(item => ({ symbol: item.stock, change: item.change })));
+    }
 }
 
 // --- CARTEIRA (LocalStorage e Monitoramento) ---
-function atualizarPainelCarteira(dadosApi = null) {
+ function atualizarPainelCarteira(dadosApi = null) {
     const tbody = document.getElementById('corpo-carteira');
     if (!tbody) return;
     
@@ -200,6 +220,8 @@ function atualizarPainelCarteira(dadosApi = null) {
     minhaCarteira.forEach((item, index) => {
         const info = dadosApi ? dadosApi.find(res => res.symbol.includes(item.ticker)) : null;
         const precoAtual = info ? (info.regularMarketPrice || info.price) : null;
+        
+        // Busca o nome real da empresa na API para colocar embaixo do ticker
         const nomeEmpresa = info && (info.longName || info.shortName) ? (info.longName || info.shortName) : "Monitorando...";
         
         let cor = ""; let pct = "Carregando...";
@@ -211,7 +233,10 @@ function atualizarPainelCarteira(dadosApi = null) {
 
         tbody.innerHTML += `
             <tr class="${cor}">
-                <td><b>${item.ticker}</b><br><small style="opacity:0.7">${nomeEmpresa}</small></td>
+                <td>
+                    <b>${item.ticker}</b><br>
+                    <small style="opacity:0.7">${nomeEmpresa}</small>
+                </td>
                 <td>R$ ${item.precoPago.toFixed(2)}</td>
                 <td>${precoAtual ? 'R$ ' + precoAtual.toFixed(2) : '---'}</td>
                 <td style="font-weight:bold">${pct}</td>
