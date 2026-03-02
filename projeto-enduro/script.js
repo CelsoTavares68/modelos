@@ -21,7 +21,7 @@ let totalPassesBest = 0;       // Recorde histórico (salvo no LocalStorage)
 
 // --- CONFIGURAÇÕES DE VELOCIDADE E TEMPO ---
 const maxSpeed = 16; 
-const STAGE_DURATION = 9000; 
+const STAGE_DURATION = 7200; 
 const DAY_DURATION = STAGE_DURATION * 9; 
 let currentTime = 0; 
 
