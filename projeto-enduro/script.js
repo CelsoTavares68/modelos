@@ -7,17 +7,16 @@ let dayNumber = 1, baseGoal = 200, carsRemaining = baseGoal;
 let gameState = "PLAYING"; 
 let isPaused = false;
 
-// --- SISTEMA DE RECORDES (ESTRUTURA COMPLETA) ---
+// --- SISTEMA DE RECORDES ---
 let dayBestRecord = 0;     
 let odometerNow = 0;       
 let totalBestRecord = 0;   
 let hasPlayedGoalMedia = false; 
 
-// NOVAS VARIÁVEIS PARA ULTRAPASSAGENS
-let totalPasses = 0;           // Passes no dia atual (zera todo dia)
-let totalPassesOdometer = 0;   // NOVO: Acumulado de todos os dias (não zera)
-let dayPassesBest = 0;         // Recorde de um único dia
-let totalPassesBest = 0;       // Recorde histórico (salvo no LocalStorage)
+let totalPasses = 0;           
+let totalPassesOdometer = 0;   
+let dayPassesBest = 0;         
+let totalPassesBest = 0;       
 
 // --- CONFIGURAÇÕES DE VELOCIDADE E TEMPO ---
 const maxSpeed = 16; 
@@ -46,7 +45,7 @@ sfxTrovao.volume = 0.7;
 const sfxDerrota = new Audio('game_over.mp3');
 const sfxVitoriaAudio = new Audio('vitoria.mp3');
 
-// --- PERSISTÊNCIA REVISADA (INCLUINDO ODO.P) ---
+// --- PERSISTÊNCIA ---
 function saveProgress() {
     const gameData = {
         dayNumber: dayNumber,
@@ -59,7 +58,7 @@ function saveProgress() {
         hasPlayedGoalMedia: hasPlayedGoalMedia,
         dayPassesBest: dayPassesBest,
         totalPassesBest: totalPassesBest,
-        totalPassesOdometer: totalPassesOdometer // Alteração: Salva ODO.P
+        totalPassesOdometer: totalPassesOdometer 
     };
     localStorage.setItem('enduro_pro_data', JSON.stringify(gameData));
 }
@@ -78,7 +77,7 @@ function loadProgress() {
         hasPlayedGoalMedia = data.hasPlayedGoalMedia || false;
         dayPassesBest = data.dayPassesBest || 0;
         totalPassesBest = data.totalPassesBest || 0;
-        totalPassesOdometer = data.totalPassesOdometer || 0; // Alteração: Carrega ODO.P
+        totalPassesOdometer = data.totalPassesOdometer || 0;
     }
 }
 loadProgress();
@@ -121,7 +120,6 @@ function togglePause() {
         isPaused = !isPaused;
         const btn = document.getElementById('pauseBtn');
         if (btn) btn.innerText = isPaused ? "Retomar" : "Pausar";
-        
         if (isPaused) { 
             sfxChuva.pause(); 
             saveProgress(); 
@@ -141,18 +139,14 @@ function resetGame() {
     if (gameState !== "PLAYING") { gameState = "PLAYING"; update(); }
 }
 
- function resetDay() {
+function resetDay() {
     currentTime = 0; 
     playerDist = 0; 
     speed = 0; 
     enemies = [];
     totalPasses = 0; 
     
-    // REMOVA ESTAS LINHAS:
-    // videoDerrota.style.display = 'none';
-    // videoDerrota.pause();
-    // videoVitoria.style.display = 'none';
-    // videoVitoria.pause();
+    // Vídeos removidos daqui
 
     carsRemaining = 200 + ((dayNumber - 1) * 10);
     gameState = "PLAYING"; 
@@ -233,7 +227,6 @@ function update() {
     if (playerDist > dayBestRecord) dayBestRecord = playerDist;
     if (odometerNow > totalBestRecord) totalBestRecord = odometerNow;
 
-    // --- ATUALIZAÇÃO DA INTERFACE (UI EXTERNA) ---
     const uiDist = document.getElementById('ui-dist');
     const uiDayBest = document.getElementById('ui-day-best');
     const uiTotalNow = document.getElementById('ui-total-now');
@@ -241,17 +234,16 @@ function update() {
     const uiPasses = document.getElementById('ui-passes');
     const uiPassesDay = document.getElementById('ui-passes-day-best');
     const uiPassesTotal = document.getElementById('ui-passes-total-best');
-    const uiOdoPassesNow = document.getElementById('ui-total-passes-now'); // Alteração: ODO.P
+    const uiOdoPassesNow = document.getElementById('ui-total-passes-now'); 
     
     if(uiDist) uiDist.innerText = (playerDist / 100).toFixed(1);
     if(uiDayBest) uiDayBest.innerText = (dayBestRecord / 100).toFixed(1);
     if(uiTotalNow) uiTotalNow.innerText = (odometerNow / 100).toFixed(1);
     if(uiTotalBest) uiTotalBest.innerText = (totalBestRecord / 100).toFixed(1);
-    
     if(uiPasses) uiPasses.innerText = totalPasses;
     if(uiPassesDay) uiPassesDay.innerText = dayPassesBest;
     if(uiPassesTotal) uiPassesTotal.innerText = totalPassesBest;
-    if(uiOdoPassesNow) uiOdoPassesNow.innerText = totalPassesOdometer; // Alteração: ODO.P
+    if(uiOdoPassesNow) uiOdoPassesNow.innerText = totalPassesOdometer; 
 
     if (gameTick % 300 === 0) saveProgress();
 
@@ -275,18 +267,24 @@ function update() {
     if (carsRemaining <= 0 && !hasPlayedGoalMedia) {
         hasPlayedGoalMedia = true;
         carsRemaining = 0; 
-        sfxVitoriaAudio.play().catch(e => {}); // Mantém o som
-        // Linhas de vídeo removidas daqui
+        sfxVitoriaAudio.play().catch(e => {});
+        // Vídeo de vitória removido daqui
     }
 
-      if (currentTime >= DAY_DURATION) {
+     if (currentTime >= DAY_DURATION) {
         if (carsRemaining <= 0) {
-            // ... lógica de WIN_DAY (mantém como está)
+            if (gameState !== "WIN_DAY") { 
+                gameState = "WIN_DAY"; 
+                dayNumber++; 
+                baseGoal = 200 + ((dayNumber - 1) * 10);
+                saveProgress();
+                setTimeout(() => { resetDay(); }, 4000); 
+            }
         } else { 
             if (gameState !== "GAME_OVER") { 
                 gameState = "GAME_OVER"; 
-                sfxDerrota.play(); // Mantém o som
-                // Linhas de vídeo removidas daqui
+                sfxDerrota.play().catch(e => {});
+                // Vídeo de derrota removido daqui
                 saveProgress(); 
             }
         }
@@ -325,7 +323,6 @@ function update() {
              speed = -4; enemy.z += (maxSpeed * 120); playCrashSound();
         }
         
-        // --- LÓGICA DE ULTRAPASSAGENS REVISADA ---
         if (p > 1.0 && !enemy.isOvertaken) { 
             enemy.isOvertaken = true;
             totalPasses++;         
@@ -402,7 +399,7 @@ function draw(colors, isRaining) {
         if (e.lastP > 0 && e.lastP < 0.92) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, hasFog, isRaining);
     });
     
-    drawF1Car(200, 350, 0.85, "#E00", true, colors.nightMode, hasFog, isRaining); 
+    drawF1Car(200, 350, 0.85, "#E00", true, colors.nightMode, hasFog, isRainy); 
     
     enemies.forEach(e => {
         if (e.lastP >= 0.92) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, hasFog, isRaining);
@@ -431,5 +428,3 @@ function draw(colors, isRaining) {
         ctx.textAlign = "left";
     }
 }
-
-update();
