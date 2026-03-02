@@ -2,6 +2,18 @@
 const ctx = canvas.getContext('2d');
 canvas.width = 400; canvas.height = 400;
 
+// Impede o menu de contexto (clique direito ou segurar o dedo)
+window.addEventListener('contextmenu', function (e) { 
+    e.preventDefault(); 
+}, false);
+
+// Impede gestos de zoom e rolagem acidental no jogo
+window.addEventListener('touchstart', function(e) {
+    if (e.target.tagName === 'CANVAS') {
+        e.preventDefault();
+    }
+}, { passive: false });
+
 let playerX = 0, speed = 0, gameTick = 0, playerDist = 0;
 let dayNumber = 1, baseGoal = 200, carsRemaining = baseGoal; 
 let gameState = "PLAYING"; 
@@ -321,7 +333,7 @@ function update() {
 
     if (gameTick % 240 === 0 && enemies.length < 100) {
         enemies.push({ 
-            lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 10.0, 
+            lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 9.0, 
             color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)],
             isOvertaken: false 
         });
@@ -398,3 +410,10 @@ function draw(colors, isRaining) {
     }
 }
 update();
+
+function updateApp() {
+    navigator.serviceWorker.getRegistration().then(reg => {
+        if (reg && reg.waiting) { reg.waiting.postMessage('skipWaiting'); }
+        window.location.reload();
+    });
+}
