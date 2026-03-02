@@ -428,3 +428,5 @@ function draw(colors, isRaining) {
         ctx.textAlign = "left";
     }
 }
+
+update();
