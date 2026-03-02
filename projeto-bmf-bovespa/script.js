@@ -110,7 +110,7 @@ async function buscarCotacoesAgro() {
 }
 
 // --- MERCADO BOVESPA ---
-async function buscarCotacoesBovespa() {
+ async function buscarCotacoesBovespa() {
     try {
         const resRanking = await fetch(`https://brapi.dev/api/quote/list?sortBy=change&sortOrder=desc&token=${TOKEN_B3}`);
         const dataRanking = await resRanking.json();
@@ -129,45 +129,45 @@ async function buscarCotacoesBovespa() {
             dataPrecos.results.forEach(item => {
                 if (item && item.symbol) {
                     const tickerLimpo = item.symbol.replace('.SA', '');
-                    if (!LISTA_AGRO_BMF.includes(tickerLimpo)) {
-                        renderizarLinhaTabela(item, "B3");
-                    }
+                    
+                    // CORREÇÃO: Removemos a trava que impedia a exibição da carteira
+                    // Agora, se o ticker for da lista fixa ou da sua carteira, ele aparece
+                    renderizarLinhaTabela(item, "B3");
                 }
             });
+            // Envia os dados atualizados para a função da carteira
             atualizarPainelCarteira(dataPrecos.results);
         }
         
         document.getElementById('status-conexao').innerText = "✅ Sistema Online";
     } catch (e) { 
         console.error("Erro Bovespa:", e); 
-        document.getElementById('status-conexao').innerText = "⚠️ Erro ao atualizar alguns dados";
+        document.getElementById('status-conexao').innerText = "⚠️ Erro na atualização";
     }
 }
 
- function renderizarLinhaTabela(item, origem) {
+  function renderizarLinhaTabela(item, origem) {
     const tbody = document.getElementById("corpo-cotacoes");
     if (!tbody || !item) return;
 
     const symbolOriginal = item.symbol.replace('.SA', '');
     
-    // Lógica para exibir Nome em Negrito e Ticker/Subnome abaixo
+    // CORREÇÃO: Se a linha já existir na tabela, não cria uma nova (evita duplicados)
+    if (document.getElementById(`linha-${symbolOriginal}`)) return;
+
     let nomePrincipal = symbolOriginal;
     let subNome = "";
 
     if (origem === "BMF") {
-        // Para o Agro, busca o nome no seu mapa e coloca o ticker embaixo
         nomePrincipal = MAPA_NOMES_AGRO[symbolOriginal] || symbolOriginal;
         subNome = symbolOriginal;
     } else {
-        // Para as Estatais, coloca o Ticker em destaque e o nome da empresa embaixo
         nomePrincipal = symbolOriginal;
         subNome = item.longName || item.shortName || "";
     }
 
     const preco = item.regularMarketPrice || item.price || 0;
     const variacao = item.regularMarketChangePercent || item.changePercent || 0;
-
-    if (document.getElementById(`linha-${symbolOriginal}`)) return;
 
     tbody.innerHTML += `
         <tr id="linha-${symbolOriginal}" class="setor-${origem.toLowerCase()}">
