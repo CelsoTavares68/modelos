@@ -7,16 +7,17 @@ let dayNumber = 1, baseGoal = 200, carsRemaining = baseGoal;
 let gameState = "PLAYING"; 
 let isPaused = false;
 
-// --- SISTEMA DE RECORDES ---
+// --- SISTEMA DE RECORDES (ESTRUTURA COMPLETA) ---
 let dayBestRecord = 0;     
 let odometerNow = 0;       
 let totalBestRecord = 0;   
 let hasPlayedGoalMedia = false; 
 
-let totalPasses = 0;           
-let totalPassesOdometer = 0;   
-let dayPassesBest = 0;         
-let totalPassesBest = 0;       
+// NOVAS VARIÁVEIS PARA ULTRAPASSAGENS
+let totalPasses = 0;           // Passes no dia atual (zera todo dia)
+let totalPassesOdometer = 0;   // NOVO: Acumulado de todos os dias (não zera)
+let dayPassesBest = 0;         // Recorde de um único dia
+let totalPassesBest = 0;       // Recorde histórico (salvo no LocalStorage)
 
 // --- CONFIGURAÇÕES DE VELOCIDADE E TEMPO ---
 const maxSpeed = 16; 
@@ -45,7 +46,7 @@ sfxTrovao.volume = 0.7;
 const sfxDerrota = new Audio('game_over.mp3');
 const sfxVitoriaAudio = new Audio('vitoria.mp3');
 
-// --- PERSISTÊNCIA ---
+// --- PERSISTÊNCIA REVISADA (INCLUINDO ODO.P) ---
 function saveProgress() {
     const gameData = {
         dayNumber: dayNumber,
@@ -58,7 +59,7 @@ function saveProgress() {
         hasPlayedGoalMedia: hasPlayedGoalMedia,
         dayPassesBest: dayPassesBest,
         totalPassesBest: totalPassesBest,
-        totalPassesOdometer: totalPassesOdometer 
+        totalPassesOdometer: totalPassesOdometer // Alteração: Salva ODO.P
     };
     localStorage.setItem('enduro_pro_data', JSON.stringify(gameData));
 }
@@ -77,7 +78,7 @@ function loadProgress() {
         hasPlayedGoalMedia = data.hasPlayedGoalMedia || false;
         dayPassesBest = data.dayPassesBest || 0;
         totalPassesBest = data.totalPassesBest || 0;
-        totalPassesOdometer = data.totalPassesOdometer || 0;
+        totalPassesOdometer = data.totalPassesOdometer || 0; // Alteração: Carrega ODO.P
     }
 }
 loadProgress();
@@ -120,6 +121,7 @@ function togglePause() {
         isPaused = !isPaused;
         const btn = document.getElementById('pauseBtn');
         if (btn) btn.innerText = isPaused ? "Retomar" : "Pausar";
+        
         if (isPaused) { 
             sfxChuva.pause(); 
             saveProgress(); 
@@ -227,6 +229,7 @@ function update() {
     if (playerDist > dayBestRecord) dayBestRecord = playerDist;
     if (odometerNow > totalBestRecord) totalBestRecord = odometerNow;
 
+    // --- ATUALIZAÇÃO DA INTERFACE (UI EXTERNA) ---
     const uiDist = document.getElementById('ui-dist');
     const uiDayBest = document.getElementById('ui-day-best');
     const uiTotalNow = document.getElementById('ui-total-now');
@@ -234,16 +237,17 @@ function update() {
     const uiPasses = document.getElementById('ui-passes');
     const uiPassesDay = document.getElementById('ui-passes-day-best');
     const uiPassesTotal = document.getElementById('ui-passes-total-best');
-    const uiOdoPassesNow = document.getElementById('ui-total-passes-now'); 
+    const uiOdoPassesNow = document.getElementById('ui-total-passes-now'); // Alteração: ODO.P
     
     if(uiDist) uiDist.innerText = (playerDist / 100).toFixed(1);
     if(uiDayBest) uiDayBest.innerText = (dayBestRecord / 100).toFixed(1);
     if(uiTotalNow) uiTotalNow.innerText = (odometerNow / 100).toFixed(1);
     if(uiTotalBest) uiTotalBest.innerText = (totalBestRecord / 100).toFixed(1);
+    
     if(uiPasses) uiPasses.innerText = totalPasses;
     if(uiPassesDay) uiPassesDay.innerText = dayPassesBest;
     if(uiPassesTotal) uiPassesTotal.innerText = totalPassesBest;
-    if(uiOdoPassesNow) uiOdoPassesNow.innerText = totalPassesOdometer; 
+    if(uiOdoPassesNow) uiOdoPassesNow.innerText = totalPassesOdometer; // Alteração: ODO.P
 
     if (gameTick % 300 === 0) saveProgress();
 
@@ -268,7 +272,7 @@ function update() {
         hasPlayedGoalMedia = true;
         carsRemaining = 0; 
         sfxVitoriaAudio.play().catch(e => {});
-        // Vídeo de vitória removido daqui
+        // Vídeo de vitória removido
     }
 
      if (currentTime >= DAY_DURATION) {
@@ -282,9 +286,8 @@ function update() {
             }
         } else { 
             if (gameState !== "GAME_OVER") { 
-                gameState = "GAME_OVER"; 
-                sfxDerrota.play().catch(e => {});
-                // Vídeo de derrota removido daqui
+                gameState = "GAME_OVER"; sfxDerrota.play();
+                // Vídeo de derrota removido
                 saveProgress(); 
             }
         }
@@ -323,6 +326,7 @@ function update() {
              speed = -4; enemy.z += (maxSpeed * 120); playCrashSound();
         }
         
+        // --- LÓGICA DE ULTRAPASSAGENS REVISADA ---
         if (p > 1.0 && !enemy.isOvertaken) { 
             enemy.isOvertaken = true;
             totalPasses++;         
@@ -342,7 +346,7 @@ function update() {
         enemy.lastY = 200 + (p * 140); enemy.lastX = screenX; enemy.lastP = p;
     });
 
-    if (gameTick % 240 === 0 && enemies.length < 100) {
+    if (gameTick % 250 === 0 && enemies.length < 100) {
         enemies.push({ 
             lane: (Math.random() - 0.5) * 1.8, 
             z: 4000, 
@@ -352,7 +356,7 @@ function update() {
         });
     }
 
-    if (gameTick % 240 === 75 && enemies.length < 100) {
+    if (gameTick % 250 === 80 && enemies.length < 100) {
         enemies.push({ 
             lane: (Math.random() - 0.5) * 1.8, 
             z: 4000, 
@@ -399,7 +403,7 @@ function draw(colors, isRaining) {
         if (e.lastP > 0 && e.lastP < 0.92) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, hasFog, isRaining);
     });
     
-    drawF1Car(200, 350, 0.85, "#E00", true, colors.nightMode, hasFog, isRainy); 
+    drawF1Car(200, 350, 0.85, "#E00", true, colors.nightMode, hasFog, isRaining); 
     
     enemies.forEach(e => {
         if (e.lastP >= 0.92) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, hasFog, isRaining);
