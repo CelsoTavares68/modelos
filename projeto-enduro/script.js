@@ -46,25 +46,6 @@ sfxTrovao.volume = 0.7;
 const sfxDerrota = new Audio('game_over.mp3');
 const sfxVitoriaAudio = new Audio('vitoria.mp3');
 
-// --- VÍDEOS ---
-const videoVitoria = document.createElement('video');
-videoVitoria.src = 'bandeira_vitoria.mp4';
-videoVitoria.style.position = 'absolute';
-videoVitoria.style.top = '55px'; videoVitoria.style.left = '0';
-videoVitoria.style.width = '400px'; videoVitoria.style.height = '345px';
-videoVitoria.style.display = 'none'; videoVitoria.style.zIndex = '10';
-videoVitoria.muted = true; videoVitoria.load();
-document.body.appendChild(videoVitoria);
-
-const videoDerrota = document.createElement('video');
-videoDerrota.src = 'game_over.mp4';
-videoDerrota.style.position = 'absolute';
-videoDerrota.style.top = '55px'; videoDerrota.style.left = '0';
-videoDerrota.style.width = '400px'; videoDerrota.style.height = '345px';
-videoDerrota.style.display = 'none'; videoDerrota.style.zIndex = '10';
-videoDerrota.muted = true; videoDerrota.load();
-document.body.appendChild(videoDerrota);
-
 // --- PERSISTÊNCIA REVISADA (INCLUINDO ODO.P) ---
 function saveProgress() {
     const gameData = {
@@ -160,17 +141,18 @@ function resetGame() {
     if (gameState !== "PLAYING") { gameState = "PLAYING"; update(); }
 }
 
-function resetDay() {
+ function resetDay() {
     currentTime = 0; 
     playerDist = 0; 
     speed = 0; 
     enemies = [];
     totalPasses = 0; 
     
-    videoDerrota.style.display = 'none';
-    videoDerrota.pause();
-    videoVitoria.style.display = 'none';
-    videoVitoria.pause();
+    // REMOVA ESTAS LINHAS:
+    // videoDerrota.style.display = 'none';
+    // videoDerrota.pause();
+    // videoVitoria.style.display = 'none';
+    // videoVitoria.pause();
 
     carsRemaining = 200 + ((dayNumber - 1) * 10);
     gameState = "PLAYING"; 
@@ -293,25 +275,18 @@ function update() {
     if (carsRemaining <= 0 && !hasPlayedGoalMedia) {
         hasPlayedGoalMedia = true;
         carsRemaining = 0; 
-        sfxVitoriaAudio.play().catch(e => {});
-        videoVitoria.style.display = 'block';
-        videoVitoria.play().catch(e => {});
-        setTimeout(() => { videoVitoria.style.display = 'none'; }, 4000);
+        sfxVitoriaAudio.play().catch(e => {}); // Mantém o som
+        // Linhas de vídeo removidas daqui
     }
 
-     if (currentTime >= DAY_DURATION) {
+      if (currentTime >= DAY_DURATION) {
         if (carsRemaining <= 0) {
-            if (gameState !== "WIN_DAY") { 
-                gameState = "WIN_DAY"; 
-                dayNumber++; 
-                baseGoal = 200 + ((dayNumber - 1) * 10);
-                saveProgress();
-                setTimeout(() => { resetDay(); }, 4000); 
-            }
+            // ... lógica de WIN_DAY (mantém como está)
         } else { 
             if (gameState !== "GAME_OVER") { 
-                gameState = "GAME_OVER"; sfxDerrota.play();
-                videoDerrota.style.display = 'block'; videoDerrota.play().catch(e => {});
+                gameState = "GAME_OVER"; 
+                sfxDerrota.play(); // Mantém o som
+                // Linhas de vídeo removidas daqui
                 saveProgress(); 
             }
         }
