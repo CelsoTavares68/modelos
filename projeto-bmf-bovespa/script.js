@@ -84,7 +84,7 @@ async function buscarApenasTaxas() {
     } catch (e) { console.error("Erro Taxas:", e); }
 }
 
-// --- MERCADO AGRO ---
+ // --- CORREÇÃO MERCADO AGRO ---
 async function buscarCotacoesAgro() {
     const ativos = LISTA_AGRO_BMF.split(',');
     const tbody = document.getElementById("corpo-cotacoes");
@@ -93,56 +93,60 @@ async function buscarCotacoesAgro() {
     for (const ticker of ativos) {
         try {
             const tickerLimpo = ticker.trim();
-            const url = `https://brapi.dev/api/quote/${tickerLimpo}?token=${TOKEN_B3}`;
+            // ADICIONADO .SA: Essencial para evitar o erro 404
+            const url = `https://brapi.dev/api/quote/${tickerLimpo}.SA?token=${TOKEN_B3}`;
             const res = await fetch(url);
-            const data = await res.json();
+            
+            if (res.status === 404) {
+                console.warn(`Ticker ${tickerLimpo} não encontrado na Brapi.`);
+                continue;
+            }
 
+            const data = await res.json();
             if (data && data.results && data.results[0]) {
-                const item = data.results[0];
-                if (item.regularMarketPrice !== null) {
-                    renderizarLinhaTabela(item, "BMF");
-                }
+                renderizarLinhaTabela(data.results[0], "BMF");
             }
         } catch (e) {
-            console.error(`Erro ao buscar o ativo individual ${ticker}:`, e);
+            console.error(`Erro no ativo ${ticker}:`, e);
         }
     }
 }
 
-// --- MERCADO BOVESPA ---
- async function buscarCotacoesBovespa() {
+ // --- CORREÇÃO MERCADO BOVESPA ---
+async function buscarCotacoesBovespa() {
     try {
-        const resRanking = await fetch(`https://brapi.dev/api/quote/list?sortBy=change&sortOrder=desc&token=${TOKEN_B3}`);
+        // 1. Busca o Ranking (Geralmente funciona sem .SA na listagem global)
+        const resRanking = await fetch(`https://brapi.dev/api/quote/list?token=${TOKEN_B3}`);
         const dataRanking = await resRanking.json();
+        if (dataRanking && dataRanking.stocks) processarRanking(dataRanking);
 
-        if (dataRanking && dataRanking.stocks) {
-            processarRanking(dataRanking);
+        // 2. Prepara a lista de busca com .SA em cada item
+        const arrayEstatais = LISTA_ACOES_B3.split(',').map(t => t.trim() + ".SA");
+        const arrayCarteira = minhaCarteira.map(a => a.ticker.trim() + ".SA");
+        
+        // Remove duplicados e junta tudo em uma string
+        const listaCompleta = [...new Set([...arrayEstatais, ...arrayCarteira])].join(',');
+
+        const urlPrecos = `https://brapi.dev/api/quote/${listaCompleta}?token=${TOKEN_B3}`;
+        const resPrecos = await fetch(urlPrecos);
+        
+        if (resPrecos.status === 400) {
+            console.error("Erro 400: Um ou mais tickers na lista são inválidos para a API.");
+            return;
         }
 
-        const tickersPessoais = minhaCarteira.map(a => a.ticker).join(',');
-        const listaBusca = (LISTA_ACOES_B3 + (tickersPessoais ? ',' + tickersPessoais : '')).replace(/\s/g, '');
-        
-        const resPrecos = await fetch(`https://brapi.dev/api/quote/${listaBusca}?token=${TOKEN_B3}`);
         const dataPrecos = await resPrecos.json();
-
         if (dataPrecos && dataPrecos.results) {
             dataPrecos.results.forEach(item => {
                 if (item && item.symbol) {
-                    const tickerLimpo = item.symbol.replace('.SA', '');
-                    
-                    // CORREÇÃO: Removemos a trava que impedia a exibição da carteira
-                    // Agora, se o ticker for da lista fixa ou da sua carteira, ele aparece
                     renderizarLinhaTabela(item, "B3");
                 }
             });
-            // Envia os dados atualizados para a função da carteira
             atualizarPainelCarteira(dataPrecos.results);
         }
-        
         document.getElementById('status-conexao').innerText = "✅ Sistema Online";
     } catch (e) { 
-        console.error("Erro Bovespa:", e); 
-        document.getElementById('status-conexao').innerText = "⚠️ Erro na atualização";
+        console.error("Erro Geral Bovespa:", e);
     }
 }
 
