@@ -110,33 +110,39 @@ async function buscarApenasTaxas() {
 }
 
 // --- MERCADO BOVESPA ---
- async function buscarCotacoesBovespa() {
+  async function buscarCotacoesBovespa() {
     try {
-        // 1. Busca o Ranking (sempre primeiro)
+        // 1. Ranking Global - Buscamos primeiro para garantir os dados das listas laterais
         const resRanking = await fetch(`https://brapi.dev/api/quote/list?token=${TOKEN_B3}`);
         const dataRanking = await resRanking.json();
         if (dataRanking && dataRanking.stocks) processarRanking(dataRanking);
 
-        // 2. Prepara os tickers (Estatais + Sua Carteira)
-        // Adicionamos .SA e removemos o "F" (fracionário) que a API rejeita em lote
-        const formatar = (t) => t.trim().replace('.SA', '').replace(/F$/, '') + ".SA";
-        const arrayEstatais = LISTA_ACOES_B3.split(',').map(formatar);
-        const arrayCarteira = minhaCarteira.map(a => formatar(a.ticker));
-        const todosOsTickers = [...new Set([...arrayEstatais, ...arrayCarteira])];
+        // 2. Preparar tickers (Estatais + Sua Carteira)
+        // Removemos o "F" (fracionário) e garantimos o ".SA" para a API não dar erro
+        const limpar = (t) => t.trim().replace('.SA', '').replace(/F$/, '') + ".SA";
+        
+        const arrayEstatais = LISTA_ACOES_B3.split(',').map(limpar);
+        const arrayCarteira = minhaCarteira.map(a => limpar(a.ticker));
+        const todosTickers = [...new Set([...arrayEstatais, ...arrayCarteira])];
 
-        // 3. Busca com "Escudo" contra Erros
+        if (todosTickers.length === 0) return;
+
+        // 3. TENTATIVA 1: Busca em lote (mais rápido)
         let resultadosFinais = [];
         try {
             const resLote = await fetch(`https://brapi.dev/api/quote/${todosOsTickers.join(',')}?token=${TOKEN_B3}`);
-            if (resLote.ok) {
-                const d = await resLote.json();
-                resultadosFinais = d.results || [];
-            } else { throw new Error("Erro no lote"); }
-        } catch (e) {
-            // SE O LOTE FALHAR (Erro 400), busca um por um para não deixar a carteira vazia
-            console.warn("Erro no lote da API. Buscando ativos individualmente...");
-            const promessas = todosOsTickers.map(ticker => 
-                fetch(`https://brapi.dev/api/quote/${ticker}?token=${TOKEN_B3}`)
+            const dadosLote = await resLote.json();
+            if (dadosLote && dadosLote.results) {
+                resultadosFinais = dadosLote.results;
+            } else {
+                throw new Error("Lote falhou");
+            }
+        } catch (err) {
+            // TENTATIVA 2: Se o lote falhar (Erro 400), busca individualmente
+            // Isso impede que um ticker inválido (como BANESE3 ou CTKA4) trave tudo
+            console.warn("Um ticker inválido foi detectado. Carregando individualmente...");
+            const promessas = todosTickers.map(t => 
+                fetch(`https://brapi.dev/api/quote/${t}?token=${TOKEN_B3}`)
                     .then(r => r.ok ? r.json() : null)
                     .catch(() => null)
             );
@@ -144,7 +150,7 @@ async function buscarApenasTaxas() {
             resultadosFinais = r.filter(x => x && x.results).map(x => x.results[0]);
         }
 
-        // 4. Renderizar na Tabela e na Carteira
+        // 4. Renderizar Tabelas
         if (resultadosFinais.length > 0) {
             // Limpa as linhas da B3 antes de atualizar para não duplicar
             document.querySelectorAll('.setor-b3').forEach(l => l.remove());
@@ -154,13 +160,15 @@ async function buscarApenasTaxas() {
                     renderizarLinhaTabela(item, "B3");
                 }
             });
-            // ATUALIZA SUA CARTEIRA COM OS PREÇOS REAIS
+            
+            // Envia os dados para a função da carteira (Monitoramento)
             atualizarPainelCarteira(resultadosFinais);
         }
+        
         document.getElementById('status-conexao').innerText = "✅ Sistema Online";
-    } catch (e) {
-        console.error("Erro Bovespa:", e);
-        document.getElementById('status-conexao').innerText = "⚠️ Erro ao carregar carteira";
+    } catch (e) { 
+        console.error("Erro Crítico Bovespa:", e); 
+        document.getElementById('status-conexao').innerText = "⚠️ Erro na conexão";
     }
 }
 
@@ -225,16 +233,21 @@ async function buscarApenasTaxas() {
 }
 
 // --- CARTEIRA (LocalStorage e Monitoramento) ---
- function atualizarPainelCarteira(dadosApi = null) {
+   function atualizarPainelCarteira(dadosApi = null) {
     const tbody = document.getElementById('corpo-carteira');
     if (!tbody) return;
     
     tbody.innerHTML = "";
     minhaCarteira.forEach((item, index) => {
-        const info = dadosApi ? dadosApi.find(res => res.symbol.includes(item.ticker)) : null;
-        const precoAtual = info ? (info.regularMarketPrice || info.price) : null;
+        // CORREÇÃO DE BUSCA: Compara removendo o .SA de ambos os lados para não haver erro
+        const tickerLimpoCarteira = item.ticker.trim().replace('.SA', '').replace(/F$/, '');
         
-        // Busca o nome real da empresa na API para colocar embaixo do ticker
+        const info = dadosApi ? dadosApi.find(res => {
+            const tickerApi = res.symbol.replace('.SA', '').replace(/F$/, '');
+            return tickerApi === tickerLimpoCarteira;
+        }) : null;
+
+        const precoAtual = info ? (info.regularMarketPrice || info.price) : null;
         const nomeEmpresa = info && (info.longName || info.shortName) ? (info.longName || info.shortName) : "Monitorando...";
         
         let cor = ""; let pct = "Carregando...";
