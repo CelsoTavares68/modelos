@@ -206,8 +206,8 @@ async function buscarApenasTaxas() {
 }
 
 // --- RANKING ---
-  function processarRanking(dataRanking) {
-    // Filtra apenas ações reais e ordena do maior para o menor ganho
+   function processarRanking(dataRanking) {
+    // 1. Filtra apenas ações reais e ordena do maior para o menor ganho
     const apenasAcoes = dataRanking.stocks.filter(s => s.stock.replace('.SA', '').length <= 6);
     const ordenado = [...apenasAcoes].sort((a, b) => (b.change || 0) - (a.change || 0));
 
@@ -230,8 +230,18 @@ async function buscarApenasTaxas() {
 
     document.getElementById('lista-altas').innerHTML = topAltas.map(a => formatLi(a, 'texto-alta')).join('');
     document.getElementById('lista-baixas').innerHTML = topBaixas.map(a => formatLi(a, 'texto-queda')).join('');
-}
 
+    // --- REATIVAÇÃO DO GRÁFICO ---
+    // Envia os dados ordenados para o gráfico no final do processamento
+    if (typeof renderizarGrafico === "function") {
+        // Junta as 30 altas e 30 quedas para exibir no gráfico
+        const dadosCompletosGrafico = [...topAltas, ...topBaixas].map(item => ({
+            symbol: item.stock.replace('.SA', ''),
+            change: item.change || 0
+        }));
+        renderizarGrafico(dadosCompletosGrafico);
+    }
+}
 // --- CARTEIRA (LocalStorage e Monitoramento) ---
    function atualizarPainelCarteira(dadosApi = null) {
     const tbody = document.getElementById('corpo-carteira');
