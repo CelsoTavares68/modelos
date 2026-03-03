@@ -85,69 +85,74 @@ async function buscarApenasTaxas() {
 }
 
  // --- CORREÇÃO MERCADO AGRO ---
-async function buscarCotacoesAgro() {
+ async function buscarCotacoesAgro() {
     const ativos = LISTA_AGRO_BMF.split(',');
     const tbody = document.getElementById("corpo-cotacoes");
     if (!tbody) return;
 
     for (const ticker of ativos) {
-        try {
-            const tickerLimpo = ticker.trim();
-            // ADICIONADO .SA: Essencial para evitar o erro 404
-            const url = `https://brapi.dev/api/quote/${tickerLimpo}.SA?token=${TOKEN_B3}`;
-            const res = await fetch(url);
-            
-            if (res.status === 404) {
-                console.warn(`Ticker ${tickerLimpo} não encontrado na Brapi.`);
-                continue;
-            }
+        const tickerLimpo = ticker.trim();
+        // Tenta primeiro COM .SA, se der erro, tenta SEM .SA
+        const urls = [
+            `https://brapi.dev/api/quote/${tickerLimpo}.SA?token=${TOKEN_B3}`,
+            `https://brapi.dev/api/quote/${tickerLimpo}?token=${TOKEN_B3}`
+        ];
 
-            const data = await res.json();
-            if (data && data.results && data.results[0]) {
-                renderizarLinhaTabela(data.results[0], "BMF");
-            }
-        } catch (e) {
-            console.error(`Erro no ativo ${ticker}:`, e);
+        for (const url of urls) {
+            try {
+                const res = await fetch(url);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.results && data.results[0]) {
+                        renderizarLinhaTabela(data.results[0], "BMF");
+                        break; // Achou o dado, sai do loop de tentativas
+                    }
+                }
+            } catch (e) { continue; }
         }
     }
 }
 
  // --- CORREÇÃO MERCADO BOVESPA ---
-async function buscarCotacoesBovespa() {
+  async function buscarCotacoesBovespa() {
     try {
-        // 1. Busca o Ranking (Geralmente funciona sem .SA na listagem global)
+        // 1. Ranking
         const resRanking = await fetch(`https://brapi.dev/api/quote/list?token=${TOKEN_B3}`);
         const dataRanking = await resRanking.json();
         if (dataRanking && dataRanking.stocks) processarRanking(dataRanking);
 
-        // 2. Prepara a lista de busca com .SA em cada item
-        const arrayEstatais = LISTA_ACOES_B3.split(',').map(t => t.trim() + ".SA");
-        const arrayCarteira = minhaCarteira.map(a => a.ticker.trim() + ".SA");
+        // 2. Limpeza de Tickers (Remove o "F" e adiciona ".SA")
+        const preparar = (t) => t.trim().replace(/F$/, "") + ".SA";
         
-        // Remove duplicados e junta tudo em uma string
+        const arrayEstatais = LISTA_ACOES_B3.split(',').map(preparar);
+        const arrayCarteira = minhaCarteira.map(a => preparar(a.ticker));
         const listaCompleta = [...new Set([...arrayEstatais, ...arrayCarteira])].join(',');
 
-        const urlPrecos = `https://brapi.dev/api/quote/${listaCompleta}?token=${TOKEN_B3}`;
-        const resPrecos = await fetch(urlPrecos);
+        // 3. Busca em lote
+        const resPrecos = await fetch(`https://brapi.dev/api/quote/${listaCompleta}?token=${TOKEN_B3}`);
         
-        if (resPrecos.status === 400) {
-            console.error("Erro 400: Um ou mais tickers na lista são inválidos para a API.");
-            return;
-        }
-
-        const dataPrecos = await resPrecos.json();
-        if (dataPrecos && dataPrecos.results) {
-            dataPrecos.results.forEach(item => {
-                if (item && item.symbol) {
-                    renderizarLinhaTabela(item, "B3");
-                }
-            });
-            atualizarPainelCarteira(dataPrecos.results);
+        if (!resPrecos.ok) {
+            // Se o lote falhar (Erro 400), tentamos carregar um por um para não travar a carteira
+            console.warn("Erro no lote. Carregando ativos individualmente...");
+            for (const t of [...arrayEstatais, ...arrayCarteira]) {
+                try {
+                    const r = await fetch(`https://brapi.dev/api/quote/${t}?token=${TOKEN_B3}`);
+                    const d = await r.json();
+                    if (d.results) {
+                        renderizarLinhaTabela(d.results[0], "B3");
+                        atualizarPainelCarteira(d.results);
+                    }
+                } catch (e) {}
+            }
+        } else {
+            const dataPrecos = await resPrecos.json();
+            if (dataPrecos.results) {
+                dataPrecos.results.forEach(item => renderizarLinhaTabela(item, "B3"));
+                atualizarPainelCarteira(dataPrecos.results);
+            }
         }
         document.getElementById('status-conexao').innerText = "✅ Sistema Online";
-    } catch (e) { 
-        console.error("Erro Geral Bovespa:", e);
-    }
+    } catch (e) { console.error("Erro Geral Bovespa:", e); }
 }
 
   function renderizarLinhaTabela(item, origem) {
