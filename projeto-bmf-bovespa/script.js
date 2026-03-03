@@ -84,15 +84,11 @@ async function buscarApenasTaxas() {
     } catch (e) { console.error("Erro Taxas:", e); }
 }
 
- // --- CORREÇÃO MERCADO AGRO ---
+// --- MERCADO AGRO ---
  async function buscarCotacoesAgro() {
     const ativos = LISTA_AGRO_BMF.split(',');
-    const tbody = document.getElementById("corpo-cotacoes");
-    if (!tbody) return;
-
     for (const ticker of ativos) {
         const tickerLimpo = ticker.trim();
-        // Tenta primeiro COM .SA, se der erro, tenta SEM .SA
         const urls = [
             `https://brapi.dev/api/quote/${tickerLimpo}.SA?token=${TOKEN_B3}`,
             `https://brapi.dev/api/quote/${tickerLimpo}?token=${TOKEN_B3}`
@@ -105,78 +101,93 @@ async function buscarApenasTaxas() {
                     const data = await res.json();
                     if (data.results && data.results[0]) {
                         renderizarLinhaTabela(data.results[0], "BMF");
-                        break; // Achou o dado, sai do loop de tentativas
+                        break; 
                     }
                 }
-            } catch (e) { continue; }
+            } catch (e) {}
         }
     }
 }
 
- // --- CORREÇÃO MERCADO BOVESPA ---
-  async function buscarCotacoesBovespa() {
+// --- MERCADO BOVESPA ---
+ async function buscarCotacoesBovespa() {
     try {
-        // 1. Ranking
+        // 1. Busca o Ranking (sempre primeiro)
         const resRanking = await fetch(`https://brapi.dev/api/quote/list?token=${TOKEN_B3}`);
         const dataRanking = await resRanking.json();
         if (dataRanking && dataRanking.stocks) processarRanking(dataRanking);
 
-        // 2. Limpeza de Tickers (Remove o "F" e adiciona ".SA")
-        const preparar = (t) => t.trim().replace(/F$/, "") + ".SA";
-        
-        const arrayEstatais = LISTA_ACOES_B3.split(',').map(preparar);
-        const arrayCarteira = minhaCarteira.map(a => preparar(a.ticker));
-        const listaCompleta = [...new Set([...arrayEstatais, ...arrayCarteira])].join(',');
+        // 2. Prepara os tickers (Estatais + Sua Carteira)
+        // Adicionamos .SA e removemos o "F" (fracionário) que a API rejeita em lote
+        const formatar = (t) => t.trim().replace('.SA', '').replace(/F$/, '') + ".SA";
+        const arrayEstatais = LISTA_ACOES_B3.split(',').map(formatar);
+        const arrayCarteira = minhaCarteira.map(a => formatar(a.ticker));
+        const todosOsTickers = [...new Set([...arrayEstatais, ...arrayCarteira])];
 
-        // 3. Busca em lote
-        const resPrecos = await fetch(`https://brapi.dev/api/quote/${listaCompleta}?token=${TOKEN_B3}`);
-        
-        if (!resPrecos.ok) {
-            // Se o lote falhar (Erro 400), tentamos carregar um por um para não travar a carteira
-            console.warn("Erro no lote. Carregando ativos individualmente...");
-            for (const t of [...arrayEstatais, ...arrayCarteira]) {
-                try {
-                    const r = await fetch(`https://brapi.dev/api/quote/${t}?token=${TOKEN_B3}`);
-                    const d = await r.json();
-                    if (d.results) {
-                        renderizarLinhaTabela(d.results[0], "B3");
-                        atualizarPainelCarteira(d.results);
-                    }
-                } catch (e) {}
-            }
-        } else {
-            const dataPrecos = await resPrecos.json();
-            if (dataPrecos.results) {
-                dataPrecos.results.forEach(item => renderizarLinhaTabela(item, "B3"));
-                atualizarPainelCarteira(dataPrecos.results);
-            }
+        // 3. Busca com "Escudo" contra Erros
+        let resultadosFinais = [];
+        try {
+            const resLote = await fetch(`https://brapi.dev/api/quote/${todosOsTickers.join(',')}?token=${TOKEN_B3}`);
+            if (resLote.ok) {
+                const d = await resLote.json();
+                resultadosFinais = d.results || [];
+            } else { throw new Error("Erro no lote"); }
+        } catch (e) {
+            // SE O LOTE FALHAR (Erro 400), busca um por um para não deixar a carteira vazia
+            console.warn("Erro no lote da API. Buscando ativos individualmente...");
+            const promessas = todosOsTickers.map(ticker => 
+                fetch(`https://brapi.dev/api/quote/${ticker}?token=${TOKEN_B3}`)
+                    .then(r => r.ok ? r.json() : null)
+                    .catch(() => null)
+            );
+            const r = await Promise.all(promessas);
+            resultadosFinais = r.filter(x => x && x.results).map(x => x.results[0]);
+        }
+
+        // 4. Renderizar na Tabela e na Carteira
+        if (resultadosFinais.length > 0) {
+            // Limpa as linhas da B3 antes de atualizar para não duplicar
+            document.querySelectorAll('.setor-b3').forEach(l => l.remove());
+
+            resultadosFinais.forEach(item => {
+                if (item && item.symbol) {
+                    renderizarLinhaTabela(item, "B3");
+                }
+            });
+            // ATUALIZA SUA CARTEIRA COM OS PREÇOS REAIS
+            atualizarPainelCarteira(resultadosFinais);
         }
         document.getElementById('status-conexao').innerText = "✅ Sistema Online";
-    } catch (e) { console.error("Erro Geral Bovespa:", e); }
+    } catch (e) {
+        console.error("Erro Bovespa:", e);
+        document.getElementById('status-conexao').innerText = "⚠️ Erro ao carregar carteira";
+    }
 }
 
-  function renderizarLinhaTabela(item, origem) {
+ function renderizarLinhaTabela(item, origem) {
     const tbody = document.getElementById("corpo-cotacoes");
     if (!tbody || !item) return;
 
     const symbolOriginal = item.symbol.replace('.SA', '');
     
-    // CORREÇÃO: Se a linha já existir na tabela, não cria uma nova (evita duplicados)
-    if (document.getElementById(`linha-${symbolOriginal}`)) return;
-
+    // Lógica para exibir Nome em Negrito e Ticker/Subnome abaixo
     let nomePrincipal = symbolOriginal;
     let subNome = "";
 
     if (origem === "BMF") {
+        // Para o Agro, busca o nome no seu mapa e coloca o ticker embaixo
         nomePrincipal = MAPA_NOMES_AGRO[symbolOriginal] || symbolOriginal;
         subNome = symbolOriginal;
     } else {
+        // Para as Estatais, coloca o Ticker em destaque e o nome da empresa embaixo
         nomePrincipal = symbolOriginal;
         subNome = item.longName || item.shortName || "";
     }
 
     const preco = item.regularMarketPrice || item.price || 0;
     const variacao = item.regularMarketChangePercent || item.changePercent || 0;
+
+    if (document.getElementById(`linha-${symbolOriginal}`)) return;
 
     tbody.innerHTML += `
         <tr id="linha-${symbolOriginal}" class="setor-${origem.toLowerCase()}">
@@ -187,37 +198,30 @@ async function buscarApenasTaxas() {
 }
 
 // --- RANKING ---
- function processarRanking(dataRanking) {
-    const apenasAcoes = dataRanking.stocks.filter(s => s.stock.length <= 6);
-    const topAltas = apenasAcoes.slice(0, 30);
-    const topBaixas = apenasAcoes.slice(-30).reverse();
+  function processarRanking(dataRanking) {
+    // Filtra apenas ações reais e ordena do maior para o menor ganho
+    const apenasAcoes = dataRanking.stocks.filter(s => s.stock.replace('.SA', '').length <= 6);
+    const ordenado = [...apenasAcoes].sort((a, b) => (b.change || 0) - (a.change || 0));
+
+    const topAltas = ordenado.slice(0, 30);
+    const topBaixas = ordenado.slice(-30).reverse();
 
     const formatLi = (a, c) => {
-        // Pega o nome da empresa enviado pela API
-        let nomeEmpresa = a.name || "";
-        // Se o nome vier com traço (ex: "PETROLEO - PETROBRAS"), tenta limpar para ficar mais curto
-        if (nomeEmpresa.includes(" - ")) nomeEmpresa = nomeEmpresa.split(" - ")[1];
-
+        let nome = a.name || a.stock;
+        if (nome.includes(" - ")) nome = nome.split(" - ")[1];
         return `
             <li style="display: flex; justify-content: space-between; align-items: center; padding: 10px 5px; border-bottom: 1px solid rgba(0,0,0,0.05);">
                 <span style="flex: 1; text-align: left; min-width: 0;">
-                    <b style="display: block; font-size: 0.95em;">${a.stock}</b>
-                    <small style="display: block; color: #777; font-size: 0.75em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px;">
-                        ${nomeEmpresa}
-                    </small>
+                    <b style="display: block; font-size: 0.95em;">${a.stock.replace('.SA', '')}</b>
+                    <small style="display: block; color: #777; font-size: 0.75em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px;">${nome}</small>
                 </span>
-                <span style="flex: 1; text-align: center; color: #444; font-size: 0.9em;">R$ ${a.close.toFixed(2)}</span>
+                <span style="flex: 1; text-align: center; color: #444; font-size: 0.9em;">R$ ${(a.close || 0).toFixed(2)}</span>
                 <span class="${c}" style="flex: 1; text-align: right; font-weight: bold;">${(a.change || 0).toFixed(2)}%</span>
             </li>`;
     };
 
     document.getElementById('lista-altas').innerHTML = topAltas.map(a => formatLi(a, 'texto-alta')).join('');
     document.getElementById('lista-baixas').innerHTML = topBaixas.map(a => formatLi(a, 'texto-queda')).join('');
-    
-    // Mantém a chamada do gráfico se ele existir no seu código
-    if (typeof renderizarGrafico === "function") {
-        renderizarGrafico([...topAltas, ...topBaixas].map(item => ({ symbol: item.stock, change: item.change })));
-    }
 }
 
 // --- CARTEIRA (LocalStorage e Monitoramento) ---
