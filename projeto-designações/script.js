@@ -1,10 +1,9 @@
-  document.addEventListener('DOMContentLoaded', carregarDados);
+ document.addEventListener('DOMContentLoaded', carregarDados);
 
 const btnAdicionar = document.getElementById('btn-adicionar');
 const btnLimpar = document.getElementById('btn-limpar-tudo');
 const btnPDF = document.getElementById('btn-gerar-pdf');
 
-// Variável para controlar se estamos editando uma linha específica
 let linhaEmEdicao = null;
 
 function reverterDataParaInput(dataBr) {
@@ -24,11 +23,12 @@ function salvarNoStorage() {
         const tds = tr.querySelectorAll('td');
         linhas.push({
             data: tds[0].innerText,
-            entrada: tds[1].innerText,
-            auditorio: tds[2].innerText,
-            volante: tds[3].innerText,
-            leitor: tds[4].innerText,
-            audioVideo: tds[5].innerText
+            presidente: tds[1].innerText,
+            entrada: tds[2].innerText,
+            auditorio: tds[3].innerText,
+            volante: tds[4].innerText,
+            leitor: tds[5].innerText,
+            audioVideo: tds[6].innerText
         });
     });
     localStorage.setItem('designacoesData', JSON.stringify(linhas));
@@ -39,12 +39,13 @@ function carregarDados() {
     dados.forEach(item => adicionarLinhaATabela(item));
 }
 
- function adicionarLinhaATabela(obj) {
+function adicionarLinhaATabela(obj) {
     const tabela = document.getElementById('corpo-tabela');
     const novaLinha = tabela.insertRow();
 
     novaLinha.innerHTML = `
         <td>${obj.data}</td>
+        <td>${obj.presidente}</td>
         <td>${obj.entrada}</td>
         <td>${obj.auditorio}</td>
         <td>${obj.volante}</td>
@@ -57,6 +58,7 @@ function carregarDados() {
 
     novaLinha.querySelector('.btn-editar').addEventListener('click', function() {
         document.getElementById('data').value = reverterDataParaInput(obj.data);
+        document.getElementById('presidente').value = obj.presidente;
         document.getElementById('entrada').value = obj.entrada;
         document.getElementById('auditorio').value = obj.auditorio;
         document.getElementById('volante').value = obj.volante;
@@ -65,7 +67,6 @@ function carregarDados() {
 
         linhaEmEdicao = novaLinha;
         
-        // Atualiza o botão principal com ícone de salvar
         btnAdicionar.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Salvar Alteração';
         btnAdicionar.style.backgroundColor = "#f39c12";
         novaLinha.style.backgroundColor = "#fff3cd"; 
@@ -73,9 +74,6 @@ function carregarDados() {
         window.scrollTo(0, 0);
     });
 }
-
-// No evento btnAdicionar.addEventListener, mude a linha do reset do botão:
-// btnAdicionar.innerHTML = '<i class="fa-solid fa-plus"></i> Adicionar à Lista';
 
 btnAdicionar.addEventListener('click', function() {
     const dataRaw = document.getElementById('data').value;
@@ -86,6 +84,7 @@ btnAdicionar.addEventListener('click', function() {
 
     const dadosCampos = {
         data: formatarData(dataRaw),
+        presidente: document.getElementById('presidente').value,
         entrada: document.getElementById('entrada').value,
         auditorio: document.getElementById('auditorio').value,
         volante: document.getElementById('volante').value,
@@ -94,19 +93,18 @@ btnAdicionar.addEventListener('click', function() {
     };
 
     if (linhaEmEdicao) {
-        // Atualiza a linha existente ao invés de criar uma nova
         const tds = linhaEmEdicao.querySelectorAll('td');
         tds[0].innerText = dadosCampos.data;
-        tds[1].innerText = dadosCampos.entrada;
-        tds[2].innerText = dadosCampos.auditorio;
-        tds[3].innerText = dadosCampos.volante;
-        tds[4].innerText = dadosCampos.leitor;
-        tds[5].innerText = dadosCampos.audioVideo;
+        tds[1].innerText = dadosCampos.presidente;
+        tds[2].innerText = dadosCampos.entrada;
+        tds[3].innerText = dadosCampos.auditorio;
+        tds[4].innerText = dadosCampos.volante;
+        tds[5].innerText = dadosCampos.leitor;
+        tds[6].innerText = dadosCampos.audioVideo;
         
-        // Reseta o estado de edição
         linhaEmEdicao.style.backgroundColor = "";
         linhaEmEdicao = null;
-        btnAdicionar.innerText = "Adicionar à Lista";
+        btnAdicionar.innerHTML = '<i class="fa-solid fa-plus"></i> Adicionar à Lista';
         btnAdicionar.style.backgroundColor = ""; 
     } else {
         adicionarLinhaATabela(dadosCampos);
@@ -121,21 +119,18 @@ btnLimpar.addEventListener('click', function() {
         document.getElementById('corpo-tabela').innerHTML = '';
         localStorage.removeItem('designacoesData');
         linhaEmEdicao = null;
-        btnAdicionar.innerText = "Adicionar à Lista";
+        btnAdicionar.innerHTML = '<i class="fa-solid fa-plus"></i> Adicionar à Lista';
     }
 });
 
-   btnPDF.addEventListener('click', async function () {
+btnPDF.addEventListener('click', async function () {
     const overlay = document.getElementById('loading-overlay');
-    
-    // 1. Mostrar aviso de carregamento
     overlay.style.display = 'flex';
 
     try {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('l', 'mm', 'a4');
 
-        // Configuração do Título
         doc.setFontSize(22);
         doc.setTextColor(44, 62, 80);
         const larguraPagina = doc.internal.pageSize.getWidth();
@@ -143,7 +138,6 @@ btnLimpar.addEventListener('click', function() {
         const x = (larguraPagina - doc.getTextWidth(textoTitulo)) / 2;
         doc.text(textoTitulo, x, 20);
 
-        // Tabela - Usando os dados do corpo da tabela para garantir que não venha branco
         doc.autoTable({
             html: '#tabela-designacoes',
             startY: 35,
@@ -152,19 +146,18 @@ btnLimpar.addEventListener('click', function() {
             styles: { halign: 'center', fontSize: 10 },
             columns: [
                 { header: 'Data', dataKey: '0' },
-                { header: 'Entrada', dataKey: '1' },
-                { header: 'Auditório', dataKey: '2' },
-                { header: 'Volante', dataKey: '3' },
-                { header: 'Leitor', dataKey: '4' },
-                { header: 'Áudio/Vídeo', dataKey: '5' }
+                { header: 'Presidente', dataKey: '1' },
+                { header: 'Entrada', dataKey: '2' },
+                { header: 'Auditório', dataKey: '3' },
+                { header: 'Volante', dataKey: '4' },
+                { header: 'Leitor', dataKey: '5' },
+                { header: 'Áudio/Vídeo', dataKey: '6' }
             ]
         });
 
-        // Forçar a renderização e criar o arquivo
         const pdfBlob = doc.output('blob');
         const arquivo = new File([pdfBlob], "Designacoes.pdf", { type: "application/pdf" });
 
-        // 2. Tentar compartilhar
         if (navigator.canShare && navigator.canShare({ files: [arquivo] })) {
             await navigator.share({
                 files: [arquivo],
@@ -172,7 +165,6 @@ btnLimpar.addEventListener('click', function() {
                 text: 'Segue o quadro de designações atualizado.'
             });
         } else {
-            // Caso seja computador ou navegador sem suporte
             doc.save('quadro_de_designacoes.pdf');
         }
 
@@ -180,7 +172,6 @@ btnLimpar.addEventListener('click', function() {
         console.error("Erro no processo:", error);
         alert("Houve um erro ao processar o arquivo.");
     } finally {
-        // 3. Esconder o aviso de carregamento (sempre executa, dando certo ou errado)
         overlay.style.display = 'none';
     }
 });

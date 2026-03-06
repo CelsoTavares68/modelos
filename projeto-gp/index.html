@@ -1,0 +1,33 @@
+ <!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>GP Retro - Time Trial</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        <div id="track-selector">
+            <button onclick="changeTrack(-1)">←</button>
+            <span id="track-display">PISTA: INTERLAGOS</span>
+            <button onclick="changeTrack(1)">→</button>
+        </div>
+
+        <canvas id="trackMap" width="120" height="120"></canvas>
+
+        <canvas id="gameCanvas"></canvas>
+
+        <div id="cockpit">
+            <div class="hud-top">
+                <div class="stat">VEL: <span id="speed">0</span> KM/H</div>
+                <div class="stat">TEMPO: <span id="timer">0.00</span>s</div>
+                <div class="stat">MELHOR: <span id="best">--:--</span></div>
+            </div>
+            <div id="steering-wheel-container">
+                <div id="steering-wheel"></div>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
