@@ -1,8 +1,8 @@
- const TOKEN_B3 = '8gRPKYrszFRi4JCDaARwuJ'; 
+  const TOKEN_B3 = '8gRPKYrszFRi4JCDaARwuJ'; 
 
-// LISTAS - Mantendo o seu Agro e alterando apenas a Linha 5 para as Estatais
+// LISTAS
 const LISTA_AGRO_BMF = "JBSS3,BRFS3,BEEF3,MRFG3,CAML3,SLCE3,AGRO3,SMTO3,KEPL3,SOJA3";
- const LISTA_ACOES_B3 = "PETR4,BBAS3,SBSP3,CPLE6,CMIG4,ELET3,SAPR11,BANESE3,BMEB4,BNBR3";
+const LISTA_ACOES_B3 = "PETR4,BBAS3,SBSP3,CPLE6,CMIG4,ELET3,SAPR11,BANESE3,BMEB4,BNBR3";
 
 const MAPA_NOMES_AGRO = {
     "JBSS3": "JBS (Carnes)", 
@@ -33,13 +33,59 @@ async function inicializarApp() {
     const tbody = document.getElementById("corpo-cotacoes");
     if (tbody) tbody.innerHTML = "";
 
-    // CORREÇÃO: Carrega a carteira do localStorage logo no início
     atualizarPainelCarteira(); 
     
+    // Chamadas iniciais
     buscarApenasMoedas();
     buscarApenasTaxas();
+    
+    // NOVA CHAMADA: Busca as bolsas mundiais
+    await buscarIndicesGlobais(); 
+    
     await buscarCotacoesAgro(); 
     await buscarCotacoesBovespa();
+}
+
+// --- NOVIDADE: FUNÇÃO PARA BOLSAS MUNDIAIS ---
+async function buscarIndicesGlobais() {
+    const container = document.getElementById('indices-globais');
+    if (!container) return;
+
+    const listaIndices = [
+        { id: '^BVSP', nome: '🇧🇷 IBOVESPA' },
+        { id: '^GSPC', nome: '🇺🇸 S&P 500' },
+        { id: '^IXIC', nome: '🇺🇸 NASDAQ' },
+        { id: '^FTSE', nome: '🇬🇧 FTSE 100' }
+    ];
+
+    container.innerHTML = ""; 
+
+    for (const item of listaIndices) {
+        try {
+            const url = `https://brapi.dev/api/quote/${encodeURIComponent(item.id)}?token=${TOKEN_B3}`;
+            const res = await fetch(url);
+            const data = await res.json();
+
+            if (data && data.results && data.results[0]) {
+                const result = data.results[0];
+                const preco = result.regularMarketPrice || result.price || 0;
+                const pct = result.regularMarketChangePercent || result.changePercent || 0;
+                const cor = pct >= 0 ? 'texto-alta' : 'texto-queda';
+                const seta = pct >= 0 ? '▲' : '▼';
+
+                container.innerHTML += `
+                    <div class="card-investimento" style="padding: 15px; ${item.id === '^BVSP' ? 'border-bottom: 3px solid #527496;' : ''}">
+                        <h4 style="margin-bottom: 5px; font-size: 0.85rem;">${item.nome}</h4>
+                        <b style="font-size: 1.1rem; display: block;">${preco.toLocaleString('pt-BR')}</b>
+                        <span class="${cor}" style="font-weight: bold; font-size: 0.9rem;">
+                            ${seta} ${pct.toFixed(2)}%
+                        </span>
+                    </div>`;
+            }
+        } catch (e) {
+            console.warn(`Erro ao carregar índice ${item.id}`);
+        }
+    }
 }
 
 // --- MOEDAS E CRIPTOS ---
@@ -85,13 +131,13 @@ async function buscarApenasTaxas() {
 }
 
 // --- MERCADO AGRO ---
- async function buscarCotacoesAgro() {
+async function buscarCotacoesAgro() {
     const ativos = LISTA_AGRO_BMF.split(',');
     for (const ticker of ativos) {
         const tickerLimpo = ticker.trim();
         const urls = [
-            `https://brapi.dev/api/quote/${tickerLimpo}.SA?token=${TOKEN_B3}`,
-            `https://brapi.dev/api/quote/${tickerLimpo}?token=${TOKEN_B3}`
+            `https://brapi.dev/api/quote/${tickerLimpo}?token=${TOKEN_B3}`,
+            `https://brapi.dev/api/quote/${tickerLimpo}.SA?token=${TOKEN_B3}`
         ];
 
         for (const url of urls) {
@@ -110,24 +156,19 @@ async function buscarApenasTaxas() {
 }
 
 // --- MERCADO BOVESPA ---
-  async function buscarCotacoesBovespa() {
+async function buscarCotacoesBovespa() {
     try {
-        // 1. Ranking Global - Buscamos primeiro para garantir os dados das listas laterais
         const resRanking = await fetch(`https://brapi.dev/api/quote/list?token=${TOKEN_B3}`);
         const dataRanking = await resRanking.json();
         if (dataRanking && dataRanking.stocks) processarRanking(dataRanking);
 
-        // 2. Preparar tickers (Estatais + Sua Carteira)
-        // Removemos o "F" (fracionário) e garantimos o ".SA" para a API não dar erro
         const limpar = (t) => t.trim().replace('.SA', '').replace(/F$/, '') + ".SA";
-        
         const arrayEstatais = LISTA_ACOES_B3.split(',').map(limpar);
         const arrayCarteira = minhaCarteira.map(a => limpar(a.ticker));
         const todosTickers = [...new Set([...arrayEstatais, ...arrayCarteira])];
 
         if (todosTickers.length === 0) return;
 
-        // 3. TENTATIVA 1: Busca em lote (mais rápido)
         let resultadosFinais = [];
         try {
             const resLote = await fetch(`https://brapi.dev/api/quote/${todosTickers.join(',')}?token=${TOKEN_B3}`);
@@ -138,9 +179,6 @@ async function buscarApenasTaxas() {
                 throw new Error("Lote falhou");
             }
         } catch (err) {
-            // TENTATIVA 2: Se o lote falhar (Erro 400), busca individualmente
-            // Isso impede que um ticker inválido (como BANESE3 ou CTKA4) trave tudo
-            console.warn("Um ticker inválido foi detectado. Carregando individualmente...");
             const promessas = todosTickers.map(t => 
                 fetch(`https://brapi.dev/api/quote/${t}?token=${TOKEN_B3}`)
                     .then(r => r.ok ? r.json() : null)
@@ -150,44 +188,32 @@ async function buscarApenasTaxas() {
             resultadosFinais = r.filter(x => x && x.results).map(x => x.results[0]);
         }
 
-        // 4. Renderizar Tabelas
         if (resultadosFinais.length > 0) {
-            // Limpa as linhas da B3 antes de atualizar para não duplicar
             document.querySelectorAll('.setor-b3').forEach(l => l.remove());
-
             resultadosFinais.forEach(item => {
-                if (item && item.symbol) {
-                    renderizarLinhaTabela(item, "B3");
-                }
+                if (item && item.symbol) renderizarLinhaTabela(item, "B3");
             });
-            
-            // Envia os dados para a função da carteira (Monitoramento)
             atualizarPainelCarteira(resultadosFinais);
         }
         
         document.getElementById('status-conexao').innerText = "✅ Sistema Online";
     } catch (e) { 
-        console.error("Erro Crítico Bovespa:", e); 
-        document.getElementById('status-conexao').innerText = "⚠️ Erro na conexão";
+        console.error("Erro Bovespa:", e); 
     }
 }
 
- function renderizarLinhaTabela(item, origem) {
+function renderizarLinhaTabela(item, origem) {
     const tbody = document.getElementById("corpo-cotacoes");
     if (!tbody || !item) return;
 
     const symbolOriginal = item.symbol.replace('.SA', '');
-    
-    // Lógica para exibir Nome em Negrito e Ticker/Subnome abaixo
     let nomePrincipal = symbolOriginal;
     let subNome = "";
 
     if (origem === "BMF") {
-        // Para o Agro, busca o nome no seu mapa e coloca o ticker embaixo
         nomePrincipal = MAPA_NOMES_AGRO[symbolOriginal] || symbolOriginal;
         subNome = symbolOriginal;
     } else {
-        // Para as Estatais, coloca o Ticker em destaque e o nome da empresa embaixo
         nomePrincipal = symbolOriginal;
         subNome = item.longName || item.shortName || "";
     }
@@ -205,9 +231,7 @@ async function buscarApenasTaxas() {
         </tr>`;
 }
 
-// --- RANKING ---
-   function processarRanking(dataRanking) {
-    // 1. Filtra apenas ações reais e ordena do maior para o menor ganho
+function processarRanking(dataRanking) {
     const apenasAcoes = dataRanking.stocks.filter(s => s.stock.replace('.SA', '').length <= 6);
     const ordenado = [...apenasAcoes].sort((a, b) => (b.change || 0) - (a.change || 0));
 
@@ -231,10 +255,7 @@ async function buscarApenasTaxas() {
     document.getElementById('lista-altas').innerHTML = topAltas.map(a => formatLi(a, 'texto-alta')).join('');
     document.getElementById('lista-baixas').innerHTML = topBaixas.map(a => formatLi(a, 'texto-queda')).join('');
 
-    // --- REATIVAÇÃO DO GRÁFICO ---
-    // Envia os dados ordenados para o gráfico no final do processamento
     if (typeof renderizarGrafico === "function") {
-        // Junta as 30 altas e 30 quedas para exibir no gráfico
         const dadosCompletosGrafico = [...topAltas, ...topBaixas].map(item => ({
             symbol: item.stock.replace('.SA', ''),
             change: item.change || 0
@@ -242,20 +263,15 @@ async function buscarApenasTaxas() {
         renderizarGrafico(dadosCompletosGrafico);
     }
 }
-// --- CARTEIRA (LocalStorage e Monitoramento) ---
-   function atualizarPainelCarteira(dadosApi = null) {
+
+function atualizarPainelCarteira(dadosApi = null) {
     const tbody = document.getElementById('corpo-carteira');
     if (!tbody) return;
     
     tbody.innerHTML = "";
     minhaCarteira.forEach((item, index) => {
-        // CORREÇÃO DE BUSCA: Compara removendo o .SA de ambos os lados para não haver erro
         const tickerLimpoCarteira = item.ticker.trim().replace('.SA', '').replace(/F$/, '');
-        
-        const info = dadosApi ? dadosApi.find(res => {
-            const tickerApi = res.symbol.replace('.SA', '').replace(/F$/, '');
-            return tickerApi === tickerLimpoCarteira;
-        }) : null;
+        const info = dadosApi ? dadosApi.find(res => res.symbol.replace('.SA', '').replace(/F$/, '') === tickerLimpoCarteira) : null;
 
         const precoAtual = info ? (info.regularMarketPrice || info.price) : null;
         const nomeEmpresa = info && (info.longName || info.shortName) ? (info.longName || info.shortName) : "Monitorando...";
@@ -269,10 +285,7 @@ async function buscarApenasTaxas() {
 
         tbody.innerHTML += `
             <tr class="${cor}">
-                <td>
-                    <b>${item.ticker}</b><br>
-                    <small style="opacity:0.7">${nomeEmpresa}</small>
-                </td>
+                <td><b>${item.ticker}</b><br><small style="opacity:0.7">${nomeEmpresa}</small></td>
                 <td>R$ ${item.precoPago.toFixed(2)}</td>
                 <td>${precoAtual ? 'R$ ' + precoAtual.toFixed(2) : '---'}</td>
                 <td style="font-weight:bold">${pct}</td>
@@ -284,7 +297,6 @@ async function buscarApenasTaxas() {
 function adicionarAcaoCarteira() {
     const t = document.getElementById('tickerCompra').value.toUpperCase().trim();
     const p = parseFloat(document.getElementById('precoPago').value);
-    
     if (t && !isNaN(p)) {
         minhaCarteira.push({ ticker: t, precoPago: p });
         localStorage.setItem('minhaCarteira', JSON.stringify(minhaCarteira));
@@ -292,8 +304,6 @@ function adicionarAcaoCarteira() {
         document.getElementById('precoPago').value = "";
         atualizarPainelCarteira(); 
         buscarCotacoesBovespa();
-    } else {
-        alert("Preencha o Ticker e o Preço corretamente.");
     }
 }
 
@@ -304,24 +314,21 @@ function removerDaCarteira(index) {
     buscarCotacoesBovespa();
 }
 
-// --- CALCULADORA ---
 function calcularRentabilidade() {
     const valor = parseFloat(document.getElementById('valorInvestido').value);
     const container = document.getElementById('tabela-rendimentos');
-    if (!valor || valor <= 0) { alert("Insira um valor."); return; }
-    
+    if (!valor || valor <= 0) return;
     const SELIC = 11.25; const CDI = SELIC - 0.10; 
-    const calcCDB = (v, tempo) => (v * (CDI / 100 / tempo)) * 0.775;
-    const calcLCI = (v, tempo) => (v * ((CDI * 0.9) / 100 / tempo));
-    const calcPoup = (v, tempo) => (v * (0.0055 / (tempo === 252 ? 21 : 1)));
+    const calcCDB = (v) => (v * (CDI / 100 / 12)) * 0.775;
+    const calcLCI = (v) => (v * ((CDI * 0.9) / 100 / 12));
+    const calcPoup = (v) => (v * 0.0055);
 
     container.innerHTML = `
-        <div class="card-investimento"><h4>CDB (100% CDI)</h4><p>Mensal: <strong>R$ ${calcCDB(valor, 12).toFixed(2)}</strong></p></div>
-        <div class="card-investimento"><h4>LCI (90% CDI)</h4><p>Mensal: <strong>R$ ${calcLCI(valor, 12).toFixed(2)}</strong></p></div>
-        <div class="card-investimento"><h4>Poupança</h4><p>Mensal: <strong>R$ ${calcPoup(valor, 1).toFixed(2)}</strong></p></div>`;
+        <div class="card-investimento"><h4>CDB (100% CDI)</h4><p>Mensal: <strong>R$ ${calcCDB(valor).toFixed(2)}</strong></p></div>
+        <div class="card-investimento"><h4>LCI (90% CDI)</h4><p>Mensal: <strong>R$ ${calcLCI(valor).toFixed(2)}</strong></p></div>
+        <div class="card-investimento"><h4>Poupança</h4><p>Mensal: <strong>R$ ${calcPoup(valor).toFixed(2)}</strong></p></div>`;
 }
 
-// --- UTILITÁRIOS ---
 function toggleDarkMode() { document.body.classList.toggle('dark-mode'); }
 
 function filtrarTabela(tipo) {
