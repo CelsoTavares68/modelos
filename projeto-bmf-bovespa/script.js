@@ -35,7 +35,7 @@ async function inicializarApp() {
 
     // CORREÇÃO: Carrega a carteira do localStorage logo no início
     atualizarPainelCarteira(); 
-    
+    buscarIndicesGlobais();
     buscarApenasMoedas();
     buscarApenasTaxas();
     await buscarCotacoesAgro(); 
@@ -353,4 +353,44 @@ function renderizarGrafico(dados) {
 function toggleAjuda() {
     const p = document.getElementById("painel-ajuda");
     if (p) p.style.display = (p.style.display === "none" || p.style.display === "") ? "block" : "none";
+}
+
+// --- ÍNDICES GLOBAIS ---
+async function buscarIndicesGlobais() {
+    try {
+        // Tickers: ^BVSP (Ibovespa), ^GSPC (S&P 500), ^IXIC (Nasdaq), ^FTSE (Londres)
+        const indices = '^BVSP,^GSPC,^IXIC,^FTSE';
+        const res = await fetch(`https://brapi.dev/api/quote/${indices}?token=${TOKEN_B3}`);
+        const data = await res.json();
+
+        const container = document.getElementById('indices-globais');
+        if (!container || !data.results) return;
+
+        container.innerHTML = data.results.map(item => {
+            const nome = item.symbol === '^BVSP' ? '🇧🇷 IBOVESPA' : 
+                         item.symbol === '^GSPC' ? '🇺🇸 S&P 500' : 
+                         item.symbol === '^IXIC' ? '🇺🇸 NASDAQ' : 
+                         item.symbol === '^FTSE' ? '🇬🇧 FTSE 100' : item.shortName;
+            
+            const preco = item.regularMarketPrice || 0;
+            const pct = item.regularMarketChangePercent || 0;
+            const cor = pct >= 0 ? 'texto-alta' : 'texto-queda';
+            const seta = pct >= 0 ? '▲' : '▼';
+            
+            // Estilo especial para o Ibovespa (Destaque)
+            const estiloIbov = item.symbol === '^BVSP' ? 'border-bottom: 4px solid #527496;' : '';
+
+            return `
+                <div class="card-investimento" style="${estiloIbov} padding: 15px;">
+                    <h4 style="margin-bottom: 5px;">${nome}</h4>
+                    <b style="font-size: 1.1rem; display: block;">${preco.toLocaleString('pt-BR')} <small style="font-size: 0.6em">pts</small></b>
+                    <span class="${cor}" style="font-weight: bold; font-size: 0.9rem;">
+                        ${seta} ${pct.toFixed(2)}%
+                    </span>
+                </div>
+            `;
+        }).join('');
+    } catch (e) {
+        console.error("Erro Índices Globais:", e);
+    }
 }
