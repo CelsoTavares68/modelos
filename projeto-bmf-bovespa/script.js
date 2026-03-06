@@ -1,4 +1,4 @@
-   const TOKEN_B3 = '8gRPKYrszFRi4JCDaARwuJ'; 
+ const TOKEN_B3 = '8gRPKYrszFRi4JCDaARwuJ'; 
 
 // LISTAS - Mantendo o seu Agro e alterando apenas a Linha 5 para as Estatais
 const LISTA_AGRO_BMF = "JBSS3,BRFS3,BEEF3,MRFG3,CAML3,SLCE3,AGRO3,SMTO3,KEPL3,SOJA3";
@@ -26,18 +26,16 @@ window.onload = () => {
     inicializarApp();
 };
 
- async function inicializarApp() {
+async function inicializarApp() {
     const status = document.getElementById('status-conexao');
     if (status) status.innerText = "🔄 Sincronizando sistema...";
     
     const tbody = document.getElementById("corpo-cotacoes");
     if (tbody) tbody.innerHTML = "";
 
-    // 1. Carrega a carteira e os índices primeiro
+    // CORREÇÃO: Carrega a carteira do localStorage logo no início
     atualizarPainelCarteira(); 
-    buscarIndicesGlobais(); // Chama a nova função aqui
-
-    // 2. Carrega o restante
+    
     buscarApenasMoedas();
     buscarApenasTaxas();
     await buscarCotacoesAgro(); 
@@ -132,7 +130,7 @@ async function buscarApenasTaxas() {
         // 3. TENTATIVA 1: Busca em lote (mais rápido)
         let resultadosFinais = [];
         try {
-            const resLote = await fetch(`https://brapi.dev/api/quote/${todosOsTickers.join(',')}?token=${TOKEN_B3}`);
+            const resLote = await fetch(`https://brapi.dev/api/quote/${todosTickers.join(',')}?token=${TOKEN_B3}`);
             const dadosLote = await resLote.json();
             if (dadosLote && dadosLote.results) {
                 resultadosFinais = dadosLote.results;
@@ -355,50 +353,4 @@ function renderizarGrafico(dados) {
 function toggleAjuda() {
     const p = document.getElementById("painel-ajuda");
     if (p) p.style.display = (p.style.display === "none" || p.style.display === "") ? "block" : "none";
-}
-
-// --- ÍNDICES GLOBAIS ---
- async function buscarIndicesGlobais() {
-    const container = document.getElementById('indices-globais');
-    if (!container) return;
-
-    try {
-        // Tickers que a Brapi costuma aceitar melhor
-        const indices = '%5EBVSP,%5EGSPC,%5EIXIC,%5EFTSE';
-        const url = `https://brapi.dev/api/quote/${indices}?token=${TOKEN_B3}`;
-        
-        const res = await fetch(url);
-        const data = await res.json();
-
-        if (data && data.results && data.results.length > 0) {
-            container.innerHTML = data.results.map(item => {
-                const simbolosNomes = {
-                    '^BVSP': '🇧🇷 IBOVESPA',
-                    '^GSPC': '🇺🇸 S&P 500',
-                    '^IXIC': '🇺🇸 NASDAQ',
-                    '^FTSE': '🇬🇧 FTSE 100'
-                };
-
-                const nome = simbolosNomes[item.symbol] || item.symbol;
-                const preco = item.regularMarketPrice || item.price || 0;
-                const pct = item.regularMarketChangePercent || item.changePercent || 0;
-                const cor = pct >= 0 ? 'texto-alta' : 'texto-queda';
-                const seta = pct >= 0 ? '▲' : '▼';
-                
-                return `
-                    <div class="card-investimento" style="padding: 15px; ${item.symbol === '^BVSP' ? 'border-bottom: 3px solid #527496;' : ''}">
-                        <h4 style="margin-bottom: 5px; font-size: 0.85rem;">${nome}</h4>
-                        <b style="font-size: 1.1rem; display: block;">${preco.toLocaleString('pt-BR')}</b>
-                        <span class="${cor}" style="font-weight: bold; font-size: 0.9rem;">
-                            ${seta} ${pct.toFixed(2)}%
-                        </span>
-                    </div>`;
-            }).join('');
-        } else {
-            container.innerHTML = "<p style='text-align:center; width:100%; color:#999;'>Carregando índices globais...</p>";
-        }
-    } catch (e) {
-        console.error("Erro nos índices:", e);
-        container.innerHTML = "<p style='color:red; text-align:center; width:100%;'>Erro ao carregar índices.</p>";
-    }
 }
