@@ -131,40 +131,43 @@ btnPDF.addEventListener('click', async function () {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('l', 'mm', 'a4');
 
-        doc.setFontSize(22);
+        doc.setFontSize(20);
         doc.setTextColor(44, 62, 80);
         const larguraPagina = doc.internal.pageSize.getWidth();
-        const textoTitulo = "Quadro de Designações";
+        const textoTitulo = "Quadro de Designações para as Reuniões";
         const x = (larguraPagina - doc.getTextWidth(textoTitulo)) / 2;
         doc.text(textoTitulo, x, 20);
 
-         doc.autoTable({
-    html: '#tabela-designacoes',
-    startY: 35,
-    theme: 'striped', // Altera para striped para habilitar as linhas alternadas
-    headStyles: { 
-        fillColor: [44, 62, 80], // Cor do cabeçalho (Azul escuro)
-        textColor: [255, 255, 255], 
-        halign: 'center' 
-    },
-    alternateRowStyles: { 
-        fillColor: [240, 240, 240] // Cinza bem claro para as linhas alternadas
-    },
-    styles: { 
-        halign: 'center', 
-        fontSize: 10,
-        cellPadding: 3
-    },
-    columns: [
-        { header: 'Data', dataKey: '0' },
-        { header: 'Presidente', dataKey: '1' },
-        { header: 'Entrada', dataKey: '2' },
-        { header: 'Auditório', dataKey: '3' },
-        { header: 'Volante', dataKey: '4' },
-        { header: 'Leitor', dataKey: '5' },
-        { header: 'Áudio/Vídeo', dataKey: '6' }
-    ]
-});
+        doc.autoTable({
+            html: '#tabela-designacoes',
+            startY: 30,
+            theme: 'striped', // Ativa o modo listrado
+            headStyles: { 
+                fillColor: [44, 62, 80], // Azul Escuro no Cabeçalho
+                textColor: [255, 255, 255],
+                halign: 'center',
+                fontStyle: 'bold'
+            },
+            alternateRowStyles: { 
+                fillColor: [240, 240, 240] // Cinza claro para linhas alternadas
+            },
+            styles: { 
+                halign: 'center', 
+                fontSize: 10,
+                cellPadding: 4,
+                lineColor: [200, 200, 200],
+                lineWidth: 0.1
+            },
+            columns: [
+                { header: 'Data', dataKey: '0' },
+                { header: 'Presidente', dataKey: '1' },
+                { header: 'Entrada', dataKey: '2' },
+                { header: 'Auditório', dataKey: '3' },
+                { header: 'Volante', dataKey: '4' },
+                { header: 'Leitor', dataKey: '5' },
+                { header: 'Áudio/Vídeo', dataKey: '6' }
+            ]
+        });
 
         const pdfBlob = doc.output('blob');
         const arquivo = new File([pdfBlob], "Designacoes.pdf", { type: "application/pdf" });
