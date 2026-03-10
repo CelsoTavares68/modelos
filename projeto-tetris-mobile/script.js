@@ -5,19 +5,22 @@ const levelElement = document.getElementById('level');
 const highScoreElement = document.getElementById('highScore');
 const btnPause = document.getElementById('btnPause');
 
-// --- 1. CONFIGURAÇÃO DE ÁUDIOS (PRESERVAÇÃO TOTAL) ---
+// --- 1. CONFIGURAÇÃO DE ÁUDIOS (MELHORADA PARA EVITAR TRAVAMENTOS) ---
 const sfxAbertura = new Audio('abertura.mp3');
 const sfxDescida = new Audio('descida.mp3');
 const sfxPares = new Audio('formarpares.mp3');
 const sfxMilPontos = new Audio('mil-pontos.mp3');
 const sfxFim = new Audio('fim.mp3');
 
-[sfxAbertura, sfxDescida, sfxPares, sfxMilPontos, sfxFim].forEach(audio => {
-    audio.preload = 'auto';
-    audio.load();
-});
+// Função para tocar som sem travar a CPU
+function playSFX(audio, rate = 1) {
+    audio.pause();
+    audio.currentTime = 0;
+    audio.playbackRate = rate;
+    audio.play().catch(() => {}); // Ignora erro se o navegador bloquear o autoplay
+}
 
-// --- 2. VARIÁVEIS DE ESTADO ---
+// --- 2. VARIÁVEIS DE ESTADO INTEGRAL ---
 const ROWS = 15;
 const COLS = 10;
 const BLOCK_SIZE = 40;
@@ -27,7 +30,7 @@ let score = 0;
 let level = 1;
 let speed = 1000;
 let isPaused = false;
-let isProcessingCombo = false; // Trava para não bugar no Combo 3
+let isProcessing = false; // TRAVA DE SEGURANÇA MÁSTICA
 let gameLoop = null;
 let board = Array(ROWS).fill().map(() => Array(COLS).fill(null));
 let blinkingBlocks = [];
@@ -52,8 +55,8 @@ function randomPiece() {
     };
 }
 
-// --- 3. SISTEMA DE TEXTO FLUTUANTE (AJUSTADO PARA VELOCIDADE MÁXIMA) ---
-function addFloatingText(text, x, y, color = 'white', fontSize = '24px') {
+// --- 3. TEXTO FLUTUANTE ULTRA-RÁPIDO ---
+function addFloatingText(text, x, y, color = 'white', fontSize = '28px') {
     floatingTexts.push({
         text: text,
         x: x,
@@ -61,15 +64,15 @@ function addFloatingText(text, x, y, color = 'white', fontSize = '24px') {
         alpha: 1.0,
         color: color,
         fontSize: fontSize,
-        speedY: -12.0 // Dispara para cima rapidamente
+        speedY: -12.0 // Velocidade aumentada
     });
 }
 
-// --- 4. RENDERIZAÇÃO PRINCIPAL ---
+// --- 4. RENDERIZAÇÃO ---
 function draw(showBlinking = true) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Grade de fundo
+    // Grade
     ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
     for(let i=0; i<COLS; i++) {
         for(let j=0; j<ROWS; j++) {
@@ -77,7 +80,7 @@ function draw(showBlinking = true) {
         }
     }
 
-    // Desenha Tabuleiro
+    // Tabuleiro
     for (let r = 0; r < ROWS; r++) {
         for (let c = 0; c < COLS; c++) {
             if (board[r][c] !== null) {
@@ -89,8 +92,8 @@ function draw(showBlinking = true) {
         }
     }
 
-    // Desenha Peça Ativa (esconde durante o combo para não sobrepor)
-    if (!isProcessingCombo) {
+    // Peça Ativa (escondida se estiver processando combo)
+    if (!isProcessing) {
         piece.items.forEach((fruitIdx, i) => {
             if (piece.y + i < ROWS) {
                 drawBlock(piece.x, piece.y + i, fruitIdx);
@@ -98,29 +101,25 @@ function draw(showBlinking = true) {
         });
     }
 
-    // ATUALIZA E DESENHA TEXTOS FLUTUANTES (FRENÉTICO)
+    // Animação de Textos
     ctx.save();
     ctx.textAlign = 'center';
     for (let i = floatingTexts.length - 1; i >= 0; i--) {
         let ft = floatingTexts[i];
         ft.y += ft.speedY; 
-        ft.alpha -= 0.15; // Some em frações de segundo
-
+        ft.alpha -= 0.15; 
         if (ft.alpha <= 0) {
             floatingTexts.splice(i, 1);
         } else {
             ctx.globalAlpha = ft.alpha;
             ctx.fillStyle = ft.color;
             ctx.font = `bold ${ft.fontSize} Arial`;
-            ctx.shadowColor = 'black';
-            ctx.shadowBlur = 4;
             ctx.fillText(ft.text, ft.x + 20, ft.y);
         }
     }
     ctx.restore();
 
-    // Overlay de Pausa
-    if (isPaused && !isProcessingCombo) {
+    if (isPaused && !isProcessing) {
         ctx.fillStyle = "rgba(0,0,0,0.6)";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = "white";
@@ -137,9 +136,9 @@ function drawBlock(x, y, fruitIdx) {
     ctx.fillText(FRUITS[fruitIdx], x * BLOCK_SIZE + 20, y * BLOCK_SIZE + 20);
 }
 
-// --- 5. LÓGICA DE MOVIMENTO E COLISÃO ---
+// --- 5. LOGICA DE MOVIMENTO ---
 function moveDown() {
-    if (isPaused || isProcessingCombo) return;
+    if (isPaused || isProcessing) return;
     if (!checkCollision(piece.x, piece.y + 1)) {
         piece.y++;
     } else {
@@ -157,6 +156,7 @@ function checkCollision(nx, ny) {
 }
 
 function lockPiece() {
+    isProcessing = true; // Trava o input do jogador
     comboCount = 0; 
     piece.items.forEach((fruitIdx, i) => {
         if (piece.y + i < ROWS) board[piece.y + i][piece.x] = fruitIdx;
@@ -164,14 +164,13 @@ function lockPiece() {
     clearMatches();
 }
 
-// --- 6. SISTEMA DE COMBINAÇÕES (SEM SIMPLIFICAÇÃO) ---
+// --- 6. SISTEMA DE COMBOS E SONS SEM TRAVAMENTO ---
 function clearMatches() {
     let toRemove = [];
     for (let r = 0; r < ROWS; r++) {
         for (let c = 0; c < COLS; c++) {
             let val = board[r][c];
             if (val === null) continue;
-            // Horizontal, Vertical e Diagonais
             if (c+2 < COLS && val === board[r][c+1] && val === board[r][c+2]) toRemove.push({r,c},{r,c:c+1},{r,c:c+2});
             if (r+2 < ROWS && val === board[r+1][c] && val === board[r+2][c]) toRemove.push({r,c},{r:r+1,c},{r:r+2,c});
             if (r+2 < ROWS && c+2 < COLS && val === board[r+1][c+1] && val === board[r+2][c+2]) toRemove.push({r,c},{r:r+1,c:c+1},{r:r+2,c:c+2});
@@ -180,46 +179,35 @@ function clearMatches() {
     }
 
     if (toRemove.length > 0) {
-        isProcessingCombo = true;
         blinkingBlocks = toRemove;
         comboCount++; 
 
-        sfxPares.currentTime = 0; 
-        sfxPares.playbackRate = Math.min(2, 1 + (comboCount * 0.1)); 
-        sfxPares.play();
+        // Toca som de par com ajuste de tom
+        playSFX(sfxPares, Math.min(2, 1 + (comboCount * 0.1)));
 
         let flashes = 0;
         let flashInterval = setInterval(() => {
             flashes++;
             draw(flashes % 2 === 0);
-            if (flashes > 3) {
+            if (flashes > 4) {
                 clearInterval(flashInterval);
                 
                 let pts = (toRemove.length * 15) * comboCount;
                 score += pts;
                 scoreElement.innerText = score;
 
-                // Centraliza texto no combo
-                let avgC = toRemove[0].c;
-                let avgR = toRemove[0].r;
+                addFloatingText(comboCount > 1 ? `x${comboCount}!` : `+${pts}`, toRemove[0].c * BLOCK_SIZE, toRemove[0].r * BLOCK_SIZE, comboCount > 1 ? '#FFD700' : 'white');
 
-                if (comboCount > 1) {
-                    addFloatingText(`x${comboCount}!`, avgC * BLOCK_SIZE, avgR * BLOCK_SIZE, '#FFD700', '32px');
-                } else {
-                    addFloatingText(`+${pts}`, avgC * BLOCK_SIZE, avgR * BLOCK_SIZE, 'white', '22px');
-                }
-
-                // Milestones e Nível
+                // LÓGICA DE 1000 PONTOS (CORRIGIDA)
                 if (Math.floor(score / 1000) > lastMilestone) {
-                    sfxMilPontos.play();
                     lastMilestone = Math.floor(score / 1000);
+                    playSFX(sfxMilPontos); // Toca o som de mil pontos
                     level++;
                     levelElement.innerText = level;
-                    speed = Math.max(150, 1000 - (level * 100));
+                    speed = Math.max(150, 1000 - (level * 80));
                     startGame();
                 }
 
-                // Recorde
                 if (score > highScore) {
                     highScore = score;
                     highScoreElement.innerText = highScore;
@@ -229,15 +217,18 @@ function clearMatches() {
                 toRemove.forEach(b => board[b.r][b.c] = null);
                 blinkingBlocks = [];
                 applyGravity();
-                setTimeout(clearMatches, 50); // Continua reação quase instantânea
+                
+                // Delay estratégico para o próximo combo não encavalar
+                setTimeout(clearMatches, 150); 
             }
-        }, 40);
+        }, 50);
     } else {
-        isProcessingCombo = false;
+        // Finaliza o processamento e traz nova peça
+        isProcessing = false;
         let nextPiece = randomPiece();
         if (checkCollision(nextPiece.x, nextPiece.y)) {
-            sfxFim.play();
-            alert("FIM DE JOGO! Score: " + score);
+            playSFX(sfxFim);
+            alert("FIM DE JOGO!");
             resetGame();
         } else {
             piece = nextPiece;
@@ -262,33 +253,33 @@ function applyGravity() {
     draw();
 }
 
-// --- 7. FLUXO E CONTROLES ---
+// --- 7. CONTROLES E INICIALIZAÇÃO ---
 function startGame() {
     clearInterval(gameLoop);
     gameLoop = setInterval(moveDown, speed);
 }
 
 window.togglePause = function() {
+    if (isProcessing) return;
     isPaused = !isPaused;
     btnPause.innerText = isPaused ? "Continuar" : "Pausar";
-    if (isPaused) clearInterval(gameLoop); else startGame();
+    if (!isPaused) startGame(); else clearInterval(gameLoop);
     draw();
 }
 
 window.resetGame = function() {
-    sfxAbertura.play();
+    playSFX(sfxAbertura);
     board = Array(ROWS).fill().map(() => Array(COLS).fill(null));
-    score = 0; level = 1; speed = 1000; isPaused = false; lastMilestone = 0;
+    score = 0; level = 1; speed = 1000; isPaused = false; isProcessing = false; lastMilestone = 0;
     scoreElement.innerText = "0"; levelElement.innerText = "1";
     piece = randomPiece();
-    floatingTexts = [];
     startGame();
     draw();
 }
 
 function handleAction(type) {
-    if (isPaused || isProcessingCombo) return;
-    sfxDescida.currentTime = 0; sfxDescida.play();
+    if (isPaused || isProcessing) return;
+    playSFX(sfxDescida);
     switch(type) {
         case 'left': if (piece.x > 0 && !checkCollision(piece.x - 1, piece.y)) piece.x--; break;
         case 'right': if (piece.x < COLS - 1 && !checkCollision(piece.x + 1, piece.y)) piece.x++; break;
