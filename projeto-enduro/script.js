@@ -21,7 +21,7 @@ let totalPassesBest = 0;       // Recorde histórico (salvo no LocalStorage)
 
 // --- CONFIGURAÇÕES DE VELOCIDADE E TEMPO ---
 const maxSpeed = 16; 
-const STAGE_DURATION = 7200; 
+const STAGE_DURATION = 6000; 
 const DAY_DURATION = STAGE_DURATION * 9; 
 let currentTime = 0; 
 
@@ -366,7 +366,7 @@ function update() {
         });
     }
 
-    enemies = enemies.filter(e => e.z > -21800 && e.z < 6000);
+    enemies = enemies.filter(e => e.z > -18800 && e.z < 6000);
     draw(colors, isRaining);
     requestAnimationFrame(update);
 }
