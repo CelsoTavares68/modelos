@@ -28,11 +28,7 @@ const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
 // --- 2. INTELIGÊNCIA ARTIFICIAL (MINIMAX + PESOS) ---
-
-// Valores das peças para a IA decidir o que capturar
 const weights = { p: 10, n: 30, b: 30, r: 50, q: 90, k: 900 };
-
-// Tabela de bónus por posição: incentiva as peças a dominarem o centro
 const boardValues = [
     [5, 5, 5, 5, 5, 5, 5, 5],
     [4, 10, 10, 10, 10, 10, 10, 4],
@@ -50,7 +46,6 @@ function evaluateBoard(currentBoard) {
         for (let j = 0; j < 8; j++) {
             const piece = currentBoard[i][j];
             if (piece) {
-                // Soma o valor da peça + o bónus de estar numa posição estratégica
                 const val = weights[piece.type] + boardValues[i][j];
                 totalEval += (piece.color === 'w' ? val : -val);
             }
@@ -61,7 +56,6 @@ function evaluateBoard(currentBoard) {
 
 function minimax(gameInstance, depth, alpha, beta, isMaximizing) {
     if (depth === 0) return -evaluateBoard(gameInstance.board());
-    
     const moves = gameInstance.moves();
     if (isMaximizing) {
         let bestEval = -9999;
@@ -125,54 +119,53 @@ function loadGame() {
     updateStatusUI();
 }
 
-// --- 4. CRIAÇÃO DAS PEÇAS ---
+// --- 4. CRIAÇÃO DAS PEÇAS (Ajustadas para maior volume e distinção) ---
 function createPiece(x, z, color, type, team) {
     const group = new THREE.Group();
     const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.4, metalness: 0.3 });
-    const base = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 0.15, 16), mat);
+    const base = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.42, 0.18, 16), mat); // Base ligeiramente maior
     group.add(base);
 
     if (type === 'pawn') {
-        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.25, 0.5, 12), mat);
+        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.28, 0.55, 12), mat);
         body.position.y = 0.3;
-        const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 16), mat);
-        head.position.y = 0.65;
+        const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 16), mat);
+        head.position.y = 0.7;
         group.add(body, head);
     } else if (type === 'rook') {
-        const tower = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.32, 0.8, 4), mat);
+        const tower = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.35, 0.9, 8), mat);
         tower.position.y = 0.45;
-        const top = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.15, 0.35), mat);
-        top.position.y = 0.9;
+        const top = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.2, 0.4), mat);
+        top.position.y = 1.0;
         group.add(tower, top);
     } else if (type === 'knight') {
-        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.22, 0.6, 12), mat);
+        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.25, 0.7, 12), mat);
         body.position.y = 0.35;
-        const head = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.4, 0.5), mat);
-        head.position.set(0, 0.8, 0.1);
+        const head = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.45, 0.55), mat);
+        head.position.set(0, 0.9, 0.1);
         head.rotation.x = -0.3;
         group.add(body, head);
     } else if (type === 'bishop') {
-        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.2, 0.9, 12), mat);
+        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.22, 1.0, 12), mat);
         body.position.y = 0.5;
-        const hat = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.4, 12), mat);
-        hat.position.y = 1.1;
+        const hat = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.5, 12), mat);
+        hat.position.y = 1.2;
         group.add(body, hat);
     } else if (type === 'queen') {
-        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.3, 1.2, 12), mat);
+        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.35, 1.3, 12), mat);
         body.position.y = 0.65;
-        const crownBase = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.15, 0.2, 12), mat);
-        crownBase.position.y = 1.3;
-        const crownTop = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 8, 0, Math.PI * 2, 0, 1), mat);
-        crownTop.position.y = 1.4;
-        crownTop.rotation.x = Math.PI;
+        const crownBase = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.2, 0.25, 12), mat);
+        crownBase.position.y = 1.4;
+        const crownTop = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8), mat);
+        crownTop.position.y = 1.6;
         group.add(body, crownBase, crownTop);
     } else if (type === 'king') {
-        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.3, 1.4, 12), mat);
+        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.35, 1.5, 12), mat);
         body.position.y = 0.75;
-        const crossH = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.1, 0.1), mat);
-        const crossV = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.4, 0.1), mat);
-        crossH.position.y = 1.6;
-        crossV.position.y = 1.6;
+        const crossH = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.12, 0.12), mat);
+        const crossV = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.5, 0.12), mat);
+        crossH.position.y = 1.8;
+        crossV.position.y = 1.8;
         group.add(body, crossH, crossV);
     }
 
@@ -180,9 +173,10 @@ function createPiece(x, z, color, type, team) {
     group.userData = { gridX: x, gridZ: z, team, type, originalColor: color };
     scene.add(group);
     pieces.push(group);
+    return group;
 }
 
-// --- 5. MOVIMENTAÇÃO E IA ---
+// --- 5. LÓGICA DE MOVIMENTOS ESPECIAIS ---
 function smoothMove(piece, tx, tz, isLegal, callback) {
     const startPos = piece.position.clone();
     const endPos = new THREE.Vector3(tx - 3.5, 0.1, tz - 3.5);
@@ -201,11 +195,46 @@ function smoothMove(piece, tx, tz, isLegal, callback) {
     step();
 }
 
+function handleSpecialMoves(move) {
+    if (move.flags.includes('p')) {
+        const p = pieces.find(p => p.userData.gridX === fromAlgebraic(move.to).x && p.userData.gridZ === fromAlgebraic(move.to).z);
+        if (p) {
+            const { gridX, gridZ, originalColor, team } = p.userData;
+            scene.remove(p);
+            pieces.splice(pieces.indexOf(p), 1);
+            createPiece(gridX, gridZ, originalColor, 'queen', team);
+        }
+    }
+    if (move.flags.includes('k') || move.flags.includes('q')) {
+        let rookFrom, rookTo;
+        if (move.to === 'g1') { rookFrom = 'h1'; rookTo = 'f1'; } 
+        else if (move.to === 'c1') { rookFrom = 'a1'; rookTo = 'd1'; } 
+        else if (move.to === 'g8') { rookFrom = 'h8'; rookTo = 'f8'; } 
+        else if (move.to === 'c8') { rookFrom = 'a8'; rookTo = 'd8'; } 
+
+        const rPos = fromAlgebraic(rookFrom);
+        const rook3d = pieces.find(p => p.userData.gridX === rPos.x && p.userData.gridZ === rPos.z);
+        if (rook3d) {
+            const target = fromAlgebraic(rookTo);
+            smoothMove(rook3d, target.x, target.z, true);
+        }
+    }
+    if (move.flags.includes('e')) {
+        const epZ = move.color === 'w' ? fromAlgebraic(move.to).z + 1 : fromAlgebraic(move.to).z - 1;
+        const victim = pieces.find(v => v.userData.gridX === fromAlgebraic(move.to).x && v.userData.gridZ === epZ);
+        if (victim) {
+            createExplosion(victim.position, victim.userData.originalColor);
+            scene.remove(victim);
+            pieces.splice(pieces.indexOf(victim), 1);
+        }
+    }
+}
+
 function tryMove(p, tx, tz) {
     const move = game.move({ from: toAlgebraic(p.userData.gridX, p.userData.gridZ), to: toAlgebraic(tx, tz), promotion: 'q' });
     if (move) {
         selectedPiece = null;
-        if (move.captured) {
+        if (move.captured && !move.flags.includes('e')) {
             const victim = pieces.find(v => v.userData.gridX === tx && v.userData.gridZ === tz && v !== p);
             if (victim) { 
                 createExplosion(victim.position, victim.userData.originalColor); 
@@ -213,7 +242,10 @@ function tryMove(p, tx, tz) {
                 pieces.splice(pieces.indexOf(victim), 1); 
             }
         }
-        smoothMove(p, tx, tz, true, () => finalizeTurn(p));
+        smoothMove(p, tx, tz, true, () => {
+            handleSpecialMoves(move);
+            finalizeTurn(p);
+        });
     } else {
         smoothMove(p, p.userData.gridX, p.userData.gridZ, false, () => { deselectPiece(p); selectedPiece = null; });
     }
@@ -225,11 +257,10 @@ function playAiTurn() {
     turnText.innerText = "PC A PENSAR...";
     
     setTimeout(() => {
-        const moves = game.moves();
+        const moves = game.moves({ verbose: true });
         let bestMove = null;
         let bestValue = -9999;
 
-        // A IA pensa 3 jogadas à frente (Profundidade 3)
         for (const move of moves) {
             game.move(move);
             const boardValue = minimax(game, 2, -10000, 10000, false);
@@ -244,12 +275,16 @@ function playAiTurn() {
         const p3d = pieces.find(p => toAlgebraic(p.userData.gridX, p.userData.gridZ) === moveDetails.from);
         const pos = fromAlgebraic(moveDetails.to);
 
-        if (moveDetails.captured) {
+        if (moveDetails.captured && !moveDetails.flags.includes('e')) {
             const victim = pieces.find(v => v.userData.gridX === pos.x && v.userData.gridZ === pos.z);
             if (victim) { createExplosion(victim.position, victim.userData.originalColor); scene.remove(victim); pieces.splice(pieces.indexOf(victim), 1); }
         }
         
-        smoothMove(p3d, pos.x, pos.z, true, () => { finalizeTurn(p3d); isAiThinking = false; });
+        smoothMove(p3d, pos.x, pos.z, true, () => { 
+            handleSpecialMoves(moveDetails);
+            finalizeTurn(p3d); 
+            isAiThinking = false; 
+        });
     }, 500);
 }
 
@@ -310,7 +345,7 @@ function updateStatusUI() {
 }
 
 function finalizeTurn(p) {
-    if(p) deselectPiece(p);
+    if(p && pieces.includes(p)) deselectPiece(p);
     saveGame();
     updateStatusUI();
     if (document.getElementById('game-mode').value === 'pve' && game.turn() === 'b') playAiTurn();
@@ -333,22 +368,20 @@ function resetGame() {
 
 document.getElementById('reset-button').addEventListener('click', resetGame);
 
- function onWindowResize() {
+// --- AJUSTE DE CÂMERA OTIMIZADO PARA CELULAR ---
+function onWindowResize() {
     const w = window.innerWidth, h = window.innerHeight;
     renderer.setSize(w, h);
     camera.aspect = w / h;
 
-    // Ajuste dinâmico para tablets e telemóveis
-    if (h > w) {
-        // Modo Retrato (Telemóvel/Tablet vertical)
-        camera.fov = 60; 
-        camera.position.set(0, 18, 12);
+    if (h > w) { 
+        // Modo Retrato (Celular em pé) - Aumenta o Zoom e inclina mais a câmera
+        camera.fov = 75; 
+        camera.position.set(0, 10, 8); 
     } else if (w < 1100) {
-        // Modo Paisagem em Tablets (Ecrãs médios)
-        camera.fov = 50;
-        camera.position.set(0, 14, 11);
+        camera.fov = 55;
+        camera.position.set(0, 11, 9);
     } else {
-        // Desktop
         camera.fov = 45;
         camera.position.set(0, 12, 10);
     }
@@ -384,25 +417,12 @@ function animate() {
     renderer.render(scene, camera);
 }
 
-// INICIALIZAÇÃO
 createBoard();
 loadGame();
 if (pieces.length === 0) resetGame();
 onWindowResize();
 animate();
 
-// --- 7. LÓGICA DO BOTÃO ATUALIZAR ---
-
-/**
- * Adiciona o evento de clique ao botão de atualizar.
- * O método location.reload(true) força o navegador a recarregar
- * a página a partir do servidor, ignorando o cache local.
- */
 document.getElementById('update-button').addEventListener('click', () => {
-    // Exibe uma mensagem rápida no log antes de recarregar
-    const log = document.getElementById('message-log');
-    if (log) log.innerText = "A atualizar jogo...";
-    
-    // Recarrega a página
     window.location.reload();
 });
