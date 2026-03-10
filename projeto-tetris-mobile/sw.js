@@ -1,5 +1,4 @@
-  const CACHE_NAME = 'fruit-columns-v5'; // Incremente sempre que mudar algo
-
+  const CACHE_NAME = 'fruit-columns-auto-cache';
 const assets = [
   './',
   './index.html',
@@ -13,40 +12,42 @@ const assets = [
   './fim.mp3'
 ];
 
+// Instalação inicial
 self.addEventListener('install', event => {
-  self.skipWaiting(); // Força a ativação imediata
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(assets);
-    })
+    caches.open(CACHE_NAME).then(cache => cache.addAll(assets))
   );
+  self.skipWaiting();
 });
 
-self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cache => {
-          if (cache !== CACHE_NAME) {
-            return caches.delete(cache); // Remove caches antigos
-          }
-        })
-      );
-    })
-  );
-});
-
+// Estratégia Stale-While-Revalidate (Usa o cache mas atualiza por trás)
 self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.match(event.request).then(response => {
-      return response || fetch(event.request);
+    caches.open(CACHE_NAME).then(cache => {
+      return cache.match(event.request).then(response => {
+        const fetchPromise = fetch(event.request).then(networkResponse => {
+          // Se a resposta for válida, atualiza o cache para a próxima vez
+          if (networkResponse && networkResponse.status === 200) {
+            cache.put(event.request, networkResponse.clone());
+          }
+          return networkResponse;
+        }).catch(() => {}); // Ignora erros de rede se estiver offline
+
+        return response || fetchPromise;
+      });
     })
   );
 });
 
-// Escuta o comando de pular espera vindo do navegador
+// Força a ativação e limpa caches antigos se existirem
+self.addEventListener('activate', event => {
+  event.waitUntil(clients.claim());
+});
+
+// Escuta mensagem de pular espera (mantido por segurança)
 self.addEventListener('message', event => {
   if (event.data.action === 'skipWaiting') {
     self.skipWaiting();
   }
-});
+}); 
+  

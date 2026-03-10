@@ -46,19 +46,36 @@
     ✨ Nova atualização disponível! Toque para atualizar.
 </button>
 
-<script>
-  let newWorker;
-
+  <script>
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').then(reg => {
-      reg.addEventListener('updatefound', () => {
-        newWorker = reg.installing;
-        newWorker.addEventListener('statechange', () => {
-          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            // Exibe o banner quando a nova versão está pronta
-            document.getElementById('update-banner').style.display = 'block';
-          }
-        });
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').then(reg => {
+        
+        // Verifica se há atualização no servidor a cada 5 minutos
+        setInterval(() => {
+          reg.update();
+        }, 1000 * 60 * 5);
+
+        reg.onupdatefound = () => {
+          const installingWorker = reg.installing;
+          installingWorker.onstatechange = () => {
+            if (installingWorker.state === 'installed') {
+              if (navigator.serviceWorker.controller) {
+                // Nova versão detectada! Pula espera e recarrega.
+                installingWorker.postMessage({ action: 'skipWaiting' });
+              }
+            }
+          };
+        };
+      });
+
+      // Recarrega a página automaticamente quando o novo SW assume
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!refreshing) {
+          window.location.reload();
+          refreshing = true;
+        }
       });
     });
   }
