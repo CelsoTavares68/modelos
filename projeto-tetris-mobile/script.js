@@ -1,4 +1,4 @@
-  const canvas = document.getElementById('gameCanvas');
+ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const scoreElement = document.getElementById('score');
 const levelElement = document.getElementById('level');
@@ -11,11 +11,13 @@ const sfxDescida = new Audio('descida.mp3');
 const sfxPares = new Audio('formarpares.mp3');
 const sfxMilPontos = new Audio('mil-pontos.mp3');
 const sfxFim = new Audio('fim.mp3');
+
 [sfxAbertura, sfxDescida, sfxPares, sfxMilPontos, sfxFim].forEach(audio => {
     audio.preload = 'auto';
     audio.load();
 });
 
+// Configurações do Jogo
 const ROWS = 15;
 const COLS = 10;
 const BLOCK_SIZE = 40;
@@ -32,9 +34,11 @@ let lastMilestone = 0;
 let comboCount = 0; 
 let floatingTexts = []; 
 
+// Recorde Local
 let highScore = parseInt(localStorage.getItem('fruitColumnsHighScore')) || 0;
 highScoreElement.innerText = highScore;
 
+// Peça Atual
 let piece = randomPiece();
 
 function randomPiece() {
@@ -49,6 +53,7 @@ function randomPiece() {
     };
 }
 
+// FUNÇÃO DE TEXTO FLUTUANTE (AJUSTADA PARA SER MUITO RÁPIDA)
 function addFloatingText(text, x, y, color = 'white', fontSize = '24px') {
     floatingTexts.push({
         text: text,
@@ -57,13 +62,15 @@ function addFloatingText(text, x, y, color = 'white', fontSize = '24px') {
         alpha: 1.0,
         color: color,
         fontSize: fontSize,
-        speedY: -5.5 
+        speedY: -9.0 // Velocidade de subida aumentada drasticamente
     });
 }
 
+// Renderização Principal
 function draw(showBlinking = true) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
+    // Grade de fundo
     ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
     for(let i=0; i<COLS; i++) {
         for(let j=0; j<ROWS; j++) {
@@ -71,6 +78,7 @@ function draw(showBlinking = true) {
         }
     }
 
+    // Desenha Tabuleiro
     for (let r = 0; r < ROWS; r++) {
         for (let c = 0; c < COLS; c++) {
             if (board[r][c] !== null) {
@@ -82,20 +90,20 @@ function draw(showBlinking = true) {
         }
     }
 
+    // Desenha Peça Ativa
     piece.items.forEach((fruitIdx, i) => {
         if (piece.y + i < ROWS) {
             drawBlock(piece.x, piece.y + i, fruitIdx);
         }
     });
 
+    // ATUALIZA E DESENHA TEXTOS FLUTUANTES (FRENÉTICO)
     ctx.save();
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-
+    ctx.textAlign = 'center';
     for (let i = floatingTexts.length - 1; i >= 0; i--) {
         let ft = floatingTexts[i];
         ft.y += ft.speedY; 
-        ft.alpha -= 0.07; 
+        ft.alpha -= 0.15; // Desaparece quase instantaneamente (Fade Out agressivo)
 
         if (ft.alpha <= 0) {
             floatingTexts.splice(i, 1);
@@ -105,12 +113,12 @@ function draw(showBlinking = true) {
             ctx.font = `bold ${ft.fontSize} Arial`;
             ctx.shadowColor = 'black';
             ctx.shadowBlur = 4;
-            ctx.fillText(ft.text, ft.x, ft.y);
-            ctx.shadowBlur = 0;
+            ctx.fillText(ft.text, ft.x + 20, ft.y);
         }
     }
     ctx.restore();
 
+    // Overlay de Pausa
     if (isPaused && blinkingBlocks.length === 0) {
         ctx.fillStyle = "rgba(0,0,0,0.6)";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -128,6 +136,7 @@ function drawBlock(x, y, fruitIdx) {
     ctx.fillText(FRUITS[fruitIdx], x * BLOCK_SIZE + 20, y * BLOCK_SIZE + 20);
 }
 
+// Lógica de Movimento
 function moveDown() {
     if (isPaused) return;
     if (!checkCollision(piece.x, piece.y + 1)) {
@@ -157,8 +166,7 @@ function lockPiece() {
     let nextPiece = randomPiece();
     if (checkCollision(nextPiece.x, nextPiece.y)) {
         sfxFim.currentTime = 0;
-        sfxFim.play().catch(e => console.log("Erro som:", e));
-        
+        sfxFim.play().catch(() => {});
         setTimeout(() => {
             alert("FIM DE JOGO! Pontos: " + score);
             resetGame();
@@ -168,6 +176,7 @@ function lockPiece() {
     }
 }
 
+// Sistema de Combinações
 function clearMatches() {
     let toRemove = [];
     
@@ -175,6 +184,7 @@ function clearMatches() {
         for (let c = 0; c < COLS; c++) {
             let val = board[r][c];
             if (val === null) continue;
+            // Horizontal, Vertical e Diagonais
             if (c+2 < COLS && val === board[r][c+1] && val === board[r][c+2]) toRemove.push({r,c},{r,c:c+1},{r,c:c+2});
             if (r+2 < ROWS && val === board[r+1][c] && val === board[r+2][c]) toRemove.push({r,c},{r:r+1,c},{r:r+2,c});
             if (r+2 < ROWS && c+2 < COLS && val === board[r+1][c+1] && val === board[r+2][c+2]) toRemove.push({r,c},{r:r+1,c:c+1},{r:r+2,c:c+2});
@@ -205,21 +215,25 @@ function clearMatches() {
                 score += pointsGained;
                 scoreElement.innerText = score;
 
-                let avgC = toRemove.reduce((sum, b) => sum + b.c, 0) / toRemove.length;
-                let avgR = toRemove.reduce((sum, b) => sum + b.r, 0) / toRemove.length;
-                let textX = avgC * BLOCK_SIZE;
-                let textY = avgR * BLOCK_SIZE;
+                // Local do texto flutuante
+                let textX = toRemove[0].c * BLOCK_SIZE;
+                let textY = toRemove[0].r * BLOCK_SIZE;
 
                 if (multiplier > 1) {
-                    addFloatingText(`x${multiplier}!`, textX, textY - 20, '#FFD700', '32px');
-                    addFloatingText(`+${pointsGained}`, textX + 10, textY + 10, 'white', '18px');
+                    addFloatingText(`COMBO x${multiplier}!`, textX, textY, '#FFD700', '32px');
                 } else {
-                    addFloatingText(`+${pointsGained}`, textX, textY, 'white', '20px');
+                    addFloatingText(`+${pointsGained}`, textX, textY, 'white', '24px');
                 }
 
+                // Sistema de Níveis e Milestones
                 if (Math.floor(score / 1000) > lastMilestone) {
                     sfxMilPontos.play();
                     lastMilestone = Math.floor(score / 1000);
+                    level++;
+                    levelElement.innerText = level;
+                    speed = Math.max(200, 1000 - (level * 100));
+                    clearInterval(gameLoop);
+                    gameLoop = setInterval(moveDown, speed);
                 }
 
                 if (score > highScore) {
@@ -233,7 +247,7 @@ function clearMatches() {
                 isPaused = false;
                 applyGravity();
                 
-                setTimeout(clearMatches, 80);
+                setTimeout(clearMatches, 50); // Continua a reação em cadeia rápido
             }
         }, 40);
     }
@@ -256,6 +270,7 @@ function applyGravity() {
     draw();
 }
 
+// Controle de Fluxo
 function startGame() {
     clearInterval(gameLoop);
     gameLoop = setInterval(moveDown, speed);
@@ -281,11 +296,12 @@ window.resetGame = function() {
     btnPause.innerText = "Pausar";
     clearInterval(gameLoop);
     piece = randomPiece();
-    floatingTexts = []; 
+    floatingTexts = [];
     startGame();
     draw();
 }
 
+// --- CONTROLES MÓVEIS ---
 function handleAction(type) {
     if (isPaused) return;
     sfxDescida.currentTime = 0;
@@ -318,5 +334,6 @@ Object.keys(controls).forEach(id => {
     }
 });
 
+// Inicialização
 startGame();
 draw();
