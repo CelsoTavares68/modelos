@@ -27,21 +27,19 @@ let score = 0;
 let level = 1;
 let speed = 1000;
 let isPaused = false;
-let isProcessingCombo = false; // NOVA TRAVA: Impede conflitos durante combos
+let isProcessingCombo = false; 
 let gameLoop = null;
 let board = Array(ROWS).fill().map(() => Array(COLS).fill(null));
 let blinkingBlocks = [];
 let lastMilestone = 0; 
 let comboCount = 0; 
 
-// --- ESTRUTURA PARA TEXTOS FLUTUANTES ---
 let floatingTexts = []; 
 
 // Recorde Local
 let highScore = parseInt(localStorage.getItem('fruitColumnsHighScore')) || 0;
 highScoreElement.innerText = highScore;
 
-// Peça Atual
 let piece = randomPiece();
 
 function randomPiece() {
@@ -56,7 +54,7 @@ function randomPiece() {
     };
 }
 
-// --- FUNÇÃO PARA ADICIONAR TEXTO FLUTUANTE (VELOCIDADE CORRIGIDA) ---
+// TEXTOS FLUTUANTES RÁPIDOS
 function addFloatingText(text, x, y, color = 'white', fontSize = '24px') {
     floatingTexts.push({
         text: text,
@@ -65,15 +63,14 @@ function addFloatingText(text, x, y, color = 'white', fontSize = '24px') {
         alpha: 1.0,
         color: color,
         fontSize: fontSize,
-        speedY: -12.0 // Aumentado para feedback rápido
+        speedY: -12.0 
     });
 }
 
-// Renderização Principal
 function draw(showBlinking = true) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Grade de fundo
+    // Grade
     ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
     for(let i=0; i<COLS; i++) {
         for(let j=0; j<ROWS; j++) {
@@ -81,7 +78,7 @@ function draw(showBlinking = true) {
         }
     }
 
-    // Desenha Tabuleiro
+    // Tabuleiro
     for (let r = 0; r < ROWS; r++) {
         for (let c = 0; c < COLS; c++) {
             if (board[r][c] !== null) {
@@ -93,7 +90,7 @@ function draw(showBlinking = true) {
         }
     }
 
-    // Desenha Peça Ativa (apenas se não estiver processando combo)
+    // Peça Ativa
     if (!isProcessingCombo) {
         piece.items.forEach((fruitIdx, i) => {
             if (piece.y + i < ROWS) {
@@ -102,28 +99,24 @@ function draw(showBlinking = true) {
         });
     }
 
-    // --- ATUALIZA E DESENHA TEXTOS FLUTUANTES ---
+    // Textos Flutuantes
     ctx.save();
     ctx.textAlign = 'center';
     for (let i = floatingTexts.length - 1; i >= 0; i--) {
         let ft = floatingTexts[i];
         ft.y += ft.speedY; 
-        ft.alpha -= 0.15; // Fade out mais rápido
-
+        ft.alpha -= 0.15; 
         if (ft.alpha <= 0) {
             floatingTexts.splice(i, 1);
         } else {
             ctx.globalAlpha = ft.alpha;
             ctx.fillStyle = ft.color;
             ctx.font = `bold ${ft.fontSize} Arial`;
-            ctx.shadowColor = 'black';
-            ctx.shadowBlur = 4;
             ctx.fillText(ft.text, ft.x + 20, ft.y);
         }
     }
     ctx.restore();
 
-    // Overlay de Pausa
     if (isPaused && !isProcessingCombo) {
         ctx.fillStyle = "rgba(0,0,0,0.6)";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -141,7 +134,6 @@ function drawBlock(x, y, fruitIdx) {
     ctx.fillText(FRUITS[fruitIdx], x * BLOCK_SIZE + 20, y * BLOCK_SIZE + 20);
 }
 
-// Lógica de Movimento
 function moveDown() {
     if (isPaused || isProcessingCombo) return;
     if (!checkCollision(piece.x, piece.y + 1)) {
@@ -161,21 +153,17 @@ function checkCollision(nx, ny) {
 }
 
 function lockPiece() {
-    isProcessingCombo = true; // Trava para evitar bugs na transição
+    isProcessingCombo = true;
     comboCount = 0; 
     piece.items.forEach((fruitIdx, i) => {
-        if (piece.y + i < ROWS) {
-            board[piece.y + i][piece.x] = fruitIdx;
-        }
+        if (piece.y + i < ROWS) board[piece.y + i][piece.x] = fruitIdx;
     });
-    
     clearMatches();
 }
 
-// Sistema de Combinações
+// --- LÓGICA DE COMBOS (ONDE OCORRIA O TRAVAMENTO) ---
 function clearMatches() {
     let toRemove = [];
-    
     for (let r = 0; r < ROWS; r++) {
         for (let c = 0; c < COLS; c++) {
             let val = board[r][c];
@@ -191,8 +179,8 @@ function clearMatches() {
         blinkingBlocks = toRemove;
         comboCount++; 
 
-        sfxPares.currentTime = 0; 
-        sfxPares.playbackRate = Math.min(2, 1 + (comboCount * 0.1)); 
+        // Toca som de par com segurança
+        sfxPares.currentTime = 0;
         sfxPares.play().catch(() => {});
 
         let flashes = 0;
@@ -203,29 +191,22 @@ function clearMatches() {
             if (flashes > 3) {
                 clearInterval(flashInterval);
                 
-                let multiplier = comboCount; 
-                let pointsGained = (toRemove.length * 15) * multiplier;
-                
-                score += pointsGained;
+                let pts = (toRemove.length * 15) * comboCount;
+                score += pts;
                 scoreElement.innerText = score;
 
-                let avgC = toRemove[0].c;
-                let avgR = toRemove[0].r;
-
-                if (multiplier > 1) {
-                    addFloatingText(`x${multiplier}!`, avgC * BLOCK_SIZE, avgR * BLOCK_SIZE, '#FFD700', '32px');
-                } else {
-                    addFloatingText(`+${pointsGained}`, avgC * BLOCK_SIZE, avgR * BLOCK_SIZE, 'white', '20px');
-                }
-
-                // SOM DE MIL PONTOS E NÍVEL (PROTEGIDO)
+                // FEEDBACK DE MIL PONTOS SEM CONGELAR
                 if (Math.floor(score / 1000) > lastMilestone) {
                     lastMilestone = Math.floor(score / 1000);
-                    sfxMilPontos.play().catch(() => {});
                     level++;
                     levelElement.innerText = level;
                     speed = Math.max(150, 1000 - (level * 80));
-                    startGame();
+                    
+                    // Toca som de mil pontos de forma assíncrona
+                    setTimeout(() => { sfxMilPontos.play().catch(() => {}); }, 50);
+                    
+                    // Reinicia o loop com a nova velocidade apenas após o combo terminar
+                    if(!isPaused) startGame(); 
                 }
 
                 if (score > highScore) {
@@ -234,23 +215,21 @@ function clearMatches() {
                     localStorage.setItem('fruitColumnsHighScore', highScore);
                 }
 
+                addFloatingText(comboCount > 1 ? `COMBO x${comboCount}!` : `+${pts}`, toRemove[0].c * BLOCK_SIZE, toRemove[0].r * BLOCK_SIZE);
+
                 toRemove.forEach(b => board[b.r][b.c] = null);
                 blinkingBlocks = [];
                 applyGravity();
                 
-                setTimeout(clearMatches, 100);
+                setTimeout(clearMatches, 150);
             }
         }, 40);
     } else {
-        // Se não há mais matches, libera a nova peça e desativa a trava
         isProcessingCombo = false;
         let nextPiece = randomPiece();
         if (checkCollision(nextPiece.x, nextPiece.y)) {
             sfxFim.play().catch(() => {});
-            setTimeout(() => {
-                alert("FIM DE JOGO! Pontos: " + score);
-                resetGame();
-            }, 100);
+            setTimeout(() => { alert("FIM DE JOGO!"); resetGame(); }, 100);
         } else {
             piece = nextPiece;
         }
@@ -282,13 +261,8 @@ function startGame() {
 window.togglePause = function() {
     if (isProcessingCombo) return;
     isPaused = !isPaused;
-    if (isPaused) {
-        clearInterval(gameLoop);
-        btnPause.innerText = "Continuar";
-    } else {
-        startGame();
-        btnPause.innerText = "Pausar";
-    }
+    btnPause.innerText = isPaused ? "Continuar" : "Pausar";
+    if (isPaused) clearInterval(gameLoop); else startGame();
     draw();
 }
 
@@ -297,7 +271,6 @@ window.resetGame = function() {
     board = Array(ROWS).fill().map(() => Array(COLS).fill(null));
     score = 0; level = 1; speed = 1000; isPaused = false; lastMilestone = 0; comboCount = 0;
     scoreElement.innerText = "0"; levelElement.innerText = "1";
-    btnPause.innerText = "Pausar";
     clearInterval(gameLoop);
     isProcessingCombo = false;
     piece = randomPiece();
@@ -310,30 +283,20 @@ function handleAction(type) {
     if (isPaused || isProcessingCombo) return;
     sfxDescida.currentTime = 0;
     sfxDescida.play().catch(() => {});
-
     switch(type) {
         case 'left': if (piece.x > 0 && !checkCollision(piece.x - 1, piece.y)) piece.x--; break;
         case 'right': if (piece.x < COLS - 1 && !checkCollision(piece.x + 1, piece.y)) piece.x++; break;
         case 'down': moveDown(); break;
-        case 'rotate': 
-            let last = piece.items.pop(); 
-            piece.items.unshift(last); 
-            break;
+        case 'rotate': let last = piece.items.pop(); piece.items.unshift(last); break;
     }
     draw();
 }
 
-const controls = {
-    'btnLeft': 'left', 'btnRight': 'right', 'btnDown': 'down', 'btnRotate': 'rotate'
-};
-
+const controls = {'btnLeft': 'left', 'btnRight': 'right', 'btnDown': 'down', 'btnRotate': 'rotate'};
 Object.keys(controls).forEach(id => {
     const btn = document.getElementById(id);
     if(btn) {
-        btn.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            handleAction(controls[id]);
-        }, { passive: false });
+        btn.addEventListener('touchstart', (e) => { e.preventDefault(); handleAction(controls[id]); }, { passive: false });
         btn.addEventListener('click', () => handleAction(controls[id]));
     }
 });
