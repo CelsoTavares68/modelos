@@ -307,7 +307,7 @@ function update() {
     playerX -= (roadCurve * 0.06) * (speed / maxSpeed); 
     if (keys.ArrowLeft) playerX -= 5;
     if (keys.ArrowRight) playerX += 5;
-    playerX = Math.max(-650, Math.min(650, playerX));
+    playerX = Math.max(-480, Math.min(480, playerX));
 
     if (--curveTimer <= 0) { 
         if (Math.random() > 0.6) { targetCurve = 0; curveTimer = 100 + Math.random() * 200; }
@@ -348,7 +348,7 @@ function update() {
 
     if (gameTick % 250 === 0 && enemies.length < 100) {
         enemies.push({ 
-            lane: (Math.random() - 0.5) * 3.2, 
+            lane: (Math.random() - 0.5) * 1.8, 
             z: 4000, 
             v: 10.0, 
             color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)],
