@@ -17,7 +17,6 @@ scene.add(sun);
 
 let turn = 'white';
 let isAiThinking = false;
-let lastInteractionTime = 0;
 const pieces = []; 
 const tiles = [];
 const particles = []; 
@@ -247,26 +246,50 @@ function tryMove(p, tx, tz) {
     }
 }
 
+// --- IA INTELIGENTE REATIVADA ---
 function playAiTurn() {
     if (game.game_over()) return;
     isAiThinking = true;
     turnText.innerText = "PC A PENSAR...";
+    
     setTimeout(() => {
         const moves = game.moves({ verbose: true });
-        let bestMove = moves[Math.floor(Math.random() * moves.length)];
+        let bestMove = null;
+        let bestValue = -9999;
+
+        // Escolha da dificuldade
+        const difficulty = document.getElementById('difficulty-level').value;
+        const depth = difficulty === 'hard' ? 3 : 1;
+
+        for (const move of moves) {
+            game.move(move);
+            const boardValue = minimax(game, depth - 1, -10000, 10000, false);
+            game.undo();
+            if (boardValue > bestValue) {
+                bestValue = boardValue;
+                bestMove = move;
+            }
+        }
+
         const moveDetails = game.move(bestMove);
         const p3d = pieces.find(p => toAlgebraic(p.userData.gridX, p.userData.gridZ) === moveDetails.from);
         const pos = fromAlgebraic(moveDetails.to);
+
         if (moveDetails.captured && !moveDetails.flags.includes('e')) {
             const victim = pieces.find(v => v.userData.gridX === pos.x && v.userData.gridZ === pos.z);
-            if (victim) { createExplosion(victim.position, victim.userData.originalColor); scene.remove(victim); pieces.splice(pieces.indexOf(victim), 1); }
+            if (victim) { 
+                createExplosion(victim.position, victim.userData.originalColor); 
+                scene.remove(victim); 
+                pieces.splice(pieces.indexOf(victim), 1); 
+            }
         }
+        
         smoothMove(p3d, pos.x, pos.z, true, () => { 
             handleSpecialMoves(moveDetails);
             finalizeTurn(p3d); 
             isAiThinking = false; 
         });
-    }, 500);
+    }, 250);
 }
 
 // --- 6. INTERAÇÃO E TABULEIRO ---
@@ -343,26 +366,21 @@ function resetGame() {
 
 document.getElementById('reset-button').addEventListener('click', resetGame);
 
-// --- AJUSTE DE CÂMERA DINÂMICO ---
+// --- AJUSTE DE CÂMERA DINÂMICO (PROPORÇÕES APROVADAS) ---
 function onWindowResize() {
     const w = window.innerWidth, h = window.innerHeight;
     renderer.setSize(w, h);
     camera.aspect = w / h;
 
     if (h > w) { 
-        // VISÃO VERTICAL (MOBILE/TABLET)
         if (w < 500) {
-            // CELULAR: Aumentei a altura para 17 e baixei o FOV para 55
-            // Isso afasta a câmera o suficiente para as torres das bordas aparecerem
             camera.fov = 55; 
             camera.position.set(0, 17, 0.01); 
         } else {
-            // TABLET
             camera.fov = 70;
             camera.position.set(0, 10, 0.01); 
         }
     } else {
-        // VISÃO HORIZONTAL (PC)
         camera.fov = 45;
         camera.position.set(0, 12, 10);
     }
