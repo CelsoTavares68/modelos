@@ -333,7 +333,7 @@ function update() {
 
     if (gameTick % 240 === 0 && enemies.length < 100) {
         enemies.push({ 
-            lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 9.0, 
+            lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 8.0, 
             color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)],
             isOvertaken: false 
         });

@@ -168,7 +168,6 @@ select:hover {
     /* Filtro aplicado diretamente no Canvas do jogo */
     canvas {
         /* Aumenta o contraste e brilho para separar as peças pretas do tabuleiro */
-        filter: contrast(1.15) brightness(1.1) saturate(1.1);
         image-rendering: auto;
     }
 
