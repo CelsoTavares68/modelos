@@ -10,9 +10,9 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap; 
 document.body.appendChild(renderer.domElement);
 
-// ILUMINAÇÃO AJUSTADA (BRILHO REDUZIDO PARA MELHORAR O CINZA)
-scene.add(new THREE.AmbientLight(0xffffff, 0.4)); // Reduzido de 0.5 para 0.4
-const sun = new THREE.DirectionalLight(0xffffff, 0.8); // Reduzido de 1.2 para 0.8 para evitar estourar o cinza
+// ILUMINAÇÃO AJUSTADA (BRILHO REDUZIDO PARA O CINZA)
+scene.add(new THREE.AmbientLight(0xffffff, 0.4)); 
+const sun = new THREE.DirectionalLight(0xffffff, 0.8); 
 sun.position.set(5, 12, 8); 
 sun.castShadow = true;
 sun.shadow.mapSize.width = 1024;
@@ -30,17 +30,19 @@ const turnText = document.getElementById('turn-indicator');
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
-// --- 2. INTELIGÊNCIA ARTIFICIAL (MINIMAX + PESOS) ---
-const weights = { p: 10, n: 30, b: 30, r: 50, q: 90, k: 900 };
+// --- 2. INTELIGÊNCIA ARTIFICIAL (DIFICULDADE APRIMORADA) ---
+const weights = { p: 10, n: 32, b: 33, r: 50, q: 90, k: 900 };
+
+// Tabelas de peso por posição (torna a IA mais estratégica no centro)
 const boardValues = [
-    [5, 5, 5, 5, 5, 5, 5, 5],
-    [4, 10, 10, 10, 10, 10, 10, 4],
-    [2, 5, 15, 20, 20, 15, 5, 2],
-    [0, 5, 20, 25, 25, 20, 5, 0],
-    [0, 5, 20, 25, 25, 20, 5, 0],
-    [2, 5, 15, 20, 20, 15, 5, 2],
-    [4, 10, 10, 10, 10, 10, 10, 4],
-    [5, 5, 5, 5, 5, 5, 5, 5]
+    [0,  0,  0,  0,  0,  0,  0,  0],
+    [5, 10, 10, -20, -20, 10, 10,  5],
+    [5, -5, -10,  0,  0, -10, -5,  5],
+    [0,  0,  0, 20, 20,  0,  0,  0],
+    [5,  5, 10, 25, 25, 10,  5,  5],
+    [10, 10, 20, 30, 30, 20, 10, 10],
+    [50, 50, 50, 50, 50, 50, 50, 50],
+    [0,  0,  0,  0,  0,  0,  0,  0]
 ];
 
 function evaluateBoard(currentBoard) {
@@ -49,7 +51,8 @@ function evaluateBoard(currentBoard) {
         for (let j = 0; j < 8; j++) {
             const piece = currentBoard[i][j];
             if (piece) {
-                const val = weights[piece.type] + boardValues[i][j];
+                // Soma o valor da peça + o bônus de posição
+                const val = weights[piece.type] + (piece.color === 'w' ? boardValues[7-i][j] : boardValues[i][j]);
                 totalEval += (piece.color === 'w' ? val : -val);
             }
         }
@@ -59,9 +62,17 @@ function evaluateBoard(currentBoard) {
 
 function minimax(gameInstance, depth, alpha, beta, isMaximizing) {
     if (depth === 0) return -evaluateBoard(gameInstance.board());
+    
     const moves = gameInstance.moves();
+    
+    // Se não houver movimentos, verifica se é xeque-mate ou empate
+    if (moves.length === 0) {
+        if (gameInstance.in_checkmate()) return isMaximizing ? -9999 : 9999;
+        return 0;
+    }
+
     if (isMaximizing) {
-        let bestEval = -9999;
+        let bestEval = -10000;
         for (const move of moves) {
             gameInstance.move(move);
             bestEval = Math.max(bestEval, minimax(gameInstance, depth - 1, alpha, beta, false));
@@ -71,7 +82,7 @@ function minimax(gameInstance, depth, alpha, beta, isMaximizing) {
         }
         return bestEval;
     } else {
-        let bestEval = 9999;
+        let bestEval = 10000;
         for (const move of moves) {
             gameInstance.move(move);
             bestEval = Math.min(bestEval, minimax(gameInstance, depth - 1, alpha, beta, true));
@@ -114,7 +125,6 @@ function loadGame() {
         for (let c = 0; c < 8; c++) {
             const square = board[r][c];
             if (square) {
-                // Pretas agora usam Cinza Chumbo (0x666666)
                 const color = square.color === 'w' ? 0xeeeeee : 0x666666;
                 createPiece(c, r, color, typeMap[square.type], square.color === 'w' ? 'white' : 'black');
             }
@@ -123,12 +133,12 @@ function loadGame() {
     updateStatusUI();
 }
 
-// --- 4. CRIAÇÃO DAS PEÇAS (PEÇAS PRETAS => CINZA) ---
+// --- 4. CRIAÇÃO DAS PEÇAS ---
 function createPiece(x, z, color, type, team) {
     const group = new THREE.Group();
     const mat = new THREE.MeshStandardMaterial({ 
         color, 
-        roughness: 0.5, // Material mais fosco para captar melhor as sombras no cinza
+        roughness: 0.5, 
         metalness: 0.2,
         emissive: new THREE.Color(0x000000)
     });
@@ -253,12 +263,14 @@ function playAiTurn() {
     setTimeout(() => {
         const moves = game.moves({ verbose: true });
         let bestMove = null;
-        let bestValue = -9999;
-        const depth = document.getElementById('difficulty-level').value === 'hard' ? 3 : 1;
+        let bestValue = -20000;
+        
+        // No Fácil (depth 2) a IA já joga com consciência. No difícil (depth 3) ela prevê muito mais.
+        const depth = document.getElementById('difficulty-level').value === 'hard' ? 3 : 2;
 
         for (const move of moves) {
             game.move(move);
-            const boardValue = minimax(game, depth - 1, -10000, 10000, false);
+            const boardValue = minimax(game, depth - 1, -20000, 20000, false);
             game.undo();
             if (boardValue > bestValue) {
                 bestValue = boardValue;
@@ -291,7 +303,7 @@ function createBoard() {
             const tile = new THREE.Mesh(
                 new THREE.BoxGeometry(1, 0.1, 1), 
                 new THREE.MeshStandardMaterial({ 
-                    color: isBlack ? 0x331100 : 0xccaa88, // Tabuleiro levemente mais escuro para contrastar com cinza
+                    color: isBlack ? 0x331100 : 0xccaa88, 
                     roughness: 0.8 
                 })
             );
@@ -353,7 +365,6 @@ function resetGame() {
     pieces.length = 0;
     const layout = ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knight', 'rook'];
     for (let i = 0; i < 8; i++) {
-        // Cores inicializadas como Cinza (0x666666) e Branco (0xeeeeee)
         createPiece(i, 0, 0x666666, layout[i], 'black');
         createPiece(i, 1, 0x666666, 'pawn', 'black');
         createPiece(i, 6, 0xeeeeee, 'pawn', 'white');
