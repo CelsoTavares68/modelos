@@ -1,4 +1,4 @@
- const canvas = document.getElementById('gameCanvas');
+  const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const scoreElement = document.getElementById('score');
 const levelElement = document.getElementById('level');
@@ -16,7 +16,6 @@ const sfxFim = new Audio('fim.mp3');
     audio.load();
 });
 
-// Configurações do Jogo
 const ROWS = 15;
 const COLS = 10;
 const BLOCK_SIZE = 40;
@@ -30,16 +29,12 @@ let gameLoop = null;
 let board = Array(ROWS).fill().map(() => Array(COLS).fill(null));
 let blinkingBlocks = [];
 let lastMilestone = 0; 
-let comboCount = 0; // Rastreia as reações em cadeia
-
-// --- NOVA ESTRUTURA PARA TEXTOS FLUTUANTES ---
+let comboCount = 0; 
 let floatingTexts = []; 
 
-// Recorde Local
 let highScore = parseInt(localStorage.getItem('fruitColumnsHighScore')) || 0;
 highScoreElement.innerText = highScore;
 
-// Peça Atual
 let piece = randomPiece();
 
 function randomPiece() {
@@ -54,24 +49,21 @@ function randomPiece() {
     };
 }
 
-// --- FUNÇÃO PARA ADICIONAR TEXTO FLUTUANTE ---
 function addFloatingText(text, x, y, color = 'white', fontSize = '24px') {
     floatingTexts.push({
         text: text,
         x: x,
         y: y,
-        alpha: 1.0, // Opacidade inicial
+        alpha: 1.0,
         color: color,
         fontSize: fontSize,
-        speedY: -5.5 // Velocidade de subida
+        speedY: -5.5 
     });
 }
 
-// Renderização Principal
 function draw(showBlinking = true) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Grade de fundo
     ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
     for(let i=0; i<COLS; i++) {
         for(let j=0; j<ROWS; j++) {
@@ -79,7 +71,6 @@ function draw(showBlinking = true) {
         }
     }
 
-    // Desenha Tabuleiro
     for (let r = 0; r < ROWS; r++) {
         for (let c = 0; c < COLS; c++) {
             if (board[r][c] !== null) {
@@ -91,39 +82,35 @@ function draw(showBlinking = true) {
         }
     }
 
-    // Desenha Peça Ativa
     piece.items.forEach((fruitIdx, i) => {
         if (piece.y + i < ROWS) {
             drawBlock(piece.x, piece.y + i, fruitIdx);
         }
     });
 
-    // --- ATUALIZA E DESENHA TEXTOS FLUTUANTES ---
-    ctx.save(); // Salva o estado do contexto
+    ctx.save();
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
 
     for (let i = floatingTexts.length - 1; i >= 0; i--) {
         let ft = floatingTexts[i];
-        ft.y += ft.speedY; // Move para cima
-        ft.alpha -= 0.07; // Diminui opacidade (fade out)
+        ft.y += ft.speedY; 
+        ft.alpha -= 0.07; 
 
         if (ft.alpha <= 0) {
-            floatingTexts.splice(i, 1); // Remove se estiver invisível
+            floatingTexts.splice(i, 1);
         } else {
             ctx.globalAlpha = ft.alpha;
             ctx.fillStyle = ft.color;
             ctx.font = `bold ${ft.fontSize} Arial`;
-            // Pequena sombra para contraste
             ctx.shadowColor = 'black';
             ctx.shadowBlur = 4;
             ctx.fillText(ft.text, ft.x, ft.y);
-            ctx.shadowBlur = 0; // Reseta a sombra
+            ctx.shadowBlur = 0;
         }
     }
-    ctx.restore(); // Restaura o estado anterior
+    ctx.restore();
 
-    // Overlay de Pausa
     if (isPaused && blinkingBlocks.length === 0) {
         ctx.fillStyle = "rgba(0,0,0,0.6)";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -141,7 +128,6 @@ function drawBlock(x, y, fruitIdx) {
     ctx.fillText(FRUITS[fruitIdx], x * BLOCK_SIZE + 20, y * BLOCK_SIZE + 20);
 }
 
-// Lógica de Movimento
 function moveDown() {
     if (isPaused) return;
     if (!checkCollision(piece.x, piece.y + 1)) {
@@ -161,7 +147,7 @@ function checkCollision(nx, ny) {
 }
 
 function lockPiece() {
-    comboCount = 0; // Resetamos o combo pois o jogador iniciou uma nova trava
+    comboCount = 0; 
     piece.items.forEach((fruitIdx, i) => {
         board[piece.y + i][piece.x] = fruitIdx;
     });
@@ -182,7 +168,6 @@ function lockPiece() {
     }
 }
 
-// Sistema de Combinações com Reação em Cadeia e Feedback Visual
 function clearMatches() {
     let toRemove = [];
     
@@ -190,7 +175,6 @@ function clearMatches() {
         for (let c = 0; c < COLS; c++) {
             let val = board[r][c];
             if (val === null) continue;
-            // Horizontal, Vertical e Diagonais
             if (c+2 < COLS && val === board[r][c+1] && val === board[r][c+2]) toRemove.push({r,c},{r,c:c+1},{r,c:c+2});
             if (r+2 < ROWS && val === board[r+1][c] && val === board[r+2][c]) toRemove.push({r,c},{r:r+1,c},{r:r+2,c});
             if (r+2 < ROWS && c+2 < COLS && val === board[r+1][c+1] && val === board[r+2][c+2]) toRemove.push({r,c},{r:r+1,c:c+1},{r:r+2,c:c+2});
@@ -201,9 +185,8 @@ function clearMatches() {
     if (toRemove.length > 0) {
         blinkingBlocks = toRemove;
         isPaused = true; 
-        comboCount++; // Incrementa a cada "trilha" encontrada na mesma sequência
+        comboCount++; 
 
-        // Feedback sonoro: fica mais agudo em combos altos
         sfxPares.currentTime = 0; 
         sfxPares.playbackRate = Math.min(2, 1 + (comboCount * 0.1)); 
         sfxPares.play();
@@ -216,29 +199,21 @@ function clearMatches() {
             if (flashes > 3) {
                 clearInterval(flashInterval);
                 
-                // --- PONTUAÇÃO E FEEDBACK VISUAL ---
-                // Multiplicador progressivo: x1, x2, x3...
                 let multiplier = comboCount; 
                 let pointsGained = (toRemove.length * 15) * multiplier;
                 
                 score += pointsGained;
                 scoreElement.innerText = score;
 
-                // --- NOVA LOGICA DE TEXTO FLUTUANTE ---
-                // Pega a posição média da combinação para centralizar o texto
                 let avgC = toRemove.reduce((sum, b) => sum + b.c, 0) / toRemove.length;
                 let avgR = toRemove.reduce((sum, b) => sum + b.r, 0) / toRemove.length;
                 let textX = avgC * BLOCK_SIZE;
                 let textY = avgR * BLOCK_SIZE;
 
                 if (multiplier > 1) {
-                    console.log(`TRILHA RESULTANTE! x${multiplier}`);
-                    // Cor amarela/ouro para o multiplicador
                     addFloatingText(`x${multiplier}!`, textX, textY - 20, '#FFD700', '32px');
-                    // Pontos em branco menores
                     addFloatingText(`+${pointsGained}`, textX + 10, textY + 10, 'white', '18px');
                 } else {
-                    // Texto normal de pontuação
                     addFloatingText(`+${pointsGained}`, textX, textY, 'white', '20px');
                 }
 
@@ -253,13 +228,11 @@ function clearMatches() {
                     localStorage.setItem('fruitColumnsHighScore', highScore);
                 }
 
-                // Remove blocos e aplica gravidade
                 toRemove.forEach(b => board[b.r][b.c] = null);
                 blinkingBlocks = [];
                 isPaused = false;
                 applyGravity();
                 
-                // Chama novamente para verificar se a queda gerou NOVAS trilhas
                 setTimeout(clearMatches, 80);
             }
         }, 40);
@@ -283,7 +256,6 @@ function applyGravity() {
     draw();
 }
 
-// Fluxo de Jogo
 function startGame() {
     clearInterval(gameLoop);
     gameLoop = setInterval(moveDown, speed);
@@ -309,12 +281,11 @@ window.resetGame = function() {
     btnPause.innerText = "Pausar";
     clearInterval(gameLoop);
     piece = randomPiece();
-    floatingTexts = []; // Limpa textos antigos
+    floatingTexts = []; 
     startGame();
     draw();
 }
 
-// CONTROLES
 function handleAction(type) {
     if (isPaused) return;
     sfxDescida.currentTime = 0;
@@ -347,6 +318,5 @@ Object.keys(controls).forEach(id => {
     }
 });
 
-// Inicialização
 startGame();
 draw();
