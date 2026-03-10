@@ -5,7 +5,7 @@ const levelElement = document.getElementById('level');
 const highScoreElement = document.getElementById('highScore');
 const btnPause = document.getElementById('btnPause');
 
-// --- CONFIGURAÇÃO DE ÁUDIOS ---
+// --- 1. CONFIGURAÇÃO DE ÁUDIOS (PRESERVAÇÃO TOTAL) ---
 const sfxAbertura = new Audio('abertura.mp3');
 const sfxDescida = new Audio('descida.mp3');
 const sfxPares = new Audio('formarpares.mp3');
@@ -17,7 +17,7 @@ const sfxFim = new Audio('fim.mp3');
     audio.load();
 });
 
-// Configurações do Jogo
+// --- 2. VARIÁVEIS DE ESTADO ---
 const ROWS = 15;
 const COLS = 10;
 const BLOCK_SIZE = 40;
@@ -27,6 +27,7 @@ let score = 0;
 let level = 1;
 let speed = 1000;
 let isPaused = false;
+let isProcessingCombo = false; // Trava para não bugar no Combo 3
 let gameLoop = null;
 let board = Array(ROWS).fill().map(() => Array(COLS).fill(null));
 let blinkingBlocks = [];
@@ -34,11 +35,9 @@ let lastMilestone = 0;
 let comboCount = 0; 
 let floatingTexts = []; 
 
-// Recorde Local
 let highScore = parseInt(localStorage.getItem('fruitColumnsHighScore')) || 0;
 highScoreElement.innerText = highScore;
 
-// Peça Atual
 let piece = randomPiece();
 
 function randomPiece() {
@@ -53,7 +52,7 @@ function randomPiece() {
     };
 }
 
-// FUNÇÃO DE TEXTO FLUTUANTE (AJUSTADA PARA SER MUITO RÁPIDA)
+// --- 3. SISTEMA DE TEXTO FLUTUANTE (AJUSTADO PARA VELOCIDADE MÁXIMA) ---
 function addFloatingText(text, x, y, color = 'white', fontSize = '24px') {
     floatingTexts.push({
         text: text,
@@ -62,11 +61,11 @@ function addFloatingText(text, x, y, color = 'white', fontSize = '24px') {
         alpha: 1.0,
         color: color,
         fontSize: fontSize,
-        speedY: -9.0 // Velocidade de subida aumentada drasticamente
+        speedY: -12.0 // Dispara para cima rapidamente
     });
 }
 
-// Renderização Principal
+// --- 4. RENDERIZAÇÃO PRINCIPAL ---
 function draw(showBlinking = true) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
@@ -90,12 +89,14 @@ function draw(showBlinking = true) {
         }
     }
 
-    // Desenha Peça Ativa
-    piece.items.forEach((fruitIdx, i) => {
-        if (piece.y + i < ROWS) {
-            drawBlock(piece.x, piece.y + i, fruitIdx);
-        }
-    });
+    // Desenha Peça Ativa (esconde durante o combo para não sobrepor)
+    if (!isProcessingCombo) {
+        piece.items.forEach((fruitIdx, i) => {
+            if (piece.y + i < ROWS) {
+                drawBlock(piece.x, piece.y + i, fruitIdx);
+            }
+        });
+    }
 
     // ATUALIZA E DESENHA TEXTOS FLUTUANTES (FRENÉTICO)
     ctx.save();
@@ -103,7 +104,7 @@ function draw(showBlinking = true) {
     for (let i = floatingTexts.length - 1; i >= 0; i--) {
         let ft = floatingTexts[i];
         ft.y += ft.speedY; 
-        ft.alpha -= 0.15; // Desaparece quase instantaneamente (Fade Out agressivo)
+        ft.alpha -= 0.15; // Some em frações de segundo
 
         if (ft.alpha <= 0) {
             floatingTexts.splice(i, 1);
@@ -119,7 +120,7 @@ function draw(showBlinking = true) {
     ctx.restore();
 
     // Overlay de Pausa
-    if (isPaused && blinkingBlocks.length === 0) {
+    if (isPaused && !isProcessingCombo) {
         ctx.fillStyle = "rgba(0,0,0,0.6)";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = "white";
@@ -136,9 +137,9 @@ function drawBlock(x, y, fruitIdx) {
     ctx.fillText(FRUITS[fruitIdx], x * BLOCK_SIZE + 20, y * BLOCK_SIZE + 20);
 }
 
-// Lógica de Movimento
+// --- 5. LÓGICA DE MOVIMENTO E COLISÃO ---
 function moveDown() {
-    if (isPaused) return;
+    if (isPaused || isProcessingCombo) return;
     if (!checkCollision(piece.x, piece.y + 1)) {
         piece.y++;
     } else {
@@ -158,28 +159,14 @@ function checkCollision(nx, ny) {
 function lockPiece() {
     comboCount = 0; 
     piece.items.forEach((fruitIdx, i) => {
-        board[piece.y + i][piece.x] = fruitIdx;
+        if (piece.y + i < ROWS) board[piece.y + i][piece.x] = fruitIdx;
     });
-    
     clearMatches();
-    
-    let nextPiece = randomPiece();
-    if (checkCollision(nextPiece.x, nextPiece.y)) {
-        sfxFim.currentTime = 0;
-        sfxFim.play().catch(() => {});
-        setTimeout(() => {
-            alert("FIM DE JOGO! Pontos: " + score);
-            resetGame();
-        }, 100);
-    } else {
-        piece = nextPiece;
-    }
 }
 
-// Sistema de Combinações
+// --- 6. SISTEMA DE COMBINAÇÕES (SEM SIMPLIFICAÇÃO) ---
 function clearMatches() {
     let toRemove = [];
-    
     for (let r = 0; r < ROWS; r++) {
         for (let c = 0; c < COLS; c++) {
             let val = board[r][c];
@@ -193,8 +180,8 @@ function clearMatches() {
     }
 
     if (toRemove.length > 0) {
+        isProcessingCombo = true;
         blinkingBlocks = toRemove;
-        isPaused = true; 
         comboCount++; 
 
         sfxPares.currentTime = 0; 
@@ -205,37 +192,34 @@ function clearMatches() {
         let flashInterval = setInterval(() => {
             flashes++;
             draw(flashes % 2 === 0);
-            
             if (flashes > 3) {
                 clearInterval(flashInterval);
                 
-                let multiplier = comboCount; 
-                let pointsGained = (toRemove.length * 15) * multiplier;
-                
-                score += pointsGained;
+                let pts = (toRemove.length * 15) * comboCount;
+                score += pts;
                 scoreElement.innerText = score;
 
-                // Local do texto flutuante
-                let textX = toRemove[0].c * BLOCK_SIZE;
-                let textY = toRemove[0].r * BLOCK_SIZE;
+                // Centraliza texto no combo
+                let avgC = toRemove[0].c;
+                let avgR = toRemove[0].r;
 
-                if (multiplier > 1) {
-                    addFloatingText(`COMBO x${multiplier}!`, textX, textY, '#FFD700', '32px');
+                if (comboCount > 1) {
+                    addFloatingText(`x${comboCount}!`, avgC * BLOCK_SIZE, avgR * BLOCK_SIZE, '#FFD700', '32px');
                 } else {
-                    addFloatingText(`+${pointsGained}`, textX, textY, 'white', '24px');
+                    addFloatingText(`+${pts}`, avgC * BLOCK_SIZE, avgR * BLOCK_SIZE, 'white', '22px');
                 }
 
-                // Sistema de Níveis e Milestones
+                // Milestones e Nível
                 if (Math.floor(score / 1000) > lastMilestone) {
                     sfxMilPontos.play();
                     lastMilestone = Math.floor(score / 1000);
                     level++;
                     levelElement.innerText = level;
-                    speed = Math.max(200, 1000 - (level * 100));
-                    clearInterval(gameLoop);
-                    gameLoop = setInterval(moveDown, speed);
+                    speed = Math.max(150, 1000 - (level * 100));
+                    startGame();
                 }
 
+                // Recorde
                 if (score > highScore) {
                     highScore = score;
                     highScoreElement.innerText = highScore;
@@ -244,12 +228,20 @@ function clearMatches() {
 
                 toRemove.forEach(b => board[b.r][b.c] = null);
                 blinkingBlocks = [];
-                isPaused = false;
                 applyGravity();
-                
-                setTimeout(clearMatches, 50); // Continua a reação em cadeia rápido
+                setTimeout(clearMatches, 50); // Continua reação quase instantânea
             }
         }, 40);
+    } else {
+        isProcessingCombo = false;
+        let nextPiece = randomPiece();
+        if (checkCollision(nextPiece.x, nextPiece.y)) {
+            sfxFim.play();
+            alert("FIM DE JOGO! Score: " + score);
+            resetGame();
+        } else {
+            piece = nextPiece;
+        }
     }
 }
 
@@ -270,7 +262,7 @@ function applyGravity() {
     draw();
 }
 
-// Controle de Fluxo
+// --- 7. FLUXO E CONTROLES ---
 function startGame() {
     clearInterval(gameLoop);
     gameLoop = setInterval(moveDown, speed);
@@ -278,13 +270,8 @@ function startGame() {
 
 window.togglePause = function() {
     isPaused = !isPaused;
-    if (isPaused) {
-        clearInterval(gameLoop);
-        btnPause.innerText = "Continuar";
-    } else {
-        startGame();
-        btnPause.innerText = "Pausar";
-    }
+    btnPause.innerText = isPaused ? "Continuar" : "Pausar";
+    if (isPaused) clearInterval(gameLoop); else startGame();
     draw();
 }
 
@@ -293,47 +280,32 @@ window.resetGame = function() {
     board = Array(ROWS).fill().map(() => Array(COLS).fill(null));
     score = 0; level = 1; speed = 1000; isPaused = false; lastMilestone = 0;
     scoreElement.innerText = "0"; levelElement.innerText = "1";
-    btnPause.innerText = "Pausar";
-    clearInterval(gameLoop);
     piece = randomPiece();
     floatingTexts = [];
     startGame();
     draw();
 }
 
-// --- CONTROLES MÓVEIS ---
 function handleAction(type) {
-    if (isPaused) return;
-    sfxDescida.currentTime = 0;
-    sfxDescida.play();
-
+    if (isPaused || isProcessingCombo) return;
+    sfxDescida.currentTime = 0; sfxDescida.play();
     switch(type) {
         case 'left': if (piece.x > 0 && !checkCollision(piece.x - 1, piece.y)) piece.x--; break;
         case 'right': if (piece.x < COLS - 1 && !checkCollision(piece.x + 1, piece.y)) piece.x++; break;
         case 'down': moveDown(); break;
-        case 'rotate': 
-            let last = piece.items.pop(); 
-            piece.items.unshift(last); 
-            break;
+        case 'rotate': let last = piece.items.pop(); piece.items.unshift(last); break;
     }
     draw();
 }
 
-const controls = {
-    'btnLeft': 'left', 'btnRight': 'right', 'btnDown': 'down', 'btnRotate': 'rotate'
-};
-
+const controls = {'btnLeft': 'left', 'btnRight': 'right', 'btnDown': 'down', 'btnRotate': 'rotate'};
 Object.keys(controls).forEach(id => {
     const btn = document.getElementById(id);
     if(btn) {
-        btn.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            handleAction(controls[id]);
-        }, { passive: false });
+        btn.addEventListener('touchstart', (e) => { e.preventDefault(); handleAction(controls[id]); }, { passive: false });
         btn.addEventListener('click', () => handleAction(controls[id]));
     }
 });
 
-// Inicialização
 startGame();
 draw();
