@@ -114,7 +114,8 @@ function loadGame() {
         for (let c = 0; c < 8; c++) {
             const square = board[r][c];
             if (square) {
-                const color = square.color === 'w' ? 0xeeeeee : 0x333333;
+                // Peças pretas agora com 0x444444 para melhor definição visual
+                const color = square.color === 'w' ? 0xeeeeee : 0x444444;
                 createPiece(c, r, color, typeMap[square.type], square.color === 'w' ? 'white' : 'black');
             }
         }
@@ -125,10 +126,12 @@ function loadGame() {
 // --- 4. CRIAÇÃO DAS PEÇAS ---
 function createPiece(x, z, color, type, team) {
     const group = new THREE.Group();
+    // Metalness aumentado para 0.7 e Roughness diminuído para 0.2 nas pretas para criar brilho de contorno
+    const isWhite = team === 'white';
     const mat = new THREE.MeshStandardMaterial({ 
         color, 
-        roughness: 0.3, 
-        metalness: 0.5,
+        roughness: isWhite ? 0.3 : 0.2, 
+        metalness: isWhite ? 0.5 : 0.7,
         emissive: new THREE.Color(0x000000)
     });
     
@@ -353,8 +356,9 @@ function resetGame() {
     pieces.length = 0;
     const layout = ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knight', 'rook'];
     for (let i = 0; i < 8; i++) {
-        createPiece(i, 0, 0x333333, layout[i], 'black');
-        createPiece(i, 1, 0x333333, 'pawn', 'black');
+        // Cor das pretas atualizada para 0x444444 no reset também
+        createPiece(i, 0, 0x444444, layout[i], 'black');
+        createPiece(i, 1, 0x444444, 'pawn', 'black');
         createPiece(i, 6, 0xeeeeee, 'pawn', 'white');
         createPiece(i, 7, 0xeeeeee, layout[i], 'white');
     }

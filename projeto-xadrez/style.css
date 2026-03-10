@@ -163,8 +163,15 @@ select:hover {
     }
 }
 
-/* --- 6. ADAPTAÇÃO PARA TELEMÓVEIS (Ecrãs Pequenos) --- */
-  @media (max-width: 600px) {
+ /* --- 6. ADAPTAÇÃO PARA TELEMÓVEIS (Ecrãs Pequenos) --- */
+@media (max-width: 600px) {
+    /* Filtro aplicado diretamente no Canvas do jogo */
+    canvas {
+        /* Aumenta o contraste e brilho para separar as peças pretas do tabuleiro */
+        filter: contrast(1.15) brightness(1.1) saturate(1.1);
+        image-rendering: auto;
+    }
+
     #status-panel {
         width: 88%;
         padding: 8px;
@@ -172,25 +179,33 @@ select:hover {
     }
 
     #turn-indicator {
-        font-size: 14px; /* Reduzido de 16 para 14 */
+        font-size: 14px;
         margin-bottom: 2px;
     }
 
     select {
-        font-size: 12px; /* Reduzido de 14 para 12 */
+        font-size: 12px;
         padding: 6px;
-    }
-
-    #reset-button {
-        width: 100%;
-        margin-top: 5px;
     }
 
     .btn-ui {
         padding: 8px 12px;
         font-size: 12px;
-        flex-grow: 1; /* Faz os botões dividirem o espaço no telemóvel */
+        flex-grow: 1;
         margin: 2px;
+    }
+
+    /* Adiciona uma sombra interna para ajudar a focar no centro do tabuleiro */
+    body::after {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        box-shadow: inset 0 0 60px rgba(0,0,0,0.6);
+        pointer-events: none;
+        z-index: 50;
     }
 }
 
