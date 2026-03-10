@@ -420,4 +420,4 @@ if (pieces.length === 0) resetGame();
 onWindowResize();
 animate();
 
-document.getElementById('update-button').addEventListener('click', () => { window.location.reload(); });
+ 
