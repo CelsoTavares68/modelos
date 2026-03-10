@@ -63,7 +63,7 @@ function addFloatingText(text, x, y, color = 'white', fontSize = '24px') {
         alpha: 1.0, // Opacidade inicial
         color: color,
         fontSize: fontSize,
-        speedY: -3.5 // Velocidade de subida
+        speedY: -5.5 // Velocidade de subida
     });
 }
 
@@ -106,7 +106,7 @@ function draw(showBlinking = true) {
     for (let i = floatingTexts.length - 1; i >= 0; i--) {
         let ft = floatingTexts[i];
         ft.y += ft.speedY; // Move para cima
-        ft.alpha -= 0.04; // Diminui opacidade (fade out)
+        ft.alpha -= 0.07; // Diminui opacidade (fade out)
 
         if (ft.alpha <= 0) {
             floatingTexts.splice(i, 1); // Remove se estiver invisível
@@ -213,7 +213,7 @@ function clearMatches() {
             flashes++;
             draw(flashes % 2 === 0);
             
-            if (flashes > 5) {
+            if (flashes > 3) {
                 clearInterval(flashInterval);
                 
                 // --- PONTUAÇÃO E FEEDBACK VISUAL ---
@@ -260,9 +260,9 @@ function clearMatches() {
                 applyGravity();
                 
                 // Chama novamente para verificar se a queda gerou NOVAS trilhas
-                setTimeout(clearMatches, 250);
+                setTimeout(clearMatches, 80);
             }
-        }, 80);
+        }, 40);
     }
 }
 
