@@ -60,15 +60,17 @@ function evaluateBoard(currentBoard) {
     return totalEval;
 }
 
-function minimax(gameInstance, depth, alpha, beta, isMaximizing) {
+ function minimax(gameInstance, depth, alpha, beta, isMaximizing) {
     if (depth === 0) return -evaluateBoard(gameInstance.board());
     
     const moves = gameInstance.moves();
     
-    // Se não houver movimentos, verifica se é xeque-mate ou empate
     if (moves.length === 0) {
-        if (gameInstance.in_checkmate()) return isMaximizing ? -9999 : 9999;
-        return 0;
+        if (gameInstance.in_checkmate()) {
+            // Se quem está a jogar (Maximizing) entrar em mate, é o pior cenário (-9999)
+            return isMaximizing ? -9999 : 9999;
+        }
+        return 0; // Empate (stalemate)
     }
 
     if (isMaximizing) {
@@ -341,20 +343,42 @@ function handleInteraction(clientX, clientY) {
 window.addEventListener('touchstart', (e) => { if(e.touches.length > 0) handleInteraction(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
 window.addEventListener('mousedown', (e) => { handleInteraction(e.clientX, e.clientY); });
 
-function updateStatusUI() {
-    if (game.game_over()) {
-        const winner = game.turn() === 'w' ? 'CINZAS' : 'BRANCAS';
-        turnText.innerText = game.in_checkmate() ? `CHECKMATE! ${winner} VENCEM` : "EMPATE!";
+ function updateStatusUI() {
+    const isGameOver = game.game_over();
+    const isCheckmate = game.in_checkmate();
+    const isDraw = game.in_draw() || game.in_stalemate() || game.in_threefold_repetition();
+
+    if (isGameOver) {
+        if (isCheckmate) {
+            // Se o jogo acabou em xeque-mate, quem perdeu foi quem estava no turno atual.
+            // Portanto, o vencedor é o oposto.
+            const winner = game.turn() === 'w' ? 'CINZAS' : 'BRANCAS';
+            turnText.innerText = `CHECKMATE! VITÓRIA DAS ${winner}`;
+            turnText.style.color = "#ff4444"; // Cor de destaque para o fim
+        } else if (isDraw) {
+            turnText.innerText = "EMPATE POR IMPOSSIBILIDADE!";
+            turnText.style.color = "#aaaaaa";
+        }
     } else {
+        // Jogo continua normalmente
         turn = game.turn() === 'w' ? 'white' : 'black';
-        turnText.innerText = `TURNO: ${turn === 'white' ? 'BRANCAS' : 'CINZAS'}`;
+        const colorName = turn === 'white' ? 'BRANCAS' : 'CINZAS';
+        
+        // Verifica se está em xeque (mas não mate) para avisar o jogador
+        if (game.in_check()) {
+            turnText.innerText = `XEQUE! VEZ DAS ${colorName}`;
+            turnText.style.color = "#ffcc00";
+        } else {
+            turnText.innerText = `VEZ DAS ${colorName}`;
+            turnText.style.color = "#f0d9b5";
+        }
     }
 }
 
-function finalizeTurn(p) {
+ function finalizeTurn(p) {
     if(p) deselectPiece(p);
-    saveGame();
-    updateStatusUI();
+    saveGame(); // Guarda o FEN atualizado primeiro
+    updateStatusUI(); // Depois verifica o estado do jogo
     if (document.getElementById('game-mode').value === 'pve' && game.turn() === 'b') playAiTurn();
 }
 
