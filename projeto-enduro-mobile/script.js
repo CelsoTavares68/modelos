@@ -226,7 +226,7 @@ function update() {
         case 2: colors.sky = "#ff8c00"; colors.grass = "#145c14"; colors.mt = "#442200"; break; 
         case 3: colors.sky = "#2c3e50"; colors.grass = "#0a2a0a"; colors.mt = "#1a1a1a"; colors.fog = 0.6; break; 
         case 4: colors.sky = "#111144"; colors.grass = "#001100"; colors.mt = "#111"; colors.nightMode = true; break; 
-        case 5: colors.sky = "#000011"; colors.grass = "#000000"; colors.mt = "#111"; colors.fog = 0.9; colors.nightMode = true; break; 
+        case 5: colors.sky = "#000011"; colors.grass = "#000000"; colors.mt = "#111"; colors.fog = 0.8; colors.nightMode = true; break; 
         case 6: colors.sky = "#111144"; colors.grass = "#001100"; colors.mt = "#111"; colors.nightMode = true; break; 
         case 7: colors.sky = "#2c3e50"; colors.grass = "#0a2a0a"; colors.mt = "#1a1a1a"; colors.fog = 0.6; break; 
         case 8: colors.sky = "#ade1f2"; colors.grass = "#1a7a1a"; colors.mt = "#555"; colors.snowCaps = true; break; 
@@ -331,7 +331,7 @@ function update() {
         enemy.lastY = 200 + (p * 140); enemy.lastX = screenX; enemy.lastP = p;
     });
 
-    if (gameTick % 240 === 0 && enemies.length < 100) {
+    if (gameTick % 230 === 0 && enemies.length < 100) {
         enemies.push({ 
             lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 8.0, 
             color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)],
