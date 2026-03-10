@@ -63,7 +63,7 @@ function addFloatingText(text, x, y, color = 'white', fontSize = '24px') {
         alpha: 1.0, // Opacidade inicial
         color: color,
         fontSize: fontSize,
-        speedY: -1.5 // Velocidade de subida
+        speedY: -3.5 // Velocidade de subida
     });
 }
 
@@ -106,7 +106,7 @@ function draw(showBlinking = true) {
     for (let i = floatingTexts.length - 1; i >= 0; i--) {
         let ft = floatingTexts[i];
         ft.y += ft.speedY; // Move para cima
-        ft.alpha -= 0.015; // Diminui opacidade (fade out)
+        ft.alpha -= 0.04; // Diminui opacidade (fade out)
 
         if (ft.alpha <= 0) {
             floatingTexts.splice(i, 1); // Remove se estiver invisível
