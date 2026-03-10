@@ -1,4 +1,4 @@
-  // --- 1. SETUP DO MOTOR E CENA ---
+ // --- 1. SETUP DO MOTOR E CENA ---
 const game = new Chess();
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x445566);
@@ -11,7 +11,7 @@ document.body.appendChild(renderer.domElement);
 
 scene.add(new THREE.AmbientLight(0xffffff, 0.8)); 
 const sun = new THREE.DirectionalLight(0xffffff, 1.0);
-sun.position.set(0, 20, 0); // Luz vindo de cima para evitar sombras longas na visão zenital
+sun.position.set(0, 20, 0); 
 sun.castShadow = true;
 scene.add(sun);
 
@@ -343,18 +343,25 @@ function resetGame() {
 
 document.getElementById('reset-button').addEventListener('click', resetGame);
 
-// --- AJUSTE DE CÂMERA: VISÃO DE CIMA PARA CELULAR ---
+// --- AJUSTE DE CÂMERA DINÂMICO ---
 function onWindowResize() {
     const w = window.innerWidth, h = window.innerHeight;
     renderer.setSize(w, h);
     camera.aspect = w / h;
 
     if (h > w) { 
-        // CELULAR EM PÉ: Visão totalmente de cima (Zenital)
-        camera.fov = 70;
-        camera.position.set(0, 10, 0.01); // Quase no centro, olhando direto para baixo
+        // VISÃO VERTICAL (MOBILE/TABLET)
+        if (w < 500) {
+            // CELULAR: Aumenta a distância (y) para o tabuleiro caber na largura estreita
+            camera.fov = 60; // FOV menor evita distorção nas bordas
+            camera.position.set(0, 14, 0.01); 
+        } else {
+            // TABLET: Mantém o zoom que você gostou
+            camera.fov = 70;
+            camera.position.set(0, 10, 0.01); 
+        }
     } else {
-        // PC OU CELULAR DEITADO: Visão 3D clássica
+        // VISÃO HORIZONTAL (PC)
         camera.fov = 45;
         camera.position.set(0, 12, 10);
     }
