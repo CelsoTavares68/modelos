@@ -1,11 +1,11 @@
-  /* --- 1. CONFIGURAÇÕES GERAIS --- */
+ /* --- 1. CONFIGURAÇÕES GERAIS --- */
 body { 
     margin: 0; 
     overflow: hidden; 
     background-color: #111; 
     font-family: 'Cinzel', serif;
-    user-select: none; /* Impede selecionar texto ao clicar no tabuleiro */
-    touch-action: none; /* Melhora a resposta ao toque em dispositivos móveis */
+    user-select: none; 
+    touch-action: none; 
 }
 
 /* --- 2. PAINEL DE STATUS (BARRA SUPERIOR) --- */
@@ -14,45 +14,73 @@ body {
     top: 10px;
     left: 50%;
     transform: translateX(-50%);
-    width: 90%;
-    max-width: 600px;
-    background: rgba(0, 0, 0, 0.75);
-    backdrop-filter: blur(5px); /* Efeito moderno de vidro fosco */
-    padding: 10px 15px;
+    width: 95%;
+    max-width: 650px;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    padding: 12px;
     border-radius: 12px;
-    border: 1px solid #886644; /* Borda cor de madeira/bronze */
+    border: 1px solid #886644;
     display: flex;
-    flex-wrap: wrap; /* Permite quebrar linha em ecrãs pequenos */
-    justify-content: space-around;
+    flex-direction: column;
     align-items: center;
-    color: white;
+    gap: 10px;
     z-index: 100;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+}
+
+/* Container para alinhar os controlos na mesma linha */
+.controls-row {
+    display: flex;
+    width: 100%;
+    gap: 8px;
 }
 
 #turn-indicator {
+    width: 100%;
+    text-align: center;
     font-weight: bold;
-    color: #f0d9b5; /* Cor clássica de peças de xadrez */
+    color: #f0d9b5;
     text-shadow: 1px 1px 2px black;
-    margin: 5px;
-    font-size: 14px;
+    font-size: 15px;
+    letter-spacing: 1px;
 }
 
-/* --- 3. SELECTS (MODO E DIFICULDADE) --- */
-select {
-    background: #332211;
+/* --- 3. PADRONIZAÇÃO DE BOTÕES E SELECTS (MESMO TAMANHO) --- */
+#game-mode, #difficulty-level, .btn-ui {
+    flex: 1; /* Força todos a dividirem o espaço igualmente */
+    height: 42px; /* Altura idêntica para todos */
+    background: #2a1a0a;
     color: #f0d9b5;
     border: 1px solid #886644;
-    padding: 5px 8px;
-    border-radius: 5px;
-    outline: none;
-    cursor: pointer;
+    border-radius: 6px;
+    font-family: 'Cinzel', serif;
     font-size: 13px;
-    margin: 2px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 0 5px;
+    margin: 0;
+    box-sizing: border-box;
+    transition: all 0.2s ease;
 }
 
-select:hover {
+#game-mode:hover, #difficulty-level:hover, .btn-ui:hover {
     background: #443322;
+    filter: brightness(1.2);
+    transform: translateY(-1px);
+}
+
+.btn-ui:active {
+    transform: translateY(1px);
+    filter: brightness(0.9);
+}
+
+#reset-button {
+    text-transform: uppercase;
+    font-weight: bold;
 }
 
 /* --- 4. LOG DE MENSAGENS (INFERIOR) --- */
@@ -66,135 +94,32 @@ select:hover {
     padding: 8px 20px;
     border-radius: 20px;
     font-size: 14px;
-    pointer-events: none; /* Não interfere nos cliques do jogo */
+    pointer-events: none;
     transition: opacity 0.3s;
     text-align: center;
     min-width: 150px;
 }
 
-#reset-button {
-    background: #b58863;
-    color: #fff;
-    border: none;
-    padding: 8px 15px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-weight: bold;
-    text-transform: uppercase;
-    font-size: 12px;
-    transition: background 0.3s;
-}
-
-#reset-button:hover {
-    background: #f0d9b5;
-    color: #332211;
-}
-
-.btn-ui {
-    padding: 10px 18px;
-    border-radius: 8px;
-    border: 1px solid #886644;
-    background: #332211;
-    color: #f0d9b5;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-size: 14px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-}
-
-/* Variante específica para o botão Atualizar */
-.update-variant {
-    background: #2a445c; /* Azul metálico para diferenciar do reset */
-    border-color: #4a6a8a;
-}
-
-/* Efeito Hover (PC) */
-.btn-ui:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-    filter: brightness(1.2);
-}
-
-/* Efeito Active (Mobile/Toque) */
-.btn-ui:active {
-    transform: translateY(1px);
-    filter: brightness(0.9);
-}
-
-/* --- 5. ADAPTAÇÃO PARA TABLETS (Ecrãs Médios) --- */
-@media only screen and (min-width: 768px) and (max-width: 1024px) {
-     #status-panel {
-        width: 85%; /* Reduzido para dar margem nas laterais */
-        padding: 10px;
-        top: 10px;
-        box-sizing: border-box; /* Garante que o padding não aumente a largura total */
-    }
-
-    canvas {
-        max-width: 100vw;
-        max-height: 100vh;
-    }
-
-    #turn-indicator {
-        font-size: 18px;
-        width: 100%;
-        text-align: center;
-        margin-bottom: 10px;
-    }
-
-    select {
-        font-size: 15px;
-        padding: 8px 12px;
-    }
-
-    #message-log {
-        font-size: 18px;
-        bottom: 40px;
-    }
-
-    .btn-ui {
-        padding: 8px 12px;
-        font-size: 12px;
-        flex-grow: 1; /* Faz os botões dividirem o espaço no telemóvel */
-        margin: 2px;
-    }
-}
-
- /* --- 6. ADAPTAÇÃO PARA TELEMÓVEIS (Ecrãs Pequenos) --- */
+/* --- 5. ADAPTAÇÃO PARA TELEMÓVEIS E TABLETS --- */
 @media (max-width: 600px) {
-    /* Filtro aplicado diretamente no Canvas do jogo */
-    canvas {
-        /* Aumenta o contraste e brilho para separar as peças pretas do tabuleiro */
-        image-rendering: auto;
-    }
-
     #status-panel {
-        width: 88%;
+        width: 92%;
         padding: 8px;
         top: 5px;
     }
 
+    /* Ajuste para manter tudo numa linha só no telemóvel */
+    #game-mode, #difficulty-level, .btn-ui {
+        font-size: 11px;
+        height: 38px;
+    }
+
     #turn-indicator {
-        font-size: 14px;
+        font-size: 13px;
         margin-bottom: 2px;
     }
 
-    select {
-        font-size: 12px;
-        padding: 6px;
-    }
-
-    .btn-ui {
-        padding: 8px 12px;
-        font-size: 12px;
-        flex-grow: 1;
-        margin: 2px;
-    }
-
-    /* Adiciona uma sombra interna para ajudar a focar no centro do tabuleiro */
+    /* Sombra interna para foco no tabuleiro */
     body::after {
         content: '';
         position: fixed;
@@ -208,9 +133,9 @@ select:hover {
     }
 }
 
-/* --- 7. BOTÃO DE INSTALAR (PWA) --- */
+/* --- 6. ELEMENTOS ADICIONAIS (PWA) --- */
 #install-button {
-    display: none; /* Fica oculto até o navegador disparar o evento de instalação */
+    display: none;
     position: absolute;
     bottom: 80px;
     right: 20px;
