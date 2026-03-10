@@ -29,8 +29,11 @@ let isPaused = false;
 let gameLoop = null;
 let board = Array(ROWS).fill().map(() => Array(COLS).fill(null));
 let blinkingBlocks = [];
-let lastMilestone = 0; // Controle para o som de 1000 pontos
-let comboCount = 0; // Rastreia quantas reações em cadeia aconteceram
+let lastMilestone = 0; 
+let comboCount = 0; // Rastreia as reações em cadeia
+
+// --- NOVA ESTRUTURA PARA TEXTOS FLUTUANTES ---
+let floatingTexts = []; 
 
 // Recorde Local
 let highScore = parseInt(localStorage.getItem('fruitColumnsHighScore')) || 0;
@@ -49,6 +52,19 @@ function randomPiece() {
             Math.floor(Math.random() * FRUITS.length)
         ]
     };
+}
+
+// --- FUNÇÃO PARA ADICIONAR TEXTO FLUTUANTE ---
+function addFloatingText(text, x, y, color = 'white', fontSize = '24px') {
+    floatingTexts.push({
+        text: text,
+        x: x,
+        y: y,
+        alpha: 1.0, // Opacidade inicial
+        color: color,
+        fontSize: fontSize,
+        speedY: -1.5 // Velocidade de subida
+    });
 }
 
 // Renderização Principal
@@ -81,6 +97,31 @@ function draw(showBlinking = true) {
             drawBlock(piece.x, piece.y + i, fruitIdx);
         }
     });
+
+    // --- ATUALIZA E DESENHA TEXTOS FLUTUANTES ---
+    ctx.save(); // Salva o estado do contexto
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+
+    for (let i = floatingTexts.length - 1; i >= 0; i--) {
+        let ft = floatingTexts[i];
+        ft.y += ft.speedY; // Move para cima
+        ft.alpha -= 0.015; // Diminui opacidade (fade out)
+
+        if (ft.alpha <= 0) {
+            floatingTexts.splice(i, 1); // Remove se estiver invisível
+        } else {
+            ctx.globalAlpha = ft.alpha;
+            ctx.fillStyle = ft.color;
+            ctx.font = `bold ${ft.fontSize} Arial`;
+            // Pequena sombra para contraste
+            ctx.shadowColor = 'black';
+            ctx.shadowBlur = 4;
+            ctx.fillText(ft.text, ft.x, ft.y);
+            ctx.shadowBlur = 0; // Reseta a sombra
+        }
+    }
+    ctx.restore(); // Restaura o estado anterior
 
     // Overlay de Pausa
     if (isPaused && blinkingBlocks.length === 0) {
@@ -119,8 +160,8 @@ function checkCollision(nx, ny) {
     return false;
 }
 
-  function lockPiece() {
-    comboCount = 0; // Resetamos aqui, pois é uma nova jogada manual
+function lockPiece() {
+    comboCount = 0; // Resetamos o combo pois o jogador iniciou uma nova trava
     piece.items.forEach((fruitIdx, i) => {
         board[piece.y + i][piece.x] = fruitIdx;
     });
@@ -128,12 +169,10 @@ function checkCollision(nx, ny) {
     clearMatches();
     
     let nextPiece = randomPiece();
-    // Verifica se a NOVA peça já nasce colidindo (Game Over)
     if (checkCollision(nextPiece.x, nextPiece.y)) {
         sfxFim.currentTime = 0;
-        sfxFim.play().catch(e => console.log("Erro ao tocar fim:", e)); // Captura erro de autoplay
+        sfxFim.play().catch(e => console.log("Erro som:", e));
         
-        // Pequeno atraso no alerta para o som poder começar antes do popup travar o JS
         setTimeout(() => {
             alert("FIM DE JOGO! Pontos: " + score);
             resetGame();
@@ -143,14 +182,15 @@ function checkCollision(nx, ny) {
     }
 }
 
- // Sistema de Combinações com Animação (Piscar)
- function clearMatches() {
+// Sistema de Combinações com Reação em Cadeia e Feedback Visual
+function clearMatches() {
     let toRemove = [];
-    // ... (Mantenha sua lógica de detecção de Horizontal, Vertical e Diagonais igual)
+    
     for (let r = 0; r < ROWS; r++) {
         for (let c = 0; c < COLS; c++) {
             let val = board[r][c];
             if (val === null) continue;
+            // Horizontal, Vertical e Diagonais
             if (c+2 < COLS && val === board[r][c+1] && val === board[r][c+2]) toRemove.push({r,c},{r,c:c+1},{r,c:c+2});
             if (r+2 < ROWS && val === board[r+1][c] && val === board[r+2][c]) toRemove.push({r,c},{r:r+1,c},{r:r+2,c});
             if (r+2 < ROWS && c+2 < COLS && val === board[r+1][c+1] && val === board[r+2][c+2]) toRemove.push({r,c},{r:r+1,c:c+1},{r:r+2,c:c+2});
@@ -161,9 +201,11 @@ function checkCollision(nx, ny) {
     if (toRemove.length > 0) {
         blinkingBlocks = toRemove;
         isPaused = true; 
-        comboCount++; // Aumenta o nível do combo!
+        comboCount++; // Incrementa a cada "trilha" encontrada na mesma sequência
 
+        // Feedback sonoro: fica mais agudo em combos altos
         sfxPares.currentTime = 0; 
+        sfxPares.playbackRate = Math.min(2, 1 + (comboCount * 0.1)); 
         sfxPares.play();
 
         let flashes = 0;
@@ -174,19 +216,32 @@ function checkCollision(nx, ny) {
             if (flashes > 5) {
                 clearInterval(flashInterval);
                 
-                // --- LÓGICA DE PONTUAÇÃO TURBO ---
-                // Se for o primeiro combo, vale normal (15 pontos por bloco)
-                // Se for o segundo ou mais (reação em cadeia), dobra a pontuação
-                let multiplier = comboCount > 1 ? 2 : 1;
+                // --- PONTUAÇÃO E FEEDBACK VISUAL ---
+                // Multiplicador progressivo: x1, x2, x3...
+                let multiplier = comboCount; 
                 let pointsGained = (toRemove.length * 15) * multiplier;
                 
                 score += pointsGained;
                 scoreElement.innerText = score;
 
-                // Feedback visual no console para teste
-                if (multiplier > 1) console.log(`COMBO X${comboCount}! Pontos dobrados!`);
+                // --- NOVA LOGICA DE TEXTO FLUTUANTE ---
+                // Pega a posição média da combinação para centralizar o texto
+                let avgC = toRemove.reduce((sum, b) => sum + b.c, 0) / toRemove.length;
+                let avgR = toRemove.reduce((sum, b) => sum + b.r, 0) / toRemove.length;
+                let textX = avgC * BLOCK_SIZE;
+                let textY = avgR * BLOCK_SIZE;
 
-                // (Mantenha sua lógica de Milestone, HighScore e Gravity...)
+                if (multiplier > 1) {
+                    console.log(`TRILHA RESULTANTE! x${multiplier}`);
+                    // Cor amarela/ouro para o multiplicador
+                    addFloatingText(`x${multiplier}!`, textX, textY - 20, '#FFD700', '32px');
+                    // Pontos em branco menores
+                    addFloatingText(`+${pointsGained}`, textX + 10, textY + 10, 'white', '18px');
+                } else {
+                    // Texto normal de pontuação
+                    addFloatingText(`+${pointsGained}`, textX, textY, 'white', '20px');
+                }
+
                 if (Math.floor(score / 1000) > lastMilestone) {
                     sfxMilPontos.play();
                     lastMilestone = Math.floor(score / 1000);
@@ -198,17 +253,16 @@ function checkCollision(nx, ny) {
                     localStorage.setItem('fruitColumnsHighScore', highScore);
                 }
 
+                // Remove blocos e aplica gravidade
+                toRemove.forEach(b => board[b.r][b.c] = null);
                 blinkingBlocks = [];
                 isPaused = false;
                 applyGravity();
                 
-                // O segredo do combo: se chamar de novo, o comboCount continua subindo
-                setTimeout(clearMatches, 200);
+                // Chama novamente para verificar se a queda gerou NOVAS trilhas
+                setTimeout(clearMatches, 250);
             }
         }, 80);
-    } else {
-        // Se não encontrou nenhuma combinação, reseta o combo para a próxima jogada do player
-        comboCount = 0;
     }
 }
 
@@ -248,22 +302,21 @@ window.togglePause = function() {
 }
 
 window.resetGame = function() {
-    sfxAbertura.play(); // SOM: Abertura ao reiniciar
+    sfxAbertura.play();
     board = Array(ROWS).fill().map(() => Array(COLS).fill(null));
     score = 0; level = 1; speed = 1000; isPaused = false; lastMilestone = 0;
     scoreElement.innerText = "0"; levelElement.innerText = "1";
     btnPause.innerText = "Pausar";
     clearInterval(gameLoop);
     piece = randomPiece();
+    floatingTexts = []; // Limpa textos antigos
     startGame();
     draw();
 }
 
-// --- CONTROLES MÓVEIS ---
+// CONTROLES
 function handleAction(type) {
     if (isPaused) return;
-
-    // Toca som de descida/movimento para qualquer ação válida
     sfxDescida.currentTime = 0;
     sfxDescida.play();
 
@@ -295,7 +348,5 @@ Object.keys(controls).forEach(id => {
 });
 
 // Inicialização
-// Importante: sfxAbertura.play() aqui pode ser bloqueado pelo navegador 
-// até que o usuário clique em algo (como o botão de Reset).
 startGame();
 draw();
