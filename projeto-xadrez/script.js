@@ -10,7 +10,6 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap; 
 document.body.appendChild(renderer.domElement);
 
-// ILUMINAÇÃO AJUSTADA (BRILHO REDUZIDO PARA O CINZA)
 scene.add(new THREE.AmbientLight(0xffffff, 0.4)); 
 const sun = new THREE.DirectionalLight(0xffffff, 0.8); 
 sun.position.set(5, 12, 8); 
@@ -30,10 +29,9 @@ const turnText = document.getElementById('turn-indicator');
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
-// --- 2. INTELIGÊNCIA ARTIFICIAL (DIFICULDADE APRIMORADA) ---
+// --- 2. INTELIGÊNCIA ARTIFICIAL (DIFICULDADE MANTIDA) ---
 const weights = { p: 10, n: 32, b: 33, r: 50, q: 90, k: 900 };
 
-// Tabelas de peso por posição (torna a IA mais estratégica no centro)
 const boardValues = [
     [0,  0,  0,  0,  0,  0,  0,  0],
     [5, 10, 10, -20, -20, 10, 10,  5],
@@ -59,18 +57,13 @@ function evaluateBoard(currentBoard) {
     return totalEval;
 }
 
- function minimax(gameInstance, depth, alpha, beta, isMaximizing) {
+function minimax(gameInstance, depth, alpha, beta, isMaximizing) {
     if (depth === 0) return -evaluateBoard(gameInstance.board());
-    
     const moves = gameInstance.moves();
-    
     if (moves.length === 0) {
-        if (gameInstance.in_checkmate()) {
-            return isMaximizing ? -9999 : 9999;
-        }
-        return 0; 
+        if (gameInstance.in_checkmate()) return isMaximizing ? -9999 : 9999;
+        return 0;
     }
-
     if (isMaximizing) {
         let bestEval = -10000;
         for (const move of moves) {
@@ -136,13 +129,7 @@ function loadGame() {
 // --- 4. CRIAÇÃO DAS PEÇAS ---
 function createPiece(x, z, color, type, team) {
     const group = new THREE.Group();
-    const mat = new THREE.MeshStandardMaterial({ 
-        color, 
-        roughness: 0.5, 
-        metalness: 0.2,
-        emissive: new THREE.Color(0x000000)
-    });
-    
+    const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.5, metalness: 0.2 });
     const base = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.42, 0.18, 16), mat);
     base.castShadow = true;
     group.add(base);
@@ -235,16 +222,13 @@ function handleSpecialMoves(move) {
 }
 
 function tryMove(p, tx, tz) {
+    if (isAiThinking) return;
     const move = game.move({ from: toAlgebraic(p.userData.gridX, p.userData.gridZ), to: toAlgebraic(tx, tz), promotion: 'q' });
     if (move) {
         selectedPiece = null;
         if (move.captured) {
             const victim = pieces.find(v => v.userData.gridX === tx && v.userData.gridZ === tz && v !== p);
-            if (victim) { 
-                createExplosion(victim.position, victim.userData.originalColor); 
-                scene.remove(victim); 
-                pieces.splice(pieces.indexOf(victim), 1); 
-            }
+            if (victim) { createExplosion(victim.position, victim.userData.originalColor); scene.remove(victim); pieces.splice(pieces.indexOf(victim), 1); }
         }
         smoothMove(p, tx, tz, true, () => {
             handleSpecialMoves(move);
@@ -255,57 +239,49 @@ function tryMove(p, tx, tz) {
     }
 }
 
+// CORREÇÃO DO BUG DE TRAVAMENTO NA IA
 function playAiTurn() {
-    if (game.game_over()) return;
+    if (game.game_over() || isAiThinking) return;
     isAiThinking = true;
-    
-    // Feedback visual imediato para evitar que pareça travado
-    turnText.innerText = "IA CALCULANDO ESTRATÉGIA...";
-    turnText.style.color = "#ffcc00"; 
-    
-    // Pequeno atraso permite que o navegador processe a UI antes do cálculo pesado
-    setTimeout(() => {
-        const moves = game.moves({ verbose: true });
-        let bestMove = null;
-        let bestValue = -20000;
-        
-        const depth = document.getElementById('difficulty-level').value === 'hard' ? 3 : 2;
+    turnText.innerText = "IA A PENSAR...";
+    turnText.style.color = "#ffcc00";
 
-        for (const move of moves) {
-            game.move(move);
-            const boardValue = minimax(game, depth - 1, -20000, 20000, false);
-            game.undo();
-            if (boardValue > bestValue) {
-                bestValue = boardValue;
-                bestMove = move;
+    // Usamos RequestAnimationFrame para garantir que o texto mude ANTES do cálculo travar o CPU
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            const moves = game.moves({ verbose: true });
+            let bestMove = null;
+            let bestValue = -20000;
+            const depth = document.getElementById('difficulty-level').value === 'hard' ? 3 : 2;
+
+            for (const move of moves) {
+                game.move(move);
+                const boardValue = minimax(game, depth - 1, -20000, 20000, false);
+                game.undo();
+                if (boardValue > bestValue) {
+                    bestValue = boardValue;
+                    bestMove = move;
+                }
             }
-        }
 
-        if (!bestMove) {
-            isAiThinking = false;
-            updateStatusUI();
-            return;
-        }
+            if (!bestMove) { isAiThinking = false; updateStatusUI(); return; }
 
-        const moveDetails = game.move(bestMove);
-        const p3d = pieces.find(p => toAlgebraic(p.userData.gridX, p.userData.gridZ) === moveDetails.from);
-        const pos = fromAlgebraic(moveDetails.to);
+            const moveDetails = game.move(bestMove);
+            const p3d = pieces.find(p => toAlgebraic(p.userData.gridX, p.userData.gridZ) === moveDetails.from);
+            const pos = fromAlgebraic(moveDetails.to);
 
-        if (moveDetails.captured) {
-            const victim = pieces.find(v => v.userData.gridX === pos.x && v.userData.gridZ === pos.z);
-            if (victim) { 
-                createExplosion(victim.position, victim.userData.originalColor); 
-                scene.remove(victim); 
-                pieces.splice(pieces.indexOf(victim), 1); 
+            if (moveDetails.captured) {
+                const victim = pieces.find(v => v.userData.gridX === pos.x && v.userData.gridZ === pos.z);
+                if (victim) { createExplosion(victim.position, victim.userData.originalColor); scene.remove(victim); pieces.splice(pieces.indexOf(victim), 1); }
             }
-        }
-        
-        smoothMove(p3d, pos.x, pos.z, true, () => { 
-            handleSpecialMoves(moveDetails);
-            finalizeTurn(p3d); 
-            isAiThinking = false; 
+            
+            smoothMove(p3d, pos.x, pos.z, true, () => { 
+                handleSpecialMoves(moveDetails);
+                finalizeTurn(p3d); 
+                isAiThinking = false; 
+            });
         });
-    }, 150); 
+    });
 }
 
 // --- 6. INTERAÇÃO E TABULEIRO ---
@@ -313,13 +289,7 @@ function createBoard() {
     for (let x = 0; x < 8; x++) {
         for (let z = 0; z < 8; z++) {
             const isBlack = (x + z) % 2 !== 0;
-            const tile = new THREE.Mesh(
-                new THREE.BoxGeometry(1, 0.1, 1), 
-                new THREE.MeshStandardMaterial({ 
-                    color: isBlack ? 0x331100 : 0xccaa88, 
-                    roughness: 0.8 
-                })
-            );
+            const tile = new THREE.Mesh(new THREE.BoxGeometry(1, 0.1, 1), new THREE.MeshStandardMaterial({ color: isBlack ? 0x331100 : 0xccaa88, roughness: 0.8 }));
             tile.position.set(x - 3.5, -0.05, z - 3.5);
             tile.receiveShadow = true;
             tile.userData = { x, z };
@@ -354,42 +324,34 @@ function handleInteraction(clientX, clientY) {
 window.addEventListener('touchstart', (e) => { if(e.touches.length > 0) handleInteraction(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
 window.addEventListener('mousedown', (e) => { handleInteraction(e.clientX, e.clientY); });
 
- function updateStatusUI() {
-    const isGameOver = game.game_over();
+function updateStatusUI() {
     const isCheckmate = game.in_checkmate();
-    const isDraw = game.in_draw() || game.in_stalemate() || game.in_threefold_repetition();
-
+    const isGameOver = game.game_over();
     if (isGameOver) {
         if (isCheckmate) {
             const winner = game.turn() === 'w' ? 'CINZAS' : 'BRANCAS';
-            turnText.innerText = `CHECKMATE! VITÓRIA DAS ${winner}`;
-            turnText.style.color = "#ff4444"; 
-        } else if (isDraw) {
-            turnText.innerText = "EMPATE POR IMPOSSIBILIDADE!";
-            turnText.style.color = "#aaaaaa";
-        }
+            turnText.innerText = `CHECKMATE! ${winner} VENCEM`;
+            turnText.style.color = "#ff4444";
+        } else { turnText.innerText = "EMPATE!"; turnText.style.color = "#888"; }
     } else {
         turn = game.turn() === 'w' ? 'white' : 'black';
         const colorName = turn === 'white' ? 'BRANCAS' : 'CINZAS';
-        
-        if (game.in_check()) {
-            turnText.innerText = `XEQUE! VEZ DAS ${colorName}`;
-            turnText.style.color = "#ffcc00";
-        } else {
-            turnText.innerText = `VEZ DAS ${colorName}`;
-            turnText.style.color = "#f0d9b5";
-        }
+        turnText.innerText = game.in_check() ? `XEQUE! VEZ DAS ${colorName}` : `VEZ DAS ${colorName}`;
+        turnText.style.color = game.in_check() ? "#ffcc00" : "#fff";
     }
 }
 
- function finalizeTurn(p) {
+function finalizeTurn(p) {
     if(p) deselectPiece(p);
-    saveGame(); 
-    updateStatusUI(); 
-    if (document.getElementById('game-mode').value === 'pve' && game.turn() === 'b') playAiTurn();
+    saveGame();
+    updateStatusUI();
+    if (document.getElementById('game-mode').value === 'pve' && game.turn() === 'b') {
+        setTimeout(playAiTurn, 300);
+    }
 }
 
 function resetGame() {
+    isAiThinking = false;
     localStorage.removeItem('chess3d_save');
     game.reset();
     pieces.forEach(p => scene.remove(p));
@@ -411,28 +373,19 @@ function onWindowResize() {
     renderer.setSize(w, h);
     camera.aspect = w / h;
     if (h > w) { 
-        if (w < 500) { camera.fov = 55; camera.position.set(0, 17, 0.01); } 
-        else { camera.fov = 70; camera.position.set(0, 10, 0.01); }
-    } else {
-        camera.fov = 45; camera.position.set(0, 12, 10);
-    }
+        camera.fov = (w < 500) ? 55 : 70;
+        camera.position.set(0, (w < 500) ? 17 : 10, 0.01);
+    } else { camera.fov = 45; camera.position.set(0, 12, 10); }
     camera.lookAt(0, 0, 0);
     camera.updateProjectionMatrix();
 }
 window.addEventListener('resize', onWindowResize);
 
 function selectPiece(p) { 
-    p.traverse(n => { 
-        if(n.isMesh) {
-            n.material.emissive = new THREE.Color(0x00ffff);
-            n.material.emissiveIntensity = 0.4;
-        }
-    }); 
+    p.traverse(n => { if(n.isMesh) { n.material.emissive = new THREE.Color(0x00ffff); n.material.emissiveIntensity = 0.4; } }); 
 }
 function deselectPiece(p) { 
-    if(p) p.traverse(n => { 
-        if(n.isMesh) n.material.emissive = new THREE.Color(0x000000); 
-    }); 
+    if(p) p.traverse(n => { if(n.isMesh) n.material.emissive = new THREE.Color(0x000000); }); 
 }
 
 function createExplosion(pos, color) {
@@ -447,7 +400,7 @@ function createExplosion(pos, color) {
 
 function animate() {
     requestAnimationFrame(animate);
-    if (selectedPiece) {
+    if (selectedPiece && !isAiThinking) {
         selectedPiece.position.y = 0.3 + Math.sin(Date.now() * 0.005) * 0.15;
         selectedPiece.rotation.y += 0.01;
     }
