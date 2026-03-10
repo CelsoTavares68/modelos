@@ -352,11 +352,12 @@ function onWindowResize() {
     if (h > w) { 
         // VISÃO VERTICAL (MOBILE/TABLET)
         if (w < 500) {
-            // CELULAR: Aumenta a distância (y) para o tabuleiro caber na largura estreita
-            camera.fov = 60; // FOV menor evita distorção nas bordas
-            camera.position.set(0, 14, 0.01); 
+            // CELULAR: Aumentei a altura para 17 e baixei o FOV para 55
+            // Isso afasta a câmera o suficiente para as torres das bordas aparecerem
+            camera.fov = 55; 
+            camera.position.set(0, 17, 0.01); 
         } else {
-            // TABLET: Mantém o zoom que você gostou
+            // TABLET
             camera.fov = 70;
             camera.position.set(0, 10, 0.01); 
         }
