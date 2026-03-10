@@ -291,7 +291,7 @@ function createBoard() {
             const tile = new THREE.Mesh(
                 new THREE.BoxGeometry(1, 0.1, 1), 
                 new THREE.MeshStandardMaterial({ 
-                    color: isBlack ? 0x222222 : 0xdddddd, 
+                    color: isBlack ? 0x442211 : 0xdddddd, // Preto alterado para Marrom Amadeirado
                     roughness: 0.8 
                 })
             );
