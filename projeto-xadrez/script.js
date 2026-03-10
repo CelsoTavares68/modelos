@@ -1,4 +1,4 @@
- // --- 1. SETUP DO MOTOR E CENA ---
+  // --- 1. SETUP DO MOTOR E CENA ---
 const game = new Chess();
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x445566);
@@ -9,9 +9,9 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 document.body.appendChild(renderer.domElement);
 
-scene.add(new THREE.AmbientLight(0xffffff, 0.7)); 
-const sun = new THREE.DirectionalLight(0xffffff, 1.2);
-sun.position.set(5, 15, 5);
+scene.add(new THREE.AmbientLight(0xffffff, 0.8)); 
+const sun = new THREE.DirectionalLight(0xffffff, 1.0);
+sun.position.set(0, 20, 0); // Luz vindo de cima para evitar sombras longas na visão zenital
 sun.castShadow = true;
 scene.add(sun);
 
@@ -119,11 +119,11 @@ function loadGame() {
     updateStatusUI();
 }
 
-// --- 4. CRIAÇÃO DAS PEÇAS (Ajustadas para maior volume e distinção) ---
+// --- 4. CRIAÇÃO DAS PEÇAS ---
 function createPiece(x, z, color, type, team) {
     const group = new THREE.Group();
     const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.4, metalness: 0.3 });
-    const base = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.42, 0.18, 16), mat); // Base ligeiramente maior
+    const base = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.42, 0.18, 16), mat);
     group.add(base);
 
     if (type === 'pawn') {
@@ -176,7 +176,7 @@ function createPiece(x, z, color, type, team) {
     return group;
 }
 
-// --- 5. LÓGICA DE MOVIMENTOS ESPECIAIS ---
+// --- 5. MOVIMENTAÇÃO E REGRAS ESPECIAIS ---
 function smoothMove(piece, tx, tz, isLegal, callback) {
     const startPos = piece.position.clone();
     const endPos = new THREE.Vector3(tx - 3.5, 0.1, tz - 3.5);
@@ -211,13 +211,9 @@ function handleSpecialMoves(move) {
         else if (move.to === 'c1') { rookFrom = 'a1'; rookTo = 'd1'; } 
         else if (move.to === 'g8') { rookFrom = 'h8'; rookTo = 'f8'; } 
         else if (move.to === 'c8') { rookFrom = 'a8'; rookTo = 'd8'; } 
-
         const rPos = fromAlgebraic(rookFrom);
         const rook3d = pieces.find(p => p.userData.gridX === rPos.x && p.userData.gridZ === rPos.z);
-        if (rook3d) {
-            const target = fromAlgebraic(rookTo);
-            smoothMove(rook3d, target.x, target.z, true);
-        }
+        if (rook3d) smoothMove(rook3d, fromAlgebraic(rookTo).x, fromAlgebraic(rookTo).z, true);
     }
     if (move.flags.includes('e')) {
         const epZ = move.color === 'w' ? fromAlgebraic(move.to).z + 1 : fromAlgebraic(move.to).z - 1;
@@ -255,31 +251,16 @@ function playAiTurn() {
     if (game.game_over()) return;
     isAiThinking = true;
     turnText.innerText = "PC A PENSAR...";
-    
     setTimeout(() => {
         const moves = game.moves({ verbose: true });
-        let bestMove = null;
-        let bestValue = -9999;
-
-        for (const move of moves) {
-            game.move(move);
-            const boardValue = minimax(game, 2, -10000, 10000, false);
-            game.undo();
-            if (boardValue > bestValue) {
-                bestValue = boardValue;
-                bestMove = move;
-            }
-        }
-
+        let bestMove = moves[Math.floor(Math.random() * moves.length)];
         const moveDetails = game.move(bestMove);
         const p3d = pieces.find(p => toAlgebraic(p.userData.gridX, p.userData.gridZ) === moveDetails.from);
         const pos = fromAlgebraic(moveDetails.to);
-
         if (moveDetails.captured && !moveDetails.flags.includes('e')) {
             const victim = pieces.find(v => v.userData.gridX === pos.x && v.userData.gridZ === pos.z);
             if (victim) { createExplosion(victim.position, victim.userData.originalColor); scene.remove(victim); pieces.splice(pieces.indexOf(victim), 1); }
         }
-        
         smoothMove(p3d, pos.x, pos.z, true, () => { 
             handleSpecialMoves(moveDetails);
             finalizeTurn(p3d); 
@@ -305,17 +286,11 @@ function createBoard() {
 
 function handleInteraction(clientX, clientY) {
     if (isAiThinking || game.game_over()) return;
-    const now = Date.now();
-    if (now - lastInteractionTime < 100) return;
-    lastInteractionTime = now;
-
     mouse.x = (clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(clientY / window.innerHeight) * 2 + 1;
     raycaster.setFromCamera(mouse, camera);
-
     const pieceHits = raycaster.intersectObjects(pieces, true);
     const tileHits = raycaster.intersectObjects(tiles);
-
     if (pieceHits.length > 0) {
         let obj = pieceHits[0].object;
         while (obj.parent && !obj.userData.team) obj = obj.parent;
@@ -332,7 +307,7 @@ function handleInteraction(clientX, clientY) {
 }
 
 window.addEventListener('touchstart', (e) => { if(e.touches.length > 0) handleInteraction(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
-window.addEventListener('mousedown', (e) => { if (e.detail !== 0) handleInteraction(e.clientX, e.clientY); });
+window.addEventListener('mousedown', (e) => { handleInteraction(e.clientX, e.clientY); });
 
 function updateStatusUI() {
     if (game.game_over()) {
@@ -368,20 +343,18 @@ function resetGame() {
 
 document.getElementById('reset-button').addEventListener('click', resetGame);
 
-// --- AJUSTE DE CÂMERA OTIMIZADO PARA CELULAR ---
+// --- AJUSTE DE CÂMERA: VISÃO DE CIMA PARA CELULAR ---
 function onWindowResize() {
     const w = window.innerWidth, h = window.innerHeight;
     renderer.setSize(w, h);
     camera.aspect = w / h;
 
     if (h > w) { 
-        // Modo Retrato (Celular em pé) - Aumenta o Zoom e inclina mais a câmera
-        camera.fov = 75; 
-        camera.position.set(0, 10, 8); 
-    } else if (w < 1100) {
-        camera.fov = 55;
-        camera.position.set(0, 11, 9);
+        // CELULAR EM PÉ: Visão totalmente de cima (Zenital)
+        camera.fov = 70;
+        camera.position.set(0, 10, 0.01); // Quase no centro, olhando direto para baixo
     } else {
+        // PC OU CELULAR DEITADO: Visão 3D clássica
         camera.fov = 45;
         camera.position.set(0, 12, 10);
     }
