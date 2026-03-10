@@ -1,18 +1,22 @@
  // --- 1. SETUP DO MOTOR E CENA ---
 const game = new Chess();
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x445566);
+scene.background = new THREE.Color(0x1a1a2e); // Fundo azul marinho profundo (luxo)
 
 const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Sombras mais suaves
 document.body.appendChild(renderer.domElement);
 
-scene.add(new THREE.AmbientLight(0xffffff, 0.8)); 
-const sun = new THREE.DirectionalLight(0xffffff, 1.0);
-sun.position.set(0, 20, 0); 
+// ILUMINAÇÃO PROFISSIONAL
+scene.add(new THREE.AmbientLight(0xffffff, 0.5)); 
+const sun = new THREE.DirectionalLight(0xffffff, 1.2);
+sun.position.set(5, 12, 8); 
 sun.castShadow = true;
+sun.shadow.mapSize.width = 1024;
+sun.shadow.mapSize.height = 1024;
 scene.add(sun);
 
 let turn = 'white';
@@ -110,7 +114,7 @@ function loadGame() {
         for (let c = 0; c < 8; c++) {
             const square = board[r][c];
             if (square) {
-                const color = square.color === 'w' ? 0xffffff : 0x222222;
+                const color = square.color === 'w' ? 0xeeeeee : 0x333333;
                 createPiece(c, r, color, typeMap[square.type], square.color === 'w' ? 'white' : 'black');
             }
         }
@@ -121,51 +125,53 @@ function loadGame() {
 // --- 4. CRIAÇÃO DAS PEÇAS ---
 function createPiece(x, z, color, type, team) {
     const group = new THREE.Group();
-    const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.4, metalness: 0.3 });
+    const mat = new THREE.MeshStandardMaterial({ 
+        color, 
+        roughness: 0.3, 
+        metalness: 0.5,
+        emissive: new THREE.Color(0x000000)
+    });
+    
     const base = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.42, 0.18, 16), mat);
+    base.castShadow = true;
     group.add(base);
 
     if (type === 'pawn') {
         const body = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.28, 0.55, 12), mat);
-        body.position.y = 0.3;
+        body.position.y = 0.3; body.castShadow = true;
         const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 16), mat);
-        head.position.y = 0.7;
+        head.position.y = 0.7; head.castShadow = true;
         group.add(body, head);
     } else if (type === 'rook') {
         const tower = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.35, 0.9, 8), mat);
-        tower.position.y = 0.45;
+        tower.position.y = 0.45; tower.castShadow = true;
         const top = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.2, 0.4), mat);
-        top.position.y = 1.0;
+        top.position.y = 1.0; top.castShadow = true;
         group.add(tower, top);
     } else if (type === 'knight') {
         const body = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.25, 0.7, 12), mat);
-        body.position.y = 0.35;
+        body.position.y = 0.35; body.castShadow = true;
         const head = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.45, 0.55), mat);
-        head.position.set(0, 0.9, 0.1);
-        head.rotation.x = -0.3;
+        head.position.set(0, 0.9, 0.1); head.rotation.x = -0.3; head.castShadow = true;
         group.add(body, head);
     } else if (type === 'bishop') {
         const body = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.22, 1.0, 12), mat);
-        body.position.y = 0.5;
+        body.position.y = 0.5; body.castShadow = true;
         const hat = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.5, 12), mat);
-        hat.position.y = 1.2;
+        hat.position.y = 1.2; hat.castShadow = true;
         group.add(body, hat);
     } else if (type === 'queen') {
         const body = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.35, 1.3, 12), mat);
-        body.position.y = 0.65;
+        body.position.y = 0.65; body.castShadow = true;
         const crownBase = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.2, 0.25, 12), mat);
-        crownBase.position.y = 1.4;
-        const crownTop = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8), mat);
-        crownTop.position.y = 1.6;
-        group.add(body, crownBase, crownTop);
+        crownBase.position.y = 1.4; crownBase.castShadow = true;
+        group.add(body, crownBase);
     } else if (type === 'king') {
         const body = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.35, 1.5, 12), mat);
-        body.position.y = 0.75;
-        const crossH = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.12, 0.12), mat);
-        const crossV = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.5, 0.12), mat);
-        crossH.position.y = 1.8;
-        crossV.position.y = 1.8;
-        group.add(body, crossH, crossV);
+        body.position.y = 0.75; body.castShadow = true;
+        const cross = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.5, 0.12), mat);
+        cross.position.y = 1.8; cross.castShadow = true;
+        group.add(body, cross);
     }
 
     group.position.set(x - 3.5, 0.1, z - 3.5);
@@ -175,7 +181,7 @@ function createPiece(x, z, color, type, team) {
     return group;
 }
 
-// --- 5. MOVIMENTAÇÃO E REGRAS ESPECIAIS ---
+// --- 5. MOVIMENTAÇÃO E REGRAS ---
 function smoothMove(piece, tx, tz, isLegal, callback) {
     const startPos = piece.position.clone();
     const endPos = new THREE.Vector3(tx - 3.5, 0.1, tz - 3.5);
@@ -184,6 +190,8 @@ function smoothMove(piece, tx, tz, isLegal, callback) {
         t += 0.08;
         if (t < 1) {
             piece.position.lerpVectors(startPos, endPos, t);
+            // Pequeno arco no movimento (efeito profissional)
+            piece.position.y = 0.1 + Math.sin(t * Math.PI) * 0.5;
             requestAnimationFrame(step);
         } else {
             piece.position.copy(endPos);
@@ -214,22 +222,13 @@ function handleSpecialMoves(move) {
         const rook3d = pieces.find(p => p.userData.gridX === rPos.x && p.userData.gridZ === rPos.z);
         if (rook3d) smoothMove(rook3d, fromAlgebraic(rookTo).x, fromAlgebraic(rookTo).z, true);
     }
-    if (move.flags.includes('e')) {
-        const epZ = move.color === 'w' ? fromAlgebraic(move.to).z + 1 : fromAlgebraic(move.to).z - 1;
-        const victim = pieces.find(v => v.userData.gridX === fromAlgebraic(move.to).x && v.userData.gridZ === epZ);
-        if (victim) {
-            createExplosion(victim.position, victim.userData.originalColor);
-            scene.remove(victim);
-            pieces.splice(pieces.indexOf(victim), 1);
-        }
-    }
 }
 
 function tryMove(p, tx, tz) {
     const move = game.move({ from: toAlgebraic(p.userData.gridX, p.userData.gridZ), to: toAlgebraic(tx, tz), promotion: 'q' });
     if (move) {
         selectedPiece = null;
-        if (move.captured && !move.flags.includes('e')) {
+        if (move.captured) {
             const victim = pieces.find(v => v.userData.gridX === tx && v.userData.gridZ === tz && v !== p);
             if (victim) { 
                 createExplosion(victim.position, victim.userData.originalColor); 
@@ -246,20 +245,16 @@ function tryMove(p, tx, tz) {
     }
 }
 
-// --- IA INTELIGENTE REATIVADA ---
 function playAiTurn() {
     if (game.game_over()) return;
     isAiThinking = true;
-    turnText.innerText = "PC A PENSAR...";
+    turnText.innerText = "IA ANALISANDO...";
     
     setTimeout(() => {
         const moves = game.moves({ verbose: true });
         let bestMove = null;
         let bestValue = -9999;
-
-        // Escolha da dificuldade
-        const difficulty = document.getElementById('difficulty-level').value;
-        const depth = difficulty === 'hard' ? 3 : 1;
+        const depth = document.getElementById('difficulty-level').value === 'hard' ? 3 : 1;
 
         for (const move of moves) {
             game.move(move);
@@ -275,13 +270,9 @@ function playAiTurn() {
         const p3d = pieces.find(p => toAlgebraic(p.userData.gridX, p.userData.gridZ) === moveDetails.from);
         const pos = fromAlgebraic(moveDetails.to);
 
-        if (moveDetails.captured && !moveDetails.flags.includes('e')) {
+        if (moveDetails.captured) {
             const victim = pieces.find(v => v.userData.gridX === pos.x && v.userData.gridZ === pos.z);
-            if (victim) { 
-                createExplosion(victim.position, victim.userData.originalColor); 
-                scene.remove(victim); 
-                pieces.splice(pieces.indexOf(victim), 1); 
-            }
+            if (victim) { createExplosion(victim.position, victim.userData.originalColor); scene.remove(victim); pieces.splice(pieces.indexOf(victim), 1); }
         }
         
         smoothMove(p3d, pos.x, pos.z, true, () => { 
@@ -289,7 +280,7 @@ function playAiTurn() {
             finalizeTurn(p3d); 
             isAiThinking = false; 
         });
-    }, 250);
+    }, 400);
 }
 
 // --- 6. INTERAÇÃO E TABULEIRO ---
@@ -297,7 +288,13 @@ function createBoard() {
     for (let x = 0; x < 8; x++) {
         for (let z = 0; z < 8; z++) {
             const isBlack = (x + z) % 2 !== 0;
-            const tile = new THREE.Mesh(new THREE.BoxGeometry(1, 0.1, 1), new THREE.MeshStandardMaterial({ color: isBlack ? 0x221100 : 0x886644 }));
+            const tile = new THREE.Mesh(
+                new THREE.BoxGeometry(1, 0.1, 1), 
+                new THREE.MeshStandardMaterial({ 
+                    color: isBlack ? 0x222222 : 0xdddddd, 
+                    roughness: 0.8 
+                })
+            );
             tile.position.set(x - 3.5, -0.05, z - 3.5);
             tile.receiveShadow = true;
             tile.userData = { x, z };
@@ -335,15 +332,15 @@ window.addEventListener('mousedown', (e) => { handleInteraction(e.clientX, e.cli
 function updateStatusUI() {
     if (game.game_over()) {
         const winner = game.turn() === 'w' ? 'PRETAS' : 'BRANCAS';
-        turnText.innerText = game.in_checkmate() ? `MATE! VITÓRIA DAS ${winner}` : "FIM DE JOGO!";
+        turnText.innerText = game.in_checkmate() ? `CHECKMATE! ${winner} VENCEM` : "EMPATE!";
     } else {
         turn = game.turn() === 'w' ? 'white' : 'black';
-        turnText.innerText = `VEZ DAS ${turn === 'white' ? 'BRANCAS' : 'PRETAS'}`;
+        turnText.innerText = `TURNO: ${turn === 'white' ? 'BRANCAS' : 'PRETAS'}`;
     }
 }
 
 function finalizeTurn(p) {
-    if(p && pieces.includes(p)) deselectPiece(p);
+    if(p) deselectPiece(p);
     saveGame();
     updateStatusUI();
     if (document.getElementById('game-mode').value === 'pve' && game.turn() === 'b') playAiTurn();
@@ -356,48 +353,52 @@ function resetGame() {
     pieces.length = 0;
     const layout = ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knight', 'rook'];
     for (let i = 0; i < 8; i++) {
-        createPiece(i, 0, 0x222222, layout[i], 'black');
-        createPiece(i, 1, 0x222222, 'pawn', 'black');
-        createPiece(i, 6, 0xffffff, 'pawn', 'white');
-        createPiece(i, 7, 0xffffff, layout[i], 'white');
+        createPiece(i, 0, 0x333333, layout[i], 'black');
+        createPiece(i, 1, 0x333333, 'pawn', 'black');
+        createPiece(i, 6, 0xeeeeee, 'pawn', 'white');
+        createPiece(i, 7, 0xeeeeee, layout[i], 'white');
     }
     updateStatusUI();
 }
 
 document.getElementById('reset-button').addEventListener('click', resetGame);
 
-// --- AJUSTE DE CÂMERA DINÂMICO (PROPORÇÕES APROVADAS) ---
+// AJUSTE DE CÂMERA (VERSÃO APROVADA)
 function onWindowResize() {
     const w = window.innerWidth, h = window.innerHeight;
     renderer.setSize(w, h);
     camera.aspect = w / h;
-
     if (h > w) { 
-        if (w < 500) {
-            camera.fov = 55; 
-            camera.position.set(0, 17, 0.01); 
-        } else {
-            camera.fov = 70;
-            camera.position.set(0, 10, 0.01); 
-        }
+        if (w < 500) { camera.fov = 55; camera.position.set(0, 17, 0.01); } 
+        else { camera.fov = 70; camera.position.set(0, 10, 0.01); }
     } else {
-        camera.fov = 45;
-        camera.position.set(0, 12, 10);
+        camera.fov = 45; camera.position.set(0, 12, 10);
     }
-
     camera.lookAt(0, 0, 0);
     camera.updateProjectionMatrix();
 }
 window.addEventListener('resize', onWindowResize);
 
-function selectPiece(p) { p.traverse(n => { if(n.isMesh) n.material.emissive = new THREE.Color(0x004444); }); }
-function deselectPiece(p) { if(p) p.traverse(n => { if(n.isMesh) n.material.emissive = new THREE.Color(0x000000); }); }
+// FEEDBACK VISUAL PROFISSIONAL
+function selectPiece(p) { 
+    p.traverse(n => { 
+        if(n.isMesh) {
+            n.material.emissive = new THREE.Color(0x00ffff);
+            n.material.emissiveIntensity = 0.4;
+        }
+    }); 
+}
+function deselectPiece(p) { 
+    if(p) p.traverse(n => { 
+        if(n.isMesh) n.material.emissive = new THREE.Color(0x000000); 
+    }); 
+}
 
 function createExplosion(pos, color) {
-    for (let i = 0; i < 15; i++) {
-        const p = new THREE.Mesh(new THREE.SphereGeometry(0.05), new THREE.MeshStandardMaterial({ color }));
+    for (let i = 0; i < 20; i++) {
+        const p = new THREE.Mesh(new THREE.SphereGeometry(0.05), new THREE.MeshStandardMaterial({ color, emissive: color }));
         p.position.copy(pos);
-        const vel = new THREE.Vector3((Math.random()-0.5)*0.2, Math.random()*0.3, (Math.random()-0.5)*0.2);
+        const vel = new THREE.Vector3((Math.random()-0.5)*0.25, Math.random()*0.4, (Math.random()-0.5)*0.25);
         scene.add(p);
         particles.push({ mesh: p, vel, life: 1.0 });
     }
@@ -405,12 +406,16 @@ function createExplosion(pos, color) {
 
 function animate() {
     requestAnimationFrame(animate);
-    if (selectedPiece) selectedPiece.position.y = 0.2 + Math.sin(Date.now() * 0.008) * 0.1;
+    // Efeito de flutuação suave na peça selecionada
+    if (selectedPiece) {
+        selectedPiece.position.y = 0.3 + Math.sin(Date.now() * 0.005) * 0.15;
+        selectedPiece.rotation.y += 0.01;
+    }
     particles.forEach((p, i) => {
         p.mesh.position.add(p.vel);
-        p.life -= 0.03;
-        p.mesh.material.transparent = true;
+        p.life -= 0.02;
         p.mesh.material.opacity = p.life;
+        p.mesh.material.transparent = true;
         if (p.life <= 0) { scene.remove(p.mesh); particles.splice(i, 1); }
     });
     renderer.render(scene, camera);
@@ -422,6 +427,4 @@ if (pieces.length === 0) resetGame();
 onWindowResize();
 animate();
 
-document.getElementById('update-button').addEventListener('click', () => {
-    window.location.reload();
-});
+document.getElementById('update-button').addEventListener('click', () => { window.location.reload(); });
