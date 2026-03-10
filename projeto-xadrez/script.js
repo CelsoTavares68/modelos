@@ -1,18 +1,18 @@
  // --- 1. SETUP DO MOTOR E CENA ---
 const game = new Chess();
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x1a1a2e); // Fundo azul marinho profundo (luxo)
+scene.background = new THREE.Color(0x1a1a2e); 
 
 const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Sombras mais suaves
+renderer.shadowMap.type = THREE.PCFSoftShadowMap; 
 document.body.appendChild(renderer.domElement);
 
-// ILUMINAÇÃO PROFISSIONAL
-scene.add(new THREE.AmbientLight(0xffffff, 0.5)); 
-const sun = new THREE.DirectionalLight(0xffffff, 1.2);
+// ILUMINAÇÃO AJUSTADA (BRILHO REDUZIDO PARA MELHORAR O CINZA)
+scene.add(new THREE.AmbientLight(0xffffff, 0.4)); // Reduzido de 0.5 para 0.4
+const sun = new THREE.DirectionalLight(0xffffff, 0.8); // Reduzido de 1.2 para 0.8 para evitar estourar o cinza
 sun.position.set(5, 12, 8); 
 sun.castShadow = true;
 sun.shadow.mapSize.width = 1024;
@@ -114,8 +114,8 @@ function loadGame() {
         for (let c = 0; c < 8; c++) {
             const square = board[r][c];
             if (square) {
-                // Peças pretas agora com 0x444444 para melhor definição visual
-                const color = square.color === 'w' ? 0xeeeeee : 0x444444;
+                // Pretas agora usam Cinza Chumbo (0x666666)
+                const color = square.color === 'w' ? 0xeeeeee : 0x666666;
                 createPiece(c, r, color, typeMap[square.type], square.color === 'w' ? 'white' : 'black');
             }
         }
@@ -123,15 +123,13 @@ function loadGame() {
     updateStatusUI();
 }
 
-// --- 4. CRIAÇÃO DAS PEÇAS ---
+// --- 4. CRIAÇÃO DAS PEÇAS (PEÇAS PRETAS => CINZA) ---
 function createPiece(x, z, color, type, team) {
     const group = new THREE.Group();
-    // Metalness aumentado para 0.7 e Roughness diminuído para 0.2 nas pretas para criar brilho de contorno
-    const isWhite = team === 'white';
     const mat = new THREE.MeshStandardMaterial({ 
         color, 
-        roughness: isWhite ? 0.3 : 0.2, 
-        metalness: isWhite ? 0.5 : 0.7,
+        roughness: 0.5, // Material mais fosco para captar melhor as sombras no cinza
+        metalness: 0.2,
         emissive: new THREE.Color(0x000000)
     });
     
@@ -193,7 +191,6 @@ function smoothMove(piece, tx, tz, isLegal, callback) {
         t += 0.08;
         if (t < 1) {
             piece.position.lerpVectors(startPos, endPos, t);
-            // Pequeno arco no movimento (efeito profissional)
             piece.position.y = 0.1 + Math.sin(t * Math.PI) * 0.5;
             requestAnimationFrame(step);
         } else {
@@ -294,7 +291,7 @@ function createBoard() {
             const tile = new THREE.Mesh(
                 new THREE.BoxGeometry(1, 0.1, 1), 
                 new THREE.MeshStandardMaterial({ 
-                    color: isBlack ? 0x442211 : 0xdddddd, // Preto alterado para Marrom Amadeirado
+                    color: isBlack ? 0x331100 : 0xccaa88, // Tabuleiro levemente mais escuro para contrastar com cinza
                     roughness: 0.8 
                 })
             );
@@ -334,11 +331,11 @@ window.addEventListener('mousedown', (e) => { handleInteraction(e.clientX, e.cli
 
 function updateStatusUI() {
     if (game.game_over()) {
-        const winner = game.turn() === 'w' ? 'PRETAS' : 'BRANCAS';
+        const winner = game.turn() === 'w' ? 'CINZAS' : 'BRANCAS';
         turnText.innerText = game.in_checkmate() ? `CHECKMATE! ${winner} VENCEM` : "EMPATE!";
     } else {
         turn = game.turn() === 'w' ? 'white' : 'black';
-        turnText.innerText = `TURNO: ${turn === 'white' ? 'BRANCAS' : 'PRETAS'}`;
+        turnText.innerText = `TURNO: ${turn === 'white' ? 'BRANCAS' : 'CINZAS'}`;
     }
 }
 
@@ -356,9 +353,9 @@ function resetGame() {
     pieces.length = 0;
     const layout = ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knight', 'rook'];
     for (let i = 0; i < 8; i++) {
-        // Cor das pretas atualizada para 0x444444 no reset também
-        createPiece(i, 0, 0x444444, layout[i], 'black');
-        createPiece(i, 1, 0x444444, 'pawn', 'black');
+        // Cores inicializadas como Cinza (0x666666) e Branco (0xeeeeee)
+        createPiece(i, 0, 0x666666, layout[i], 'black');
+        createPiece(i, 1, 0x666666, 'pawn', 'black');
         createPiece(i, 6, 0xeeeeee, 'pawn', 'white');
         createPiece(i, 7, 0xeeeeee, layout[i], 'white');
     }
@@ -367,7 +364,6 @@ function resetGame() {
 
 document.getElementById('reset-button').addEventListener('click', resetGame);
 
-// AJUSTE DE CÂMERA (VERSÃO APROVADA)
 function onWindowResize() {
     const w = window.innerWidth, h = window.innerHeight;
     renderer.setSize(w, h);
@@ -383,7 +379,6 @@ function onWindowResize() {
 }
 window.addEventListener('resize', onWindowResize);
 
-// FEEDBACK VISUAL PROFISSIONAL
 function selectPiece(p) { 
     p.traverse(n => { 
         if(n.isMesh) {
@@ -410,7 +405,6 @@ function createExplosion(pos, color) {
 
 function animate() {
     requestAnimationFrame(animate);
-    // Efeito de flutuação suave na peça selecionada
     if (selectedPiece) {
         selectedPiece.position.y = 0.3 + Math.sin(Date.now() * 0.005) * 0.15;
         selectedPiece.rotation.y += 0.01;
