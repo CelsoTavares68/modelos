@@ -51,7 +51,6 @@ function evaluateBoard(currentBoard) {
         for (let j = 0; j < 8; j++) {
             const piece = currentBoard[i][j];
             if (piece) {
-                // Soma o valor da peça + o bônus de posição
                 const val = weights[piece.type] + (piece.color === 'w' ? boardValues[7-i][j] : boardValues[i][j]);
                 totalEval += (piece.color === 'w' ? val : -val);
             }
@@ -67,10 +66,9 @@ function evaluateBoard(currentBoard) {
     
     if (moves.length === 0) {
         if (gameInstance.in_checkmate()) {
-            // Se quem está a jogar (Maximizing) entrar em mate, é o pior cenário (-9999)
             return isMaximizing ? -9999 : 9999;
         }
-        return 0; // Empate (stalemate)
+        return 0; 
     }
 
     if (isMaximizing) {
@@ -260,14 +258,17 @@ function tryMove(p, tx, tz) {
 function playAiTurn() {
     if (game.game_over()) return;
     isAiThinking = true;
-    turnText.innerText = "IA ANALISANDO...";
     
+    // Feedback visual imediato para evitar que pareça travado
+    turnText.innerText = "IA CALCULANDO ESTRATÉGIA...";
+    turnText.style.color = "#ffcc00"; 
+    
+    // Pequeno atraso permite que o navegador processe a UI antes do cálculo pesado
     setTimeout(() => {
         const moves = game.moves({ verbose: true });
         let bestMove = null;
         let bestValue = -20000;
         
-        // No Fácil (depth 2) a IA já joga com consciência. No difícil (depth 3) ela prevê muito mais.
         const depth = document.getElementById('difficulty-level').value === 'hard' ? 3 : 2;
 
         for (const move of moves) {
@@ -280,13 +281,23 @@ function playAiTurn() {
             }
         }
 
+        if (!bestMove) {
+            isAiThinking = false;
+            updateStatusUI();
+            return;
+        }
+
         const moveDetails = game.move(bestMove);
         const p3d = pieces.find(p => toAlgebraic(p.userData.gridX, p.userData.gridZ) === moveDetails.from);
         const pos = fromAlgebraic(moveDetails.to);
 
         if (moveDetails.captured) {
             const victim = pieces.find(v => v.userData.gridX === pos.x && v.userData.gridZ === pos.z);
-            if (victim) { createExplosion(victim.position, victim.userData.originalColor); scene.remove(victim); pieces.splice(pieces.indexOf(victim), 1); }
+            if (victim) { 
+                createExplosion(victim.position, victim.userData.originalColor); 
+                scene.remove(victim); 
+                pieces.splice(pieces.indexOf(victim), 1); 
+            }
         }
         
         smoothMove(p3d, pos.x, pos.z, true, () => { 
@@ -294,7 +305,7 @@ function playAiTurn() {
             finalizeTurn(p3d); 
             isAiThinking = false; 
         });
-    }, 400);
+    }, 150); 
 }
 
 // --- 6. INTERAÇÃO E TABULEIRO ---
@@ -350,21 +361,17 @@ window.addEventListener('mousedown', (e) => { handleInteraction(e.clientX, e.cli
 
     if (isGameOver) {
         if (isCheckmate) {
-            // Se o jogo acabou em xeque-mate, quem perdeu foi quem estava no turno atual.
-            // Portanto, o vencedor é o oposto.
             const winner = game.turn() === 'w' ? 'CINZAS' : 'BRANCAS';
             turnText.innerText = `CHECKMATE! VITÓRIA DAS ${winner}`;
-            turnText.style.color = "#ff4444"; // Cor de destaque para o fim
+            turnText.style.color = "#ff4444"; 
         } else if (isDraw) {
             turnText.innerText = "EMPATE POR IMPOSSIBILIDADE!";
             turnText.style.color = "#aaaaaa";
         }
     } else {
-        // Jogo continua normalmente
         turn = game.turn() === 'w' ? 'white' : 'black';
         const colorName = turn === 'white' ? 'BRANCAS' : 'CINZAS';
         
-        // Verifica se está em xeque (mas não mate) para avisar o jogador
         if (game.in_check()) {
             turnText.innerText = `XEQUE! VEZ DAS ${colorName}`;
             turnText.style.color = "#ffcc00";
@@ -377,8 +384,8 @@ window.addEventListener('mousedown', (e) => { handleInteraction(e.clientX, e.cli
 
  function finalizeTurn(p) {
     if(p) deselectPiece(p);
-    saveGame(); // Guarda o FEN atualizado primeiro
-    updateStatusUI(); // Depois verifica o estado do jogo
+    saveGame(); 
+    updateStatusUI(); 
     if (document.getElementById('game-mode').value === 'pve' && game.turn() === 'b') playAiTurn();
 }
 
