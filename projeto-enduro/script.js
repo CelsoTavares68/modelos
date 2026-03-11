@@ -111,9 +111,9 @@ function playCrashSound() {
     osc.type = 'square';
     osc.frequency.setValueAtTime(80, audioCtx.currentTime);
     gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.4);
+    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.5);
     osc.connect(gain); gain.connect(audioCtx.destination);
-    osc.start(); osc.stop(audioCtx.currentTime + 0.4);
+    osc.start(); osc.stop(audioCtx.currentTime + 0.5);
 }
 
 function togglePause() {
