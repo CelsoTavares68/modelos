@@ -419,5 +419,3 @@ loadGame();
 if (pieces.length === 0) resetGame();
 onWindowResize();
 animate();
-
- 
