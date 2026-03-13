@@ -6,25 +6,15 @@ const btnPDF = document.getElementById('btn-gerar-pdf');
 
 let linhaEmEdicao = null;
 
-function obterDiaSemana(dataString) {
-    const dias = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-    const data = new Date(dataString + 'T00:00:00');
-    return dias[data.getDay()];
-}
-
-// CORREÇÃO 1: Captura o ano real da string para não bugar na virada do ano
-function reverterDataParaInput(dataFormatada) {
-    const partes = dataFormatada.split(' ');
-    const [dia, mes, anoComParenteses] = partes[0].split('/');
-    const ano = new Date().getFullYear(); 
+function reverterDataParaInput(dataBr) {
+    const [dia, mes, ano] = dataBr.split('/');
     return `${ano}-${mes}-${dia}`;
 }
 
 function formatarData(data) {
     if(!data) return "";
-    const diaSemana = obterDiaSemana(data);
     const [ano, mes, dia] = data.split('-');
-    return `${dia}/${mes} (${diaSemana})`;
+    return `${dia}/${mes}/${ano}`;
 }
 
 function salvarNoStorage() {
@@ -38,47 +28,20 @@ function salvarNoStorage() {
             auditorio: tds[3].innerText,
             volante: tds[4].innerText,
             leitor: tds[5].innerText,
-            audioVideo: tds[6].innerText,
-            observacao: tr.dataset.obs || '',
-            especial: tr.classList.contains('linha-especial')
+            audioVideo: tds[6].innerText
         });
     });
     localStorage.setItem('designacoesData', JSON.stringify(linhas));
-    localStorage.setItem('mesReferencia', document.getElementById('mes-referencia').value);
-    atualizarQuadroObservacoes();
 }
 
 function carregarDados() {
     const dados = JSON.parse(localStorage.getItem('designacoesData') || '[]');
-    const mesSalvo = localStorage.getItem('mesReferencia') || '';
-    document.getElementById('mes-referencia').value = mesSalvo;
     dados.forEach(item => adicionarLinhaATabela(item));
-    atualizarQuadroObservacoes();
-}
-
-function atualizarQuadroObservacoes() {
-    const container = document.getElementById('container-observacoes');
-    if(!container) return;
-    container.innerHTML = '';
-    
-    document.querySelectorAll('#corpo-tabela tr').forEach(tr => {
-        const obs = tr.dataset.obs;
-        const data = tr.cells[0].innerText;
-        if(obs && obs.trim() !== '') {
-            const div = document.createElement('div');
-            div.className = tr.classList.contains('linha-especial') ? 'obs-item obs-especial' : 'obs-item';
-            div.innerHTML = `<strong>* ${data}:</strong> ${obs}`;
-            container.appendChild(div);
-        }
-    });
 }
 
 function adicionarLinhaATabela(obj) {
     const tabela = document.getElementById('corpo-tabela');
     const novaLinha = tabela.insertRow();
-    
-    novaLinha.dataset.obs = obj.observacao || '';
-    if(obj.especial) novaLinha.classList.add('linha-especial');
 
     novaLinha.innerHTML = `
         <td>${obj.data}</td>
@@ -101,12 +64,13 @@ function adicionarLinhaATabela(obj) {
         document.getElementById('volante').value = obj.volante;
         document.getElementById('leitor').value = obj.leitor;
         document.getElementById('audioVideo').value = obj.audioVideo;
-        document.getElementById('observacao').value = novaLinha.dataset.obs;
-        document.getElementById('data-especial').checked = novaLinha.classList.contains('linha-especial');
 
         linhaEmEdicao = novaLinha;
+        
         btnAdicionar.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Salvar Alteração';
         btnAdicionar.style.backgroundColor = "#f39c12";
+        novaLinha.style.backgroundColor = "#fff3cd"; 
+        
         window.scrollTo(0, 0);
     });
 }
@@ -118,127 +82,116 @@ btnAdicionar.addEventListener('click', function() {
         return;
     }
 
-    const ehEspecial = document.getElementById('data-especial').checked;
-    const obsValue = document.getElementById('observacao').value;
+    const dadosCampos = {
+        data: formatarData(dataRaw),
+        presidente: document.getElementById('presidente').value,
+        entrada: document.getElementById('entrada').value,
+        auditorio: document.getElementById('auditorio').value,
+        volante: document.getElementById('volante').value,
+        leitor: document.getElementById('leitor').value,
+        audioVideo: document.getElementById('audioVideo').value
+    };
 
     if (linhaEmEdicao) {
         const tds = linhaEmEdicao.querySelectorAll('td');
-        tds[0].innerText = formatarData(dataRaw);
-        tds[1].innerText = document.getElementById('presidente').value;
-        tds[2].innerText = document.getElementById('entrada').value;
-        tds[3].innerText = document.getElementById('auditorio').value;
-        tds[4].innerText = document.getElementById('volante').value;
-        tds[5].innerText = document.getElementById('leitor').value;
-        tds[6].innerText = document.getElementById('audioVideo').value;
+        tds[0].innerText = dadosCampos.data;
+        tds[1].innerText = dadosCampos.presidente;
+        tds[2].innerText = dadosCampos.entrada;
+        tds[3].innerText = dadosCampos.auditorio;
+        tds[4].innerText = dadosCampos.volante;
+        tds[5].innerText = dadosCampos.leitor;
+        tds[6].innerText = dadosCampos.audioVideo;
         
-        linhaEmEdicao.dataset.obs = obsValue;
-        if(ehEspecial) linhaEmEdicao.classList.add('linha-especial');
-        else linhaEmEdicao.classList.remove('linha-especial');
-
+        linhaEmEdicao.style.backgroundColor = "";
         linhaEmEdicao = null;
         btnAdicionar.innerHTML = '<i class="fa-solid fa-plus"></i> Adicionar à Lista';
         btnAdicionar.style.backgroundColor = ""; 
     } else {
-        adicionarLinhaATabela({
-            data: formatarData(dataRaw),
-            presidente: document.getElementById('presidente').value,
-            entrada: document.getElementById('entrada').value,
-            auditorio: document.getElementById('auditorio').value,
-            volante: document.getElementById('volante').value,
-            leitor: document.getElementById('leitor').value,
-            audioVideo: document.getElementById('audioVideo').value,
-            observacao: obsValue,
-            especial: ehEspecial
-        });
+        adicionarLinhaATabela(dadosCampos);
     }
 
     salvarNoStorage();
-    document.querySelectorAll('.form-container input:not(#mes-referencia), .form-container textarea').forEach(i => {
-        if(i.type === 'checkbox') i.checked = false;
-        else i.value = '';
-    });
+    document.querySelectorAll('.form-container input').forEach(i => i.value = '');
 });
 
 btnLimpar.addEventListener('click', function() {
-    if (confirm("Apagar tudo?")) {
+    if (confirm("Isso apagará TODA a escala permanentemente. Confirma?")) {
         document.getElementById('corpo-tabela').innerHTML = '';
-        const obsCont = document.getElementById('container-observacoes');
-        if(obsCont) obsCont.innerHTML = '';
-        localStorage.clear();
+        localStorage.removeItem('designacoesData');
+        linhaEmEdicao = null;
+        btnAdicionar.innerHTML = '<i class="fa-solid fa-plus"></i> Adicionar à Lista';
     }
 });
 
-// CORREÇÃO 2: Função PDF robusta com exclusão de coluna 'Editar' e Share corrigido
 btnPDF.addEventListener('click', async function () {
     const overlay = document.getElementById('loading-overlay');
-    if(overlay) overlay.style.display = 'flex';
+    if (overlay) overlay.style.display = 'flex';
 
     try {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('l', 'mm', 'a4');
 
-        const mesRef = document.getElementById('mes-referencia').value;
-        let titulo = "Quadro de Designações";
-        if(mesRef) {
-            const [ano, mes] = mesRef.split('-');
-            const meses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-            titulo += ` - ${meses[parseInt(mes)-1]} / ${ano}`;
-        }
-        doc.setFontSize(18);
-        doc.text(titulo, 14, 15);
+        doc.setFontSize(20);
+        doc.setTextColor(44, 62, 80);
+        const larguraPagina = doc.internal.pageSize.getWidth();
+        const textoTitulo = "Quadro de Designações para as Reuniões";
+        const x = (larguraPagina - doc.getTextWidth(textoTitulo)) / 2;
+        doc.text(textoTitulo, x, 20);
 
         doc.autoTable({
             html: '#tabela-designacoes',
-            startY: 25,
-            theme: 'grid',
-            headStyles: { fillColor: [44, 62, 80] },
-            // Ignora a última coluna (Editar) no PDF
-            columns: [0, 1, 2, 3, 4, 5, 6], 
-            didParseCell: function(data) {
-                const rowElement = data.row.raw;
-                if (rowElement && rowElement.classList.contains('linha-especial')) {
-                    data.cell.styles.fillColor = [255, 235, 156];
-                }
-            }
+            startY: 30,
+            theme: 'striped',
+            headStyles: { 
+                fillColor: [44, 62, 80],
+                textColor: [255, 255, 255],
+                halign: 'center',
+                fontStyle: 'bold'
+            },
+            alternateRowStyles: { 
+                fillColor: [240, 240, 240]
+            },
+            styles: { 
+                halign: 'center', 
+                fontSize: 10,
+                cellPadding: 4,
+                lineColor: [200, 200, 200],
+                lineWidth: 0.1
+            },
+            // AJUSTE CRÍTICO: Definimos as colunas manualmente para ignorar a coluna "Editar"
+            // Isso evita que o PDF quebre ao tentar ler botões HTML.
+            columns: [
+                { header: 'Data', dataKey: '0' },
+                { header: 'Presidente', dataKey: '1' },
+                { header: 'Entrada', dataKey: '2' },
+                { header: 'Auditório', dataKey: '3' },
+                { header: 'Volante', dataKey: '4' },
+                { header: 'Leitor', dataKey: '5' },
+                { header: 'Áudio/Vídeo', dataKey: '6' }
+            ]
         });
 
-        let finalY = doc.lastAutoTable.finalY + 10;
-        doc.setFontSize(11);
-        doc.setTextColor(50, 50, 50);
-
-        document.querySelectorAll('#corpo-tabela tr').forEach(tr => {
-            const obs = tr.dataset.obs;
-            if(obs && obs.trim() !== '') {
-                if (finalY > 180) { doc.addPage(); finalY = 20; }
-                const texto = `* ${tr.cells[0].innerText}: ${obs}`;
-                const splitText = doc.splitTextToSize(texto, 260);
-                doc.text(splitText, 14, finalY);
-                finalY += (splitText.length * 6);
-            }
-        });
-
-        const nomeArquivo = `Escala_${mesRef || 'Designacoes'}.pdf`;
         const pdfBlob = doc.output('blob');
-        const arquivo = new File([pdfBlob], nomeArquivo, { type: "application/pdf" });
+        const arquivo = new File([pdfBlob], "Designacoes.pdf", { type: "application/pdf" });
 
-        // CORREÇÃO 3: Verificação de Share com Fallback para download
+        // AJUSTE PARA COMPARTILHAMENTO: Abre o menu de escolha (WhatsApp, etc.)
         if (navigator.share && navigator.canShare && navigator.canShare({ files: [arquivo] })) {
             await navigator.share({
                 files: [arquivo],
-                title: 'Quadro de Designações',
-                text: 'Segue a escala atualizada.'
-            }).catch(e => {
-                // Se der erro ou cancelar, baixa o arquivo
-                doc.save(nomeArquivo);
+                title: 'Escala de Designações',
+                text: 'Segue o quadro de designações atualizado.'
+            }).catch(err => {
+                // Se o usuário cancelar ou der erro no share, baixa o arquivo como backup
+                doc.save('quadro_de_designacoes.pdf');
             });
         } else {
-            doc.save(nomeArquivo);
+            doc.save('quadro_de_designacoes.pdf');
         }
 
     } catch (error) {
-        console.error("Erro Crítico PDF:", error);
-        alert("Erro ao gerar PDF. Verifique se a tabela possui dados.");
+        console.error("Erro no processo:", error);
+        alert("Houve um erro ao gerar o PDF. Verifique se a tabela contém dados.");
     } finally {
-        if(overlay) overlay.style.display = 'none';
+        if (overlay) overlay.style.display = 'none';
     }
 });
