@@ -1,4 +1,14 @@
- document.addEventListener('DOMContentLoaded', carregarDados);
+ document.addEventListener('DOMContentLoaded', () => {
+    carregarDados();
+    
+    // FIXAR O MÊS: Salva automaticamente no celular quando você altera o campo
+    const campoMes = document.getElementById('mes-referencia');
+    if (campoMes) {
+        campoMes.addEventListener('change', () => {
+            localStorage.setItem('mesReferencia', campoMes.value);
+        });
+    }
+});
 
 const btnAdicionar = document.getElementById('btn-adicionar');
 const btnLimpar = document.getElementById('btn-limpar-tudo');
@@ -6,21 +16,28 @@ const btnPDF = document.getElementById('btn-gerar-pdf');
 
 let linhaEmEdicao = null;
 
-function reverterDataParaInput(dataBr) {
-    const partes = dataBr.split(' ');
-    const [dia, mes, ano] = partes[0].split('/');
+// Funções Auxiliares de Data
+function obterDiaSemana(dataString) {
+    const dias = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    const data = new Date(dataString + 'T00:00:00');
+    return dias[data.getDay()];
+}
+
+function reverterDataParaInput(dataFormatada) {
+    const partes = dataFormatada.split(' ');
+    const [dia, mes] = partes[0].split('/');
+    const ano = new Date().getFullYear(); 
     return `${ano}-${mes}-${dia}`;
 }
 
 function formatarData(data) {
     if(!data) return "";
+    const diaSemana = obterDiaSemana(data);
     const [ano, mes, dia] = data.split('-');
-    const dias = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-    const d = new Date(data + 'T00:00:00');
-    const semana = dias[d.getDay()];
-    return `${dia}/${mes}/${ano} (${semana})`;
+    return `${dia}/${mes} (${diaSemana})`;
 }
 
+// Persistência de Dados
 function salvarNoStorage() {
     const linhas = [];
     document.querySelectorAll('#corpo-tabela tr').forEach(tr => {
@@ -43,6 +60,12 @@ function salvarNoStorage() {
 
 function carregarDados() {
     const dados = JSON.parse(localStorage.getItem('designacoesData') || '[]');
+    const mesSalvo = localStorage.getItem('mesReferencia') || '';
+    
+    // Recupera o mês de referência para ficar fixo
+    const campoMes = document.getElementById('mes-referencia');
+    if (campoMes && mesSalvo) campoMes.value = mesSalvo;
+    
     dados.forEach(item => adicionarLinhaATabela(item));
     atualizarQuadroObservacoes();
 }
@@ -55,13 +78,14 @@ function atualizarQuadroObservacoes() {
         const obs = tr.dataset.obs;
         if(obs && obs.trim() !== "") {
             const div = document.createElement('div');
-            div.style.marginBottom = "5px";
+            div.className = "obs-item";
             div.innerHTML = `<strong>* ${tr.cells[0].innerText}:</strong> ${obs}`;
             container.appendChild(div);
         }
     });
 }
 
+// Manipulação da Tabela
 function adicionarLinhaATabela(obj) {
     const tabela = document.getElementById('corpo-tabela');
     const novaLinha = tabela.insertRow();
@@ -90,9 +114,8 @@ function adicionarLinhaATabela(obj) {
         document.getElementById('volante').value = obj.volante;
         document.getElementById('leitor').value = obj.leitor;
         document.getElementById('audioVideo').value = obj.audioVideo;
-        
-        if(document.getElementById('observacao')) document.getElementById('observacao').value = novaLinha.dataset.obs;
-        if(document.getElementById('data-especial')) document.getElementById('data-especial').checked = novaLinha.classList.contains('linha-especial');
+        document.getElementById('observacao').value = novaLinha.dataset.obs;
+        document.getElementById('data-especial').checked = novaLinha.classList.contains('linha-especial');
 
         linhaEmEdicao = novaLinha;
         btnAdicionar.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Salvar Alteração';
@@ -103,13 +126,7 @@ function adicionarLinhaATabela(obj) {
 
 btnAdicionar.addEventListener('click', function() {
     const dataRaw = document.getElementById('data').value;
-    if (dataRaw === "") {
-        alert("Selecione uma data!");
-        return;
-    }
-
-    const ehEspecial = document.getElementById('data-especial') ? document.getElementById('data-especial').checked : false;
-    const obsTexto = document.getElementById('observacao') ? document.getElementById('observacao').value : '';
+    if (dataRaw === "") return alert("Selecione uma data!");
 
     const dados = {
         data: formatarData(dataRaw),
@@ -119,8 +136,8 @@ btnAdicionar.addEventListener('click', function() {
         volante: document.getElementById('volante').value,
         leitor: document.getElementById('leitor').value,
         audioVideo: document.getElementById('audioVideo').value,
-        observacao: obsTexto,
-        especial: ehEspecial
+        observacao: document.getElementById('observacao').value,
+        especial: document.getElementById('data-especial').checked
     };
 
     if (linhaEmEdicao) {
@@ -131,9 +148,9 @@ btnAdicionar.addEventListener('click', function() {
         linhaEmEdicao.cells[4].innerText = dados.volante;
         linhaEmEdicao.cells[5].innerText = dados.leitor;
         linhaEmEdicao.cells[6].innerText = dados.audioVideo;
+        linhaEmEdicao.dataset.obs = dados.observacao;
         
-        linhaEmEdicao.dataset.obs = obsTexto; // Correção feita aqui (linhaEmEdicao)
-        if(ehEspecial) linhaEmEdicao.classList.add('linha-especial');
+        if(dados.especial) linhaEmEdicao.classList.add('linha-especial');
         else linhaEmEdicao.classList.remove('linha-especial');
 
         linhaEmEdicao = null;
@@ -144,52 +161,62 @@ btnAdicionar.addEventListener('click', function() {
     }
 
     salvarNoStorage();
-    document.querySelectorAll('.form-container input, .form-container textarea').forEach(i => {
+    
+    // Limpa campos EXCETO o mês de referência
+    document.querySelectorAll('.form-container input:not(#mes-referencia), .form-container textarea').forEach(i => {
         if(i.type === 'checkbox') i.checked = false;
         else i.value = '';
     });
 });
 
 btnLimpar.addEventListener('click', function() {
-    if (confirm("Apagar tudo?")) {
+    if (confirm("Apagar tudo? Isso também limpará o mês fixo.")) {
         document.getElementById('corpo-tabela').innerHTML = '';
-        if(document.getElementById('container-observacoes')) document.getElementById('container-observacoes').innerHTML = '';
-        localStorage.removeItem('designacoesData');
+        document.getElementById('container-observacoes').innerHTML = '';
+        localStorage.clear();
+        location.reload();
     }
 });
 
- btnPDF.addEventListener('click', async function () {
+// Geração de PDF
+btnPDF.addEventListener('click', async function () {
     const overlay = document.getElementById('loading-overlay');
-    if (overlay) overlay.style.display = 'flex';
+    if(overlay) overlay.style.display = 'flex';
 
     try {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('l', 'mm', 'a4');
 
-        doc.setFontSize(20);
+        // Título Dinâmico com Mês
+        const valorMes = document.getElementById('mes-referencia').value;
+        let tituloPDF = "Quadro de Designações";
+        if (valorMes) {
+            const [ano, mes] = valorMes.split('-');
+            const mesesExtenso = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+            tituloPDF += ` - ${mesesExtenso[parseInt(mes)-1]} de ${ano}`;
+        }
+
+        doc.setFontSize(18);
         doc.setTextColor(44, 62, 80);
-        doc.text("Quadro de Designações para as Reuniões", 148.5, 20, { align: 'center' });
+        doc.text(tituloPDF, 148.5, 15, { align: 'center' });
 
         doc.autoTable({
             html: '#tabela-designacoes',
             startY: 25,
             theme: 'grid',
             headStyles: { fillColor: [44, 62, 80], halign: 'center' },
-            styles: { halign: 'center' },
-            columns: [0, 1, 2, 3, 4, 5, 6], // Pega apenas as colunas de dados
+            styles: { halign: 'center', fontSize: 10 },
+            columns: [0, 1, 2, 3, 4, 5, 6], // Ignora coluna Editar
             didParseCell: function(data) {
-                // VERIFICAÇÃO DE SEGURANÇA:
-                // data.row.raw precisa existir e ser um elemento HTML (nodeType 1)
                 const rowElement = data.row.raw;
-                if (rowElement && rowElement.nodeType === 1) { 
-                    if (rowElement.classList.contains('linha-especial')) {
-                        data.cell.styles.fillColor = [255, 249, 196];
-                    }
+                // Proteção contra erro de 'contains' em elementos indefinidos
+                if (rowElement && rowElement.nodeType === 1 && rowElement.classList.contains('linha-especial')) {
+                    data.cell.styles.fillColor = [255, 249, 196];
                 }
             }
         });
 
-        // Adiciona Observações
+        // Observações no PDF
         let finalY = doc.lastAutoTable.finalY + 10;
         doc.setFontSize(11);
         document.querySelectorAll('#corpo-tabela tr').forEach(tr => {
@@ -209,17 +236,17 @@ btnLimpar.addEventListener('click', function() {
         if (navigator.share && navigator.canShare && navigator.canShare({ files: [arquivo] })) {
             await navigator.share({
                 files: [arquivo],
-                title: 'Escala',
-                text: 'Segue o quadro de designações.'
+                title: 'Designações',
+                text: 'Quadro atualizado.'
             }).catch(() => doc.save('Designacoes.pdf'));
         } else {
             doc.save('Designacoes.pdf');
         }
 
-    } catch (e) {
-        console.error("Erro detalhado:", e);
-        alert("Erro ao gerar PDF. Certifique-se de que a tabela tem dados.");
+    } catch (error) {
+        console.error("Erro PDF:", error);
+        alert("Houve um erro ao gerar o PDF.");
     } finally {
-        if (overlay) overlay.style.display = 'none';
+        if(overlay) overlay.style.display = 'none';
     }
 });
