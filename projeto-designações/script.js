@@ -62,7 +62,6 @@ function carregarDados() {
     const dados = JSON.parse(localStorage.getItem('designacoesData') || '[]');
     const mesSalvo = localStorage.getItem('mesReferencia') || '';
     
-    // Recupera o mês de referência para ficar fixo
     const campoMes = document.getElementById('mes-referencia');
     if (campoMes && mesSalvo) campoMes.value = mesSalvo;
     
@@ -85,7 +84,6 @@ function atualizarQuadroObservacoes() {
     });
 }
 
-// Manipulação da Tabela
 function adicionarLinhaATabela(obj) {
     const tabela = document.getElementById('corpo-tabela');
     const novaLinha = tabela.insertRow();
@@ -162,7 +160,6 @@ btnAdicionar.addEventListener('click', function() {
 
     salvarNoStorage();
     
-    // Limpa campos EXCETO o mês de referência
     document.querySelectorAll('.form-container input:not(#mes-referencia), .form-container textarea').forEach(i => {
         if(i.type === 'checkbox') i.checked = false;
         else i.value = '';
@@ -178,7 +175,7 @@ btnLimpar.addEventListener('click', function() {
     }
 });
 
-// Geração de PDF
+// Geração de PDF com MARCAÇÃO DE LINHA ESPECIAL
 btnPDF.addEventListener('click', async function () {
     const overlay = document.getElementById('loading-overlay');
     if(overlay) overlay.style.display = 'flex';
@@ -187,7 +184,6 @@ btnPDF.addEventListener('click', async function () {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('l', 'mm', 'a4');
 
-        // Título Dinâmico com Mês
         const valorMes = document.getElementById('mes-referencia').value;
         let tituloPDF = "Quadro de Designações";
         if (valorMes) {
@@ -206,17 +202,19 @@ btnPDF.addEventListener('click', async function () {
             theme: 'grid',
             headStyles: { fillColor: [44, 62, 80], halign: 'center' },
             styles: { halign: 'center', fontSize: 10 },
-            columns: [0, 1, 2, 3, 4, 5, 6], // Ignora coluna Editar
+            columns: [0, 1, 2, 3, 4, 5, 6],
             didParseCell: function(data) {
+                // AQUI É ONDE A MÁGICA ACONTECE NO PDF:
+                // Ele verifica se o elemento original da linha tem a classe 'linha-especial'
                 const rowElement = data.row.raw;
-                // Proteção contra erro de 'contains' em elementos indefinidos
                 if (rowElement && rowElement.nodeType === 1 && rowElement.classList.contains('linha-especial')) {
+                    // Pinta o fundo da célula de amarelo claro no PDF
                     data.cell.styles.fillColor = [255, 249, 196];
                 }
             }
         });
 
-        // Observações no PDF
+        // Observações
         let finalY = doc.lastAutoTable.finalY + 10;
         doc.setFontSize(11);
         document.querySelectorAll('#corpo-tabela tr').forEach(tr => {
