@@ -1,7 +1,7 @@
  document.addEventListener('DOMContentLoaded', () => {
     carregarDados();
     
-    // FIXAR O MÊS: Salva automaticamente no celular quando você altera o campo
+    // FIXAR O MÊS: Salva automaticamente no localStorage ao alterar
     const campoMes = document.getElementById('mes-referencia');
     if (campoMes) {
         campoMes.addEventListener('change', () => {
@@ -152,7 +152,7 @@ btnAdicionar.addEventListener('click', function() {
         else linhaEmEdicao.classList.remove('linha-especial');
 
         linhaEmEdicao = null;
-        btnAdicionar.innerHTML = '<i class="fa-solid fa-plus"></i> Adicionar à Lista';
+        btnAdicionar.innerHTML = '<i class="fa-solid fa-plus"></i> Adicionar';
         btnAdicionar.style.backgroundColor = ""; 
     } else {
         adicionarLinhaATabela(dados);
@@ -167,7 +167,7 @@ btnAdicionar.addEventListener('click', function() {
 });
 
 btnLimpar.addEventListener('click', function() {
-    if (confirm("Apagar tudo? Isso também limpará o mês fixo.")) {
+    if (confirm("Apagar tudo?")) {
         document.getElementById('corpo-tabela').innerHTML = '';
         document.getElementById('container-observacoes').innerHTML = '';
         localStorage.clear();
@@ -175,7 +175,7 @@ btnLimpar.addEventListener('click', function() {
     }
 });
 
-// Geração de PDF com MARCAÇÃO DE LINHA ESPECIAL
+// Geração de PDF com destaque visual na linha
 btnPDF.addEventListener('click', async function () {
     const overlay = document.getElementById('loading-overlay');
     if(overlay) overlay.style.display = 'flex';
@@ -202,21 +202,23 @@ btnPDF.addEventListener('click', async function () {
             theme: 'grid',
             headStyles: { fillColor: [44, 62, 80], halign: 'center' },
             styles: { halign: 'center', fontSize: 10 },
-            columns: [0, 1, 2, 3, 4, 5, 6],
+            columns: [0, 1, 2, 3, 4, 5, 6], // Exclui a coluna "Editar"
             didParseCell: function(data) {
-                // AQUI É ONDE A MÁGICA ACONTECE NO PDF:
-                // Ele verifica se o elemento original da linha tem a classe 'linha-especial'
-                const rowElement = data.row.raw;
-                if (rowElement && rowElement.nodeType === 1 && rowElement.classList.contains('linha-especial')) {
-                    // Pinta o fundo da célula de amarelo claro no PDF
-                    data.cell.styles.fillColor = [255, 249, 196];
+                // VERIFICA SE A LINHA ORIGINAL NO HTML TEM A CLASSE 'linha-especial'
+                const rowElement = data.row.raw; 
+                if (rowElement && rowElement.classList && rowElement.classList.contains('linha-especial')) {
+                    // Pinta o fundo da célula de AMARELO no PDF
+                    data.cell.styles.fillColor = [255, 249, 196]; 
+                    // Deixa o texto em NEGRITO na linha de destaque
+                    data.cell.styles.fontStyle = 'bold';
                 }
             }
         });
 
-        // Observações
+        // Adiciona as Observações no final do PDF
         let finalY = doc.lastAutoTable.finalY + 10;
         doc.setFontSize(11);
+        doc.setTextColor(0, 0, 0);
         document.querySelectorAll('#corpo-tabela tr').forEach(tr => {
             const obs = tr.dataset.obs;
             if(obs && obs.trim() !== "") {
@@ -228,22 +230,13 @@ btnPDF.addEventListener('click', async function () {
             }
         });
 
-        const pdfBlob = doc.output('blob');
-        const arquivo = new File([pdfBlob], "Designacoes.pdf", { type: "application/pdf" });
-
-        if (navigator.share && navigator.canShare && navigator.canShare({ files: [arquivo] })) {
-            await navigator.share({
-                files: [arquivo],
-                title: 'Designações',
-                text: 'Quadro atualizado.'
-            }).catch(() => doc.save('Designacoes.pdf'));
-        } else {
-            doc.save('Designacoes.pdf');
-        }
+        // Nome do arquivo baseado no mês
+        const nomeArquivo = `Designacoes_${valorMes || 'Geral'}.pdf`;
+        doc.save(nomeArquivo);
 
     } catch (error) {
         console.error("Erro PDF:", error);
-        alert("Houve um erro ao gerar o PDF.");
+        alert("Erro ao gerar PDF.");
     } finally {
         if(overlay) overlay.style.display = 'none';
     }
