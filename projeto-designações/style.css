@@ -6,7 +6,7 @@
 }
 
 .container {
-    max-width: 1200px;
+    max-width: 1300px;
     margin: 0 auto;
     background: white;
     padding: 20px;
@@ -18,12 +18,11 @@ h1 {
     text-align: center;
     color: #2c3e50;
     font-size: 1.8rem;
-    margin-bottom: 25px;
 }
 
 .form-container {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); 
     gap: 12px;
     margin-bottom: 30px;
     background: #f8f9fa;
@@ -32,104 +31,96 @@ h1 {
     border: 1px solid #e9ecef;
 }
 
+/* Faz o textarea e o botão ocuparem linhas completas se necessário */
+.full-width {
+    grid-column: 1 / -1;
+}
+
+textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 14px;
+    resize: vertical; /* Permite ao utilizador esticar para baixo */
+    box-sizing: border-box;
+}
+
 input {
     padding: 12px;
     border: 1px solid #ced4da;
     border-radius: 6px;
-    font-size: 15px; 
+    font-size: 14px; 
     width: 100%;
     box-sizing: border-box;
 }
 
 #btn-adicionar {
+    grid-column: 1 / -1;
     background-color: #3498db;
     color: white;
     border: none;
-    padding: 12px;
+    padding: 15px;
     border-radius: 6px;
     cursor: pointer;
     font-weight: bold;
     font-size: 16px;
-    transition: background 0.3s;
 }
 
-#btn-adicionar:hover {
-    background-color: #2980b9;
+.linha-especial {
+    background-color: #fff9c4 !important;
+}
+
+.linha-especial td {
+    font-weight: bold;
 }
 
 .table-responsive {
     overflow-x: auto; 
     margin-bottom: 20px;
-    border-radius: 8px;
-    border: 1px solid #dee2e6;
 }
 
 table {
     width: 100%;
     border-collapse: collapse;
-    min-width: 950px; 
+    min-width: 1100px; 
 }
 
 th, td {
     border: 1px solid #dee2e6;
-    padding: 12px 8px;
+    padding: 10px 5px;
     text-align: center;
-    font-size: 14px;
+    font-size: 13px;
+    word-wrap: break-word;
+}
+
+/* Alinhamento da observação na tabela do navegador */
+.col-obs {
+    text-align: left;
+    max-width: 250px;
+    white-space: pre-wrap; /* Mantém as quebras de linha digitadas */
 }
 
 th {
     background-color: #2c3e50;
     color: white;
-    text-transform: uppercase;
-    font-size: 11px;
-}
-
-/* Efeito Zebrado no Navegador */
-tbody tr:nth-child(even) {
-    background-color: #f8f9fa;
-}
-
-tbody tr:nth-child(odd) {
-    background-color: #ffffff;
 }
 
 .footer-buttons {
     display: flex;
-    flex-wrap: wrap; 
     gap: 15px;
     justify-content: center;
-    margin-top: 20px;
 }
 
-.btn-pdf, .btn-limpar {
-    padding: 12px 25px;
-    border-radius: 6px;
-    border: none;
-    color: white;
-    font-weight: bold;
-    cursor: pointer;
-    flex: 1; 
-    min-width: 150px;
-    max-width: 300px;
-}
-
-.btn-pdf { background-color: #27ae60; }
-.btn-limpar { background-color: #e74c3c; }
+.btn-pdf { background-color: #27ae60; color: white; padding: 12px 30px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold;}
+.btn-limpar { background-color: #e74c3c; color: white; padding: 12px 30px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold;}
 
 .btn-editar {
     background-color: #f39c12;
     color: white;
     border: none;
-    padding: 8px 15px;
+    padding: 5px 10px;
     border-radius: 4px;
     cursor: pointer;
-}
-
-button i { margin-right: 8px; }
-h1 i { color: #3498db; margin-right: 10px; }
-.btn-editar i { margin-right: 5px; }
-
-@media (max-width: 600px) {
-    .container { padding: 10px; }
-    h1 { font-size: 1.3rem; }
 }

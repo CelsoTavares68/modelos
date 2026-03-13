@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
@@ -15,13 +15,30 @@
         <h1><i class="fa-solid fa-calendar-check"></i> Quadro de Designações</h1>
 
         <div class="form-container">
-            <input type="date" id="data">
+            <div class="input-group">
+                <label for="mes-referencia" style="display:block; font-size: 12px; color: #666; margin-bottom: 5px;">Mês de Referência:</label>
+                <input type="month" id="mes-referencia">
+            </div>
+            <div class="input-group">
+                <label for="data" style="display:block; font-size: 12px; color: #666; margin-bottom: 5px;">Data da Reunião:</label>
+                <input type="date" id="data">
+            </div>
             <input type="text" id="presidente" placeholder="Presidente">
             <input type="text" id="entrada" placeholder="Indicador Entrada">
             <input type="text" id="auditorio" placeholder="Indicador Auditório">
             <input type="text" id="volante" placeholder="Volante-Palco">
             <input type="text" id="leitor" placeholder="Leitor">
             <input type="text" id="audioVideo" placeholder="Áudio e Vídeo">
+            
+            <div class="input-group" style="display: flex; align-items: center; gap: 10px; background: #fff; padding: 10px; border-radius: 6px; border: 1px solid #ced4da;">
+                <input type="checkbox" id="data-especial" style="width: 20px; cursor: pointer;">
+                <label for="data-especial" style="font-size: 14px; cursor: pointer; color: #2c3e50; font-weight: bold;">Data Especial?</label>
+            </div>
+
+            <div class="full-width">
+                <textarea id="observacao" placeholder="Observações detalhadas sobre a data especial ou avisos gerais..." rows="3"></textarea>
+            </div>
+
             <button id="btn-adicionar">
                 <i class="fa-solid fa-plus"></i> Adicionar à Lista
             </button>
@@ -31,13 +48,14 @@
             <table id="tabela-designacoes">
                 <thead>
                     <tr>
-                        <th>Data</th>
+                        <th style="width: 80px;">Data</th>
                         <th>Presidente</th>
-                        <th>Indicador Entrada</th>
-                        <th>Indicador Auditório</th>
-                        <th>Volante-Palco</th>
+                        <th>Entrada</th>
+                        <th>Auditório</th>
+                        <th>Volante</th>
                         <th>Leitor</th>
-                        <th>Áudio e Vídeo</th>
+                        <th>Áudio/Vídeo</th>
+                        <th style="width: 200px;">Observação</th>
                         <th class="no-print">Editar</th>
                     </tr>
                 </thead>
@@ -59,10 +77,6 @@
         <div class="spinner" style="border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 15px;"></div>
         <p>Gerando e preparando PDF...</p>
     </div>
-
-    <style>
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    </style>
 
     <script src="script.js"></script>
 </body>
