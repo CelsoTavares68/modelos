@@ -1,15 +1,14 @@
  {
-  "name": "Meu App de Discurso",
-  "short_name": "Discurso",
-  "description": "Editor de textos e detalhes para discursos.",
-  "start_url": "index.html",
+  "name": "Quadro de Designações",
+  "short_name": "Designações",
+  "description": "Gerenciador de escalas e designações com exportação em PDF.",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#0a0538",
-  "orientation": "any",
+  "theme_color": "#2c3e50",
   "icons": [
     {
-      "src": "icon.png",
+      "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
