@@ -105,7 +105,7 @@ function adicionarLinhaATabela(obj) {
         document.getElementById('observacao').value = novaLinha.dataset.obs;
         document.getElementById('data-especial').checked = novaLinha.classList.contains('linha-especial');
         linhaEmEdicao = novaLinha;
-        btnAdicionar.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Salvar Alteração';
+        btnAdicionar.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Salvar';
         btnAdicionar.style.backgroundColor = "#f39c12";
         window.scrollTo(0, 0);
     });
@@ -181,7 +181,7 @@ btnPDF.addEventListener('click', async function () {
         doc.setTextColor(44, 62, 80);
         doc.text(tituloPDF, 148.5, 15, { align: 'center' });
 
-        // Identifica índices das linhas especiais para garantir o destaque no PDF
+        // Mapeamento de índices para destaque no PDF
         const indicesEspeciais = [];
         document.querySelectorAll('#corpo-tabela tr').forEach((tr, index) => {
             if (tr.classList.contains('linha-especial')) indicesEspeciais.push(index);
@@ -197,7 +197,7 @@ btnPDF.addEventListener('click', async function () {
             didParseCell: function(data) {
                 if (data.section === 'body' && indicesEspeciais.includes(data.row.index)) {
                     data.cell.styles.fillColor = [255, 249, 196]; // Amarelo
-                    data.cell.styles.fontStyle = 'bold'; // Negrito
+                    data.cell.styles.fontStyle = 'bold';
                 }
             }
         });
@@ -215,10 +215,10 @@ btnPDF.addEventListener('click', async function () {
             }
         });
 
+        // Geração do arquivo para compartilhamento
         const pdfBlob = doc.output('blob');
         const arquivo = new File([pdfBlob], `Escala_${nomeMes}.pdf`, { type: "application/pdf" });
 
-        // Lógica de compartilhamento nativa para WhatsApp/Celular
         if (navigator.share && navigator.canShare && navigator.canShare({ files: [arquivo] })) {
             await navigator.share({
                 files: [arquivo],
@@ -226,10 +226,10 @@ btnPDF.addEventListener('click', async function () {
                 text: 'Segue a escala atualizada.'
             });
         } else {
-            doc.save(`Escala_${nomeMes}.pdf`); // Download se estiver no PC
+            doc.save(`Escala_${nomeMes}.pdf`);
         }
     } catch (error) {
-        alert("Erro ao gerar/enviar PDF.");
+        alert("Erro ao processar PDF.");
     } finally {
         if(overlay) overlay.style.display = 'none';
     }
