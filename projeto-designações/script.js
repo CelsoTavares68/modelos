@@ -166,76 +166,85 @@ btnLimpar.addEventListener('click', function() {
 });
 
 btnPDF.addEventListener('click', async function () {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF('l', 'mm', 'a4');
+    const overlay = document.getElementById('loading-overlay');
+    overlay.style.display = 'flex';
 
-    // Título
-    const mesRef = document.getElementById('mes-referencia').value;
-    let titulo = "Quadro de Designações";
-    if(mesRef) {
-        const [ano, mes] = mesRef.split('-');
-        const meses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-        titulo += ` - ${meses[parseInt(mes)-1]} / ${ano}`;
-    }
-    doc.setFontSize(18);
-    doc.text(titulo, 14, 15);
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('l', 'mm', 'a4');
 
-    // Tabela
-    doc.autoTable({
-        html: '#tabela-designacoes',
-        startY: 25,
-        theme: 'grid',
-        headStyles: { fillColor: [44, 62, 80] },
-        columns: [
-            { header: 'Data', dataKey: '0' },
-            { header: 'Presidente', dataKey: '1' },
-            { header: 'Entrada', dataKey: '2' },
-            { header: 'Auditório', dataKey: '3' },
-            { header: 'Volante', dataKey: '4' },
-            { header: 'Leitor', dataKey: '5' },
-            { header: 'Áudio/Vídeo', dataKey: '6' }
-        ],
-        didParseCell: function(data) {
-            const rowElement = data.row.raw;
-            if (rowElement && rowElement.classList.contains('linha-especial')) {
-                data.cell.styles.fillColor = [255, 235, 156];
+        // Título
+        const mesRef = document.getElementById('mes-referencia').value;
+        let titulo = "Quadro de Designações";
+        if(mesRef) {
+            const [ano, mes] = mesRef.split('-');
+            const meses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+            titulo += ` - ${meses[parseInt(mes)-1]} / ${ano}`;
+        }
+        doc.setFontSize(18);
+        doc.text(titulo, 14, 15);
+
+        // Tabela
+        doc.autoTable({
+            html: '#tabela-designacoes',
+            startY: 25,
+            theme: 'grid',
+            headStyles: { fillColor: [44, 62, 80] },
+            columns: [
+                { header: 'Data', dataKey: '0' },
+                { header: 'Presidente', dataKey: '1' },
+                { header: 'Entrada', dataKey: '2' },
+                { header: 'Auditório', dataKey: '3' },
+                { header: 'Volante', dataKey: '4' },
+                { header: 'Leitor', dataKey: '5' },
+                { header: 'Áudio/Vídeo', dataKey: '6' }
+            ],
+            didParseCell: function(data) {
+                const rowElement = data.row.raw;
+                if (rowElement && rowElement.classList.contains('linha-especial')) {
+                    data.cell.styles.fillColor = [255, 235, 156];
+                }
             }
-        }
-    });
+        });
 
-    // Observações no Rodapé do PDF
-    let finalY = doc.lastAutoTable.finalY + 10;
-    doc.setFontSize(11);
-    doc.setTextColor(50, 50, 50);
+        // Observações no Rodapé do PDF
+        let finalY = doc.lastAutoTable.finalY + 10;
+        doc.setFontSize(11);
+        doc.setTextColor(50, 50, 50);
 
-    document.querySelectorAll('#corpo-tabela tr').forEach(tr => {
-        const obs = tr.dataset.obs;
-        if(obs && obs.trim() !== '') {
-            if (finalY > 180) { doc.addPage(); finalY = 20; }
-            const texto = `* ${tr.cells[0].innerText}: ${obs}`;
-            const splitText = doc.splitTextToSize(texto, 260);
-            doc.text(splitText, 14, finalY);
-            finalY += (splitText.length * 6);
-        }
-    });
+        document.querySelectorAll('#corpo-tabela tr').forEach(tr => {
+            const obs = tr.dataset.obs;
+            if(obs && obs.trim() !== '') {
+                if (finalY > 180) { doc.addPage(); finalY = 20; }
+                const texto = `* ${tr.cells[0].innerText}: ${obs}`;
+                const splitText = doc.splitTextToSize(texto, 260);
+                doc.text(splitText, 14, finalY);
+                finalY += (splitText.length * 6);
+            }
+        });
 
-    // Código para Compartilhamento Nativo (WhatsApp, etc)
-    const pdfBlob = doc.output('blob');
-    const nomeArquivo = `Escala_${mesRef || 'Designacoes'}.pdf`;
-    const arquivo = new File([pdfBlob], nomeArquivo, { type: "application/pdf" });
+        // Nome do arquivo
+        const nomeArquivo = `Escala_${mesRef || 'Designacoes'}.pdf`;
 
-    if (navigator.canShare && navigator.canShare({ files: [arquivo] })) {
-        try {
+        // Lógica de Partilha/Download
+        const pdfBlob = doc.output('blob');
+        const arquivo = new File([pdfBlob], nomeArquivo, { type: "application/pdf" });
+
+        if (navigator.canShare && navigator.canShare({ files: [arquivo] })) {
             await navigator.share({
                 files: [arquivo],
                 title: 'Quadro de Designações',
-                text: 'Segue o quadro de designações atualizado.'
+                text: 'Segue a escala atualizada.'
             });
-        } catch (shareError) {
-            console.log("Compartilhamento cancelado:", shareError);
+        } else {
+            // Se não suportar partilha (ex: PC), faz o download direto
             doc.save(nomeArquivo);
         }
-    } else {
-        doc.save(nomeArquivo);
+
+    } catch (error) {
+        console.error("Erro ao gerar PDF:", error);
+        alert("Erro ao processar o PDF. Tente novamente.");
+    } finally {
+        overlay.style.display = 'none';
     }
 });
