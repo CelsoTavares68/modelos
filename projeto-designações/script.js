@@ -158,9 +158,9 @@ btnLimpar.addEventListener('click', function() {
     }
 });
 
-btnPDF.addEventListener('click', async function () {
+ btnPDF.addEventListener('click', async function () {
     const overlay = document.getElementById('loading-overlay');
-    if(overlay) overlay.style.display = 'flex';
+    if (overlay) overlay.style.display = 'flex';
 
     try {
         const { jsPDF } = window.jspdf;
@@ -172,31 +172,32 @@ btnPDF.addEventListener('click', async function () {
 
         doc.autoTable({
             html: '#tabela-designacoes',
-            startY: 30,
+            startY: 25,
             theme: 'grid',
             headStyles: { fillColor: [44, 62, 80], halign: 'center' },
-            styles: { halign: 'center', fontSize: 10 },
-            columns: [0, 1, 2, 3, 4, 5, 6], // Ignora a coluna de edição
+            styles: { halign: 'center' },
+            columns: [0, 1, 2, 3, 4, 5, 6], // Pega apenas as colunas de dados
             didParseCell: function(data) {
+                // VERIFICAÇÃO DE SEGURANÇA:
+                // data.row.raw precisa existir e ser um elemento HTML (nodeType 1)
                 const rowElement = data.row.raw;
-                if (rowElement && rowElement.classList.contains('linha-especial')) {
-                    data.cell.styles.fillColor = [255, 249, 196];
+                if (rowElement && rowElement.nodeType === 1) { 
+                    if (rowElement.classList.contains('linha-especial')) {
+                        data.cell.styles.fillColor = [255, 249, 196];
+                    }
                 }
             }
         });
 
-        // TRATAMENTO SEGURO DAS OBSERVAÇÕES NO PDF
+        // Adiciona Observações
         let finalY = doc.lastAutoTable.finalY + 10;
         doc.setFontSize(11);
-        doc.setTextColor(0, 0, 0);
-
         document.querySelectorAll('#corpo-tabela tr').forEach(tr => {
             const obs = tr.dataset.obs;
             if(obs && obs.trim() !== "") {
                 if (finalY > 185) { doc.addPage(); finalY = 20; }
-                const textoCompleto = `* ${tr.cells[0].innerText}: ${obs}`;
-                // Quebra o texto automaticamente para não estourar a largura da página
-                const linhasTexto = doc.splitTextToSize(textoCompleto, 270);
+                const texto = `* ${tr.cells[0].innerText}: ${obs}`;
+                const linhasTexto = doc.splitTextToSize(texto, 270);
                 doc.text(linhasTexto, 14, finalY);
                 finalY += (linhasTexto.length * 7);
             }
@@ -208,17 +209,17 @@ btnPDF.addEventListener('click', async function () {
         if (navigator.share && navigator.canShare && navigator.canShare({ files: [arquivo] })) {
             await navigator.share({
                 files: [arquivo],
-                title: 'Escala de Designações',
-                text: 'Segue o quadro de designações atualizado.'
+                title: 'Escala',
+                text: 'Segue o quadro de designações.'
             }).catch(() => doc.save('Designacoes.pdf'));
         } else {
             doc.save('Designacoes.pdf');
         }
 
-    } catch (error) {
-        console.error("Erro no PDF:", error);
-        alert("Erro ao gerar PDF. Tente recarregar a página.");
+    } catch (e) {
+        console.error("Erro detalhado:", e);
+        alert("Erro ao gerar PDF. Certifique-se de que a tabela tem dados.");
     } finally {
-        if(overlay) overlay.style.display = 'none';
+        if (overlay) overlay.style.display = 'none';
     }
 });
