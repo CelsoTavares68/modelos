@@ -219,5 +219,23 @@ btnPDF.addEventListener('click', async function () {
         }
     });
 
-    doc.save('escala.pdf');
+    // Código para Compartilhamento Nativo (WhatsApp, etc)
+    const pdfBlob = doc.output('blob');
+    const nomeArquivo = `Escala_${mesRef || 'Designacoes'}.pdf`;
+    const arquivo = new File([pdfBlob], nomeArquivo, { type: "application/pdf" });
+
+    if (navigator.canShare && navigator.canShare({ files: [arquivo] })) {
+        try {
+            await navigator.share({
+                files: [arquivo],
+                title: 'Quadro de Designações',
+                text: 'Segue o quadro de designações atualizado.'
+            });
+        } catch (shareError) {
+            console.log("Compartilhamento cancelado:", shareError);
+            doc.save(nomeArquivo);
+        }
+    } else {
+        doc.save(nomeArquivo);
+    }
 });
