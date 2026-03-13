@@ -38,12 +38,13 @@ function salvarNoStorage() {
             volante: tds[4].innerText,
             leitor: tds[5].innerText,
             audioVideo: tds[6].innerText,
-            observacao: tds[7].innerText,
+            observacao: tr.dataset.obs || '',
             especial: tr.classList.contains('linha-especial')
         });
     });
     localStorage.setItem('designacoesData', JSON.stringify(linhas));
     localStorage.setItem('mesReferencia', document.getElementById('mes-referencia').value);
+    atualizarQuadroObservacoes();
 }
 
 function carregarDados() {
@@ -51,12 +52,30 @@ function carregarDados() {
     const mesSalvo = localStorage.getItem('mesReferencia') || '';
     document.getElementById('mes-referencia').value = mesSalvo;
     dados.forEach(item => adicionarLinhaATabela(item));
+    atualizarQuadroObservacoes();
+}
+
+function atualizarQuadroObservacoes() {
+    const container = document.getElementById('container-observacoes');
+    container.innerHTML = '';
+    
+    document.querySelectorAll('#corpo-tabela tr').forEach(tr => {
+        const obs = tr.dataset.obs;
+        const data = tr.cells[0].innerText;
+        if(obs && obs.trim() !== '') {
+            const div = document.createElement('div');
+            div.className = tr.classList.contains('linha-especial') ? 'obs-item obs-especial' : 'obs-item';
+            div.innerHTML = `<strong>* ${data}:</strong> ${obs}`;
+            container.appendChild(div);
+        }
+    });
 }
 
 function adicionarLinhaATabela(obj) {
     const tabela = document.getElementById('corpo-tabela');
     const novaLinha = tabela.insertRow();
     
+    novaLinha.dataset.obs = obj.observacao || '';
     if(obj.especial) novaLinha.classList.add('linha-especial');
 
     novaLinha.innerHTML = `
@@ -67,7 +86,6 @@ function adicionarLinhaATabela(obj) {
         <td>${obj.volante}</td>
         <td>${obj.leitor}</td>
         <td>${obj.audioVideo}</td>
-        <td class="col-obs">${obj.observacao || ''}</td>
         <td class="no-print">
             <button class="btn-editar"><i class="fa-solid fa-pen-to-square"></i> Editar</button>
         </td>
@@ -81,7 +99,7 @@ function adicionarLinhaATabela(obj) {
         document.getElementById('volante').value = obj.volante;
         document.getElementById('leitor').value = obj.leitor;
         document.getElementById('audioVideo').value = obj.audioVideo;
-        document.getElementById('observacao').value = obj.observacao || '';
+        document.getElementById('observacao').value = novaLinha.dataset.obs;
         document.getElementById('data-especial').checked = novaLinha.classList.contains('linha-especial');
 
         linhaEmEdicao = novaLinha;
@@ -99,29 +117,19 @@ btnAdicionar.addEventListener('click', function() {
     }
 
     const ehEspecial = document.getElementById('data-especial').checked;
-    const dadosCampos = {
-        data: formatarData(dataRaw),
-        presidente: document.getElementById('presidente').value,
-        entrada: document.getElementById('entrada').value,
-        auditorio: document.getElementById('auditorio').value,
-        volante: document.getElementById('volante').value,
-        leitor: document.getElementById('leitor').value,
-        audioVideo: document.getElementById('audioVideo').value,
-        observacao: document.getElementById('observacao').value,
-        especial: ehEspecial
-    };
+    const obsValue = document.getElementById('observacao').value;
 
     if (linhaEmEdicao) {
         const tds = linhaEmEdicao.querySelectorAll('td');
-        tds[0].innerText = dadosCampos.data;
-        tds[1].innerText = dadosCampos.presidente;
-        tds[2].innerText = dadosCampos.entrada;
-        tds[3].innerText = dadosCampos.auditorio;
-        tds[4].innerText = dadosCampos.volante;
-        tds[5].innerText = dadosCampos.leitor;
-        tds[6].innerText = dadosCampos.audioVideo;
-        tds[7].innerText = dadosCampos.observacao;
+        tds[0].innerText = formatarData(dataRaw);
+        tds[1].innerText = document.getElementById('presidente').value;
+        tds[2].innerText = document.getElementById('entrada').value;
+        tds[3].innerText = document.getElementById('auditorio').value;
+        tds[4].innerText = document.getElementById('volante').value;
+        tds[5].innerText = document.getElementById('leitor').value;
+        tds[6].innerText = document.getElementById('audioVideo').value;
         
+        linhaEmEdicao.dataset.obs = obsValue;
         if(ehEspecial) linhaEmEdicao.classList.add('linha-especial');
         else linhaEmEdicao.classList.remove('linha-especial');
 
@@ -129,11 +137,20 @@ btnAdicionar.addEventListener('click', function() {
         btnAdicionar.innerHTML = '<i class="fa-solid fa-plus"></i> Adicionar à Lista';
         btnAdicionar.style.backgroundColor = ""; 
     } else {
-        adicionarLinhaATabela(dadosCampos);
+        adicionarLinhaATabela({
+            data: formatarData(dataRaw),
+            presidente: document.getElementById('presidente').value,
+            entrada: document.getElementById('entrada').value,
+            auditorio: document.getElementById('auditorio').value,
+            volante: document.getElementById('volante').value,
+            leitor: document.getElementById('leitor').value,
+            audioVideo: document.getElementById('audioVideo').value,
+            observacao: obsValue,
+            especial: ehEspecial
+        });
     }
 
     salvarNoStorage();
-    // Limpa campos
     document.querySelectorAll('.form-container input:not(#mes-referencia), .form-container textarea').forEach(i => {
         if(i.type === 'checkbox') i.checked = false;
         else i.value = '';
@@ -141,64 +158,66 @@ btnAdicionar.addEventListener('click', function() {
 });
 
 btnLimpar.addEventListener('click', function() {
-    if (confirm("Isso apagará TODA a escala permanentemente. Confirma?")) {
+    if (confirm("Apagar tudo?")) {
         document.getElementById('corpo-tabela').innerHTML = '';
+        document.getElementById('container-observacoes').innerHTML = '';
         localStorage.clear();
     }
 });
 
 btnPDF.addEventListener('click', async function () {
-    const overlay = document.getElementById('loading-overlay');
-    overlay.style.display = 'flex';
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('l', 'mm', 'a4');
 
-    try {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF('l', 'mm', 'a4');
-
-        const mesRefValue = document.getElementById('mes-referencia').value;
-        let textoTitulo = "Quadro de Designações";
-        
-        if(mesRefValue) {
-            const [ano, mesNum] = mesRefValue.split('-');
-            const meses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-            textoTitulo += ` - ${meses[parseInt(mesNum)-1]} / ${ano}`;
-        }
-
-        doc.setFontSize(18);
-        doc.setTextColor(44, 62, 80);
-        const larguraPagina = doc.internal.pageSize.getWidth();
-        doc.text(textoTitulo, (larguraPagina - doc.getTextWidth(textoTitulo)) / 2, 20);
-
-        doc.autoTable({
-            html: '#tabela-designacoes',
-            startY: 30,
-            theme: 'grid',
-            headStyles: { fillColor: [44, 62, 80], halign: 'center' },
-            styles: { 
-                halign: 'center', 
-                fontSize: 9, 
-                cellPadding: 2,
-                overflow: 'linebreak' // Permite quebra de linha
-            },
-            columnStyles: {
-                0: { cellWidth: 22 }, // Data
-                7: { cellWidth: 50, halign: 'left' } // Observação maior e alinhada à esquerda
-            },
-            didParseCell: function(data) {
-                const rowElement = data.row.raw; 
-                if (rowElement && rowElement.classList.contains('linha-especial')) {
-                    data.cell.styles.fillColor = [255, 235, 156];
-                    data.cell.styles.fontStyle = 'bold';
-                }
-            }
-        });
-
-        doc.save('quadro_designacoes.pdf');
-
-    } catch (error) {
-        console.error(error);
-        alert("Erro ao processar.");
-    } finally {
-        overlay.style.display = 'none';
+    // Título
+    const mesRef = document.getElementById('mes-referencia').value;
+    let titulo = "Quadro de Designações";
+    if(mesRef) {
+        const [ano, mes] = mesRef.split('-');
+        const meses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+        titulo += ` - ${meses[parseInt(mes)-1]} / ${ano}`;
     }
+    doc.setFontSize(18);
+    doc.text(titulo, 14, 15);
+
+    // Tabela
+    doc.autoTable({
+        html: '#tabela-designacoes',
+        startY: 25,
+        theme: 'grid',
+        headStyles: { fillColor: [44, 62, 80] },
+        columns: [
+            { header: 'Data', dataKey: '0' },
+            { header: 'Presidente', dataKey: '1' },
+            { header: 'Entrada', dataKey: '2' },
+            { header: 'Auditório', dataKey: '3' },
+            { header: 'Volante', dataKey: '4' },
+            { header: 'Leitor', dataKey: '5' },
+            { header: 'Áudio/Vídeo', dataKey: '6' }
+        ],
+        didParseCell: function(data) {
+            const rowElement = data.row.raw;
+            if (rowElement && rowElement.classList.contains('linha-especial')) {
+                data.cell.styles.fillColor = [255, 235, 156];
+            }
+        }
+    });
+
+    // Observações no Rodapé do PDF
+    let finalY = doc.lastAutoTable.finalY + 10;
+    doc.setFontSize(11);
+    doc.setTextColor(50, 50, 50);
+
+    document.querySelectorAll('#corpo-tabela tr').forEach(tr => {
+        const obs = tr.dataset.obs;
+        if(obs && obs.trim() !== '') {
+            if (finalY > 180) { doc.addPage(); finalY = 20; }
+            const texto = `* ${tr.cells[0].innerText}: ${obs}`;
+            const splitText = doc.splitTextToSize(texto, 260);
+            doc.text(splitText, 14, finalY);
+            finalY += (splitText.length * 6);
+        }
+    });
+
+    doc.save('escala.pdf');
 });
