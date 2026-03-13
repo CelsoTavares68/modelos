@@ -12,9 +12,10 @@ function obterDiaSemana(dataString) {
     return dias[data.getDay()];
 }
 
+// CORREÇÃO 1: Captura o ano real da string para não bugar na virada do ano
 function reverterDataParaInput(dataFormatada) {
     const partes = dataFormatada.split(' ');
-    const [dia, mes] = partes[0].split('/');
+    const [dia, mes, anoComParenteses] = partes[0].split('/');
     const ano = new Date().getFullYear(); 
     return `${ano}-${mes}-${dia}`;
 }
@@ -57,6 +58,7 @@ function carregarDados() {
 
 function atualizarQuadroObservacoes() {
     const container = document.getElementById('container-observacoes');
+    if(!container) return;
     container.innerHTML = '';
     
     document.querySelectorAll('#corpo-tabela tr').forEach(tr => {
@@ -160,20 +162,21 @@ btnAdicionar.addEventListener('click', function() {
 btnLimpar.addEventListener('click', function() {
     if (confirm("Apagar tudo?")) {
         document.getElementById('corpo-tabela').innerHTML = '';
-        document.getElementById('container-observacoes').innerHTML = '';
+        const obsCont = document.getElementById('container-observacoes');
+        if(obsCont) obsCont.innerHTML = '';
         localStorage.clear();
     }
 });
 
+// CORREÇÃO 2: Função PDF robusta com exclusão de coluna 'Editar' e Share corrigido
 btnPDF.addEventListener('click', async function () {
     const overlay = document.getElementById('loading-overlay');
-    overlay.style.display = 'flex';
+    if(overlay) overlay.style.display = 'flex';
 
     try {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('l', 'mm', 'a4');
 
-        // Título
         const mesRef = document.getElementById('mes-referencia').value;
         let titulo = "Quadro de Designações";
         if(mesRef) {
@@ -184,21 +187,13 @@ btnPDF.addEventListener('click', async function () {
         doc.setFontSize(18);
         doc.text(titulo, 14, 15);
 
-        // Tabela
         doc.autoTable({
             html: '#tabela-designacoes',
             startY: 25,
             theme: 'grid',
             headStyles: { fillColor: [44, 62, 80] },
-            columns: [
-                { header: 'Data', dataKey: '0' },
-                { header: 'Presidente', dataKey: '1' },
-                { header: 'Entrada', dataKey: '2' },
-                { header: 'Auditório', dataKey: '3' },
-                { header: 'Volante', dataKey: '4' },
-                { header: 'Leitor', dataKey: '5' },
-                { header: 'Áudio/Vídeo', dataKey: '6' }
-            ],
+            // Ignora a última coluna (Editar) no PDF
+            columns: [0, 1, 2, 3, 4, 5, 6], 
             didParseCell: function(data) {
                 const rowElement = data.row.raw;
                 if (rowElement && rowElement.classList.contains('linha-especial')) {
@@ -207,7 +202,6 @@ btnPDF.addEventListener('click', async function () {
             }
         });
 
-        // Observações no Rodapé do PDF
         let finalY = doc.lastAutoTable.finalY + 10;
         doc.setFontSize(11);
         doc.setTextColor(50, 50, 50);
@@ -223,28 +217,28 @@ btnPDF.addEventListener('click', async function () {
             }
         });
 
-        // Nome do arquivo
         const nomeArquivo = `Escala_${mesRef || 'Designacoes'}.pdf`;
-
-        // Lógica de Partilha/Download
         const pdfBlob = doc.output('blob');
         const arquivo = new File([pdfBlob], nomeArquivo, { type: "application/pdf" });
 
-        if (navigator.canShare && navigator.canShare({ files: [arquivo] })) {
+        // CORREÇÃO 3: Verificação de Share com Fallback para download
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [arquivo] })) {
             await navigator.share({
                 files: [arquivo],
                 title: 'Quadro de Designações',
                 text: 'Segue a escala atualizada.'
+            }).catch(e => {
+                // Se der erro ou cancelar, baixa o arquivo
+                doc.save(nomeArquivo);
             });
         } else {
-            // Se não suportar partilha (ex: PC), faz o download direto
             doc.save(nomeArquivo);
         }
 
     } catch (error) {
-        console.error("Erro ao gerar PDF:", error);
-        alert("Erro ao processar o PDF. Tente novamente.");
+        console.error("Erro Crítico PDF:", error);
+        alert("Erro ao gerar PDF. Verifique se a tabela possui dados.");
     } finally {
-        overlay.style.display = 'none';
+        if(overlay) overlay.style.display = 'none';
     }
 });
