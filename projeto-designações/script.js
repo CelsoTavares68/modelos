@@ -116,7 +116,7 @@ function adicionarLinhaATabela(obj) {
         document.getElementById('data-especial').checked = novaLinha.classList.contains('linha-especial');
 
         linhaEmEdicao = novaLinha;
-        btnAdicionar.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Salvar Alteração';
+        btnAdicionar.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Salvar';
         btnAdicionar.style.backgroundColor = "#f39c12";
         window.scrollTo(0, 0);
     });
@@ -175,7 +175,7 @@ btnLimpar.addEventListener('click', function() {
     }
 });
 
-// Geração de PDF com destaque visual na linha
+// Geração de PDF e Compartilhamento
 btnPDF.addEventListener('click', async function () {
     const overlay = document.getElementById('loading-overlay');
     if(overlay) overlay.style.display = 'flex';
@@ -186,15 +186,24 @@ btnPDF.addEventListener('click', async function () {
 
         const valorMes = document.getElementById('mes-referencia').value;
         let tituloPDF = "Quadro de Designações";
+        let mesNome = "Geral";
+        
         if (valorMes) {
             const [ano, mes] = valorMes.split('-');
-            const mesesExtenso = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-            tituloPDF += ` - ${mesesExtenso[parseInt(mes)-1]} de ${ano}`;
+            const meses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+            mesNome = meses[parseInt(mes)-1];
+            tituloPDF += ` - ${mesNome} de ${ano}`;
         }
 
         doc.setFontSize(18);
         doc.setTextColor(44, 62, 80);
         doc.text(tituloPDF, 148.5, 15, { align: 'center' });
+
+        // Identifica quais linhas são especiais ANTES de gerar a tabela
+        const listaEspeciais = [];
+        document.querySelectorAll('#corpo-tabela tr').forEach((tr, idx) => {
+            if (tr.classList.contains('linha-especial')) listaEspeciais.push(idx);
+        });
 
         doc.autoTable({
             html: '#tabela-designacoes',
@@ -202,23 +211,19 @@ btnPDF.addEventListener('click', async function () {
             theme: 'grid',
             headStyles: { fillColor: [44, 62, 80], halign: 'center' },
             styles: { halign: 'center', fontSize: 10 },
-            columns: [0, 1, 2, 3, 4, 5, 6], // Exclui a coluna "Editar"
+            columns: [0, 1, 2, 3, 4, 5, 6],
             didParseCell: function(data) {
-                // VERIFICA SE A LINHA ORIGINAL NO HTML TEM A CLASSE 'linha-especial'
-                const rowElement = data.row.raw; 
-                if (rowElement && rowElement.classList && rowElement.classList.contains('linha-especial')) {
-                    // Pinta o fundo da célula de AMARELO no PDF
-                    data.cell.styles.fillColor = [255, 249, 196]; 
-                    // Deixa o texto em NEGRITO na linha de destaque
+                // Aplica o destaque por índice de linha
+                if (data.section === 'body' && listaEspeciais.includes(data.row.index)) {
+                    data.cell.styles.fillColor = [255, 249, 196]; // Amarelo Destaque
                     data.cell.styles.fontStyle = 'bold';
                 }
             }
         });
 
-        // Adiciona as Observações no final do PDF
+        // Adiciona Observações
         let finalY = doc.lastAutoTable.finalY + 10;
         doc.setFontSize(11);
-        doc.setTextColor(0, 0, 0);
         document.querySelectorAll('#corpo-tabela tr').forEach(tr => {
             const obs = tr.dataset.obs;
             if(obs && obs.trim() !== "") {
@@ -230,13 +235,25 @@ btnPDF.addEventListener('click', async function () {
             }
         });
 
-        // Nome do arquivo baseado no mês
-        const nomeArquivo = `Designacoes_${valorMes || 'Geral'}.pdf`;
-        doc.save(nomeArquivo);
+        const nomeArquivo = `Designacoes_${mesNome}.pdf`;
+        const pdfBlob = doc.output('blob');
+        const arquivoFinal = new File([pdfBlob], nomeArquivo, { type: "application/pdf" });
+
+        // Tenta compartilhar (WhatsApp/Menu de sistema)
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [arquivoFinal] })) {
+            await navigator.share({
+                files: [arquivoFinal],
+                title: 'Designações',
+                text: `Quadro de Designações - ${mesNome}`
+            });
+        } else {
+            // Se não for possível compartilhar (ex: PC), faz o download
+            doc.save(nomeArquivo);
+        }
 
     } catch (error) {
-        console.error("Erro PDF:", error);
-        alert("Erro ao gerar PDF.");
+        console.error("Erro:", error);
+        alert("Erro ao processar PDF.");
     } finally {
         if(overlay) overlay.style.display = 'none';
     }
