@@ -1,7 +1,5 @@
  document.addEventListener('DOMContentLoaded', () => {
     carregarDados();
-    
-    // FIXAR O MÊS: Salva automaticamente no localStorage ao alterar
     const campoMes = document.getElementById('mes-referencia');
     if (campoMes) {
         campoMes.addEventListener('change', () => {
@@ -13,10 +11,8 @@
 const btnAdicionar = document.getElementById('btn-adicionar');
 const btnLimpar = document.getElementById('btn-limpar-tudo');
 const btnPDF = document.getElementById('btn-gerar-pdf');
-
 let linhaEmEdicao = null;
 
-// Funções Auxiliares de Data
 function obterDiaSemana(dataString) {
     const dias = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
     const data = new Date(dataString + 'T00:00:00');
@@ -37,7 +33,6 @@ function formatarData(data) {
     return `${dia}/${mes} (${diaSemana})`;
 }
 
-// Persistência de Dados
 function salvarNoStorage() {
     const linhas = [];
     document.querySelectorAll('#corpo-tabela tr').forEach(tr => {
@@ -61,10 +56,8 @@ function salvarNoStorage() {
 function carregarDados() {
     const dados = JSON.parse(localStorage.getItem('designacoesData') || '[]');
     const mesSalvo = localStorage.getItem('mesReferencia') || '';
-    
     const campoMes = document.getElementById('mes-referencia');
     if (campoMes && mesSalvo) campoMes.value = mesSalvo;
-    
     dados.forEach(item => adicionarLinhaATabela(item));
     atualizarQuadroObservacoes();
 }
@@ -87,7 +80,6 @@ function atualizarQuadroObservacoes() {
 function adicionarLinhaATabela(obj) {
     const tabela = document.getElementById('corpo-tabela');
     const novaLinha = tabela.insertRow();
-    
     novaLinha.dataset.obs = obj.observacao || '';
     if(obj.especial) novaLinha.classList.add('linha-especial');
 
@@ -99,9 +91,7 @@ function adicionarLinhaATabela(obj) {
         <td>${obj.volante}</td>
         <td>${obj.leitor}</td>
         <td>${obj.audioVideo}</td>
-        <td class="no-print">
-            <button class="btn-editar"><i class="fa-solid fa-pen-to-square"></i> Editar</button>
-        </td>
+        <td class="no-print"><button class="btn-editar"><i class="fa-solid fa-pen-to-square"></i> Editar</button></td>
     `;
 
     novaLinha.querySelector('.btn-editar').addEventListener('click', function() {
@@ -114,9 +104,8 @@ function adicionarLinhaATabela(obj) {
         document.getElementById('audioVideo').value = obj.audioVideo;
         document.getElementById('observacao').value = novaLinha.dataset.obs;
         document.getElementById('data-especial').checked = novaLinha.classList.contains('linha-especial');
-
         linhaEmEdicao = novaLinha;
-        btnAdicionar.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Salvar';
+        btnAdicionar.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Salvar Alteração';
         btnAdicionar.style.backgroundColor = "#f39c12";
         window.scrollTo(0, 0);
     });
@@ -147,19 +136,15 @@ btnAdicionar.addEventListener('click', function() {
         linhaEmEdicao.cells[5].innerText = dados.leitor;
         linhaEmEdicao.cells[6].innerText = dados.audioVideo;
         linhaEmEdicao.dataset.obs = dados.observacao;
-        
         if(dados.especial) linhaEmEdicao.classList.add('linha-especial');
         else linhaEmEdicao.classList.remove('linha-especial');
-
         linhaEmEdicao = null;
         btnAdicionar.innerHTML = '<i class="fa-solid fa-plus"></i> Adicionar';
         btnAdicionar.style.backgroundColor = ""; 
     } else {
         adicionarLinhaATabela(dados);
     }
-
     salvarNoStorage();
-    
     document.querySelectorAll('.form-container input:not(#mes-referencia), .form-container textarea').forEach(i => {
         if(i.type === 'checkbox') i.checked = false;
         else i.value = '';
@@ -169,13 +154,11 @@ btnAdicionar.addEventListener('click', function() {
 btnLimpar.addEventListener('click', function() {
     if (confirm("Apagar tudo?")) {
         document.getElementById('corpo-tabela').innerHTML = '';
-        document.getElementById('container-observacoes').innerHTML = '';
         localStorage.clear();
         location.reload();
     }
 });
 
-// Geração de PDF e Compartilhamento
 btnPDF.addEventListener('click', async function () {
     const overlay = document.getElementById('loading-overlay');
     if(overlay) overlay.style.display = 'flex';
@@ -183,26 +166,25 @@ btnPDF.addEventListener('click', async function () {
     try {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('l', 'mm', 'a4');
-
         const valorMes = document.getElementById('mes-referencia').value;
         let tituloPDF = "Quadro de Designações";
-        let mesNome = "Geral";
-        
+        let nomeMes = "Geral";
+
         if (valorMes) {
             const [ano, mes] = valorMes.split('-');
-            const meses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-            mesNome = meses[parseInt(mes)-1];
-            tituloPDF += ` - ${mesNome} de ${ano}`;
+            const mesesExtenso = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+            nomeMes = mesesExtenso[parseInt(mes)-1];
+            tituloPDF += ` - ${nomeMes} de ${ano}`;
         }
 
         doc.setFontSize(18);
         doc.setTextColor(44, 62, 80);
         doc.text(tituloPDF, 148.5, 15, { align: 'center' });
 
-        // Identifica quais linhas são especiais ANTES de gerar a tabela
-        const listaEspeciais = [];
-        document.querySelectorAll('#corpo-tabela tr').forEach((tr, idx) => {
-            if (tr.classList.contains('linha-especial')) listaEspeciais.push(idx);
+        // Identifica índices das linhas especiais para garantir o destaque no PDF
+        const indicesEspeciais = [];
+        document.querySelectorAll('#corpo-tabela tr').forEach((tr, index) => {
+            if (tr.classList.contains('linha-especial')) indicesEspeciais.push(index);
         });
 
         doc.autoTable({
@@ -213,15 +195,13 @@ btnPDF.addEventListener('click', async function () {
             styles: { halign: 'center', fontSize: 10 },
             columns: [0, 1, 2, 3, 4, 5, 6],
             didParseCell: function(data) {
-                // Aplica o destaque por índice de linha
-                if (data.section === 'body' && listaEspeciais.includes(data.row.index)) {
-                    data.cell.styles.fillColor = [255, 249, 196]; // Amarelo Destaque
-                    data.cell.styles.fontStyle = 'bold';
+                if (data.section === 'body' && indicesEspeciais.includes(data.row.index)) {
+                    data.cell.styles.fillColor = [255, 249, 196]; // Amarelo
+                    data.cell.styles.fontStyle = 'bold'; // Negrito
                 }
             }
         });
 
-        // Adiciona Observações
         let finalY = doc.lastAutoTable.finalY + 10;
         doc.setFontSize(11);
         document.querySelectorAll('#corpo-tabela tr').forEach(tr => {
@@ -235,25 +215,21 @@ btnPDF.addEventListener('click', async function () {
             }
         });
 
-        const nomeArquivo = `Designacoes_${mesNome}.pdf`;
         const pdfBlob = doc.output('blob');
-        const arquivoFinal = new File([pdfBlob], nomeArquivo, { type: "application/pdf" });
+        const arquivo = new File([pdfBlob], `Escala_${nomeMes}.pdf`, { type: "application/pdf" });
 
-        // Tenta compartilhar (WhatsApp/Menu de sistema)
-        if (navigator.share && navigator.canShare && navigator.canShare({ files: [arquivoFinal] })) {
+        // Lógica de compartilhamento nativa para WhatsApp/Celular
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [arquivo] })) {
             await navigator.share({
-                files: [arquivoFinal],
-                title: 'Designações',
-                text: `Quadro de Designações - ${mesNome}`
+                files: [arquivo],
+                title: 'Quadro de Designações',
+                text: 'Segue a escala atualizada.'
             });
         } else {
-            // Se não for possível compartilhar (ex: PC), faz o download
-            doc.save(nomeArquivo);
+            doc.save(`Escala_${nomeMes}.pdf`); // Download se estiver no PC
         }
-
     } catch (error) {
-        console.error("Erro:", error);
-        alert("Erro ao processar PDF.");
+        alert("Erro ao gerar/enviar PDF.");
     } finally {
         if(overlay) overlay.style.display = 'none';
     }
