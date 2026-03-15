@@ -25,7 +25,7 @@ let dayBestRecord = parseFloat(localStorage.getItem('enduro_dayBest')) || 0;
 let totalBestRecord = parseFloat(localStorage.getItem('enduro_totalBest')) || 0;
 
 const maxSpeed = 16; 
-const STAGE_DURATION = 7500; 
+const STAGE_DURATION = 7200; 
 const DAY_DURATION = STAGE_DURATION * 9; 
 let currentTime = 0; 
 
@@ -365,7 +365,29 @@ function draw(colors, isRaining) {
             drawFinishLine(i, w, x);
         }
 
-        let asphaltColor1 = colors.nightMode ? "#050505" : "#333"; 
+        let asphaltColor1, asphaltColor2;
+
+    if (isSnowStage) {
+        // Tons de branco e cinza muito claro para a neve
+        asphaltColor1 = "#FFFFFF"; // Branco puro
+        asphaltColor2 = "#E0E0E0"; // Cinza gelo claro
+    } else {
+        // Cores originais para os outros estágios
+        asphaltColor1 = colors.nightMode ? "#050505" : "#333"; 
+        asphaltColor2 = colors.nightMode ? "#0a0a0a" : "#3d3d3d";
+    }
+
+    ctx.fillStyle = Math.sin(i * 0.5 + playerDist * 0.2) > 0 ? asphaltColor1 : asphaltColor2;
+    ctx.fillRect(x - w/2, i, w, 4);
+    
+    // As zebras (curb) também podem mudar na neve se você quiser, 
+    // mas manter o vermelho e branco ajuda na visibilidade.
+    let curbColor1 = colors.nightMode ? "#600" : "red";
+    let curbColor2 = colors.nightMode ? "#888" : "white";
+    ctx.fillStyle = Math.sin(i * 0.5 + playerDist * 0.2) > 0 ? curbColor1 : curbColor2;
+    ctx.fillRect(x - w/2 - 12*p, i, 12*p, 4);
+    ctx.fillRect(x + w/2, i, 12*p, 4); 
+} 
         let asphaltColor2 = colors.nightMode ? "#0a0a0a" : "#3d3d3d";
         ctx.fillStyle = Math.sin(i * 0.5 + playerDist * 0.2) > 0 ? asphaltColor1 : asphaltColor2;
         ctx.fillRect(x - w/2, i, w, 4);
