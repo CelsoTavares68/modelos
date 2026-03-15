@@ -38,6 +38,7 @@ let lastMilestone = 0;
 let nextPiece = randomPiece(); // Gera a primeira "reserva"
 let comboCount = 0; // Quantidade de explosões seguidas na mesma jogada
 let particles = [];
+let comboMessages = []; // Mensagens flutuantes de combo
 
 // Recorde Local
 let highScore = parseInt(localStorage.getItem('fruitColumnsHighScore')) || 0;
@@ -100,29 +101,32 @@ function draw(showBlinking = true) {
         ctx.fillText("PAUSADO", canvas.width/2, canvas.height/2);
     }
 
+    // Desenha Mensagens de Combo
+    drawComboMessages();
+
     // Desenha e atualiza partículas
-     updateParticles();
-particles.forEach(p => {
-    ctx.save(); // Guarda o estado do canvas
-    ctx.fillStyle = p.color;
-    ctx.globalAlpha = p.life / 20;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore(); // Restaura o estado para não afetar o resto do desenho
-});
+    updateParticles();
+    particles.forEach(p => {
+        ctx.save(); 
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = p.life / 20;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore(); 
+    });
 
-// Se houver partículas ou animações, redesenhamos no próximo frame
-if (particles.length > 0 || blinkingBlocks.length > 0) {
-    requestAnimationFrame(() => draw(showBlinking));
+    // Se houver partículas ou animações, redesenhamos no próximo frame
+    if (particles.length > 0 || blinkingBlocks.length > 0 || comboMessages.length > 0) {
+        requestAnimationFrame(() => draw(showBlinking));
+    }
 }
-}
-
 
 function updateNextPieceDisplay() {
-    // Transforma os índices numéricos em emojis de fruta
-    const emojis = nextPiece.items.map(idx => FRUITS[idx]).join("");
-    nextPieceElement.innerText = emojis;
+    if (nextPieceElement) {
+        const emojis = nextPiece.items.map(idx => FRUITS[idx]).join("");
+        nextPieceElement.innerText = emojis;
+    }
 }
 
 function drawBlock(x, y, fruitIdx) {
@@ -143,14 +147,9 @@ function moveDown() {
     draw();
 }
 
- function checkCollision(nx, ny) {
-    // Verifica se a peça sai dos limites laterais
+function checkCollision(nx, ny) {
     if (nx < 0 || nx >= COLS) return true;
-    
-    // Verifica se a peça atinge o fundo
     if (ny + 2 >= ROWS) return true;
-
-    // Verifica colisão com blocos já existentes no tabuleiro
     for (let i = 0; i < 3; i++) {
         if (ny + i >= 0 && board[ny + i][nx] !== null) {
             return true;
@@ -169,10 +168,39 @@ function lockPiece() {
 }
 
 // --- 5. SISTEMA DE COMBINAÇÕES ---
- function clearMatches() {
+function clearMatches() {
     let toRemove = [];
-    // ... (toda a tua lógica de deteção de combinações está correta aqui) ...
-    // (Apenas certifique-se de manter a parte que preenche o array toRemove)
+    let matchSet = new Set();
+
+    // Deteção de Trincas
+    for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+            let val = board[r][c];
+            if (val === null) continue;
+
+            // Horizontal
+            if (c + 2 < COLS && val === board[r][c + 1] && val === board[r][c + 2]) {
+                [0, 1, 2].forEach(i => matchSet.add(`${r},${c + i}`));
+            }
+            // Vertical
+            if (r + 2 < ROWS && val === board[r + 1][c] && val === board[r + 2][c]) {
+                [0, 1, 2].forEach(i => matchSet.add(`${r + i},${c}`));
+            }
+            // Diagonal \
+            if (r + 2 < ROWS && c + 2 < COLS && val === board[r + 1][c + 1] && val === board[r + 2][c + 2]) {
+                [0, 1, 2].forEach(i => matchSet.add(`${r + i},${c + i}`));
+            }
+            // Diagonal /
+            if (r - 2 >= 0 && c + 2 < COLS && val === board[r - 1][c + 1] && val === board[r - 2][c + 2]) {
+                [0, 1, 2].forEach(i => matchSet.add(`${r - i},${c + i}`));
+            }
+        }
+    }
+
+    matchSet.forEach(pos => {
+        const [r, c] = pos.split(',').map(Number);
+        toRemove.push({ r, c });
+    });
 
     if (toRemove.length > 0) {
         blinkingBlocks = toRemove;
@@ -181,17 +209,10 @@ function lockPiece() {
         let flashes = 0;
         let flashInterval = setInterval(() => {
             flashes++;
-            if (flashes > 6) { // Terminou o piscar
+            if (flashes > 6) { 
                 clearInterval(flashInterval);
                 
-                // 1. Criar partículas e APENAS AGORA remover do tabuleiro
-                toRemove.forEach(p => {
-                    const fruitIdx = board[p.r][p.c];
-                    createParticles(p.c, p.r, "#00ffcc");
-                    board[p.r][p.c] = null;
-                });
-
-                // 2. Cálculo de Pontuação (Corrigido: sem duplicar)
+                // Cálculo de Pontuação com bónus de Combo (30%)
                 const basePoints = toRemove.length * 15;
                 const comboBonus = comboCount > 0 ? 1.3 : 1.0;
                 const pointsGained = Math.floor(basePoints * comboBonus);
@@ -199,12 +220,19 @@ function lockPiece() {
                 score += pointsGained;
                 scoreElement.innerText = score;
                 
-                // Se for combo, podemos mostrar algo no console ou preparar um texto
-                if(comboCount > 0) console.log("COMBO X" + (comboCount + 1));
+                if (comboCount > 0) {
+                    createComboMessage(toRemove[0].c, toRemove[0].r, `COMBO X${comboCount + 1}!`);
+                }
                 
                 comboCount++; 
 
-                // 3. Sistema de Nível (Milestone)
+                // Criar partículas e remover do tabuleiro
+                toRemove.forEach(p => {
+                    createParticles(p.c, p.r, "#00ffcc");
+                    board[p.r][p.c] = null;
+                });
+
+                // Sistema de Nível
                 if (Math.floor(score / 1000) > lastMilestone) {
                     playSFX(sfxMilPontos);
                     lastMilestone = Math.floor(score / 1000);
@@ -222,7 +250,6 @@ function lockPiece() {
 
                 blinkingBlocks = [];
                 applyGravity();
-                // Verifica se a queda das frutas gerou novos pares
                 setTimeout(clearMatches, 300); 
             } else {
                 draw(flashes % 2 === 0);
@@ -234,15 +261,10 @@ function lockPiece() {
     }
 }
 
- function finalizeTurn() {
-    // A peça atual passa a ser a que estava na reserva
+function finalizeTurn() {
     piece = nextPiece;
-    // Geramos uma nova reserva para a próxima jogada
     nextPiece = randomPiece();
-
     comboCount = 0;
-    
-    // Atualizamos o mostrador no ecrã
     updateNextPieceDisplay();
 
     if (checkCollision(piece.x, piece.y)) {
@@ -300,10 +322,10 @@ window.resetGame = function() {
     isProcessingCombo = false;
     clearInterval(gameLoop);
     piece = randomPiece();
+    nextPiece = randomPiece();
+    updateNextPieceDisplay();
     startGame();
     draw();
-    nextPiece = randomPiece();
-updateNextPieceDisplay();
 }
 
 function handleAction(type) {
@@ -322,7 +344,6 @@ function handleAction(type) {
     draw();
 }
 
-// Mapeamento de botões
 const controls = { 'btnLeft': 'left', 'btnRight': 'right', 'btnDown': 'down', 'btnRotate': 'rotate' };
 
 Object.keys(controls).forEach(id => {
@@ -336,10 +357,6 @@ Object.keys(controls).forEach(id => {
     }
 });
 
-// Inicialização
-startGame();
-draw();
-
 function createParticles(x, y, color) {
     for (let i = 0; i < 8; i++) {
         particles.push({
@@ -347,7 +364,7 @@ function createParticles(x, y, color) {
             y: y * BLOCK_SIZE + 20,
             vx: (Math.random() - 0.5) * 10,
             vy: (Math.random() - 0.5) * 10,
-            life: 20, // Frames de duração
+            life: 20, 
             color: color
         });
     }
@@ -361,3 +378,28 @@ function updateParticles() {
         p.life--;
     });
 }
+
+function createComboMessage(x, r, text) {
+    comboMessages.push({
+        x: x * BLOCK_SIZE,
+        y: r * BLOCK_SIZE,
+        text: text,
+        life: 40 
+    });
+}
+
+function drawComboMessages() {
+    comboMessages = comboMessages.filter(m => m.life > 0);
+    comboMessages.forEach(m => {
+        ctx.fillStyle = "#ffcc00";
+        ctx.font = "bold 24px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText(m.text, m.x + 20, m.y - (40 - m.life)); 
+        m.life--;
+    });
+}
+
+// Inicialização
+updateNextPieceDisplay();
+startGame();
+draw();
