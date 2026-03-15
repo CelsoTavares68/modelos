@@ -331,7 +331,7 @@ function update() {
         enemy.lastY = 200 + (p * 140); enemy.lastX = screenX; enemy.lastP = p;
     });
 
-    if (gameTick % 140 === 0 && enemies.length < 100) {
+    if (gameTick % 180 === 0 && enemies.length < 100) {
         enemies.push({ 
             lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 7.0, 
             color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)],
@@ -345,7 +345,7 @@ function update() {
 }
 
 function draw(colors, isRaining, currentStage) {
-    // 1. DESENHA O CÉU E GRAMA BASE
+    // 1. DESENHA O CÉU E GRAMA
     ctx.fillStyle = colors.sky; ctx.fillRect(0, 0, 400, 200);
     ctx.fillStyle = colors.grass; ctx.fillRect(0, 200, 400, 200);
     
@@ -358,12 +358,10 @@ function draw(colors, isRaining, currentStage) {
         if (colors.snowCaps) { ctx.fillStyle = "white"; ctx.beginPath(); ctx.moveTo(bx, 130); ctx.lineTo(bx - 25, 155); ctx.lineTo(bx + 25, 155); ctx.fill(); }
     }
 
-    // --- MUDANÇA AQUI: CLARÃO DO RELÂMPAGO APENAS NO FUNDO ---
-    // Desenha o clarão APÓS as montanhas, mas ANTES da pista
-    if (lightningAlpha > 0) { 
+    // --- RELÂMPAGO ATRÁS (Aviso: cases 2 e 6) ---
+    if (lightningAlpha > 0 && (currentStage === 2 || currentStage === 6)) { 
         ctx.fillStyle = `rgba(255, 255, 255, ${lightningAlpha})`; 
-        // Preenche apenas a parte superior (horizonte até o topo)
-        ctx.fillRect(0, 0, 400, 200); 
+        ctx.fillRect(0, 55, 400, 145); // Apenas a faixa do horizonte
     }
 
     // 3. DESENHA A PISTA
@@ -413,6 +411,12 @@ function draw(colors, isRaining, currentStage) {
     if (isRaining) {
         ctx.strokeStyle = "rgba(200, 210, 255, 0.51)"; ctx.lineWidth = 1.2;
         raindrops.forEach(r => { ctx.beginPath(); ctx.moveTo(r.x, r.y); ctx.lineTo(r.x + 1.5, r.y + 12); ctx.stroke(); });
+    }
+
+    // --- RELÂMPAGO NA FRENTE (Tempestade: cases 3 e 7) ---
+    if (lightningAlpha > 0 && (currentStage === 3 || currentStage === 7)) { 
+        ctx.fillStyle = `rgba(255, 255, 255, ${lightningAlpha})`; 
+        ctx.fillRect(0, 55, 400, 345); // Tela inteira do jogo
     }
 
     // 6. INTERFACE (HUD)
