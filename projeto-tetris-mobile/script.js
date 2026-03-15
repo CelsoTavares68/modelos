@@ -24,6 +24,7 @@ const ROWS = 15;
 const COLS = 10;
 const BLOCK_SIZE = 40;
 const FRUITS = ['🍎', '🍇', '🍊', '🍌', '💎', '🍓', '🥝'];
+const nextPieceElement = document.getElementById('nextPiece');
 
 let score = 0;
 let level = 1;
@@ -34,6 +35,7 @@ let gameLoop = null;
 let board = Array(ROWS).fill().map(() => Array(COLS).fill(null));
 let blinkingBlocks = [];
 let lastMilestone = 0;
+let nextPiece = randomPiece(); // Gera a primeira "reserva"
 
 // Recorde Local
 let highScore = parseInt(localStorage.getItem('fruitColumnsHighScore')) || 0;
@@ -97,6 +99,12 @@ function draw(showBlinking = true) {
     }
 }
 
+function updateNextPieceDisplay() {
+    // Transforma os índices numéricos em emojis de fruta
+    const emojis = nextPiece.items.map(idx => FRUITS[idx]).join("");
+    nextPieceElement.innerText = emojis;
+}
+
 function drawBlock(x, y, fruitIdx) {
     ctx.font = "28px Arial";
     ctx.textAlign = "center";
@@ -115,10 +123,18 @@ function moveDown() {
     draw();
 }
 
-function checkCollision(nx, ny) {
+ function checkCollision(nx, ny) {
+    // Verifica se a peça sai dos limites laterais
+    if (nx < 0 || nx >= COLS) return true;
+    
+    // Verifica se a peça atinge o fundo
     if (ny + 2 >= ROWS) return true;
+
+    // Verifica colisão com blocos já existentes no tabuleiro
     for (let i = 0; i < 3; i++) {
-        if (board[ny + i] && board[ny + i][nx] !== null) return true;
+        if (ny + i >= 0 && board[ny + i][nx] !== null) {
+            return true;
+        }
     }
     return false;
 }
@@ -189,16 +205,21 @@ function clearMatches() {
     }
 }
 
-function finalizeTurn() {
-    let nextPiece = randomPiece();
-    if (checkCollision(nextPiece.x, nextPiece.y)) {
+ function finalizeTurn() {
+    // A peça atual passa a ser a que estava na reserva
+    piece = nextPiece;
+    // Geramos uma nova reserva para a próxima jogada
+    nextPiece = randomPiece();
+    
+    // Atualizamos o mostrador no ecrã
+    updateNextPieceDisplay();
+
+    if (checkCollision(piece.x, piece.y)) {
         playSFX(sfxFim);
         setTimeout(() => {
             alert("FIM DE JOGO! Pontos: " + score);
             resetGame();
         }, 100);
-    } else {
-        piece = nextPiece;
     }
 }
 
@@ -250,6 +271,8 @@ window.resetGame = function() {
     piece = randomPiece();
     startGame();
     draw();
+    nextPiece = randomPiece();
+updateNextPieceDisplay();
 }
 
 function handleAction(type) {
