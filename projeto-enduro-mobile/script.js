@@ -25,7 +25,7 @@ let dayBestRecord = parseFloat(localStorage.getItem('enduro_dayBest')) || 0;
 let totalBestRecord = parseFloat(localStorage.getItem('enduro_totalBest')) || 0;
 
 const maxSpeed = 16; 
-const STAGE_DURATION = 8100; 
+const STAGE_DURATION = 7500; 
 const DAY_DURATION = STAGE_DURATION * 9; 
 let currentTime = 0; 
 
