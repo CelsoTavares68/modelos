@@ -234,7 +234,7 @@ function update() {
 
     if (gameState === "WIN_DAY" || gameState === "GAME_OVER") { 
         sfxChuva.pause();
-        draw(colors, isRaining); 
+        draw(colors, isRaining, currentStage); 
         requestAnimationFrame(update); 
         return; 
     }
@@ -340,11 +340,11 @@ function update() {
     }
 
     enemies = enemies.filter(e => e.z > -18000 && e.z < 6000);
-    draw(colors, isRaining);
+    draw(colors, isRaining, currentStage);
     requestAnimationFrame(update);
 }
 
-function draw(colors, isRaining) {
+function draw(colors, isRaining, currentStage) {
     ctx.fillStyle = colors.sky; ctx.fillRect(0, 0, 400, 200);
     ctx.fillStyle = colors.grass; ctx.fillRect(0, 200, 400, 200);
     
@@ -356,6 +356,8 @@ function draw(colors, isRaining) {
         if (colors.snowCaps) { ctx.fillStyle = "white"; ctx.beginPath(); ctx.moveTo(bx, 130); ctx.lineTo(bx - 25, 155); ctx.lineTo(bx + 25, 155); ctx.fill(); }
     }
 
+    let isSnowStage = (currentStage === 1);
+
     for (let i = 200; i < 400; i += 4) {
         let p = (i - 200) / 140; 
         let x = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p);
@@ -366,31 +368,17 @@ function draw(colors, isRaining) {
         }
 
         let asphaltColor1, asphaltColor2;
+        if (isSnowStage) {
+            asphaltColor1 = "#FFFFFF"; 
+            asphaltColor2 = "#E0E0E0"; 
+        } else {
+            asphaltColor1 = colors.nightMode ? "#050505" : "#333"; 
+            asphaltColor2 = colors.nightMode ? "#0a0a0a" : "#3d3d3d";
+        }
 
-    if (isSnowStage) {
-        // Tons de branco e cinza muito claro para a neve
-        asphaltColor1 = "#FFFFFF"; // Branco puro
-        asphaltColor2 = "#E0E0E0"; // Cinza gelo claro
-    } else {
-        // Cores originais para os outros estágios
-        asphaltColor1 = colors.nightMode ? "#050505" : "#333"; 
-        asphaltColor2 = colors.nightMode ? "#0a0a0a" : "#3d3d3d";
-    }
-
-    ctx.fillStyle = Math.sin(i * 0.5 + playerDist * 0.2) > 0 ? asphaltColor1 : asphaltColor2;
-    ctx.fillRect(x - w/2, i, w, 4);
-    
-    // As zebras (curb) também podem mudar na neve se você quiser, 
-    // mas manter o vermelho e branco ajuda na visibilidade.
-    let curbColor1 = colors.nightMode ? "#600" : "red";
-    let curbColor2 = colors.nightMode ? "#888" : "white";
-    ctx.fillStyle = Math.sin(i * 0.5 + playerDist * 0.2) > 0 ? curbColor1 : curbColor2;
-    ctx.fillRect(x - w/2 - 12*p, i, 12*p, 4);
-    ctx.fillRect(x + w/2, i, 12*p, 4); 
-} 
-        let asphaltColor2 = colors.nightMode ? "#0a0a0a" : "#3d3d3d";
         ctx.fillStyle = Math.sin(i * 0.5 + playerDist * 0.2) > 0 ? asphaltColor1 : asphaltColor2;
         ctx.fillRect(x - w/2, i, w, 4);
+        
         let curbColor1 = colors.nightMode ? "#600" : "red";
         let curbColor2 = colors.nightMode ? "#888" : "white";
         ctx.fillStyle = Math.sin(i * 0.5 + playerDist * 0.2) > 0 ? curbColor1 : curbColor2;
