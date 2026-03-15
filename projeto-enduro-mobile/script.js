@@ -25,7 +25,7 @@ let dayBestRecord = parseFloat(localStorage.getItem('enduro_dayBest')) || 0;
 let totalBestRecord = parseFloat(localStorage.getItem('enduro_totalBest')) || 0;
 
 const maxSpeed = 16; 
-const STAGE_DURATION = 9000; 
+const STAGE_DURATION = 8100; 
 const DAY_DURATION = STAGE_DURATION * 9; 
 let currentTime = 0; 
 
@@ -331,9 +331,9 @@ function update() {
         enemy.lastY = 200 + (p * 140); enemy.lastX = screenX; enemy.lastP = p;
     });
 
-    if (gameTick % 230 === 0 && enemies.length < 100) {
+    if (gameTick % 210 === 0 && enemies.length < 100) {
         enemies.push({ 
-            lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 8.0, 
+            lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 7.0, 
             color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)],
             isOvertaken: false 
         });
