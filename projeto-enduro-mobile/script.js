@@ -345,9 +345,11 @@ function update() {
 }
 
 function draw(colors, isRaining, currentStage) {
+    // 1. DESENHA O CÉU E GRAMA BASE
     ctx.fillStyle = colors.sky; ctx.fillRect(0, 0, 400, 200);
     ctx.fillStyle = colors.grass; ctx.fillRect(0, 200, 400, 200);
     
+    // 2. DESENHA AS MONTANHAS
     let mtShift = (roadCurve * 0.6);
     for (let i = -3; i < 9; i++) {
         let bx = (i * 100) + mtShift;
@@ -356,8 +358,16 @@ function draw(colors, isRaining, currentStage) {
         if (colors.snowCaps) { ctx.fillStyle = "white"; ctx.beginPath(); ctx.moveTo(bx, 130); ctx.lineTo(bx - 25, 155); ctx.lineTo(bx + 25, 155); ctx.fill(); }
     }
 
-    let isSnowStage = (currentStage === 1);
+    // --- MUDANÇA AQUI: CLARÃO DO RELÂMPAGO APENAS NO FUNDO ---
+    // Desenha o clarão APÓS as montanhas, mas ANTES da pista
+    if (lightningAlpha > 0) { 
+        ctx.fillStyle = `rgba(255, 255, 255, ${lightningAlpha})`; 
+        // Preenche apenas a parte superior (horizonte até o topo)
+        ctx.fillRect(0, 0, 400, 200); 
+    }
 
+    // 3. DESENHA A PISTA
+    let isSnowStage = (currentStage === 1);
     for (let i = 200; i < 400; i += 4) {
         let p = (i - 200) / 140; 
         let x = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p);
@@ -386,6 +396,7 @@ function draw(colors, isRaining, currentStage) {
         ctx.fillRect(x + w/2, i, 12*p, 4); 
     }
 
+    // 4. DESENHA OS CARROS
     let hasFog = colors.fog > 0;
     enemies.sort((a,b) => b.z - a.z).forEach(e => {
         if (e.lastP > 0 && e.lastP < 0.92) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, hasFog, isRaining);
@@ -397,13 +408,14 @@ function draw(colors, isRaining, currentStage) {
         if (e.lastP >= 0.92) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, hasFog, isRaining);
     });
 
+    // 5. EFEITOS DE CLIMA (Neblina e Chuva)
     if (colors.fog > 0) { ctx.fillStyle = `rgba(140,145,160,${colors.fog})`; ctx.fillRect(0, 55, 400, 345); }
     if (isRaining) {
         ctx.strokeStyle = "rgba(200, 210, 255, 0.51)"; ctx.lineWidth = 1.2;
         raindrops.forEach(r => { ctx.beginPath(); ctx.moveTo(r.x, r.y); ctx.lineTo(r.x + 1.5, r.y + 12); ctx.stroke(); });
     }
-    if (lightningAlpha > 0) { ctx.fillStyle = `rgba(255, 255, 255, ${lightningAlpha})`; ctx.fillRect(0, 55, 400, 345); }
 
+    // 6. INTERFACE (HUD)
     ctx.fillStyle = "black"; ctx.fillRect(0, 0, 400, 55);
     ctx.fillStyle = (gameState === "GOAL_REACHED" || gameState === "WIN_DAY") ? "lime" : "yellow";
     ctx.font = "bold 18px Courier";
