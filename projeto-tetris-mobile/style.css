@@ -32,12 +32,21 @@
     font-weight: 900;
 }
 
+/* Ajuste no container de informações para suportar o novo elemento */
 #info {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     width: 100%;
     font-size: 1rem;
     margin-bottom: 10px;
+    gap: 5px;
+}
+
+#info div {
+    flex: 1;
+    text-align: center;
+    white-space: nowrap;
 }
 
 canvas {
@@ -73,21 +82,49 @@ canvas {
     border-color: #ffcc00;
 }
 
-#update-banner {
-    position: fixed;
-    bottom: 20px;
-    background: #ffcc00;
-    color: #000;
-    padding: 15px 25px;
-    border-radius: 50px;
-    display: none;
-    z-index: 1000;
-}
-
+/* Estilo para o container da próxima peça */
 #next-piece-container {
     background: rgba(255, 255, 255, 0.1);
-    padding: 5px 10px;
+    padding: 5px 8px;
     border-radius: 5px;
     border: 1px solid #00ffcc;
-    font-size: 1.2rem;
+    font-size: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#nextPiece {
+    font-size: 1.4rem;
+    margin-top: 2px;
+}
+
+/* --- AJUSTES PARA CELULAR (MEDIA QUERIES) --- */
+@media screen and (max-width: 480px) {
+    .game-title {
+        font-size: 1.5rem;
+    }
+
+    #info {
+        flex-wrap: wrap; /* Permite quebrar linha se necessário */
+        justify-content: space-around;
+        font-size: 1.1rem; /* Texto ligeiramente maior no mobile */
+    }
+
+    /* Faz a próxima sequência ganhar destaque no mobile */
+    #next-piece-container {
+        order: -1; /* Coloca a próxima peça no topo ou início se desejar */
+        min-width: 80px;
+        background: rgba(0, 255, 204, 0.15);
+        border-width: 2px;
+    }
+
+    #nextPiece {
+        font-size: 1.8rem; /* Frutas maiores para facilitar visualização */
+    }
+
+    .ctrl-btn {
+        width: 75px; /* Botões maiores para polegares no telemóvel */
+        height: 75px;
+    }
 }

@@ -15,12 +15,11 @@
             <button id="btnPause" onclick="togglePause()">Pausar</button>
             <button id="btnReset" onclick="resetGame()">Recomeçar</button>
         </div>
-         <div id="info">
+       <div id="info">
     <div>Pontos: <span id="score">0</span></div>
-    <div>Nível: <span id="level">1</span></div>
+    <div id="next-piece-container">Prox: <span id="nextPiece"></span></div>
     <div>Recorde: <span id="highScore">0</span></div>
-    <div id="next-piece-container">Próxima: <span id="nextPiece"></span></div>
-</div>
+</div>   
         <canvas id="gameCanvas" width="400" height="600"></canvas>
         <div class="mobile-controls">
             <button class="ctrl-btn" id="btnLeft">⬅️</button>
