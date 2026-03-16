@@ -13,31 +13,25 @@ let odometerNow = 0;
 let totalBestRecord = 0;   
 let hasPlayedGoalMedia = false; 
 
-// VARIÁVEIS PARA ULTRAPASSAGENS
 let totalPasses = 0;           
 let totalPassesOdometer = 0;   
 let dayPassesBest = 0;         
 let totalPassesBest = 0;       
 
-// --- CONFIGURAÇÕES DE VELOCIDADE E TEMPO ---
-const maxSpeed = 16; 
+const maxSpeed = 17; 
 const STAGE_DURATION = 6000; 
 const DAY_DURATION = STAGE_DURATION * 9; 
 let currentTime = 0; 
 
 let enemies = [];
-
-// --- SISTEMA DE CURVAS ---
 let roadCurve = 0;      
 let targetCurve = 0;    
 let curveTimer = 0;     
 let curveSpeed = 0.015; 
 
-// --- CLIMA E PARTÍCULAS ---
 let raindrops = []; 
 let lightningAlpha = 0; 
 
-// --- SONS ---
 const sfxChuva = new Audio('chuva.mp3');
 sfxChuva.loop = true;
 sfxChuva.volume = 0.5; 
@@ -46,7 +40,6 @@ sfxTrovao.volume = 0.7;
 const sfxDerrota = new Audio('game_over.mp3');
 const sfxVitoriaAudio = new Audio('vitoria.mp3');
 
-// --- PERSISTÊNCIA ---
 function saveProgress() {
     const gameData = {
         dayNumber: dayNumber,
@@ -177,13 +170,17 @@ function update() {
     if (isPaused) return; 
     let currentStage = Math.min(Math.floor(currentTime / STAGE_DURATION), 8);
     let isRaining = (currentStage === 3 || currentStage === 7);
-    // Relâmpagos ativos nos cases 2, 3, 6 e 7
     let hasLightning = (currentStage === 2 || currentStage === 3 || currentStage === 6 || currentStage === 7); 
 
     let colors = { sky: "#87CEEB", grass: "#1a7a1a", fog: 0, mt: "#555", nightMode: false, snowCaps: false };
     switch(currentStage) {
         case 0: colors.snowCaps = true; break; 
-        case 1: colors.sky = "#DDD"; colors.grass = "#FFF"; colors.mt = "#999"; colors.snowCaps = true; break; 
+        case 1: 
+            colors.sky = "#B0C4DE"; 
+            colors.grass = "#FFFFFF"; 
+            colors.mt = "#5F9EA0"; 
+            colors.snowCaps = true; 
+            break; 
         case 2: colors.sky = "#ff8c00"; colors.grass = "#145c14"; colors.mt = "#442200"; break; 
         case 3: colors.sky = "#2c3e50"; colors.grass = "#0a2a0a"; colors.mt = "#1a1a1a"; colors.fog = 0.6; break; 
         case 4: colors.sky = "#0d0d0e"; colors.grass = "#080808"; colors.mt = "#111"; colors.nightMode = true; break; 
@@ -212,7 +209,6 @@ function update() {
     if (playerDist > dayBestRecord) dayBestRecord = playerDist;
     if (odometerNow > totalBestRecord) totalBestRecord = odometerNow;
 
-    // UI Updates
     const uiDist = document.getElementById('ui-dist');
     const uiDayBest = document.getElementById('ui-day-best');
     const uiTotalNow = document.getElementById('ui-total-now');
@@ -233,13 +229,11 @@ function update() {
 
     if (gameTick % 300 === 0) saveProgress();
 
-    // Lógica de Relâmpago e Trovão
     if (hasLightning) {
         if (isRaining && sfxChuva.paused && audioCtx.state === 'running') sfxChuva.play().catch(e => {}); 
         if (Math.random() > 0.996) { 
             lightningAlpha = 0.7; 
             if (audioCtx.state === 'running') {
-                // Trovão mais baixo nos cases 2 e 6 (aviso)
                 sfxTrovao.volume = (currentStage === 2 || currentStage === 6) ? 0.2 : 0.7;
                 sfxTrovao.play().catch(e => {});
             }
@@ -327,9 +321,17 @@ function update() {
         enemy.lastY = 200 + (p * 140); enemy.lastX = screenX; enemy.lastP = p;
     });
 
+    // --- LÓGICA DE INIMIGOS EM DUPLA ---
     if (gameTick % 250 === 0 && enemies.length < 100) {
         enemies.push({ 
-            lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 10.0, 
+            lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 9.0, 
+            color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)],
+            isOvertaken: false 
+        });
+    }
+    if (gameTick % 250 === 80 && enemies.length < 100) {
+        enemies.push({ 
+            lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 9.0, 
             color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)],
             isOvertaken: false 
         });
@@ -341,11 +343,9 @@ function update() {
 }
 
 function draw(colors, isRaining, currentStage) {
-    // 1. FUNDO
     ctx.fillStyle = colors.sky; ctx.fillRect(0, 0, 400, 200);
     ctx.fillStyle = colors.grass; ctx.fillRect(0, 200, 400, 200);
     
-    // 2. MONTANHAS
     let mtShift = (roadCurve * 0.6);
     for (let i = -3; i < 9; i++) {
         let bx = (i * 100) + mtShift;
@@ -354,24 +354,23 @@ function draw(colors, isRaining, currentStage) {
         if (colors.snowCaps) { ctx.fillStyle = "white"; ctx.beginPath(); ctx.moveTo(bx, 130); ctx.lineTo(bx - 25, 155); ctx.lineTo(bx + 25, 155); ctx.fill(); }
     }
 
-    // --- RELÂMPAGO ATRÁS (Aviso: cases 2 e 6) ---
     if (lightningAlpha > 0 && (currentStage === 2 || currentStage === 6)) { 
         ctx.fillStyle = `rgba(255, 255, 255, ${lightningAlpha})`; 
-        ctx.fillRect(0, 55, 400, 145); // Clareia apenas a área das montanhas/horizonte
+        ctx.fillRect(0, 55, 400, 145); 
     }
 
-    // 3. PISTA
     let isSnowStage = (currentStage === 1);
     for (let i = 200; i < 400; i += 4) {
         let p = (i - 200) / 140; 
         let x = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p);
         let w = 20 + p * 800;
         
-        // Cores do asfalto (Branco/Cinza claro para Neve)
         let asphaltColor1, asphaltColor2;
         if (isSnowStage) {
-            asphaltColor1 = "#FFFFFF"; 
-            asphaltColor2 = "#EBEBEB";
+            let snowPattern = Math.sin(i * 0.5 + playerDist * 0.2);
+            // Proporção 70/30 e cor secundária muito clara (#F8F8F8)
+            asphaltColor1 = snowPattern > -0.4 ? "#FFFFFF" : "#F8F8F8"; 
+            asphaltColor2 = snowPattern > -0.4 ? "#FFFFFF" : "#F0F0F0";
         } else {
             asphaltColor1 = colors.nightMode ? "#050505" : "#333"; 
             asphaltColor2 = colors.nightMode ? "#0a0a0a" : "#3d3d3d";
@@ -380,14 +379,19 @@ function draw(colors, isRaining, currentStage) {
         ctx.fillStyle = Math.sin(i * 0.5 + playerDist * 0.2) > 0 ? asphaltColor1 : asphaltColor2;
         ctx.fillRect(x - w/2, i, w, 4);
         
-        let curbColor1 = colors.nightMode ? "#600" : "red";
-        let curbColor2 = colors.nightMode ? "#888" : "white";
+        // Bordas (Curbs) - Sempre Vermelho e Branco
+        let curbColor1, curbColor2;
+        if (colors.nightMode) {
+            curbColor1 = "#600"; curbColor2 = "#888";
+        } else {
+            curbColor1 = "red"; curbColor2 = "white";
+        }
+        
         ctx.fillStyle = Math.sin(i * 0.5 + playerDist * 0.2) > 0 ? curbColor1 : curbColor2;
         ctx.fillRect(x - w/2 - 12*p, i, 12*p, 4);
         ctx.fillRect(x + w/2, i, 12*p, 4); 
     }
 
-    // 4. CARROS
     let hasFog = colors.fog > 0;
     enemies.sort((a,b) => b.z - a.z).forEach(e => {
         if (e.lastP > 0 && e.lastP < 0.92) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, hasFog, isRaining);
@@ -399,20 +403,17 @@ function draw(colors, isRaining, currentStage) {
         if (e.lastP >= 0.92) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, hasFog, isRaining);
     });
 
-    // 5. CLIMA
     if (colors.fog > 0) { ctx.fillStyle = `rgba(140,145,160,${colors.fog})`; ctx.fillRect(0, 55, 400, 345); }
     if (isRaining) {
         ctx.strokeStyle = "rgba(200, 210, 255, 0.49)"; ctx.lineWidth = 1.2;
         raindrops.forEach(r => { ctx.beginPath(); ctx.moveTo(r.x, r.y); ctx.lineTo(r.x + 1.5, r.y + 12); ctx.stroke(); });
     }
 
-    // --- RELÂMPAGO NA TELA TODA (Cases 3 e 7) ---
     if (lightningAlpha > 0 && (currentStage === 3 || currentStage === 7)) { 
         ctx.fillStyle = `rgba(255, 255, 255, ${lightningAlpha})`; 
         ctx.fillRect(0, 55, 400, 345); 
     }
 
-    // 6. HUD
     ctx.fillStyle = "black"; ctx.fillRect(0, 0, 400, 55);
     ctx.fillStyle = (hasPlayedGoalMedia) ? "lime" : "yellow";
     ctx.font = "bold 18px Courier";
