@@ -7,17 +7,17 @@ let dayNumber = 1, baseGoal = 200, carsRemaining = baseGoal;
 let gameState = "PLAYING"; 
 let isPaused = false;
 
-// --- SISTEMA DE RECORDES (ESTRUTURA COMPLETA) ---
+// --- SISTEMA DE RECORDES ---
 let dayBestRecord = 0;     
 let odometerNow = 0;       
 let totalBestRecord = 0;   
 let hasPlayedGoalMedia = false; 
 
-// NOVAS VARIÁVEIS PARA ULTRAPASSAGENS
-let totalPasses = 0;           // Passes no dia atual (zera todo dia)
-let totalPassesOdometer = 0;   // NOVO: Acumulado de todos os dias (não zera)
-let dayPassesBest = 0;         // Recorde de um único dia
-let totalPassesBest = 0;       // Recorde histórico (salvo no LocalStorage)
+// VARIÁVEIS PARA ULTRAPASSAGENS
+let totalPasses = 0;           
+let totalPassesOdometer = 0;   
+let dayPassesBest = 0;         
+let totalPassesBest = 0;       
 
 // --- CONFIGURAÇÕES DE VELOCIDADE E TEMPO ---
 const maxSpeed = 16; 
@@ -46,7 +46,7 @@ sfxTrovao.volume = 0.7;
 const sfxDerrota = new Audio('game_over.mp3');
 const sfxVitoriaAudio = new Audio('vitoria.mp3');
 
-// --- PERSISTÊNCIA REVISADA (INCLUINDO ODO.P) ---
+// --- PERSISTÊNCIA ---
 function saveProgress() {
     const gameData = {
         dayNumber: dayNumber,
@@ -59,7 +59,7 @@ function saveProgress() {
         hasPlayedGoalMedia: hasPlayedGoalMedia,
         dayPassesBest: dayPassesBest,
         totalPassesBest: totalPassesBest,
-        totalPassesOdometer: totalPassesOdometer // Alteração: Salva ODO.P
+        totalPassesOdometer: totalPassesOdometer
     };
     localStorage.setItem('enduro_pro_data', JSON.stringify(gameData));
 }
@@ -78,7 +78,7 @@ function loadProgress() {
         hasPlayedGoalMedia = data.hasPlayedGoalMedia || false;
         dayPassesBest = data.dayPassesBest || 0;
         totalPassesBest = data.totalPassesBest || 0;
-        totalPassesOdometer = data.totalPassesOdometer || 0; // Alteração: Carrega ODO.P
+        totalPassesOdometer = data.totalPassesOdometer || 0;
     }
 }
 loadProgress();
@@ -121,39 +121,21 @@ function togglePause() {
         isPaused = !isPaused;
         const btn = document.getElementById('pauseBtn');
         if (btn) btn.innerText = isPaused ? "Retomar" : "Pausar";
-        
-        if (isPaused) { 
-            sfxChuva.pause(); 
-            saveProgress(); 
-        } else { 
-            audioCtx.resume(); 
-            update(); 
-        }
+        if (isPaused) { sfxChuva.pause(); saveProgress(); } 
+        else { audioCtx.resume(); update(); }
     }
 }
 
 function resetGame() {
-    dayNumber = 1; 
-    baseGoal = 200; 
-    odometerNow = 0; 
-    totalPassesOdometer = 0; 
+    dayNumber = 1; baseGoal = 200; odometerNow = 0; totalPassesOdometer = 0; 
     resetDay();
     if (gameState !== "PLAYING") { gameState = "PLAYING"; update(); }
 }
 
 function resetDay() {
-    currentTime = 0; 
-    playerDist = 0; 
-    speed = 0; 
-    enemies = [];
-    totalPasses = 0; 
-    
-    // Vídeos removidos daqui
-
+    currentTime = 0; playerDist = 0; speed = 0; enemies = []; totalPasses = 0; 
     carsRemaining = 200 + ((dayNumber - 1) * 10);
-    gameState = "PLAYING"; 
-    isPaused = false;
-    hasPlayedGoalMedia = false;
+    gameState = "PLAYING"; isPaused = false; hasPlayedGoalMedia = false;
     if (sfxChuva) { sfxChuva.pause(); sfxChuva.currentTime = 0; }
     saveProgress();
 }
@@ -195,7 +177,8 @@ function update() {
     if (isPaused) return; 
     let currentStage = Math.min(Math.floor(currentTime / STAGE_DURATION), 8);
     let isRaining = (currentStage === 3 || currentStage === 7);
-    let warningLightning = (currentStage === 2); 
+    // Relâmpagos ativos nos cases 2, 3, 6 e 7
+    let hasLightning = (currentStage === 2 || currentStage === 3 || currentStage === 6 || currentStage === 7); 
 
     let colors = { sky: "#87CEEB", grass: "#1a7a1a", fog: 0, mt: "#555", nightMode: false, snowCaps: false };
     switch(currentStage) {
@@ -212,7 +195,7 @@ function update() {
 
     if (gameState === "WIN_DAY" || gameState === "GAME_OVER") { 
         sfxChuva.pause();
-        draw(colors, isRaining); 
+        draw(colors, isRaining, currentStage); 
         requestAnimationFrame(update); 
         return; 
     }
@@ -229,7 +212,7 @@ function update() {
     if (playerDist > dayBestRecord) dayBestRecord = playerDist;
     if (odometerNow > totalBestRecord) totalBestRecord = odometerNow;
 
-    // --- ATUALIZAÇÃO DA INTERFACE (UI EXTERNA) ---
+    // UI Updates
     const uiDist = document.getElementById('ui-dist');
     const uiDayBest = document.getElementById('ui-day-best');
     const uiTotalNow = document.getElementById('ui-total-now');
@@ -237,26 +220,27 @@ function update() {
     const uiPasses = document.getElementById('ui-passes');
     const uiPassesDay = document.getElementById('ui-passes-day-best');
     const uiPassesTotal = document.getElementById('ui-passes-total-best');
-    const uiOdoPassesNow = document.getElementById('ui-total-passes-now'); // Alteração: ODO.P
+    const uiOdoPassesNow = document.getElementById('ui-total-passes-now');
     
     if(uiDist) uiDist.innerText = (playerDist / 100).toFixed(1);
     if(uiDayBest) uiDayBest.innerText = (dayBestRecord / 100).toFixed(1);
     if(uiTotalNow) uiTotalNow.innerText = (odometerNow / 100).toFixed(1);
     if(uiTotalBest) uiTotalBest.innerText = (totalBestRecord / 100).toFixed(1);
-    
     if(uiPasses) uiPasses.innerText = totalPasses;
     if(uiPassesDay) uiPassesDay.innerText = dayPassesBest;
     if(uiPassesTotal) uiPassesTotal.innerText = totalPassesBest;
-    if(uiOdoPassesNow) uiOdoPassesNow.innerText = totalPassesOdometer; // Alteração: ODO.P
+    if(uiOdoPassesNow) uiOdoPassesNow.innerText = totalPassesOdometer;
 
     if (gameTick % 300 === 0) saveProgress();
 
-    if (isRaining || warningLightning) {
+    // Lógica de Relâmpago e Trovão
+    if (hasLightning) {
         if (isRaining && sfxChuva.paused && audioCtx.state === 'running') sfxChuva.play().catch(e => {}); 
         if (Math.random() > 0.996) { 
             lightningAlpha = 0.7; 
             if (audioCtx.state === 'running') {
-                sfxTrovao.volume = warningLightning ? 0.15 : 0.7;
+                // Trovão mais baixo nos cases 2 e 6 (aviso)
+                sfxTrovao.volume = (currentStage === 2 || currentStage === 6) ? 0.2 : 0.7;
                 sfxTrovao.play().catch(e => {});
             }
         }
@@ -272,7 +256,6 @@ function update() {
         hasPlayedGoalMedia = true;
         carsRemaining = 0; 
         sfxVitoriaAudio.play().catch(e => {});
-        // Vídeo de vitória removido
     }
 
      if (currentTime >= DAY_DURATION) {
@@ -287,7 +270,6 @@ function update() {
         } else { 
             if (gameState !== "GAME_OVER") { 
                 gameState = "GAME_OVER"; sfxDerrota.play();
-                // Vídeo de derrota removido
                 saveProgress(); 
             }
         }
@@ -326,7 +308,6 @@ function update() {
              speed = -4; enemy.z += (maxSpeed * 120); playCrashSound();
         }
         
-        // --- LÓGICA DE ULTRAPASSAGENS REVISADA ---
         if (p > 1.0 && !enemy.isOvertaken) { 
             enemy.isOvertaken = true;
             totalPasses++;         
@@ -348,33 +329,23 @@ function update() {
 
     if (gameTick % 250 === 0 && enemies.length < 100) {
         enemies.push({ 
-            lane: (Math.random() - 0.5) * 1.8, 
-            z: 4000, 
-            v: 10.0, 
-            color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)],
-            isOvertaken: false 
-        });
-    }
-
-    if (gameTick % 250 === 80 && enemies.length < 100) {
-        enemies.push({ 
-            lane: (Math.random() - 0.5) * 1.8, 
-            z: 4000, 
-            v: 10.0, 
+            lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 10.0, 
             color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)],
             isOvertaken: false 
         });
     }
 
     enemies = enemies.filter(e => e.z > -18800 && e.z < 6000);
-    draw(colors, isRaining);
+    draw(colors, isRaining, currentStage);
     requestAnimationFrame(update);
 }
 
-function draw(colors, isRaining) {
+function draw(colors, isRaining, currentStage) {
+    // 1. FUNDO
     ctx.fillStyle = colors.sky; ctx.fillRect(0, 0, 400, 200);
     ctx.fillStyle = colors.grass; ctx.fillRect(0, 200, 400, 200);
     
+    // 2. MONTANHAS
     let mtShift = (roadCurve * 0.6);
     for (let i = -3; i < 9; i++) {
         let bx = (i * 100) + mtShift;
@@ -383,14 +354,32 @@ function draw(colors, isRaining) {
         if (colors.snowCaps) { ctx.fillStyle = "white"; ctx.beginPath(); ctx.moveTo(bx, 130); ctx.lineTo(bx - 25, 155); ctx.lineTo(bx + 25, 155); ctx.fill(); }
     }
 
+    // --- RELÂMPAGO ATRÁS (Aviso: cases 2 e 6) ---
+    if (lightningAlpha > 0 && (currentStage === 2 || currentStage === 6)) { 
+        ctx.fillStyle = `rgba(255, 255, 255, ${lightningAlpha})`; 
+        ctx.fillRect(0, 55, 400, 145); // Clareia apenas a área das montanhas/horizonte
+    }
+
+    // 3. PISTA
+    let isSnowStage = (currentStage === 1);
     for (let i = 200; i < 400; i += 4) {
         let p = (i - 200) / 140; 
         let x = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p);
         let w = 20 + p * 800;
-        let asphaltColor1 = colors.nightMode ? "#050505" : "#333"; 
-        let asphaltColor2 = colors.nightMode ? "#0a0a0a" : "#3d3d3d";
+        
+        // Cores do asfalto (Branco/Cinza claro para Neve)
+        let asphaltColor1, asphaltColor2;
+        if (isSnowStage) {
+            asphaltColor1 = "#FFFFFF"; 
+            asphaltColor2 = "#EBEBEB";
+        } else {
+            asphaltColor1 = colors.nightMode ? "#050505" : "#333"; 
+            asphaltColor2 = colors.nightMode ? "#0a0a0a" : "#3d3d3d";
+        }
+
         ctx.fillStyle = Math.sin(i * 0.5 + playerDist * 0.2) > 0 ? asphaltColor1 : asphaltColor2;
         ctx.fillRect(x - w/2, i, w, 4);
+        
         let curbColor1 = colors.nightMode ? "#600" : "red";
         let curbColor2 = colors.nightMode ? "#888" : "white";
         ctx.fillStyle = Math.sin(i * 0.5 + playerDist * 0.2) > 0 ? curbColor1 : curbColor2;
@@ -398,6 +387,7 @@ function draw(colors, isRaining) {
         ctx.fillRect(x + w/2, i, 12*p, 4); 
     }
 
+    // 4. CARROS
     let hasFog = colors.fog > 0;
     enemies.sort((a,b) => b.z - a.z).forEach(e => {
         if (e.lastP > 0 && e.lastP < 0.92) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, hasFog, isRaining);
@@ -409,13 +399,20 @@ function draw(colors, isRaining) {
         if (e.lastP >= 0.92) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, hasFog, isRaining);
     });
 
+    // 5. CLIMA
     if (colors.fog > 0) { ctx.fillStyle = `rgba(140,145,160,${colors.fog})`; ctx.fillRect(0, 55, 400, 345); }
     if (isRaining) {
         ctx.strokeStyle = "rgba(200, 210, 255, 0.49)"; ctx.lineWidth = 1.2;
         raindrops.forEach(r => { ctx.beginPath(); ctx.moveTo(r.x, r.y); ctx.lineTo(r.x + 1.5, r.y + 12); ctx.stroke(); });
     }
-    if (lightningAlpha > 0) { ctx.fillStyle = `rgba(255, 255, 255, ${lightningAlpha})`; ctx.fillRect(0, 55, 400, 345); }
 
+    // --- RELÂMPAGO NA TELA TODA (Cases 3 e 7) ---
+    if (lightningAlpha > 0 && (currentStage === 3 || currentStage === 7)) { 
+        ctx.fillStyle = `rgba(255, 255, 255, ${lightningAlpha})`; 
+        ctx.fillRect(0, 55, 400, 345); 
+    }
+
+    // 6. HUD
     ctx.fillStyle = "black"; ctx.fillRect(0, 0, 400, 55);
     ctx.fillStyle = (hasPlayedGoalMedia) ? "lime" : "yellow";
     ctx.font = "bold 18px Courier";
