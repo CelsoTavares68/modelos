@@ -19,13 +19,13 @@ let dayNumber = 1, baseGoal = 200, carsRemaining = baseGoal;
 let gameState = "PLAYING"; 
 let isPaused = false;
 let vitoriaTocada = false; 
-
 let odometerNow = 0;
-
-// --- CARREGAMENTO DE RECORDES (DISTÂNCIA E CARROS) ---
+// Recordes de Distância (KM)
 let dayBestRecord = parseFloat(localStorage.getItem('enduro_dayBest')) || 0;
 let totalBestRecord = parseFloat(localStorage.getItem('enduro_totalBest')) || 0;
-let carsOvertakenRecord = parseInt(localStorage.getItem('enduro_carsRecord')) || 0;
+// Recordes de Carros (Sistema PC)
+let totalCarsPass = parseInt(localStorage.getItem('enduro_totalCarsPass')) || 0; // Odómetro de carros
+let bestCarsPass = parseInt(localStorage.getItem('enduro_bestCarsPass')) || 0;   // Recorde histórico de carros
 
 const maxSpeed = 18; 
 const STAGE_DURATION = 5400; 
@@ -220,8 +220,9 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasF
     ctx.restore();
 }
 
-function update() {
+ function update() {
     if (isPaused) return; 
+    
     let currentStage = Math.min(Math.floor(currentTime / STAGE_DURATION), 8);
     let isRaining = (currentStage === 3 || currentStage === 7);
     let warningLightning = (currentStage === 2 || currentStage === 6);
@@ -266,7 +267,7 @@ function update() {
     raindrops.forEach((r, i) => { r.y += r.s; if (r.y > 400) raindrops.splice(i, 1); });
     if (lightningAlpha > 0) lightningAlpha -= 0.05;
 
-    // --- LÓGICA DE RECORDES (DISTÂNCIA E CARROS) ---
+    // --- LOGICA DE RECORDES (SISTEMA PC) ---
     if (playerDist / 1000 > dayBestRecord) {
         dayBestRecord = playerDist / 1000;
         localStorage.setItem('enduro_dayBest', dayBestRecord);
@@ -274,13 +275,6 @@ function update() {
     if (odometerNow > totalBestRecord) {
         totalBestRecord = odometerNow;
         localStorage.setItem('enduro_totalBest', totalBestRecord);
-    }
-    
-    // Recorde de ultrapassagens
-    let currentOvertaken = (baseGoal + (dayNumber - 1) * 10) - carsRemaining;
-    if (currentOvertaken > carsOvertakenRecord) {
-        carsOvertakenRecord = currentOvertaken;
-        localStorage.setItem('enduro_carsRecord', carsOvertakenRecord);
     }
 
     updateUI();
@@ -330,18 +324,36 @@ function update() {
         let p = 1 - (enemy.z / 4000); 
         let roadWidth = 20 + p * 800;
         let screenX = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p) + (enemy.lane * roadWidth * 0.5);
+        
         if (p > 0.92 && p < 1.05 && Math.abs(screenX - 200) < 50) { speed = -4; enemy.z += 800; playCrashSound(); }
+        
         if (gameState === "PLAYING" || gameState === "GOAL_REACHED") {
             if (enemy.z <= 0 && !enemy.isOvertaken) { 
-                carsRemaining--; 
                 enemy.isOvertaken = true; 
+                
+                // Meta do Dia (Zera no resetDay)
+                if (carsRemaining > 0) carsRemaining--; 
+                
+                // Odômetro Total de Carros (Sistema PC - Não zera)
+                if (typeof totalCarsPass !== 'undefined') {
+                    totalCarsPass++; 
+                    if (totalCarsPass > bestCarsPass) {
+                        bestCarsPass = totalCarsPass;
+                        localStorage.setItem('enduro_bestCarsPass', bestCarsPass);
+                    }
+                    localStorage.setItem('enduro_totalCarsPass', totalCarsPass);
+                }
+
                 if (carsRemaining <= 0 && !vitoriaTocada) { 
                     gameState = "GOAL_REACHED"; 
                     sfxVitoriaAudio.play().catch(e => {}); 
                     vitoriaTocada = true; 
                 }
             }
-            if (enemy.z > 0 && enemy.isOvertaken) { carsRemaining++; enemy.isOvertaken = false; }
+            if (enemy.z > 0 && enemy.isOvertaken) { 
+                carsRemaining++; 
+                enemy.isOvertaken = false; 
+            }
             if (carsRemaining <= 0) { carsRemaining = 0; gameState = "GOAL_REACHED"; }
         }
         enemy.lastY = 200 + (p * 140); enemy.lastX = screenX; enemy.lastP = p;
