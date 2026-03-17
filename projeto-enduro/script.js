@@ -19,7 +19,7 @@ let dayPassesBest = 0;
 let totalPassesBest = 0;       
 
 const maxSpeed = 17; 
-const STAGE_DURATION = 6000; 
+const STAGE_DURATION = 5400; 
 const DAY_DURATION = STAGE_DURATION * 9; 
 let currentTime = 0; 
 
@@ -324,14 +324,14 @@ function update() {
     // --- LÓGICA DE INIMIGOS EM DUPLA ---
     if (gameTick % 250 === 0 && enemies.length < 100) {
         enemies.push({ 
-            lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 9.0, 
+            lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 8.0, 
             color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)],
             isOvertaken: false 
         });
     }
     if (gameTick % 250 === 80 && enemies.length < 100) {
         enemies.push({ 
-            lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 9.0, 
+            lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 8.0, 
             color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)],
             isOvertaken: false 
         });

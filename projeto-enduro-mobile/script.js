@@ -24,8 +24,8 @@ let odometerNow = 0;
 let dayBestRecord = parseFloat(localStorage.getItem('enduro_dayBest')) || 0;
 let totalBestRecord = parseFloat(localStorage.getItem('enduro_totalBest')) || 0;
 
-const maxSpeed = 17; 
-const STAGE_DURATION = 6000; 
+const maxSpeed = 18; 
+const STAGE_DURATION = 5400; 
 const DAY_DURATION = STAGE_DURATION * 9; 
 let currentTime = 0; 
 
