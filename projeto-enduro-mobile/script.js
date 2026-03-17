@@ -21,8 +21,11 @@ let isPaused = false;
 let vitoriaTocada = false; 
 
 let odometerNow = 0;
+
+// --- CARREGAMENTO DE RECORDES (DISTÂNCIA E CARROS) ---
 let dayBestRecord = parseFloat(localStorage.getItem('enduro_dayBest')) || 0;
 let totalBestRecord = parseFloat(localStorage.getItem('enduro_totalBest')) || 0;
+let carsOvertakenRecord = parseInt(localStorage.getItem('enduro_carsRecord')) || 0;
 
 const maxSpeed = 18; 
 const STAGE_DURATION = 5400; 
@@ -83,10 +86,13 @@ function updateUI() {
     if(document.getElementById('ui-day-best')) document.getElementById('ui-day-best').innerText = dayBestRecord.toFixed(1) + " KM";
     if(document.getElementById('ui-total-now')) document.getElementById('ui-total-now').innerText = (odometerNow / 1000).toFixed(1) + " KM";
     if(document.getElementById('ui-total-best')) document.getElementById('ui-total-best').innerText = (totalBestRecord / 1000).toFixed(1) + " KM";
+    
+    // Opcional: Se você quiser mostrar o recorde de carros no console ou em um elemento futuro:
+    // console.log("Recorde Carros:", carsOvertakenRecord);
 }
 
 function saveProgress() {
-    const data = { dayNumber, carsRemaining, playerDist, currentTime, odometerNow };
+    const data = { dayNumber, carsRemaining, playerDist, currentTime, odometerNow, carsOvertakenRecord };
     localStorage.setItem('enduro_save', JSON.stringify(data));
 }
 
@@ -99,6 +105,7 @@ function loadProgress() {
         playerDist = data.playerDist;
         currentTime = data.currentTime;
         odometerNow = data.odometerNow || 0;
+        carsOvertakenRecord = data.carsOvertakenRecord || 0;
     }
 }
 loadProgress();
@@ -259,6 +266,7 @@ function update() {
     raindrops.forEach((r, i) => { r.y += r.s; if (r.y > 400) raindrops.splice(i, 1); });
     if (lightningAlpha > 0) lightningAlpha -= 0.05;
 
+    // --- LÓGICA DE RECORDES (DISTÂNCIA E CARROS) ---
     if (playerDist / 1000 > dayBestRecord) {
         dayBestRecord = playerDist / 1000;
         localStorage.setItem('enduro_dayBest', dayBestRecord);
@@ -267,6 +275,14 @@ function update() {
         totalBestRecord = odometerNow;
         localStorage.setItem('enduro_totalBest', totalBestRecord);
     }
+    
+    // Recorde de ultrapassagens
+    let currentOvertaken = (baseGoal + (dayNumber - 1) * 10) - carsRemaining;
+    if (currentOvertaken > carsOvertakenRecord) {
+        carsOvertakenRecord = currentOvertaken;
+        localStorage.setItem('enduro_carsRecord', carsOvertakenRecord);
+    }
+
     updateUI();
 
     if (currentTime >= DAY_DURATION) {
@@ -361,7 +377,7 @@ function draw(colors, isRaining, currentStage) {
     // --- RELÂMPAGO ATRÁS (Aviso: cases 2 e 6) ---
     if (lightningAlpha > 0 && (currentStage === 2 || currentStage === 6)) { 
         ctx.fillStyle = `rgba(255, 255, 255, ${lightningAlpha})`; 
-        ctx.fillRect(0, 55, 400, 145); // Apenas a faixa do horizonte
+        ctx.fillRect(0, 55, 400, 145); 
     }
 
     // 3. DESENHA A PISTA
@@ -416,7 +432,7 @@ function draw(colors, isRaining, currentStage) {
     // --- RELÂMPAGO NA FRENTE (Tempestade: cases 3 e 7) ---
     if (lightningAlpha > 0 && (currentStage === 3 || currentStage === 7)) { 
         ctx.fillStyle = `rgba(255, 255, 255, ${lightningAlpha})`; 
-        ctx.fillRect(0, 55, 400, 345); // Tela inteira do jogo
+        ctx.fillRect(0, 55, 400, 345); 
     }
 
     // 6. INTERFACE (HUD)
