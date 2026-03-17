@@ -50,12 +50,12 @@ body, html {
 }
 
 /* 4. Dashboard (Colado nos botões) */
-.dashboard-externa {
+ .dashboard-externa {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(4, 1fr); /* 4 colunas para caber tudo em 2 linhas */
     gap: 1px;
     width: 100%;
-    max-width: 500px;
+    max-width: 600px;
     flex-shrink: 0;
 }
 
@@ -66,8 +66,8 @@ body, html {
     text-align: center;
 }
 
-.stat-box .label { font-size: 7px; color: #888; display: block; }
-.stat-box .value { font-size: 11px; color: #ffff00; font-weight: bold; }
+ .stat-box .label { font-size: 6px; color: #888; display: block; }
+.stat-box .value { font-size: 10px; color: #ffff00; font-weight: bold; }
 
  /* 5. O JOGO - AJUSTE DINÂMICO */
 canvas { 
