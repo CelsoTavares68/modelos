@@ -81,14 +81,20 @@ function drawFinishLine(y, roadWidth, xPos) {
     }
 }
 
-function updateUI() {
-    if(document.getElementById('ui-dist')) document.getElementById('ui-dist').innerText = (playerDist / 1000).toFixed(1) + " KM";
-    if(document.getElementById('ui-day-best')) document.getElementById('ui-day-best').innerText = dayBestRecord.toFixed(1) + " KM";
-    if(document.getElementById('ui-total-now')) document.getElementById('ui-total-now').innerText = (odometerNow / 1000).toFixed(1) + " KM";
-    if(document.getElementById('ui-total-best')) document.getElementById('ui-total-best').innerText = (totalBestRecord / 1000).toFixed(1) + " KM";
+ function updateUI() {
+    // Distância e Recordes de KM (O que já tinhas)
+    if(document.getElementById('ui-dist')) 
+        document.getElementById('ui-dist').innerText = (playerDist / 1000).toFixed(1) + " KM";
     
-    // Opcional: Se você quiser mostrar o recorde de carros no console ou em um elemento futuro:
-    // console.log("Recorde Carros:", carsOvertakenRecord);
+    if(document.getElementById('ui-day-best')) 
+        document.getElementById('ui-day-best').innerText = dayBestRecord.toFixed(1) + " KM";
+
+    // --- NOVO: Odômetro e Recorde Total de Carros Ultrapassados ---
+    if(document.getElementById('ui-total-now')) 
+        document.getElementById('ui-total-now').innerText = totalCarsPass + " CARS";
+    
+    if(document.getElementById('ui-total-best')) 
+        document.getElementById('ui-total-best').innerText = bestCarsPass + " CARS";
 }
 
 function saveProgress() {
@@ -449,12 +455,25 @@ function draw(colors, isRaining, currentStage) {
 
     // 6. INTERFACE (HUD)
     ctx.fillStyle = "black"; ctx.fillRect(0, 0, 400, 55);
-    ctx.fillStyle = (gameState === "GOAL_REACHED" || gameState === "WIN_DAY") ? "lime" : "yellow";
-    ctx.font = "bold 18px Courier";
-    ctx.fillText(gameState === "GOAL_REACHED" || gameState === "WIN_DAY" ? "GOAL OK!" : `CARS: ${carsRemaining}`, 15, 35);
-    ctx.fillStyle = "yellow"; ctx.fillText(`DAY: ${dayNumber}`, 160, 35);
-    ctx.fillStyle = "#444"; ctx.fillRect(260, 20, 120, 15);
-    ctx.fillStyle = "lime"; ctx.fillRect(260, 20, (currentTime/DAY_DURATION) * 120, 15);
+ctx.fillStyle = (gameState === "GOAL_REACHED" || gameState === "WIN_DAY") ? "lime" : "yellow";
+ctx.font = "bold 18px Courier";
+
+// Mostra a meta do dia
+ctx.fillText(gameState === "GOAL_REACHED" || gameState === "WIN_DAY" ? "GOAL OK!" : `CARS: ${carsRemaining}`, 15, 35);
+
+// --- NOVO: Mostra o Odômetro Total (Igual ao PC) ---
+ctx.fillStyle = "white"; 
+ctx.font = "bold 14px Courier";
+ctx.fillText(`TOTAL: ${totalCarsPass}`, 145, 35); // Posicionado no centro
+
+// Mostra o Dia
+ctx.fillStyle = "yellow"; 
+ctx.font = "bold 18px Courier";
+ctx.fillText(`DAY: ${dayNumber}`, 300, 35); 
+
+// Barra de tempo (mantém como está)
+ctx.fillStyle = "#444"; ctx.fillRect(260, 42, 120, 8);
+ctx.fillStyle = "lime"; ctx.fillRect(260, 42, (currentTime/DAY_DURATION) * 120, 8);
 
     if (gameState === "WIN_DAY") {
         ctx.fillStyle = "rgba(0,0,0,0.7)"; ctx.fillRect(0, 55, 400, 345);
