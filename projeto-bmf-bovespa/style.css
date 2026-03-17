@@ -106,6 +106,13 @@ th {
     border-bottom: 1px solid #eee;
 }
 
+small.label-cambio {
+    display: block;
+    font-size: 0.7rem;
+    color: #888;
+    margin-top: 5px;
+}
+
 /* Alinhamento das 3 colunas principais */
 .col-ativo { 
     text-align: 
@@ -359,6 +366,84 @@ background-color: rgb(30, 69, 188);
     color: #e74c3c;
 }
 
+.grupo-cambio {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-top: 15px;
+}
+
+.campo-moeda {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.campo-moeda label {
+    font-weight: bold;
+    font-size: 0.9rem;
+    color: #527496;
+}
+
+/* Reutilizando o estilo de input que você já criou para Renda Fixa */
+.campo-moeda input {
+    padding: 12px 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #333;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+.campo-moeda input:focus {
+    border-color: #527496;
+}
+
+.card-carteira {
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 30px;
+    transition: background-color 0.3s, border-color 0.3s;
+}
+
+/* Container dos botões */
+.filtros-mercado {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* Estilo Base dos Botões */
+.btn-filtro {
+    cursor: pointer;
+    padding: 10px 20px;
+    border-radius: 25px; /* Formato pílula */
+    border: 2px solid #ddd;
+    background: transparent;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    color: #555;
+    font-size: 0.9rem;
+}
+
+.btn-todos:hover { background: #eee; border-color: #bbb; }
+
+.btn-agro { border-color: #27ae60; color: #27ae60; }
+.btn-agro:hover { background: #27ae60; color: white; }
+
+.btn-b3 { border-color: #2980b9; color: #2980b9; }
+.btn-b3:hover { background: #2980b9; color: white; }
+
+.rank-ticker { text-align: left; font-weight: bold; }
+.rank-preco  { text-align: center; color: #666; }
+.rank-pct    { text-align: right; font-weight: bold; }
+
  /* --- MODO ESCURO COMPLETO --- */
 body.dark-mode {
     background-color: #1a1a1a;
@@ -415,48 +500,17 @@ body.dark-mode .renda-fixa input {
     color: #fff;
 }
 
-.card-carteira {
-    background-color: #ffffff;
-    border: 1px solid #e0e0e0;
-    padding: 20px;
-    border-radius: 12px;
-    margin-bottom: 30px;
-    transition: background-color 0.3s, border-color 0.3s;
+body.dark-mode .campo-moeda label {
+    color: #e0e0e0;
 }
 
-/* Container dos botões */
-.filtros-mercado {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 20px;
-    justify-content: center;
-    flex-wrap: wrap;
+body.dark-mode .campo-moeda input {
+    background-color: #1a1a1a;
+    border-color: #444;
+    color: #fff;
 }
 
-/* Estilo Base dos Botões */
-.btn-filtro {
-    cursor: pointer;
-    padding: 10px 20px;
-    border-radius: 25px; /* Formato pílula */
-    border: 2px solid #ddd;
-    background: transparent;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    color: #555;
-    font-size: 0.9rem;
-}
 
-.btn-todos:hover { background: #eee; border-color: #bbb; }
-
-.btn-agro { border-color: #27ae60; color: #27ae60; }
-.btn-agro:hover { background: #27ae60; color: white; }
-
-.btn-b3 { border-color: #2980b9; color: #2980b9; }
-.btn-b3:hover { background: #2980b9; color: white; }
-
-.rank-ticker { text-align: left; font-weight: bold; }
-.rank-preco  { text-align: center; color: #666; }
-.rank-pct    { text-align: right; font-weight: bold; }
 
 /* Modo Escuro para a Carteira */
 body.dark-mode .card-carteira {

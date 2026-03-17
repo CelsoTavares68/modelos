@@ -1,4 +1,4 @@
-  const TOKEN_B3 = '8gRPKYrszFRi4JCDaARwuJ'; 
+ const TOKEN_B3 = '8gRPKYrszFRi4JCDaARwuJ'; 
 
 // LISTAS
 const LISTA_AGRO_BMF = "JBSS3,BRFS3,BEEF3,MRFG3,CAML3,SLCE3,AGRO3,SMTO3,KEPL3,SOJA3";
@@ -17,8 +17,19 @@ const MAPA_NOMES_AGRO = {
     "SOJA3": "Boa Safra (Sementes)"
 };
 
+// =========================================================
+//   PAINEL DE CONTROLE MANUAL (ALTERE AQUI TODO MÊS)
+// =========================================================
+let SELIC_ATUAL = 10.75; 
+let CDI_ATUAL   = 10.65;
+let IPCA_ATUAL  = "4.42"; 
+let IGPM_ATUAL  = "1.12"; 
+// =========================================================
+
 let chartMercado = null;
 let minhaCarteira = JSON.parse(localStorage.getItem('minhaCarteira')) || [];
+let COTACAO_USD = 0;
+let COTACAO_EUR = 0;
 
 window.onload = () => {
     const dataElemento = document.getElementById('data-atual');
@@ -44,7 +55,7 @@ async function inicializarApp() {
     
     await buscarCotacoesAgro(); 
     await buscarCotacoesBovespa();
-}
+}  
 
 // --- NOVIDADE: FUNÇÃO PARA BOLSAS MUNDIAIS ---
 async function buscarIndicesGlobais() {
@@ -89,22 +100,25 @@ async function buscarIndicesGlobais() {
 }
 
 // --- MOEDAS E CRIPTOS ---
-async function buscarApenasMoedas() {
+ async function buscarApenasMoedas() {
     try {
         const url = 'https://economia.awesomeapi.com.br/last/USD-BRL,EUR-BRL,BTC-BRL,ETH-BRL,XAU-BRL';
         const res = await fetch(url);
         const d = await res.json();
-        const SPREAD = 1.08; 
+        const SPREAD = 1.08; // O seu multiplicador de 8% para o Turismo
 
         if (d.USDBRL) {
-            const val = parseFloat(d.USDBRL.bid);
-            document.getElementById('usd-comercial').innerText = "R$ " + val.toFixed(2);
-            document.getElementById('usd-turismo').innerText = "R$ " + (val * SPREAD).toFixed(2);
+            COTACAO_USD = parseFloat(d.USDBRL.bid); 
+            // Exibe no painel (Comercial e Turismo)
+            document.getElementById('usd-comercial').innerText = "R$ " + COTACAO_USD.toFixed(2);
+            document.getElementById('usd-turismo').innerText = "R$ " + (COTACAO_USD * SPREAD).toFixed(2);
         }
+        
         if (d.EURBRL) {
-            const val = parseFloat(d.EURBRL.bid);
-            document.getElementById('eur-comercial').innerText = "R$ " + val.toFixed(2);
-            document.getElementById('eur-turismo').innerText = "R$ " + (val * SPREAD).toFixed(2);
+            COTACAO_EUR = parseFloat(d.EURBRL.bid);
+            // Exibe no painel (Comercial e Turismo)
+            document.getElementById('eur-comercial').innerText = "R$ " + COTACAO_EUR.toFixed(2);
+            document.getElementById('eur-turismo').innerText = "R$ " + (COTACAO_EUR * SPREAD).toFixed(2);
         }
         if (d.BTCBRL) document.getElementById('btc-val').innerText = "R$ " + parseFloat(d.BTCBRL.bid).toLocaleString('pt-BR');
         if (d.ETHBRL) document.getElementById('eth-val').innerText = "R$ " + parseFloat(d.ETHBRL.bid).toLocaleString('pt-BR');
@@ -115,19 +129,39 @@ async function buscarApenasMoedas() {
     } catch (e) { console.error("Erro Moedas:", e); }
 }
 
+function converterMoedas(origem) {
+    const valorBRL = document.getElementById('calc-brl');
+    const valorUSD = document.getElementById('calc-usd');
+    const valorEUR = document.getElementById('calc-eur');
+
+    if (COTACAO_USD === 0 || COTACAO_EUR === 0) return;
+
+    if (origem === 'BRL') {
+        const v = parseFloat(valorBRL.value);
+        valorUSD.value = (v / COTACAO_USD).toFixed(2);
+        valorEUR.value = (v / COTACAO_EUR).toFixed(2);
+    } 
+    else if (origem === 'USD') {
+        const v = parseFloat(valorUSD.value);
+        const emReais = v * COTACAO_USD;
+        valorBRL.value = emReais.toFixed(2);
+        valorEUR.value = (emReais / COTACAO_EUR).toFixed(2);
+    } 
+    else if (origem === 'EUR') {
+        const v = parseFloat(valorEUR.value);
+        const emReais = v * COTACAO_EUR;
+        valorBRL.value = emReais.toFixed(2);
+        valorUSD.value = (emReais / COTACAO_USD).toFixed(2);
+    }
+}
+
 // --- TAXAS ---
-async function buscarApenasTaxas() {
-    try {
-        const res = await fetch('https://api.hgbrasil.com/finance/taxes?format=json-cors');
-        const data = await res.json();
-        const t = data.results[0] || data.results;
-        if (t) {
-            document.getElementById('taxa-selic').innerText = (t.selic || "11.25") + "%";
-            document.getElementById('taxa-cdi').innerText = (t.cdi || "11.15") + "%";
-            document.getElementById('taxa-ipca').innerText = (t.ipca || "4.51") + "%";
-            document.getElementById('taxa-igpm').innerText = (t.igpm || "0.88") + "%";
-        }
-    } catch (e) { console.error("Erro Taxas:", e); }
+  function buscarApenasTaxas() {
+    // Em vez de buscar na internet, usamos os valores que você definiu no topo
+    document.getElementById('taxa-selic').innerText = SELIC_ATUAL.toFixed(2) + "%";
+    document.getElementById('taxa-cdi').innerText = CDI_ATUAL.toFixed(2) + "%";
+    document.getElementById('taxa-ipca').innerText = IPCA_ATUAL + "%";
+    document.getElementById('taxa-igpm').innerText = IGPM_ATUAL + "%";
 }
 
 // --- MERCADO AGRO ---
@@ -314,19 +348,32 @@ function removerDaCarteira(index) {
     buscarCotacoesBovespa();
 }
 
-function calcularRentabilidade() {
+ function calcularRentabilidade() {
     const valor = parseFloat(document.getElementById('valorInvestido').value);
     const container = document.getElementById('tabela-rendimentos');
     if (!valor || valor <= 0) return;
-    const SELIC = 11.25; const CDI = SELIC - 0.10; 
-    const calcCDB = (v) => (v * (CDI / 100 / 12)) * 0.775;
-    const calcLCI = (v) => (v * ((CDI * 0.9) / 100 / 12));
-    const calcPoup = (v) => (v * 0.0055);
+
+    // Agora usa os valores que vieram da API HG Brasil
+    const calcCDB = (v) => (v * (CDI_ATUAL / 100 / 12)) * 0.775; // 22.5% IR (curto prazo)
+    const calcLCI = (v) => (v * ((CDI_ATUAL * 0.9) / 100 / 12)); // LCI 90% isenta
+    const calcPoup = (v) => (v * 0.0055); // Regra padrão 0.5% + TR
 
     container.innerHTML = `
-        <div class="card-investimento"><h4>CDB (100% CDI)</h4><p>Mensal: <strong>R$ ${calcCDB(valor).toFixed(2)}</strong></p></div>
-        <div class="card-investimento"><h4>LCI (90% CDI)</h4><p>Mensal: <strong>R$ ${calcLCI(valor).toFixed(2)}</strong></p></div>
-        <div class="card-investimento"><h4>Poupança</h4><p>Mensal: <strong>R$ ${calcPoup(valor).toFixed(2)}</strong></p></div>`;
+        <div class="card-investimento">
+            <h4>CDB (100% CDI)</h4>
+            <p>Mensal aprox: <strong>R$ ${calcCDB(valor).toFixed(2)}</strong></p>
+            <small>Base: ${CDI_ATUAL}% a.a.</small>
+        </div>
+        <div class="card-investimento">
+            <h4>LCI (90% CDI)</h4>
+            <p>Mensal aprox: <strong>R$ ${calcLCI(valor).toFixed(2)}</strong></p>
+            <small>Isento de IR</small>
+        </div>
+        <div class="card-investimento">
+            <h4>Poupança</h4>
+            <p>Mensal aprox: <strong>R$ ${calcPoup(valor).toFixed(2)}</strong></p>
+            <small>0.5% + TR</small>
+        </div>`;
 }
 
 function toggleDarkMode() { document.body.classList.toggle('dark-mode'); }
