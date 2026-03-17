@@ -14,21 +14,22 @@ window.addEventListener('touchstart', function(e) {
     }
 }, { passive: false });
 
- let playerX = 0, speed = 0, gameTick = 0, playerDist = 0;
-let dayNumber = 1, baseGoal = 200, carsRemaining = baseGoal;
+let playerX = 0, speed = 0, gameTick = 0, playerDist = 0;
+let dayNumber = 1, baseGoal = 200, carsRemaining = baseGoal; 
 let gameState = "PLAYING"; 
 let isPaused = false;
 let vitoriaTocada = false; 
 
-// --- SISTEMA DE RECORDES IGUAL AO PC ---
+// --- NOVO: SISTEMA DE RECORDES ESTILO PC ---
 let odometerNow = parseFloat(localStorage.getItem('enduro_odometer')) || 0; 
 let dayBestRecord = parseFloat(localStorage.getItem('enduro_dayBest')) || 0;
 let totalBestRecord = parseFloat(localStorage.getItem('enduro_totalBest')) || 0;
 
-let totalPasses = 0; // Carros do dia atual
+let totalPasses = 0; // Carros ultrapassados hoje
 let totalPassesOdometer = parseInt(localStorage.getItem('enduro_totalCarsPass')) || 0; 
 let dayPassesBest = parseInt(localStorage.getItem('enduro_dayCarsBest')) || 0;
 let totalPassesBest = parseInt(localStorage.getItem('enduro_bestCarsPass')) || 0;
+// -------------------------------------------
 
 const maxSpeed = 18; 
 const STAGE_DURATION = 5400; 
@@ -84,15 +85,14 @@ function drawFinishLine(y, roadWidth, xPos) {
     }
 }
 
-  function updateUI() {
-    // KM e Distância
+// ATUALIZADO: Painel de Recordes igual ao PC
+function updateUI() {
     if(document.getElementById('ui-dist')) 
-        document.getElementById('ui-dist').innerText = playerDist.toFixed(1) + " KM";
+        document.getElementById('ui-dist').innerText = (playerDist / 1000).toFixed(1) + " KM";
     
     if(document.getElementById('ui-day-best')) 
         document.getElementById('ui-day-best').innerText = dayBestRecord.toFixed(1) + " KM";
 
-    // Odômetro e Recorde Total (Carros)
     if(document.getElementById('ui-total-now')) 
         document.getElementById('ui-total-now').innerText = totalPassesOdometer + " CARS";
     
@@ -101,7 +101,11 @@ function drawFinishLine(y, roadWidth, xPos) {
 }
 
 function saveProgress() {
-    const data = { dayNumber, carsRemaining, playerDist, currentTime, odometerNow, carsOvertakenRecord };
+    const data = { 
+        dayNumber, carsRemaining, playerDist, currentTime, 
+        odometerNow, dayBestRecord, totalBestRecord,
+        totalPassesOdometer, dayPassesBest, totalPassesBest
+    };
     localStorage.setItem('enduro_save', JSON.stringify(data));
 }
 
@@ -114,7 +118,11 @@ function loadProgress() {
         playerDist = data.playerDist;
         currentTime = data.currentTime;
         odometerNow = data.odometerNow || 0;
-        carsOvertakenRecord = data.carsOvertakenRecord || 0;
+        dayBestRecord = data.dayBestRecord || 0;
+        totalBestRecord = data.totalBestRecord || 0;
+        totalPassesOdometer = data.totalPassesOdometer || 0;
+        dayPassesBest = data.dayPassesBest || 0;
+        totalPassesBest = data.totalPassesBest || 0;
     }
 }
 loadProgress();
@@ -172,21 +180,22 @@ function togglePause() {
         isPaused = !isPaused;
         const btn = document.getElementById('pauseBtn');
         if (btn) btn.innerText = isPaused ? "Retomar" : "Pausar";
-        if (isPaused) sfxChuva.pause();
+        if (isPaused) { sfxChuva.pause(); saveProgress(); }
         if (!isPaused) { audioCtx.resume(); update(); }
     }
 }
 
 function resetGame() {
     if (audioCtx.state === 'suspended') audioCtx.resume();
-    dayNumber = 1; baseGoal = 200; isPaused = false; odometerNow = 0;
+    dayNumber = 1; baseGoal = 200; isPaused = false; 
+    odometerNow = 0; totalPassesOdometer = 0;
     localStorage.removeItem('enduro_save');
     resetDay();
     if (gameState !== "PLAYING") { gameState = "PLAYING"; update(); }
 }
 
 function resetDay() {
-    currentTime = 0; playerDist = 0; speed = 0; enemies = [];
+    currentTime = 0; playerDist = 0; speed = 0; enemies = []; totalPasses = 0;
     carsRemaining = baseGoal + (dayNumber - 1) * 10; 
     gameState = "PLAYING"; isPaused = false;
     vitoriaTocada = false; 
@@ -206,7 +215,6 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasF
         ctx.fillStyle = "#FF0000";
         ctx.fillRect(-w * 0.35, h * 0.2, w * 0.15, h * 0.25); 
         ctx.fillRect(w * 0.20, h * 0.2, w * 0.15, h * 0.25); 
-
         let lightLength = h * 3; 
         let gradient = ctx.createLinearGradient(0, 0, 0, -lightLength);
         gradient.addColorStop(0, "rgba(255, 255, 200, 0.25)"); 
@@ -217,7 +225,6 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasF
         ctx.lineTo(w * 0.8, -lightLength); ctx.lineTo(w * 0.15, 0);
         ctx.fill();
     }
-
     if (!(nightMode || (hasFog && !isRainy))) {
         ctx.fillStyle = "#111"; 
         ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8);
@@ -229,9 +236,8 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasF
     ctx.restore();
 }
 
- function update() {
+function update() {
     if (isPaused) return; 
-    
     let currentStage = Math.min(Math.floor(currentTime / STAGE_DURATION), 8);
     let isRaining = (currentStage === 3 || currentStage === 7);
     let warningLightning = (currentStage === 2 || currentStage === 6);
@@ -276,16 +282,17 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasF
     raindrops.forEach((r, i) => { r.y += r.s; if (r.y > 400) raindrops.splice(i, 1); });
     if (lightningAlpha > 0) lightningAlpha -= 0.05;
 
-    // --- LOGICA DE RECORDES (SISTEMA PC) ---
+    // Atualiza Recordes de Distância
     if (playerDist / 1000 > dayBestRecord) {
         dayBestRecord = playerDist / 1000;
         localStorage.setItem('enduro_dayBest', dayBestRecord);
     }
-    if (odometerNow > totalBestRecord) {
-        totalBestRecord = odometerNow;
+    if (playerDist / 1000 > totalBestRecord) { // Se o KM do dia bater o histórico
+        totalBestRecord = playerDist / 1000;
         localStorage.setItem('enduro_totalBest', totalBestRecord);
     }
-
+    localStorage.setItem('enduro_odometer', odometerNow);
+    
     updateUI();
 
     if (currentTime >= DAY_DURATION) {
@@ -333,26 +340,28 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasF
         let p = 1 - (enemy.z / 4000); 
         let roadWidth = 20 + p * 800;
         let screenX = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p) + (enemy.lane * roadWidth * 0.5);
-        
         if (p > 0.92 && p < 1.05 && Math.abs(screenX - 200) < 50) { speed = -4; enemy.z += 800; playCrashSound(); }
         
         if (gameState === "PLAYING" || gameState === "GOAL_REACHED") {
+            // Lógica de Ultrapassagem (Igual ao PC)
             if (enemy.z <= 0 && !enemy.isOvertaken) { 
                 enemy.isOvertaken = true; 
+                totalPasses++;
+                totalPassesOdometer++;
                 
-                // Meta do Dia (Zera no resetDay)
+                // Recordes de Carros
+                if (totalPasses > dayPassesBest) {
+                    dayPassesBest = totalPasses;
+                    localStorage.setItem('enduro_dayCarsBest', dayPassesBest);
+                }
+                if (totalPassesOdometer > totalPassesBest) {
+                    totalPassesBest = totalPassesOdometer;
+                    localStorage.setItem('enduro_bestCarsPass', totalPassesBest);
+                }
+                localStorage.setItem('enduro_totalCarsPass', totalPassesOdometer);
+
                 if (carsRemaining > 0) carsRemaining--; 
                 
-                // Odômetro Total de Carros (Sistema PC - Não zera)
-                if (typeof totalCarsPass !== 'undefined') {
-                    totalCarsPass++; 
-                    if (totalCarsPass > bestCarsPass) {
-                        bestCarsPass = totalCarsPass;
-                        localStorage.setItem('enduro_bestCarsPass', bestCarsPass);
-                    }
-                    localStorage.setItem('enduro_totalCarsPass', totalCarsPass);
-                }
-
                 if (carsRemaining <= 0 && !vitoriaTocada) { 
                     gameState = "GOAL_REACHED"; 
                     sfxVitoriaAudio.play().catch(e => {}); 
@@ -362,6 +371,8 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasF
             if (enemy.z > 0 && enemy.isOvertaken) { 
                 carsRemaining++; 
                 enemy.isOvertaken = false; 
+                totalPasses--; 
+                totalPassesOdometer--;
             }
             if (carsRemaining <= 0) { carsRemaining = 0; gameState = "GOAL_REACHED"; }
         }
@@ -379,60 +390,12 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasF
     enemies = enemies.filter(e => e.z > -18000 && e.z < 6000);
     draw(colors, isRaining, currentStage);
     requestAnimationFrame(update);
-
-    // 1. Incremento de Distância e Odômetro
-if (speed > 0) {
-    let delta = (speed / 100); // Fator de conversão para KM
-    playerDist += delta;
-    odometerNow += delta;
-    
-    // Verifica recordes de distância
-    if (playerDist > dayBestRecord) {
-        dayBestRecord = playerDist;
-        localStorage.setItem('enduro_dayBest', dayBestRecord);
-    }
-    if (odometerNow > totalBestRecord) {
-        totalBestRecord = odometerNow;
-        localStorage.setItem('enduro_totalBest', totalBestRecord);
-    }
-    localStorage.setItem('enduro_odometer', odometerNow);
-}
-
-// 2. Lógica de Ultrapassagem (Dentro do enemies.forEach)
-enemies.forEach((enemy) => {
-    // ... (lógica de movimento do inimigo mantida) ...
-
-    if (p > 1.0 && !enemy.isOvertaken) { 
-        enemy.isOvertaken = true;
-        totalPasses++;         
-        totalPassesOdometer++; 
-
-        // Atualiza recordes de carros (Igual ao PC)
-        if (totalPasses > dayPassesBest) {
-            dayPassesBest = totalPasses;
-            localStorage.setItem('enduro_dayCarsBest', dayPassesBest);
-        }
-        if (totalPassesOdometer > totalPassesBest) {
-            totalPassesBest = totalPassesOdometer;
-            localStorage.setItem('enduro_bestCarsPass', totalPassesBest);
-        }
-        localStorage.setItem('enduro_totalCarsPass', totalPassesOdometer);
-
-        if (carsRemaining > 0) carsRemaining--; 
-    }
-    // ...
-});
-
-// 3. Atualização da Interface Visual
-updateUI();
 }
 
 function draw(colors, isRaining, currentStage) {
-    // 1. DESENHA O CÉU E GRAMA
     ctx.fillStyle = colors.sky; ctx.fillRect(0, 0, 400, 200);
     ctx.fillStyle = colors.grass; ctx.fillRect(0, 200, 400, 200);
     
-    // 2. DESENHA AS MONTANHAS
     let mtShift = (roadCurve * 0.6);
     for (let i = -3; i < 9; i++) {
         let bx = (i * 100) + mtShift;
@@ -441,43 +404,30 @@ function draw(colors, isRaining, currentStage) {
         if (colors.snowCaps) { ctx.fillStyle = "white"; ctx.beginPath(); ctx.moveTo(bx, 130); ctx.lineTo(bx - 25, 155); ctx.lineTo(bx + 25, 155); ctx.fill(); }
     }
 
-    // --- RELÂMPAGO ATRÁS (Aviso: cases 2 e 6) ---
     if (lightningAlpha > 0 && (currentStage === 2 || currentStage === 6)) { 
         ctx.fillStyle = `rgba(255, 255, 255, ${lightningAlpha})`; 
-        ctx.fillRect(0, 55, 400, 145); 
+        ctx.fillRect(0, 55, 400, 145);
     }
 
-    // 3. DESENHA A PISTA
     let isSnowStage = (currentStage === 1);
     for (let i = 200; i < 400; i += 4) {
         let p = (i - 200) / 140; 
         let x = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p);
         let w = 20 + p * 800;
 
-        if (carsRemaining <= 0 && i > 250 && i < 265) {
-            drawFinishLine(i, w, x);
-        }
+        if (carsRemaining <= 0 && i > 250 && i < 265) { drawFinishLine(i, w, x); }
 
-        let asphaltColor1, asphaltColor2;
-        if (isSnowStage) {
-            asphaltColor1 = "#FFFFFF"; 
-            asphaltColor2 = "#E0E0E0"; 
-        } else {
-            asphaltColor1 = colors.nightMode ? "#050505" : "#333"; 
-            asphaltColor2 = colors.nightMode ? "#0a0a0a" : "#3d3d3d";
-        }
+        let asphaltColor1 = isSnowStage ? "#FFFFFF" : (colors.nightMode ? "#050505" : "#333");
+        let asphaltColor2 = isSnowStage ? "#E0E0E0" : (colors.nightMode ? "#0a0a0a" : "#3d3d3d");
 
         ctx.fillStyle = Math.sin(i * 0.5 + playerDist * 0.2) > 0 ? asphaltColor1 : asphaltColor2;
         ctx.fillRect(x - w/2, i, w, 4);
         
-        let curbColor1 = colors.nightMode ? "#600" : "red";
-        let curbColor2 = colors.nightMode ? "#888" : "white";
-        ctx.fillStyle = Math.sin(i * 0.5 + playerDist * 0.2) > 0 ? curbColor1 : curbColor2;
+        ctx.fillStyle = Math.sin(i * 0.5 + playerDist * 0.2) > 0 ? (colors.nightMode ? "#600" : "red") : (colors.nightMode ? "#888" : "white");
         ctx.fillRect(x - w/2 - 12*p, i, 12*p, 4);
         ctx.fillRect(x + w/2, i, 12*p, 4); 
     }
 
-    // 4. DESENHA OS CARROS
     let hasFog = colors.fog > 0;
     enemies.sort((a,b) => b.z - a.z).forEach(e => {
         if (e.lastP > 0 && e.lastP < 0.92) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, hasFog, isRaining);
@@ -489,40 +439,33 @@ function draw(colors, isRaining, currentStage) {
         if (e.lastP >= 0.92) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, hasFog, isRaining);
     });
 
-    // 5. EFEITOS DE CLIMA (Neblina e Chuva)
     if (colors.fog > 0) { ctx.fillStyle = `rgba(140,145,160,${colors.fog})`; ctx.fillRect(0, 55, 400, 345); }
     if (isRaining) {
         ctx.strokeStyle = "rgba(200, 210, 255, 0.51)"; ctx.lineWidth = 1.2;
         raindrops.forEach(r => { ctx.beginPath(); ctx.moveTo(r.x, r.y); ctx.lineTo(r.x + 1.5, r.y + 12); ctx.stroke(); });
     }
 
-    // --- RELÂMPAGO NA FRENTE (Tempestade: cases 3 e 7) ---
     if (lightningAlpha > 0 && (currentStage === 3 || currentStage === 7)) { 
         ctx.fillStyle = `rgba(255, 255, 255, ${lightningAlpha})`; 
         ctx.fillRect(0, 55, 400, 345); 
     }
 
-    // 6. INTERFACE (HUD)
     ctx.fillStyle = "black"; ctx.fillRect(0, 0, 400, 55);
-ctx.fillStyle = (gameState === "GOAL_REACHED" || gameState === "WIN_DAY") ? "lime" : "yellow";
-ctx.font = "bold 18px Courier";
+    ctx.fillStyle = (gameState === "GOAL_REACHED" || gameState === "WIN_DAY") ? "lime" : "yellow";
+    ctx.font = "bold 18px Courier";
+    ctx.fillText(gameState === "GOAL_REACHED" || gameState === "WIN_DAY" ? "GOAL OK!" : `CARS: ${carsRemaining}`, 15, 35);
+    
+    // NOVO: Exibição do Odômetro total no HUD do Canvas
+    ctx.fillStyle = "white"; 
+    ctx.font = "bold 14px Courier";
+    ctx.fillText(`TOTAL: ${totalPassesOdometer}`, 145, 35);
 
-// Mostra a meta do dia
-ctx.fillText(gameState === "GOAL_REACHED" || gameState === "WIN_DAY" ? "GOAL OK!" : `CARS: ${carsRemaining}`, 15, 35);
+    ctx.fillStyle = "yellow"; 
+    ctx.font = "bold 18px Courier";
+    ctx.fillText(`DAY: ${dayNumber}`, 300, 35);
 
-// --- NOVO: Mostra o Odômetro Total (Igual ao PC) ---
-ctx.fillStyle = "white"; 
-ctx.font = "bold 14px Courier";
-ctx.fillText(`TOTAL: ${totalCarsPass}`, 145, 35); // Posicionado no centro
-
-// Mostra o Dia
-ctx.fillStyle = "yellow"; 
-ctx.font = "bold 18px Courier";
-ctx.fillText(`DAY: ${dayNumber}`, 300, 35); 
-
-// Barra de tempo (mantém como está)
-ctx.fillStyle = "#444"; ctx.fillRect(260, 42, 120, 8);
-ctx.fillStyle = "lime"; ctx.fillRect(260, 42, (currentTime/DAY_DURATION) * 120, 8);
+    ctx.fillStyle = "#444"; ctx.fillRect(260, 42, 120, 8);
+    ctx.fillStyle = "lime"; ctx.fillRect(260, 42, (currentTime/DAY_DURATION) * 120, 8);
 
     if (gameState === "WIN_DAY") {
         ctx.fillStyle = "rgba(0,0,0,0.7)"; ctx.fillRect(0, 55, 400, 345);
