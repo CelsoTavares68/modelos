@@ -14,18 +14,21 @@ window.addEventListener('touchstart', function(e) {
     }
 }, { passive: false });
 
-let playerX = 0, speed = 0, gameTick = 0, playerDist = 0;
-let dayNumber = 1, baseGoal = 200, carsRemaining = baseGoal; 
+ let playerX = 0, speed = 0, gameTick = 0, playerDist = 0;
+let dayNumber = 1, baseGoal = 200, carsRemaining = baseGoal;
 let gameState = "PLAYING"; 
 let isPaused = false;
 let vitoriaTocada = false; 
-let odometerNow = 0;
-// Recordes de Distância (KM)
+
+// --- SISTEMA DE RECORDES IGUAL AO PC ---
+let odometerNow = parseFloat(localStorage.getItem('enduro_odometer')) || 0; 
 let dayBestRecord = parseFloat(localStorage.getItem('enduro_dayBest')) || 0;
 let totalBestRecord = parseFloat(localStorage.getItem('enduro_totalBest')) || 0;
-// Recordes de Carros (Sistema PC)
-let totalCarsPass = parseInt(localStorage.getItem('enduro_totalCarsPass')) || 0; // Odómetro de carros
-let bestCarsPass = parseInt(localStorage.getItem('enduro_bestCarsPass')) || 0;   // Recorde histórico de carros
+
+let totalPasses = 0; // Carros do dia atual
+let totalPassesOdometer = parseInt(localStorage.getItem('enduro_totalCarsPass')) || 0; 
+let dayPassesBest = parseInt(localStorage.getItem('enduro_dayCarsBest')) || 0;
+let totalPassesBest = parseInt(localStorage.getItem('enduro_bestCarsPass')) || 0;
 
 const maxSpeed = 18; 
 const STAGE_DURATION = 5400; 
@@ -81,20 +84,20 @@ function drawFinishLine(y, roadWidth, xPos) {
     }
 }
 
- function updateUI() {
-    // Distância e Recordes de KM (O que já tinhas)
+  function updateUI() {
+    // KM e Distância
     if(document.getElementById('ui-dist')) 
-        document.getElementById('ui-dist').innerText = (playerDist / 1000).toFixed(1) + " KM";
+        document.getElementById('ui-dist').innerText = playerDist.toFixed(1) + " KM";
     
     if(document.getElementById('ui-day-best')) 
         document.getElementById('ui-day-best').innerText = dayBestRecord.toFixed(1) + " KM";
 
-    // --- NOVO: Odômetro e Recorde Total de Carros Ultrapassados ---
+    // Odômetro e Recorde Total (Carros)
     if(document.getElementById('ui-total-now')) 
-        document.getElementById('ui-total-now').innerText = totalCarsPass + " CARS";
+        document.getElementById('ui-total-now').innerText = totalPassesOdometer + " CARS";
     
     if(document.getElementById('ui-total-best')) 
-        document.getElementById('ui-total-best').innerText = bestCarsPass + " CARS";
+        document.getElementById('ui-total-best').innerText = totalPassesBest + " CARS";
 }
 
 function saveProgress() {
@@ -376,6 +379,52 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasF
     enemies = enemies.filter(e => e.z > -18000 && e.z < 6000);
     draw(colors, isRaining, currentStage);
     requestAnimationFrame(update);
+
+    // 1. Incremento de Distância e Odômetro
+if (speed > 0) {
+    let delta = (speed / 100); // Fator de conversão para KM
+    playerDist += delta;
+    odometerNow += delta;
+    
+    // Verifica recordes de distância
+    if (playerDist > dayBestRecord) {
+        dayBestRecord = playerDist;
+        localStorage.setItem('enduro_dayBest', dayBestRecord);
+    }
+    if (odometerNow > totalBestRecord) {
+        totalBestRecord = odometerNow;
+        localStorage.setItem('enduro_totalBest', totalBestRecord);
+    }
+    localStorage.setItem('enduro_odometer', odometerNow);
+}
+
+// 2. Lógica de Ultrapassagem (Dentro do enemies.forEach)
+enemies.forEach((enemy) => {
+    // ... (lógica de movimento do inimigo mantida) ...
+
+    if (p > 1.0 && !enemy.isOvertaken) { 
+        enemy.isOvertaken = true;
+        totalPasses++;         
+        totalPassesOdometer++; 
+
+        // Atualiza recordes de carros (Igual ao PC)
+        if (totalPasses > dayPassesBest) {
+            dayPassesBest = totalPasses;
+            localStorage.setItem('enduro_dayCarsBest', dayPassesBest);
+        }
+        if (totalPassesOdometer > totalPassesBest) {
+            totalPassesBest = totalPassesOdometer;
+            localStorage.setItem('enduro_bestCarsPass', totalPassesBest);
+        }
+        localStorage.setItem('enduro_totalCarsPass', totalPassesOdometer);
+
+        if (carsRemaining > 0) carsRemaining--; 
+    }
+    // ...
+});
+
+// 3. Atualização da Interface Visual
+updateUI();
 }
 
 function draw(colors, isRaining, currentStage) {
