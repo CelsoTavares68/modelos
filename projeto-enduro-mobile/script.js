@@ -1,4 +1,4 @@
- const canvas = document.getElementById('gameCanvas');
+  const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 canvas.width = 400; canvas.height = 400;
 
@@ -37,6 +37,7 @@ const DAY_DURATION = STAGE_DURATION * 9;
 let currentTime = 0; 
 
 let enemies = [];
+let enemySpawnTimer = 0; // Timer para nascimento aleatório
 let roadCurve = 0;      
 let targetCurve = 0;    
 let curveTimer = 0;     
@@ -91,11 +92,10 @@ function updateUI() {
     if(document.getElementById('ui-total-now')) document.getElementById('ui-total-now').innerText = (odometerNow / 1000).toFixed(1) + " KM";
     if(document.getElementById('ui-total-best')) document.getElementById('ui-total-best').innerText = (totalBestRecord / 1000).toFixed(1) + " KM";
 
-    // Atualização dos IDs de ultrapassagem (conforme o seu index.html anterior)
-     if(document.getElementById('ui-pass-day')) document.getElementById('ui-pass-day').innerText = passDayNow;
-if(document.getElementById('ui-pass-day-best')) document.getElementById('ui-pass-day-best').innerText = passDayBest;
-if(document.getElementById('ui-pass-total')) document.getElementById('ui-pass-total').innerText = passTotalOdo;
-if(document.getElementById('ui-pass-total-best')) document.getElementById('ui-pass-total-best').innerText = passTotalBest;
+    if(document.getElementById('ui-pass-day')) document.getElementById('ui-pass-day').innerText = passDayNow;
+    if(document.getElementById('ui-pass-day-best')) document.getElementById('ui-pass-day-best').innerText = passDayBest;
+    if(document.getElementById('ui-pass-total')) document.getElementById('ui-pass-total').innerText = passTotalOdo;
+    if(document.getElementById('ui-pass-total-best')) document.getElementById('ui-pass-total-best').innerText = passTotalBest;
 }
 
  function saveProgress() {
@@ -104,7 +104,6 @@ if(document.getElementById('ui-pass-total-best')) document.getElementById('ui-pa
         passDayNow, passTotalOdo 
     };
     localStorage.setItem('enduro_save', JSON.stringify(data));
-    // Adicione estas linhas para garantir a persistência dos recordes
     localStorage.setItem('enduro_passDayBest', passDayBest);
     localStorage.setItem('enduro_passTotalBest', passTotalBest);
 }
@@ -265,7 +264,6 @@ function update() {
     gameTick++; playerDist += speed; odometerNow += speed; currentTime++; 
     if (gameTick % 4 === 0) playEngineSound();
 
-    // Verificação de Recordes de Distância
     if (playerDist / 1000 > dayBestRecord) {
         dayBestRecord = playerDist / 1000;
         localStorage.setItem('enduro_dayBest', dayBestRecord);
@@ -275,7 +273,6 @@ function update() {
         localStorage.setItem('enduro_totalBest', totalBestRecord);
     }
 
-    // Verificação de Recordes de Ultrapassagens
     if (passDayNow > passDayBest) {
         passDayBest = passDayNow;
         localStorage.setItem('enduro_passDayBest', passDayBest);
@@ -344,7 +341,7 @@ function update() {
     roadCurve += (targetCurve - roadCurve) * curveSpeed;
 
     enemies.forEach((enemy) => {
-        let effectiveEnemySpeed = (speed < 15) ? 15 : enemy.v; 
+        let effectiveEnemySpeed = enemy.v; 
         enemy.z -= (speed - effectiveEnemySpeed);
         let p = 1 - (enemy.z / 4000); 
         let roadWidth = 20 + p * 550;
@@ -377,12 +374,16 @@ function update() {
         enemy.lastY = 200 + (p * 140); enemy.lastX = screenX; enemy.lastP = p;
     });
 
-    if (gameTick % 180 === 0 && enemies.length < 100) {
+    enemySpawnTimer--;
+    if (enemySpawnTimer <= 0 && enemies.length < 30) {
         enemies.push({ 
-            lane: (Math.random() - 0.5) * 0.9, z: 4000, v: 6.0, 
-            color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)],
+            lane: (Math.random() - 0.5) * 1.0, 
+            z: 4000, 
+            v: 4 + Math.random() * 5, 
+            color: ["#F0F", "#0FF", "#0F0", "#FF0", "#FFF"][Math.floor(Math.random() * 5)],
             isOvertaken: false 
         });
+        enemySpawnTimer = 60 + Math.random() * 120; 
     }
 
     enemies = enemies.filter(e => e.z > -18000 && e.z < 6000);
@@ -454,7 +455,6 @@ function draw(colors, isRaining, currentStage) {
         raindrops.forEach(r => { ctx.beginPath(); ctx.moveTo(r.x, r.y); ctx.lineTo(r.x + 1.5, r.y + 12); ctx.stroke(); });
     }
 
-    // --- RELÂMPAGO NA FRENTE (Tempestade: cases 3 e 7) ---
     if (lightningAlpha > 0 && (currentStage === 3 || currentStage === 7)) { 
         ctx.fillStyle = `rgba(255, 255, 255, ${lightningAlpha})`; 
         ctx.fillRect(0, 55, 400, 345); 
