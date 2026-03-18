@@ -453,7 +453,7 @@ function update() {
                     sfxVitoriaAudio.play(); 
                     vitoriaTocada = true; 
                 }
-            } else if (enemy.z > 0 && enemy.isOvertaken) { 
+            } else if (enemy.z > 100 && enemy.isOvertaken) { 
                 // Se o carro te ultrapassar de volta pela frente
                 carsRemaining++; 
                 passDayNow = Math.max(0, passDayNow - 1); 
@@ -468,18 +468,18 @@ function update() {
     });
 
     enemySpawnTimer--;
-    if (enemySpawnTimer <= 0 && enemies.length < 10) {
+    if (enemySpawnTimer <= 0 && enemies.length < 12) {
         let lanes = [-0.8, -0.4, 0, 0.4, 0.8];
         let chosenLane = lanes[Math.floor(Math.random() * lanes.length)];
         
         enemies.push({ 
             lane: chosenLane, 
             z: 4000, 
-            v: 7 + Math.random() * 3, 
+            v: 6 + Math.random() * 4, 
             color: ["#F0F", "#0FF", "#0F0", "#FF0", "#FFF"][Math.floor(Math.random() * 5)], 
             isOvertaken: false 
         });
-        enemySpawnTimer = 100 + Math.random() * 100; 
+        enemySpawnTimer = 40 + Math.random() * 40; 
     }
 
     draw(colors, isRaining, currentStage);
