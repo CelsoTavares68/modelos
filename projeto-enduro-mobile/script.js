@@ -85,25 +85,31 @@ function drawFinishLine(y, roadWidth, xPos) {
     }
 }
 
-function updateUI() {
+ function updateUI() {
+    // Distância
     if(document.getElementById('ui-dist')) document.getElementById('ui-dist').innerText = (playerDist / 1000).toFixed(1) + " KM";
     if(document.getElementById('ui-day-best')) document.getElementById('ui-day-best').innerText = dayBestRecord.toFixed(1) + " KM";
     if(document.getElementById('ui-total-now')) document.getElementById('ui-total-now').innerText = (odometerNow / 1000).toFixed(1) + " KM";
     if(document.getElementById('ui-total-best')) document.getElementById('ui-total-best').innerText = (totalBestRecord / 1000).toFixed(1) + " KM";
 
-    // Atualização dos IDs de ultrapassagem (conforme o seu index.html anterior)
-    if(document.getElementById('ui-passes')) document.getElementById('ui-passes').innerText = passDayNow;
+    // Ultrapassagens - IDs corrigidos conforme o index.html
+    if(document.getElementById('ui-pass-day')) document.getElementById('ui-pass-day').innerText = passDayNow;
     if(document.getElementById('ui-passes-day-best')) document.getElementById('ui-passes-day-best').innerText = passDayBest;
     if(document.getElementById('ui-total-passes-now')) document.getElementById('ui-total-passes-now').innerText = passTotalOdo;
     if(document.getElementById('ui-passes-total-best')) document.getElementById('ui-passes-total-best').innerText = passTotalBest;
 }
 
-function saveProgress() {
+ function saveProgress() {
     const data = { 
         dayNumber, carsRemaining, playerDist, currentTime, odometerNow,
         passDayNow, passTotalOdo 
     };
     localStorage.setItem('enduro_save', JSON.stringify(data));
+    // Salva os recordes independentemente do save do dia
+    localStorage.setItem('enduro_passDayBest', passDayBest);
+    localStorage.setItem('enduro_passTotalBest', passTotalBest);
+    localStorage.setItem('enduro_dayBest', dayBestRecord);
+    localStorage.setItem('enduro_totalBest', totalBestRecord);
 }
 
 function loadProgress() {
