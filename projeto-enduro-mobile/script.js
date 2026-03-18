@@ -1,4 +1,4 @@
- const canvas = document.getElementById('gameCanvas');
+  const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 canvas.width = 400; canvas.height = 400;
 
@@ -31,8 +31,8 @@ let passDayBest = parseInt(localStorage.getItem('enduro_passDayBest')) || 0;
 let passTotalOdo = parseInt(localStorage.getItem('enduro_passTotalOdo')) || 0;   
 let passTotalBest = parseInt(localStorage.getItem('enduro_passTotalBest')) || 0; 
 
-const maxSpeed = 16; 
-const STAGE_DURATION = 6000; 
+const maxSpeed = 18; 
+const STAGE_DURATION = 5400; 
 const DAY_DURATION = STAGE_DURATION * 9; 
 let currentTime = 0; 
 
@@ -86,18 +86,18 @@ function drawFinishLine(y, roadWidth, xPos) {
     }
 }
 
+// CORREÇÃO DOS IDS PARA O SEU HTML
 function updateUI() {
-    // Distância
     if(document.getElementById('ui-dist')) document.getElementById('ui-dist').innerText = (playerDist / 1000).toFixed(1) + " KM";
     if(document.getElementById('ui-day-best')) document.getElementById('ui-day-best').innerText = dayBestRecord.toFixed(1) + " KM";
     if(document.getElementById('ui-total-now')) document.getElementById('ui-total-now').innerText = (odometerNow / 1000).toFixed(1) + " KM";
     if(document.getElementById('ui-total-best')) document.getElementById('ui-total-best').innerText = (totalBestRecord / 1000).toFixed(1) + " KM";
 
-    // Ultrapassagens (Sincronizado com os IDs do seu HTML)
+    // IDs corrigidos para bater com index.html:
     if(document.getElementById('ui-pass-day')) document.getElementById('ui-pass-day').innerText = passDayNow;
-    if(document.getElementById('ui-pass-day-best')) document.getElementById('ui-pass-day-best').innerText = passDayBest;
-    if(document.getElementById('ui-pass-total')) document.getElementById('ui-pass-total').innerText = passTotalOdo;
-    if(document.getElementById('ui-pass-total-best')) document.getElementById('ui-pass-total-best').innerText = passTotalBest;
+    if(document.getElementById('ui-passes-day-best')) document.getElementById('ui-passes-day-best').innerText = passDayBest;
+    if(document.getElementById('ui-total-passes-now')) document.getElementById('ui-total-passes-now').innerText = passTotalOdo;
+    if(document.getElementById('ui-passes-total-best')) document.getElementById('ui-passes-total-best').innerText = passTotalBest;
 }
 
 function saveProgress() {
@@ -108,6 +108,7 @@ function saveProgress() {
     localStorage.setItem('enduro_save', JSON.stringify(data));
     localStorage.setItem('enduro_passDayBest', passDayBest);
     localStorage.setItem('enduro_passTotalBest', passTotalBest);
+    localStorage.setItem('enduro_passTotalOdo', passTotalOdo); // Garante a persistência do total
 }
 
 function loadProgress() {
@@ -122,6 +123,9 @@ function loadProgress() {
         passDayNow = data.passDayNow || 0;
         passTotalOdo = data.passTotalOdo || 0;
     }
+    // Carrega recordes históricos
+    passDayBest = parseInt(localStorage.getItem('enduro_passDayBest')) || 0;
+    passTotalBest = parseInt(localStorage.getItem('enduro_passTotalBest')) || 0;
 }
 loadProgress();
 
@@ -266,7 +270,6 @@ function update() {
     gameTick++; playerDist += speed; odometerNow += speed; currentTime++; 
     if (gameTick % 4 === 0) playEngineSound();
 
-    // Recordes de Distância
     if (playerDist / 1000 > dayBestRecord) {
         dayBestRecord = playerDist / 1000;
         localStorage.setItem('enduro_dayBest', dayBestRecord);
@@ -276,7 +279,7 @@ function update() {
         localStorage.setItem('enduro_totalBest', totalBestRecord);
     }
 
-    // Lógica de Recordes de Ultrapassagens
+    // Recordes de ultrapassagens
     if (passDayNow > passDayBest) {
         passDayBest = passDayNow;
         localStorage.setItem('enduro_passDayBest', passDayBest);
@@ -378,14 +381,10 @@ function update() {
         enemy.lastY = 200 + (p * 140); enemy.lastX = screenX; enemy.lastP = p;
     });
 
-    // --- NOVO GERENCIADOR DE NASCIMENTO (ANTICOLISÃO) ---
     enemySpawnTimer--;
     if (enemySpawnTimer <= 0 && enemies.length < 30) {
-        // Escolhe uma das 5 colunas da pista (-0.8, -0.4, 0, 0.4, 0.8)
         let lanes = [-0.8, -0.4, 0, 0.4, 0.8];
         let chosenLane = lanes[Math.floor(Math.random() * lanes.length)];
-        
-        // Verifica se já tem alguém nessa lane no horizonte (z > 3500)
         let isCollisionRisk = enemies.some(e => e.lane === chosenLane && e.z > 3500);
 
         if (!isCollisionRisk) {
@@ -492,9 +491,7 @@ function draw(colors, isRaining, currentStage) {
 
 function updateApp() {
     navigator.serviceWorker.getRegistration().then(reg => {
-        if (reg && reg.waiting) { 
-            reg.waiting.postMessage('skipWaiting'); 
-        }
+        if (reg && reg.waiting) { reg.waiting.postMessage('skipWaiting'); }
         window.location.reload();
     });
 }
