@@ -1,4 +1,4 @@
-  const canvas = document.getElementById('gameCanvas');
+ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 canvas.width = 400; canvas.height = 400;
 
@@ -26,10 +26,10 @@ let dayBestRecord = parseFloat(localStorage.getItem('enduro_dayBest')) || 0;
 let totalBestRecord = parseFloat(localStorage.getItem('enduro_totalBest')) || 0;
 
 // NOVOS RECORDES DE ULTRAPASSAGENS
-let passDayNow = 0;                                               // 1. Ultrapassagens no dia
-let passDayBest = parseInt(localStorage.getItem('enduro_passDayBest')) || 0;     // 2. Recorde do dia
-let passTotalOdo = parseInt(localStorage.getItem('enduro_passTotalOdo')) || 0;   // 3. Odômetro total de carros
-let passTotalBest = parseInt(localStorage.getItem('enduro_passTotalBest')) || 0; // 4. Recorde total histórico
+let passDayNow = 0;                                               
+let passDayBest = parseInt(localStorage.getItem('enduro_passDayBest')) || 0;     
+let passTotalOdo = parseInt(localStorage.getItem('enduro_passTotalOdo')) || 0;   
+let passTotalBest = parseInt(localStorage.getItem('enduro_passTotalBest')) || 0; 
 
 const maxSpeed = 18; 
 const STAGE_DURATION = 5400; 
@@ -37,7 +37,7 @@ const DAY_DURATION = STAGE_DURATION * 9;
 let currentTime = 0; 
 
 let enemies = [];
-let enemySpawnTimer = 0; // Timer para nascimento aleatório
+let enemySpawnTimer = 0; 
 let roadCurve = 0;      
 let targetCurve = 0;    
 let curveTimer = 0;     
@@ -87,18 +87,20 @@ function drawFinishLine(y, roadWidth, xPos) {
 }
 
 function updateUI() {
+    // Distância
     if(document.getElementById('ui-dist')) document.getElementById('ui-dist').innerText = (playerDist / 1000).toFixed(1) + " KM";
     if(document.getElementById('ui-day-best')) document.getElementById('ui-day-best').innerText = dayBestRecord.toFixed(1) + " KM";
     if(document.getElementById('ui-total-now')) document.getElementById('ui-total-now').innerText = (odometerNow / 1000).toFixed(1) + " KM";
     if(document.getElementById('ui-total-best')) document.getElementById('ui-total-best').innerText = (totalBestRecord / 1000).toFixed(1) + " KM";
 
+    // Ultrapassagens (Sincronizado com os IDs do seu HTML)
     if(document.getElementById('ui-pass-day')) document.getElementById('ui-pass-day').innerText = passDayNow;
     if(document.getElementById('ui-pass-day-best')) document.getElementById('ui-pass-day-best').innerText = passDayBest;
     if(document.getElementById('ui-pass-total')) document.getElementById('ui-pass-total').innerText = passTotalOdo;
     if(document.getElementById('ui-pass-total-best')) document.getElementById('ui-pass-total-best').innerText = passTotalBest;
 }
 
- function saveProgress() {
+function saveProgress() {
     const data = { 
         dayNumber, carsRemaining, playerDist, currentTime, odometerNow,
         passDayNow, passTotalOdo 
@@ -264,6 +266,7 @@ function update() {
     gameTick++; playerDist += speed; odometerNow += speed; currentTime++; 
     if (gameTick % 4 === 0) playEngineSound();
 
+    // Recordes de Distância
     if (playerDist / 1000 > dayBestRecord) {
         dayBestRecord = playerDist / 1000;
         localStorage.setItem('enduro_dayBest', dayBestRecord);
@@ -273,6 +276,7 @@ function update() {
         localStorage.setItem('enduro_totalBest', totalBestRecord);
     }
 
+    // Lógica de Recordes de Ultrapassagens
     if (passDayNow > passDayBest) {
         passDayBest = passDayNow;
         localStorage.setItem('enduro_passDayBest', passDayBest);
@@ -374,16 +378,26 @@ function update() {
         enemy.lastY = 200 + (p * 140); enemy.lastX = screenX; enemy.lastP = p;
     });
 
+    // --- NOVO GERENCIADOR DE NASCIMENTO (ANTICOLISÃO) ---
     enemySpawnTimer--;
     if (enemySpawnTimer <= 0 && enemies.length < 30) {
-        enemies.push({ 
-            lane: (Math.random() - 0.5) * 1.0, 
-            z: 4000, 
-            v: 4 + Math.random() * 5, 
-            color: ["#F0F", "#0FF", "#0F0", "#FF0", "#FFF"][Math.floor(Math.random() * 5)],
-            isOvertaken: false 
-        });
-        enemySpawnTimer = 60 + Math.random() * 120; 
+        // Escolhe uma das 5 colunas da pista (-0.8, -0.4, 0, 0.4, 0.8)
+        let lanes = [-0.8, -0.4, 0, 0.4, 0.8];
+        let chosenLane = lanes[Math.floor(Math.random() * lanes.length)];
+        
+        // Verifica se já tem alguém nessa lane no horizonte (z > 3500)
+        let isCollisionRisk = enemies.some(e => e.lane === chosenLane && e.z > 3500);
+
+        if (!isCollisionRisk) {
+            enemies.push({ 
+                lane: chosenLane, 
+                z: 4000, 
+                v: 4 + Math.random() * 5, 
+                color: ["#F0F", "#0FF", "#0F0", "#FF0", "#FFF"][Math.floor(Math.random() * 5)],
+                isOvertaken: false 
+            });
+            enemySpawnTimer = 40 + Math.random() * 80; 
+        }
     }
 
     enemies = enemies.filter(e => e.z > -18000 && e.z < 6000);
@@ -478,7 +492,9 @@ function draw(colors, isRaining, currentStage) {
 
 function updateApp() {
     navigator.serviceWorker.getRegistration().then(reg => {
-        if (reg && reg.waiting) { reg.waiting.postMessage('skipWaiting'); }
+        if (reg && reg.waiting) { 
+            reg.waiting.postMessage('skipWaiting'); 
+        }
         window.location.reload();
     });
 }
