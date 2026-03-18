@@ -1,4 +1,4 @@
- const canvas = document.getElementById('gameCanvas');
+  const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 canvas.width = 400; canvas.height = 400;
 
@@ -93,6 +93,8 @@ function saveProgress() {
     localStorage.setItem('enduro_save', JSON.stringify(data));
     localStorage.setItem('enduro_passDayBest', passDayBest);
     localStorage.setItem('enduro_passTotalBest', passTotalBest);
+    localStorage.setItem('enduro_dayBest', dayBestRecord);
+    localStorage.setItem('enduro_totalBest', totalBestRecord);
 }
 
 function loadProgress() {
@@ -106,6 +108,8 @@ function loadProgress() {
     }
     passDayBest = parseInt(localStorage.getItem('enduro_passDayBest')) || 0;
     passTotalBest = parseInt(localStorage.getItem('enduro_passTotalBest')) || 0;
+    dayBestRecord = parseFloat(localStorage.getItem('enduro_dayBest')) || 0;
+    totalBestRecord = parseFloat(localStorage.getItem('enduro_totalBest')) || 0;
 }
 loadProgress();
 
@@ -240,10 +244,10 @@ function update() {
 
     gameTick++; playerDist += speed; odometerNow += speed; currentTime++; 
     if (gameTick % 4 === 0) playEngineSound();
-    if (playerDist / 1000 > dayBestRecord) { dayBestRecord = playerDist / 1000; localStorage.setItem('enduro_dayBest', dayBestRecord); }
-    if (odometerNow > totalBestRecord) { totalBestRecord = odometerNow; localStorage.setItem('enduro_totalBest', totalBestRecord); }
-    if (passDayNow > passDayBest) { passDayBest = passDayNow; localStorage.setItem('enduro_passDayBest', passDayBest); }
-    if (passTotalOdo > passTotalBest) { passTotalBest = passTotalOdo; localStorage.setItem('enduro_passTotalBest', passTotalBest); }
+    if (playerDist / 1000 > dayBestRecord) { dayBestRecord = playerDist / 1000; }
+    if (odometerNow > totalBestRecord) { totalBestRecord = odometerNow; }
+    if (passDayNow > passDayBest) { passDayBest = passDayNow; }
+    if (passTotalOdo > passTotalBest) { passTotalBest = passTotalOdo; }
     updateUI();
 
     if (isRaining || warningLightning) {
@@ -297,10 +301,8 @@ function update() {
         let currentV = (speed < 0) ? enemy.v * 0.4 : enemy.v;
         enemy.z -= (speed - currentV);
         
-        // --- LIMITE DE SUMIÇO ---
-        // Se o carro te ultrapassou e foi para o horizonte (Z > 2000), ele some.
-        // Se você o ultrapassou, ele fica atrás até -15000.
-        if (enemy.z > 2200 || enemy.z < -15000) {
+        // Se o carro for muito à frente (Z > 3200) ou muito atrás (Z < -15000), ele some.
+        if (enemy.z > 3200 || enemy.z < -15000) {
             enemies.splice(index, 1);
             return;
         }
@@ -321,7 +323,6 @@ function update() {
                 carsRemaining--; passDayNow++; passTotalOdo++; enemy.isOvertaken = true; 
                 if (carsRemaining <= 0 && !vitoriaTocada) { gameState = "GOAL_REACHED"; sfxVitoriaAudio.play(); vitoriaTocada = true; }
             } else if (enemy.z > 0 && enemy.isOvertaken) { 
-                // Carro te ultrapassou de volta
                 carsRemaining++; passDayNow = Math.max(0, passDayNow - 1); passTotalOdo = Math.max(0, passTotalOdo - 1); enemy.isOvertaken = false; 
             }
         }
@@ -332,19 +333,14 @@ function update() {
     enemySpawnTimer--;
     if (enemySpawnTimer <= 0 && enemies.length < 10) {
         let lanes = [-0.8, -0.4, 0, 0.4, 0.8];
-        let chosenLane = lanes[Math.floor(Math.random() * lanes.length)];
-        
-        // Só nasce se o horizonte estiver limpo (Z > 3500)
-        if (!enemies.some(e => e.z > 3500)) {
-            enemies.push({ 
-                lane: chosenLane, 
-                z: 4000, 
-                v: 7 + Math.random() * 3, 
-                color: ["#F0F", "#0FF", "#0F0", "#FF0", "#FFF"][Math.floor(Math.random() * 5)], 
-                isOvertaken: false 
-            });
-            enemySpawnTimer = 150 + Math.random() * 100; // Intervalo maior entre carros
-        }
+        enemies.push({ 
+            lane: lanes[Math.floor(Math.random() * lanes.length)], 
+            z: 4000, 
+            v: 7 + Math.random() * 3, 
+            color: ["#F0F", "#0FF", "#0F0", "#FF0", "#FFF"][Math.floor(Math.random() * 5)], 
+            isOvertaken: false 
+        });
+        enemySpawnTimer = 100 + Math.random() * 100; 
     }
 
     draw(colors, isRaining, currentStage);
