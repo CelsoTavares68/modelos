@@ -98,15 +98,12 @@ function updateUI() {
     if(document.getElementById('ui-passes-total-best')) document.getElementById('ui-passes-total-best').innerText = passTotalBest;
 }
 
- function saveProgress() {
+function saveProgress() {
     const data = { 
         dayNumber, carsRemaining, playerDist, currentTime, odometerNow,
         passDayNow, passTotalOdo 
     };
     localStorage.setItem('enduro_save', JSON.stringify(data));
-    // Adicione estas linhas para garantir a persistência dos recordes
-    localStorage.setItem('enduro_passDayBest', passDayBest);
-    localStorage.setItem('enduro_passTotalBest', passTotalBest);
 }
 
 function loadProgress() {
