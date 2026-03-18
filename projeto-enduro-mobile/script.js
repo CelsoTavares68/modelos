@@ -1,4 +1,4 @@
-  const canvas = document.getElementById('gameCanvas');
+ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 canvas.width = 400; canvas.height = 400;
 
@@ -46,7 +46,7 @@ const sfxTrovao = new Audio('trovao.mp3'); sfxTrovao.volume = 0.2;
 const sfxVitoriaAudio = new Audio('vitoria.mp3');
 const sfxDerrota = new Audio('game_over.mp3');
 
-// --- VÍDEOS ---
+// --- VÍDEOS DE FEEDBACK ---
 const videoVitoria = document.createElement('video');
 videoVitoria.src = 'bandeira_vitoria.mp4';
 videoVitoria.style.position = 'absolute';
@@ -160,7 +160,6 @@ function playCrashSound() {
     osc.start(); osc.stop(audioCtx.currentTime + 0.4);
 }
 
-// --- LOGICA DE JOGO ---
 function togglePause() {
     if (gameState === "PLAYING" || gameState === "GOAL_REACHED") {
         isPaused = !isPaused;
@@ -296,15 +295,17 @@ function update() {
     }
     roadCurve += (targetCurve - roadCurve) * curveSpeed;
 
-    // --- LÓGICA DE INIMIGOS (CORREÇÃO DO HORIZONTE) ---
-    enemies.forEach((enemy, index) => {
+    // --- LÓGICA DE INIMIGOS (CORREÇÃO DO SPAWN E SUMIÇO) ---
+    for (let i = enemies.length - 1; i >= 0; i--) {
+        let enemy = enemies[i];
         let currentV = (speed < 0) ? enemy.v * 0.4 : enemy.v;
         enemy.z -= (speed - currentV);
         
-        // Se o carro for muito à frente (Z > 3200) ou muito atrás (Z < -15000), ele some.
-        if (enemy.z > 3200 || enemy.z < -15000) {
-            enemies.splice(index, 1);
-            return;
+        // Se o carro for muito à frente (te passou e sumiu) ou muito atrás
+        // Calibrado: Carros nascem em 4000. Só somem se passarem de 5000 (longe) ou ficarem -15000 (atrás)
+        if (enemy.z > 5000 || enemy.z < -15000) {
+            enemies.splice(i, 1);
+            continue;
         }
 
         let p = 1 - (enemy.z / 4000); 
@@ -327,9 +328,9 @@ function update() {
             }
         }
         enemy.lastY = 200 + (p * 140); enemy.lastX = screenX; enemy.lastP = p;
-    });
+    }
 
-    // --- SPAWN CONTROLADO ---
+    // --- SPAWN DE INIMIGOS ---
     enemySpawnTimer--;
     if (enemySpawnTimer <= 0 && enemies.length < 10) {
         let lanes = [-0.8, -0.4, 0, 0.4, 0.8];
@@ -358,8 +359,8 @@ function draw(colors, isRaining, currentStage) {
         ctx.beginPath(); ctx.moveTo(bx - 70, 200); ctx.lineTo(bx, 130); ctx.lineTo(bx + 70, 200); ctx.fill();
         if (colors.snowCaps) { ctx.fillStyle = "white"; ctx.beginPath(); ctx.moveTo(bx, 130); ctx.lineTo(bx - 25, 155); ctx.lineTo(bx + 25, 155); ctx.fill(); }
     }
-    if (lightningAlpha > 0 && (currentStage === 2 || currentStage === 6)) { 
-        ctx.fillStyle = `rgba(255, 255, 255, ${lightningAlpha})`; ctx.fillRect(0, 55, 400, 145); 
+    if (lightningAlpha > 0 && (currentStage === 3 || currentStage === 7)) { 
+        ctx.fillStyle = `rgba(255, 255, 255, ${lightningAlpha})`; ctx.fillRect(0, 55, 400, 345); 
     }
     let isSnowStage = (currentStage === 1);
     for (let i = 200; i < 400; i += 4) {
@@ -398,4 +399,5 @@ function updateApp() {
         window.location.reload();
     });
 }
+
 update();
