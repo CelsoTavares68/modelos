@@ -92,18 +92,21 @@ function updateUI() {
     if(document.getElementById('ui-total-best')) document.getElementById('ui-total-best').innerText = (totalBestRecord / 1000).toFixed(1) + " KM";
 
     // Atualização dos IDs de ultrapassagem (conforme o seu index.html anterior)
-    if(document.getElementById('ui-passes')) document.getElementById('ui-passes').innerText = passDayNow;
-    if(document.getElementById('ui-passes-day-best')) document.getElementById('ui-passes-day-best').innerText = passDayBest;
-    if(document.getElementById('ui-total-passes-now')) document.getElementById('ui-total-passes-now').innerText = passTotalOdo;
-    if(document.getElementById('ui-passes-total-best')) document.getElementById('ui-passes-total-best').innerText = passTotalBest;
+     if(document.getElementById('ui-pass-day')) document.getElementById('ui-pass-day').innerText = passDayNow;
+if(document.getElementById('ui-pass-day-best')) document.getElementById('ui-pass-day-best').innerText = passDayBest;
+if(document.getElementById('ui-pass-total')) document.getElementById('ui-pass-total').innerText = passTotalOdo;
+if(document.getElementById('ui-pass-total-best')) document.getElementById('ui-pass-total-best').innerText = passTotalBest;
 }
 
-function saveProgress() {
+ function saveProgress() {
     const data = { 
         dayNumber, carsRemaining, playerDist, currentTime, odometerNow,
         passDayNow, passTotalOdo 
     };
     localStorage.setItem('enduro_save', JSON.stringify(data));
+    // Adicione estas linhas para garantir a persistência dos recordes
+    localStorage.setItem('enduro_passDayBest', passDayBest);
+    localStorage.setItem('enduro_passTotalBest', passTotalBest);
 }
 
 function loadProgress() {
@@ -244,11 +247,11 @@ function update() {
         case 0: colors.snowCaps = true; break; 
         case 1: colors.sky = "#DDD"; colors.grass = "#FFF"; colors.mt = "#999"; colors.snowCaps = true; break; 
         case 2: colors.sky = "#ff8c00"; colors.grass = "#145c14"; colors.mt = "#442200"; break; 
-        case 3: colors.sky = "#2c3e50"; colors.grass = "#0a2a0a"; colors.mt = "#1a1a1a"; colors.fog = 0.6; break; 
+        case 3: colors.sky = "#2c3e50"; colors.grass = "#0a2a0a"; colors.mt = "#1a1a1a"; colors.fog = 0.7; break; 
         case 4: colors.sky = "#111144"; colors.grass = "#001100"; colors.mt = "#111"; colors.nightMode = true; break; 
-        case 5: colors.sky = "#000011"; colors.grass = "#000000"; colors.mt = "#111"; colors.fog = 0.8; colors.nightMode = true; break; 
+        case 5: colors.sky = "#000011"; colors.grass = "#000000"; colors.mt = "#111"; colors.fog = 0.9; colors.nightMode = true; break; 
         case 6: colors.sky = "#111144"; colors.grass = "#001100"; colors.mt = "#111"; colors.nightMode = true; break; 
-        case 7: colors.sky = "#2c3e50"; colors.grass = "#0a2a0a"; colors.mt = "#1a1a1a"; colors.fog = 0.6; break; 
+        case 7: colors.sky = "#2c3e50"; colors.grass = "#0a2a0a"; colors.mt = "#1a1a1a"; colors.fog = 0.7; break; 
         case 8: colors.sky = "#ade1f2"; colors.grass = "#1a7a1a"; colors.mt = "#555"; colors.snowCaps = true; break; 
     }
 
@@ -318,7 +321,7 @@ function update() {
         currentTime = DAY_DURATION - 1; 
     }
 
-    let offRoad = Math.abs(playerX) > 380;
+    let offRoad = Math.abs(playerX) > 260;
     if (keys.ArrowLeft) leftPressTime++; else leftPressTime = 0;
     if (keys.ArrowRight) rightPressTime++; else rightPressTime = 0;
 
@@ -344,7 +347,7 @@ function update() {
         let effectiveEnemySpeed = (speed < 15) ? 15 : enemy.v; 
         enemy.z -= (speed - effectiveEnemySpeed);
         let p = 1 - (enemy.z / 4000); 
-        let roadWidth = 20 + p * 800;
+        let roadWidth = 20 + p * 550;
         let screenX = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p) + (enemy.lane * roadWidth * 0.5);
         
         if (p > 0.92 && p < 1.05 && Math.abs(screenX - 200) < 50) { 
@@ -376,7 +379,7 @@ function update() {
 
     if (gameTick % 100 === 0 && enemies.length < 100) {
         enemies.push({ 
-            lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 6.0, 
+            lane: (Math.random() - 0.5) * 0.9, z: 4000, v: 6.0, 
             color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)],
             isOvertaken: false 
         });
@@ -410,7 +413,7 @@ function draw(colors, isRaining, currentStage) {
     for (let i = 200; i < 400; i += 4) {
         let p = (i - 200) / 140; 
         let x = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p);
-        let w = 20 + p * 800;
+        let w = 20 + p * 550;
 
         if (carsRemaining <= 0 && i > 250 && i < 265) {
             drawFinishLine(i, w, x);
