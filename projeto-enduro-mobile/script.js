@@ -26,7 +26,7 @@ let passTotalBest = parseInt(localStorage.getItem('enduro_passTotalBest')) || 0;
 
 // --- CONSTANTES ---
 const maxSpeed = 18; 
-const STAGE_DURATION = 5400; 
+const STAGE_DURATION = 6000; 
 const DAY_DURATION = STAGE_DURATION * 9; 
 let currentTime = 0; 
 
