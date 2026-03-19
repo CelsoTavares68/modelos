@@ -129,29 +129,35 @@ async function buscarIndicesGlobais() {
     } catch (e) { console.error("Erro Moedas:", e); }
 }
 
-function converterMoedas(origem) {
+ function converterMoedas(origem) {
     const valorBRL = document.getElementById('calc-brl');
     const valorUSD = document.getElementById('calc-usd');
     const valorEUR = document.getElementById('calc-eur');
 
     if (COTACAO_USD === 0 || COTACAO_EUR === 0) return;
 
+    // Configuração para formatar no padrão: 1.000,00
+    const estiloMoeda = { minimumFractionDigits: 2, maximumFractionDigits: 2 };
+
     if (origem === 'BRL') {
-        const v = parseFloat(valorBRL.value);
-        valorUSD.value = (v / COTACAO_USD).toFixed(2);
-        valorEUR.value = (v / COTACAO_EUR).toFixed(2);
+        const v = parseFloat(valorBRL.value.replace(/\./g, '').replace(',', '.'));
+        if (isNaN(v)) return;
+        valorUSD.value = (v / COTACAO_USD).toLocaleString('pt-BR', estiloMoeda);
+        valorEUR.value = (v / COTACAO_EUR).toLocaleString('pt-BR', estiloMoeda);
     } 
     else if (origem === 'USD') {
-        const v = parseFloat(valorUSD.value);
+        const v = parseFloat(valorUSD.value.replace(/\./g, '').replace(',', '.'));
+        if (isNaN(v)) return;
         const emReais = v * COTACAO_USD;
-        valorBRL.value = emReais.toFixed(2);
-        valorEUR.value = (emReais / COTACAO_EUR).toFixed(2);
+        valorBRL.value = emReais.toLocaleString('pt-BR', estiloMoeda);
+        valorEUR.value = (emReais / COTACAO_EUR).toLocaleString('pt-BR', estiloMoeda);
     } 
     else if (origem === 'EUR') {
-        const v = parseFloat(valorEUR.value);
+        const v = parseFloat(valorEUR.value.replace(/\./g, '').replace(',', '.'));
+        if (isNaN(v)) return;
         const emReais = v * COTACAO_EUR;
-        valorBRL.value = emReais.toFixed(2);
-        valorUSD.value = (emReais / COTACAO_USD).toFixed(2);
+        valorBRL.value = emReais.toLocaleString('pt-BR', estiloMoeda);
+        valorUSD.value = (emReais / COTACAO_USD).toLocaleString('pt-BR', estiloMoeda);
     }
 }
 
