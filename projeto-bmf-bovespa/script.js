@@ -1,4 +1,4 @@
- const TOKEN_B3 = '8gRPKYrszFRi4JCDaARwuJ'; 
+  const TOKEN_B3 = '8gRPKYrszFRi4JCDaARwuJ'; 
 
 // LISTAS
 const LISTA_AGRO_BMF = "JBSS3,BRFS3,BEEF3,MRFG3,CAML3,SLCE3,AGRO3,SMTO3,KEPL3,SOJA3";
@@ -129,45 +129,29 @@ async function buscarIndicesGlobais() {
     } catch (e) { console.error("Erro Moedas:", e); }
 }
 
-  function converterMoedas(origem) {
+function converterMoedas(origem) {
     const valorBRL = document.getElementById('calc-brl');
     const valorUSD = document.getElementById('calc-usd');
     const valorEUR = document.getElementById('calc-eur');
 
-    // 1. Pega as cotações atuais que já estão nos cards do seu dashboard
-    const COTACAO_USD = parseFloat(document.getElementById('usd-comercial').innerText.replace('R$ ', '').replace('.', '').replace(',', '.'));
-    const COTACAO_EUR = parseFloat(document.getElementById('eur-comercial').innerText.replace('R$ ', '').replace('.', '').replace(',', '.'));
-
-    if (!COTACAO_USD || !COTACAO_EUR) return;
-
-    // 2. Configuração para formatar no padrão brasileiro (1.000,00)
-    const estiloMoeda = { minimumFractionDigits: 2, maximumFractionDigits: 2 };
-
-    // 3. Função auxiliar para converter o texto "1.500,00" em número real (1500.00)
-    const limparParaNumero = (input) => {
-        let valor = input.value.replace(/\./g, '').replace(',', '.');
-        return parseFloat(valor) || 0;
-    };
+    if (COTACAO_USD === 0 || COTACAO_EUR === 0) return;
 
     if (origem === 'BRL') {
-        const v = limparParaNumero(valorBRL);
-        if (v === 0) { valorUSD.value = ""; valorEUR.value = ""; return; }
-        valorUSD.value = (v / COTACAO_USD).toLocaleString('pt-BR', estiloMoeda);
-        valorEUR.value = (v / COTACAO_EUR).toLocaleString('pt-BR', estiloMoeda);
+        const v = parseFloat(valorBRL.value);
+        valorUSD.value = (v / COTACAO_USD).toFixed(2);
+        valorEUR.value = (v / COTACAO_EUR).toFixed(2);
     } 
     else if (origem === 'USD') {
-        const v = limparParaNumero(valorUSD);
-        if (v === 0) { valorBRL.value = ""; valorEUR.value = ""; return; }
+        const v = parseFloat(valorUSD.value);
         const emReais = v * COTACAO_USD;
-        valorBRL.value = emReais.toLocaleString('pt-BR', estiloMoeda);
-        valorEUR.value = (emReais / COTACAO_EUR).toLocaleString('pt-BR', estiloMoeda);
+        valorBRL.value = emReais.toFixed(2);
+        valorEUR.value = (emReais / COTACAO_EUR).toFixed(2);
     } 
     else if (origem === 'EUR') {
-        const v = limparParaNumero(valorEUR);
-        if (v === 0) { valorBRL.value = ""; valorUSD.value = ""; return; }
+        const v = parseFloat(valorEUR.value);
         const emReais = v * COTACAO_EUR;
-        valorBRL.value = emReais.toLocaleString('pt-BR', estiloMoeda);
-        valorUSD.value = (emReais / COTACAO_USD).toLocaleString('pt-BR', estiloMoeda);
+        valorBRL.value = emReais.toFixed(2);
+        valorUSD.value = (emReais / COTACAO_USD).toFixed(2);
     }
 }
 
