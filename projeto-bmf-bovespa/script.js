@@ -134,27 +134,36 @@ async function buscarIndicesGlobais() {
     const valorUSD = document.getElementById('calc-usd');
     const valorEUR = document.getElementById('calc-eur');
 
-    if (COTACAO_USD === 0 || COTACAO_EUR === 0) return;
+    // Pega as cotações que já estão carregadas no seu sistema
+    const COTACAO_USD = parseFloat(document.getElementById('usd-comercial').innerText.replace('R$ ', '').replace('.', '').replace(',', '.'));
+    const COTACAO_EUR = parseFloat(document.getElementById('eur-comercial').innerText.replace('R$ ', '').replace('.', '').replace(',', '.'));
 
-    // Configuração para formatar no padrão: 1.000,00
+    if (!COTACAO_USD || !COTACAO_EUR) return;
+
+    // Configuração visual brasileira (Ponto para milhar, vírgula para decimal)
     const estiloMoeda = { minimumFractionDigits: 2, maximumFractionDigits: 2 };
 
+    // Função interna para "limpar" o texto formatado e transformar em número para cálculo
+    const limparParaNumero = (seletor) => {
+        return parseFloat(seletor.value.replace(/\./g, '').replace(',', '.')) || 0;
+    };
+
     if (origem === 'BRL') {
-        const v = parseFloat(valorBRL.value.replace(/\./g, '').replace(',', '.'));
-        if (isNaN(v)) return;
+        const v = limparParaNumero(valorBRL);
+        if (v === 0) { valorUSD.value = ""; valorEUR.value = ""; return; }
         valorUSD.value = (v / COTACAO_USD).toLocaleString('pt-BR', estiloMoeda);
         valorEUR.value = (v / COTACAO_EUR).toLocaleString('pt-BR', estiloMoeda);
     } 
     else if (origem === 'USD') {
-        const v = parseFloat(valorUSD.value.replace(/\./g, '').replace(',', '.'));
-        if (isNaN(v)) return;
+        const v = limparParaNumero(valorUSD);
+        if (v === 0) { valorBRL.value = ""; valorEUR.value = ""; return; }
         const emReais = v * COTACAO_USD;
         valorBRL.value = emReais.toLocaleString('pt-BR', estiloMoeda);
         valorEUR.value = (emReais / COTACAO_EUR).toLocaleString('pt-BR', estiloMoeda);
     } 
     else if (origem === 'EUR') {
-        const v = parseFloat(valorEUR.value.replace(/\./g, '').replace(',', '.'));
-        if (isNaN(v)) return;
+        const v = limparParaNumero(valorEUR);
+        if (v === 0) { valorBRL.value = ""; valorUSD.value = ""; return; }
         const emReais = v * COTACAO_EUR;
         valorBRL.value = emReais.toLocaleString('pt-BR', estiloMoeda);
         valorUSD.value = (emReais / COTACAO_USD).toLocaleString('pt-BR', estiloMoeda);
