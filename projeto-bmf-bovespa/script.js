@@ -129,23 +129,24 @@ async function buscarIndicesGlobais() {
     } catch (e) { console.error("Erro Moedas:", e); }
 }
 
- function converterMoedas(origem) {
+  function converterMoedas(origem) {
     const valorBRL = document.getElementById('calc-brl');
     const valorUSD = document.getElementById('calc-usd');
     const valorEUR = document.getElementById('calc-eur');
 
-    // Pega as cotações que já estão carregadas no seu sistema
+    // 1. Pega as cotações atuais que já estão nos cards do seu dashboard
     const COTACAO_USD = parseFloat(document.getElementById('usd-comercial').innerText.replace('R$ ', '').replace('.', '').replace(',', '.'));
     const COTACAO_EUR = parseFloat(document.getElementById('eur-comercial').innerText.replace('R$ ', '').replace('.', '').replace(',', '.'));
 
     if (!COTACAO_USD || !COTACAO_EUR) return;
 
-    // Configuração visual brasileira (Ponto para milhar, vírgula para decimal)
+    // 2. Configuração para formatar no padrão brasileiro (1.000,00)
     const estiloMoeda = { minimumFractionDigits: 2, maximumFractionDigits: 2 };
 
-    // Função interna para "limpar" o texto formatado e transformar em número para cálculo
-    const limparParaNumero = (seletor) => {
-        return parseFloat(seletor.value.replace(/\./g, '').replace(',', '.')) || 0;
+    // 3. Função auxiliar para converter o texto "1.500,00" em número real (1500.00)
+    const limparParaNumero = (input) => {
+        let valor = input.value.replace(/\./g, '').replace(',', '.');
+        return parseFloat(valor) || 0;
     };
 
     if (origem === 'BRL') {
