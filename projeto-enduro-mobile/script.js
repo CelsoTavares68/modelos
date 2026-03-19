@@ -31,8 +31,8 @@ let passDayBest = parseInt(localStorage.getItem('enduro_passDayBest')) || 0;    
 let passTotalOdo = parseInt(localStorage.getItem('enduro_passTotalOdo')) || 0;   // 3. Odômetro total de carros
 let passTotalBest = parseInt(localStorage.getItem('enduro_passTotalBest')) || 0; // 4. Recorde total histórico
 
-const maxSpeed = 18; 
-const STAGE_DURATION = 5400; 
+const maxSpeed = 17; 
+const STAGE_DURATION = 4500; 
 const DAY_DURATION = STAGE_DURATION * 9; 
 let currentTime = 0; 
 
@@ -383,7 +383,7 @@ function update() {
     if (gameTick % 100 === 0 && enemies.length < 100) {
         enemies.push({ 
             lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 6.0, 
-            color: ["#F0F", "#0FF", "#0F0", "#FF0"][Math.floor(Math.random() * 4)],
+            color: ["#F0F", "#0FF", "#0F0", "#FF0", "#f47d28" ][Math.floor(Math.random() * 5)],
             isOvertaken: false 
         });
     }
