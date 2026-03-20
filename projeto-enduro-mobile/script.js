@@ -194,20 +194,36 @@ function togglePause() {
     if (gameState !== "PLAYING") { gameState = "PLAYING"; update(); }
 }
 
- function resetDay() {
-    currentTime = 0; playerDist = 0; speed = 0; enemies = []; totalPasses = 0; 
+  function resetDay() {
+    // 1. Reinicialização de Variáveis de Jogo
+    currentTime = 0; 
+    playerDist = 0; 
+    speed = 0; 
+    enemies = []; 
     
-    // Nova lógica: Aumenta de 10 em 10 até o dia 10 (chegando a 290). 
-    // Do dia 11 em diante, fixa em 300.
+    // 2. Reinicialização de Contadores de Ultrapassagem
+    passDayNow = 0; // Zera a contagem para o novo dia começar do zero
+    vitoriaTocada = false; // Permite que o som de vitória toque no próximo objetivo
+
+    // 3. Definição da Meta de Carros (Dificuldade Progressiva)
     if (dayNumber < 11) {
         carsRemaining = 200 + ((dayNumber - 1) * 10);
     } else {
         carsRemaining = 300;
     }
     
-    gameState = "PLAYING"; isPaused = false; hasPlayedGoalMedia = false;
-    if (sfxChuva) { sfxChuva.pause(); sfxChuva.currentTime = 0; }
-    saveProgress();
+    // 4. Estado do Jogo e Áudio
+    gameState = "PLAYING"; 
+    isPaused = false;
+    
+    if (sfxChuva) { 
+        sfxChuva.pause(); 
+        sfxChuva.currentTime = 0; 
+    }
+
+    // 5. Persistência
+    saveProgress(); // Salva o estado atual (com passDayNow zerado) no LocalStorage
+    updateUI();     // Atualiza a interface visual imediatamente
 }
 
  function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasFog = false, isRainy = false) {
