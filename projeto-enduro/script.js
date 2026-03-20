@@ -141,7 +141,7 @@ function resetDay() {
     ctx.translate(x, y);
     if(isPlayer) ctx.rotate((roadCurve / 80) * Math.PI / 180);
     
-    // --- LÓGICA DE COR DO CORPO ---
+    // --- LÓGICA DE COR DO CORPO (Original) ---
     // O carro só fica preto se for estritamente Noite (nightMode).
     // Na chuva (isRainy) ou neblina (hasFog) sem ser noite, ele mantém a cor original.
     let bodyColor = nightMode ? "#000000" : color;
@@ -157,21 +157,51 @@ function resetDay() {
     ctx.fillRect(-w * 0.5, -h * 0.3, w, h * 0.2); 
 
     // --- LANTERNAS (Apenas Noite, Chuva ou Neblina) ---
-    // Desenhadas em LINHA (lado a lado horizontalmente) e por CIMA do carro
+    // Desenhadas em LINHA e por CIMA do carro.
     if (nightMode || hasFog || isRainy) {
         ctx.fillStyle = "#FFFFFF"; 
-        const headlightSize = 2.2 * s;
-        const headLightY = h * 0.2; // Mesma altura para ambos (alinha em linha)
         
-        // Lanterna Esquerda (Mais para a esquerda da tela)
+        // AJUSTE 1: Círculos um pouco maiores (de 2.2 para 2.8)
+        const headlightSize = 2.8 * s; 
+        const headLightY = h * 0.2; 
+        const leftX = -w * 0.2;
+        const rightX = w * 0.2;
+        
+        // Lanterna Esquerda
         ctx.beginPath();
-        ctx.arc(-w * 0.2, headLightY, headlightSize, 0, Math.PI * 2);
+        ctx.arc(leftX, headLightY, headlightSize, 0, Math.PI * 2);
         ctx.fill();
         
-        // Lanterna Direita (Mais para a direita da tela)
+        // Lanterna Direita
         ctx.beginPath();
-        ctx.arc(w * 0.2, headLightY, headlightSize, 0, Math.PI * 2);
+        ctx.arc(rightX, headLightY, headlightSize, 0, Math.PI * 2);
         ctx.fill();
+
+        // --- AJUSTE 2: CORREÇÃO DO FEIXE DE LUZ (Jogando para frente/baixo na tela) ---
+        // Desenhamos um cone de luz saindo da frente do carro em direção à parte inferior da tela.
+        ctx.save();
+        ctx.translate(0, headLightY); // Move para a linha dos faróis
+
+        let lightLength = h * 6; // Comprimento do feixe
+        let lightWidth = w * 1.5;  // Largura do feixe no final
+
+        // Gradiente vertical (frente do carro -> final do feixe)
+        let gradient = ctx.createLinearGradient(0, 0, 0, lightLength);
+        gradient.addColorStop(0, "rgba(255, 255, 255, 0.3)"); // Mais brilhante perto do carro
+        gradient.addColorStop(1, "rgba(255, 255, 255, 0)");   // Transparente longe
+
+        ctx.fillStyle = gradient;
+        
+        // Desenha o trapézio do feixe de luz projetado para frente (Y positivo)
+        ctx.beginPath();
+        ctx.moveTo(leftX, 0);                 // Canto superior esquerdo (no farol)
+        ctx.lineTo(rightX, 0);                // Canto superior direito (no farol)
+        ctx.lineTo(lightWidth / 2, lightLength); // Canto inferior direito (largo)
+        ctx.lineTo(-lightWidth / 2, lightLength); // Canto inferior esquerdo (largo)
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.restore();
     }
     
     ctx.restore();
