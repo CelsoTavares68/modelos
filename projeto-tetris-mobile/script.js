@@ -379,30 +379,40 @@ function updateParticles() {
     });
 }
 
- function createComboMessage(x, r, text) {
+  // --- 5. SISTEMA DE COMBINAÇÕES (DURAÇÃO ESTENDIDA) ---
+
+function createComboMessage(x, r, text) {
     comboMessages.push({
         x: x * BLOCK_SIZE,
         y: r * BLOCK_SIZE,
         text: text,
-        life: 100 // Aumentado de 40 para 100 para durar mais tempo
+        life: 180 // Aumentado para 180 (aprox. 3 segundos a 60fps)
     });
 }
 
 function drawComboMessages() {
     comboMessages = comboMessages.filter(m => m.life > 0);
     comboMessages.forEach(m => {
-        // Opacidade diminui conforme o tempo de vida acaba (fade out)
-        ctx.globalAlpha = m.life / 100; 
+        // Fade out mais lento: só começa a sumir de verdade nos últimos 60 frames
+        let opacity = m.life > 60 ? 1.0 : m.life / 60;
+        
+        ctx.save(); // Salva o estado do contexto para não afetar outros desenhos
+        ctx.globalAlpha = opacity;
         ctx.fillStyle = "#ffcc00";
-        ctx.font = "bold 24px Arial";
+        ctx.shadowColor = "black";
+        ctx.shadowBlur = 4;
+        ctx.font = "bold 26px Arial";
         ctx.textAlign = "center";
         
-        // O valor (100 - m.life) / 3 controla a velocidade da subida. 
-        // Dividir por 3 torna o movimento mais suave.
-        ctx.fillText(m.text, m.x + 20, m.y - ((100 - m.life) / 2)); 
+        // Movimento de subida constante e bem lento
+        // O valor (180 - m.life) representa o tempo decorrido
+        const elapsed = 180 - m.life;
+        const offset = elapsed * 0.4; // Multiplicador baixo = subida mais lenta
         
+        ctx.fillText(m.text, m.x + 20, m.y - offset); 
+        
+        ctx.restore(); // Restaura o estado (limpa o alpha e o shadow)
         m.life--;
-        ctx.globalAlpha = 1.0; // Reseta a opacidade para o restante do desenho
     });
 }
 
