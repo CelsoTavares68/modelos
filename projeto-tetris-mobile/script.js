@@ -379,23 +379,30 @@ function updateParticles() {
     });
 }
 
-function createComboMessage(x, r, text) {
+ function createComboMessage(x, r, text) {
     comboMessages.push({
         x: x * BLOCK_SIZE,
         y: r * BLOCK_SIZE,
         text: text,
-        life: 40 
+        life: 100 // Aumentado de 40 para 100 para durar mais tempo
     });
 }
 
 function drawComboMessages() {
     comboMessages = comboMessages.filter(m => m.life > 0);
     comboMessages.forEach(m => {
+        // Opacidade diminui conforme o tempo de vida acaba (fade out)
+        ctx.globalAlpha = m.life / 100; 
         ctx.fillStyle = "#ffcc00";
         ctx.font = "bold 24px Arial";
         ctx.textAlign = "center";
-        ctx.fillText(m.text, m.x + 20, m.y - (40 - m.life)); 
+        
+        // O valor (100 - m.life) / 3 controla a velocidade da subida. 
+        // Dividir por 3 torna o movimento mais suave.
+        ctx.fillText(m.text, m.x + 20, m.y - ((100 - m.life) / 2)); 
+        
         m.life--;
+        ctx.globalAlpha = 1.0; // Reseta a opacidade para o restante do desenho
     });
 }
 
