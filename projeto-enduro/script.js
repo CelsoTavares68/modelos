@@ -186,7 +186,7 @@ function update() {
         case 4: colors.sky = "#0d0d0e"; colors.grass = "#080808"; colors.mt = "#111"; colors.nightMode = true; break; 
         case 5: colors.sky = "#000011"; colors.grass = "#000800"; colors.mt = "#000"; colors.fog = 0.9; colors.nightMode = true; break; 
         case 6: colors.sky = "#000011"; colors.grass = "#000800"; colors.mt = "#000"; colors.nightMode = true; break; 
-        case 7: colors.sky = "#2c3e50"; colors.grass = "#0a2a0a"; colors.mt = "#1a1a1a"; colors.fog = 0.7; break; 
+        case 7: colors.sky = "#2c3e50"; colors.grass = "#0a2a0a"; colors.mt = "#1a1a1a"; colors.fog = 0.6; break; 
         case 8: colors.sky = "#ade1f2"; colors.grass = "#1a7a1a"; colors.mt = "#555"; colors.snowCaps = true; break; 
     }
 
@@ -322,16 +322,16 @@ function update() {
     });
 
     // --- LÓGICA DE INIMIGOS EM DUPLA ---
-    if (gameTick % 250 === 0 && enemies.length < 100) {
+    if (gameTick % 240 === 0 && enemies.length < 100) {
         enemies.push({ 
             lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 7.5, 
              color: ["#F0F", "#0FF", "#0F0", "#FF0", "#f47d28", "#a5a3a3", "rgb(0, 26, 255)", "rgb(27, 104, 27)" ][Math.floor(Math.random() * 8)],
             isOvertaken: false 
         });
     }
-    if (gameTick % 250 === 80 && enemies.length < 100) {
+    if (gameTick % 240 === 80 && enemies.length < 100) {
         enemies.push({ 
-            lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 7.5, 
+            lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 7.0, 
             color: ["#F0F", "#0FF", "#0F0", "#FF0", "#f47d28", "#a5a3a3", "rgb(0, 26, 255)", "rgb(27, 104, 27)"][Math.floor(Math.random() * 8)],
             isOvertaken: false 
         });
