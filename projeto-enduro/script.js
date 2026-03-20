@@ -141,44 +141,37 @@ function resetDay() {
     ctx.translate(x, y);
     if(isPlayer) ctx.rotate((roadCurve / 80) * Math.PI / 180);
     
-    // 1. DESENHO DO CORPO E PNEUS (Original)
-    // Pneus
+    // --- LÓGICA DE COR DO CORPO ---
+    // O carro só fica preto se for estritamente Noite (nightMode).
+    // Na chuva (isRainy) ou neblina (hasFog) sem ser noite, ele mantém a cor original.
+    let bodyColor = nightMode ? "#000000" : color;
+
+    // Pneus (Original)
     ctx.fillStyle = "#111"; 
     ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8);
     ctx.fillRect(w * 0.25, -h * 0.1, w * 0.25, h * 0.8);
     
-    // Carcaça (Preta na noite/fog, colorida no dia)
-    ctx.fillStyle = (nightMode || hasFog) ? "#000" : color; 
+    // Corpo do Carro
+    ctx.fillStyle = bodyColor; 
     ctx.fillRect(-w * 0.25, h * 0.1, w * 0.5, h * 0.4); 
     ctx.fillRect(-w * 0.5, -h * 0.3, w, h * 0.2); 
 
-    // 2. LANTERNAS (Apenas Noite/Chuva/Fog) - DESENHADAS POR CIMA
+    // --- LANTERNAS (Apenas Noite, Chuva ou Neblina) ---
+    // Desenhadas em LINHA (lado a lado horizontalmente) e por CIMA do carro
     if (nightMode || hasFog || isRainy) {
         ctx.fillStyle = "#FFFFFF"; 
         const headlightSize = 2.2 * s;
-        const frontPos = w * 0.35; // Posição na ponta frontal do carro
+        const headLightY = h * 0.2; // Mesma altura para ambos (alinha em linha)
         
-        // No seu sistema:
-        // Y Negativo sobe (Esquerda do carro)
-        // Y Positivo desce (Direita do carro)
-        
-        // Lanterna ESQUERDA (em cima no desenho, mas esquerda do piloto)
+        // Lanterna Esquerda (Mais para a esquerda da tela)
         ctx.beginPath();
-        ctx.arc(frontPos, -h * 0.1, headlightSize, 0, Math.PI * 2);
+        ctx.arc(-w * 0.2, headLightY, headlightSize, 0, Math.PI * 2);
         ctx.fill();
         
-        // Lanterna DIREITA (em baixo no desenho, mas direita do piloto)
+        // Lanterna Direita (Mais para a direita da tela)
         ctx.beginPath();
-        ctx.arc(frontPos, h * 0.7, headlightSize, 0, Math.PI * 2);
+        ctx.arc(w * 0.2, headLightY, headlightSize, 0, Math.PI * 2);
         ctx.fill();
-
-        // Feixe de luz (opcional)
-        let lightLength = h * 3; 
-        let gradient = ctx.createLinearGradient(frontPos, 0, frontPos + lightLength, 0);
-        gradient.addColorStop(0, "rgba(255, 255, 255, 0.4)"); 
-        gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
-        ctx.fillStyle = gradient;
-        ctx.fillRect(frontPos, -h * 0.1, lightLength, h * 0.8);
     }
     
     ctx.restore();
