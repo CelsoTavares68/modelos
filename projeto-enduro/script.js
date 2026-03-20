@@ -133,7 +133,7 @@ function resetDay() {
     saveProgress();
 }
 
-     function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasFog = false, isRainy = false) {
+      function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasFog = false, isRainy = false) {
     let s = scale * 1.2;
     if (s < 0.02 || s > 30) return;
     let w = 45 * s; let h = 22 * s;
@@ -141,9 +141,7 @@ function resetDay() {
     ctx.translate(x, y);
     if(isPlayer) ctx.rotate((roadCurve / 80) * Math.PI / 180);
     
-    // --- LÓGICA DE COR DO CORPO (Original) ---
-    // O carro só fica preto se for estritamente Noite (nightMode).
-    // Na chuva (isRainy) ou neblina (hasFog) sem ser noite, ele mantém a cor original.
+    // --- LÓGICA DE COR DO CORPO ---
     let bodyColor = nightMode ? "#000000" : color;
 
     // Pneus (Original)
@@ -156,52 +154,43 @@ function resetDay() {
     ctx.fillRect(-w * 0.25, h * 0.1, w * 0.5, h * 0.4); 
     ctx.fillRect(-w * 0.5, -h * 0.3, w, h * 0.2); 
 
-    // --- LANTERNAS (Apenas Noite, Chuva ou Neblina) ---
-    // Desenhadas em LINHA e por CIMA do carro.
+    // --- LANTERNAS (Noite, Chuva ou Neblina) ---
     if (nightMode || hasFog || isRainy) {
+        // 1. FEIXE DE LUZ (Projetado "para cima" na tela / para frente na estrada)
+        const lightY = -h * 0.1; // Base das lanternas
+        const lightLength = h * 8; // Comprimento da luz à frente
+        const lightWidthStart = w * 0.6;
+        const lightWidthEnd = w * 2.5;
+
+        let gradient = ctx.createLinearGradient(0, lightY, 0, lightY - lightLength);
+        gradient.addColorStop(0, "rgba(255, 255, 255, 0.4)"); 
+        gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
+
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        // Trapézio projetando para o horizonte (Y negativo)
+        ctx.moveTo(-lightWidthStart / 2, lightY);
+        ctx.lineTo(lightWidthStart / 2, lightY);
+        ctx.lineTo(lightWidthEnd / 2, lightY - lightLength);
+        ctx.lineTo(-lightWidthEnd / 2, lightY - lightLength);
+        ctx.closePath();
+        ctx.fill();
+
+        // 2. CÍRCULOS DAS LANTERNAS (Maiores e por cima do feixe)
         ctx.fillStyle = "#FFFFFF"; 
-        
-        // AJUSTE 1: Círculos um pouco maiores (de 2.2 para 2.8)
-        const headlightSize = 2.8 * s; 
-        const headLightY = h * 0.2; 
-        const leftX = -w * 0.2;
-        const rightX = w * 0.2;
+        const headlightSize = 3.2 * s; // Aumentado para aparecer melhor
+        const leftX = -w * 0.15;
+        const rightX = w * 0.15;
         
         // Lanterna Esquerda
         ctx.beginPath();
-        ctx.arc(leftX, headLightY, headlightSize, 0, Math.PI * 2);
+        ctx.arc(leftX, lightY, headlightSize, 0, Math.PI * 2);
         ctx.fill();
         
         // Lanterna Direita
         ctx.beginPath();
-        ctx.arc(rightX, headLightY, headlightSize, 0, Math.PI * 2);
+        ctx.arc(rightX, lightY, headlightSize, 0, Math.PI * 2);
         ctx.fill();
-
-        // --- AJUSTE 2: CORREÇÃO DO FEIXE DE LUZ (Jogando para frente/baixo na tela) ---
-        // Desenhamos um cone de luz saindo da frente do carro em direção à parte inferior da tela.
-        ctx.save();
-        ctx.translate(0, headLightY); // Move para a linha dos faróis
-
-        let lightLength = h * 6; // Comprimento do feixe
-        let lightWidth = w * 1.5;  // Largura do feixe no final
-
-        // Gradiente vertical (frente do carro -> final do feixe)
-        let gradient = ctx.createLinearGradient(0, 0, 0, lightLength);
-        gradient.addColorStop(0, "rgba(255, 255, 255, 0.3)"); // Mais brilhante perto do carro
-        gradient.addColorStop(1, "rgba(255, 255, 255, 0)");   // Transparente longe
-
-        ctx.fillStyle = gradient;
-        
-        // Desenha o trapézio do feixe de luz projetado para frente (Y positivo)
-        ctx.beginPath();
-        ctx.moveTo(leftX, 0);                 // Canto superior esquerdo (no farol)
-        ctx.lineTo(rightX, 0);                // Canto superior direito (no farol)
-        ctx.lineTo(lightWidth / 2, lightLength); // Canto inferior direito (largo)
-        ctx.lineTo(-lightWidth / 2, lightLength); // Canto inferior esquerdo (largo)
-        ctx.closePath();
-        ctx.fill();
-
-        ctx.restore();
     }
     
     ctx.restore();
