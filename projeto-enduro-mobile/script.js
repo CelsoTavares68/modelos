@@ -204,7 +204,7 @@ function resetDay() {
     saveProgress();
 }
 
-function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasFog = false, isRainy = false) {
+ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasFog = false, isRainy = false) {
     let s = scale * 1.2;
     if (s < 0.02 || s > 30) return;
     let w = 45 * s; let h = 22 * s;
@@ -212,32 +212,57 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasF
     ctx.translate(x, y);
     if(isPlayer) ctx.rotate((roadCurve / 80) * Math.PI / 180);
     
-    if (nightMode || hasFog || isRainy) {
-        ctx.fillStyle = "#FF0000";
-        ctx.fillRect(-w * 0.35, h * 0.2, w * 0.15, h * 0.25); 
-        ctx.fillRect(w * 0.20, h * 0.2, w * 0.15, h * 0.25); 
+    // --- COR DO CORPO (Preto apenas na Noite) ---
+    let bodyColor = nightMode ? "#000000" : color;
 
-        let lightLength = h * 3; 
-        let gradient = ctx.createLinearGradient(0, 0, 0, -lightLength);
-        gradient.addColorStop(0, "rgba(255, 255, 200, 0.25)"); 
-        gradient.addColorStop(1, "rgba(255, 255, 200, 0)");
+    // Pneus e Carcaça Original
+    ctx.fillStyle = "#111"; 
+    ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8);
+    ctx.fillRect(w * 0.25, -h * 0.1, w * 0.25, h * 0.8);
+    
+    ctx.fillStyle = bodyColor; 
+    ctx.fillRect(-w * 0.25, h * 0.1, w * 0.5, h * 0.4); 
+    ctx.fillRect(-w * 0.5, -h * 0.3, w, h * 0.2); 
+
+    // --- LANTERNAS E CONE DE LUZ (Noite, Chuva ou Neblina) ---
+    if (nightMode || hasFog || isRainy) {
+        const lightY = h * 0.1; // Posição frontal no corpo
+        const leftX = -w * 0.2;
+        const rightX = w * 0.2;
+        
+        // 1. FEIXE EM FORMATO DE CONE (Projetado para cima)
+        const coneLength = h * 2.5; // Comprimento discreto do cone
+        const coneExpansion = w * 1.2; // Largura da parte de cima do cone
+
+        let gradient = ctx.createLinearGradient(0, lightY, 0, lightY - coneLength);
+        gradient.addColorStop(0, "rgba(255, 255, 255, 0.4)"); 
+        gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
+
         ctx.fillStyle = gradient;
         ctx.beginPath();
-        ctx.moveTo(-w * 0.15, 0); ctx.lineTo(-w * 0.8, -lightLength); 
-        ctx.lineTo(w * 0.8, -lightLength); ctx.lineTo(w * 0.15, 0);
+        // O Cone: começa estreito nos faróis e abre para cima
+        ctx.moveTo(leftX, lightY);               // Ponto inferior esquerdo (farol)
+        ctx.lineTo(rightX, lightY);              // Ponto inferior direito (farol)
+        ctx.lineTo(coneExpansion / 2, lightY - coneLength);  // Topo direito (largo)
+        ctx.lineTo(-coneExpansion / 2, lightY - coneLength); // Topo esquerdo (largo)
+        ctx.closePath();
+        ctx.fill();
+
+        // 2. CÍRCULOS DAS LANTERNAS (Por cima do cone)
+        ctx.fillStyle = "#FFFFFF"; 
+        const headlightSize = 2.8 * s; 
+        
+        ctx.beginPath();
+        ctx.arc(leftX, lightY, headlightSize, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.beginPath();
+        ctx.arc(rightX, lightY, headlightSize, 0, Math.PI * 2);
         ctx.fill();
     }
-
-    if (!(nightMode || (hasFog && !isRainy))) {
-        ctx.fillStyle = "#111"; 
-        ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8);
-        ctx.fillRect(w * 0.25, -h * 0.1, w * 0.25, h * 0.8);
-        ctx.fillStyle = color; 
-        ctx.fillRect(-w * 0.25, h * 0.1, w * 0.5, h * 0.4); 
-        ctx.fillRect(-w * 0.5, -h * 0.3, w, h * 0.2); 
-    }
+    
     ctx.restore();
-}
+}   
 
 function update() {
     if (isPaused) return; 
