@@ -133,7 +133,7 @@ function resetDay() {
     saveProgress();
 }
 
-      function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasFog = false, isRainy = false) {
+    function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasFog = false, isRainy = false) {
     let s = scale * 1.2;
     if (s < 0.02 || s > 30) return;
     let w = 45 * s; let h = 22 * s;
@@ -149,45 +149,45 @@ function resetDay() {
     ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8);
     ctx.fillRect(w * 0.25, -h * 0.1, w * 0.25, h * 0.8);
     
-    // Corpo do Carro
+    // Corpo do Carro (Original)
     ctx.fillStyle = bodyColor; 
     ctx.fillRect(-w * 0.25, h * 0.1, w * 0.5, h * 0.4); 
     ctx.fillRect(-w * 0.5, -h * 0.3, w, h * 0.2); 
 
-    // --- LANTERNAS (Noite, Chuva ou Neblina) ---
+    // --- LANTERNAS (Apenas Noite, Chuva ou Neblina) ---
     if (nightMode || hasFog || isRainy) {
-        // 1. FEIXE DE LUZ (Projetado "para cima" na tela / para frente na estrada)
-        const lightY = -h * 0.1; // Base das lanternas
-        const lightLength = h * 8; // Comprimento da luz à frente
-        const lightWidthStart = w * 0.6;
-        const lightWidthEnd = w * 2.5;
+        const lightY = h * 0.1; // Voltando para a altura original do corpo
+        
+        // 1. FEIXE DE LUZ CURTO E DISCRETO
+        // Reduzi o lightLength para ser apenas um pequeno brilho
+        const lightLength = h * 1.5; 
+        const lightWidthStart = w * 0.4;
+        const lightWidthEnd = w * 0.8;
 
         let gradient = ctx.createLinearGradient(0, lightY, 0, lightY - lightLength);
-        gradient.addColorStop(0, "rgba(255, 255, 255, 0.4)"); 
+        gradient.addColorStop(0, "rgba(255, 255, 255, 0.3)"); 
         gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
 
         ctx.fillStyle = gradient;
         ctx.beginPath();
-        // Trapézio projetando para o horizonte (Y negativo)
         ctx.moveTo(-lightWidthStart / 2, lightY);
         ctx.lineTo(lightWidthStart / 2, lightY);
         ctx.lineTo(lightWidthEnd / 2, lightY - lightLength);
-        ctx.lineTo(-lightWidthEnd / 2, lightY - lightLength);
+        ctx.lineTo(-lightWidthEnd / 2, lightY - length);
         ctx.closePath();
         ctx.fill();
 
-        // 2. CÍRCULOS DAS LANTERNAS (Maiores e por cima do feixe)
+        // 2. CÍRCULOS DAS LANTERNAS (Na posição original do bico)
         ctx.fillStyle = "#FFFFFF"; 
-        const headlightSize = 3.2 * s; // Aumentado para aparecer melhor
-        const leftX = -w * 0.15;
-        const rightX = w * 0.15;
+        const headlightSize = 2.8 * s; 
+        const leftX = -w * 0.2;
+        const rightX = w * 0.2;
         
-        // Lanterna Esquerda
+        // Desenhando exatamente onde o carro termina na frente
         ctx.beginPath();
         ctx.arc(leftX, lightY, headlightSize, 0, Math.PI * 2);
         ctx.fill();
         
-        // Lanterna Direita
         ctx.beginPath();
         ctx.arc(rightX, lightY, headlightSize, 0, Math.PI * 2);
         ctx.fill();
