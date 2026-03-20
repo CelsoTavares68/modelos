@@ -185,21 +185,27 @@ function togglePause() {
     }
 }
 
-function resetGame() {
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    dayNumber = 1; baseGoal = 200; isPaused = false; 
-    odometerNow = 0; passTotalOdo = 0;
-    localStorage.removeItem('enduro_save');
+ function resetGame() {
+    dayNumber = 1; 
+    baseGoal = 200; // Reinicia para o valor do Dia 1
+    odometerNow = 0; 
+    totalPassesOdometer = 0; 
     resetDay();
     if (gameState !== "PLAYING") { gameState = "PLAYING"; update(); }
 }
 
-function resetDay() {
-    currentTime = 0; playerDist = 0; speed = 0; enemies = [];
-    passDayNow = 0;
-    carsRemaining = baseGoal + (dayNumber - 1) * 10; 
-    gameState = "PLAYING"; isPaused = false;
-    vitoriaTocada = false; 
+ function resetDay() {
+    currentTime = 0; playerDist = 0; speed = 0; enemies = []; totalPasses = 0; 
+    
+    // Nova lógica: Aumenta de 10 em 10 até o dia 10 (chegando a 290). 
+    // Do dia 11 em diante, fixa em 300.
+    if (dayNumber < 11) {
+        carsRemaining = 200 + ((dayNumber - 1) * 10);
+    } else {
+        carsRemaining = 300;
+    }
+    
+    gameState = "PLAYING"; isPaused = false; hasPlayedGoalMedia = false;
     if (sfxChuva) { sfxChuva.pause(); sfxChuva.currentTime = 0; }
     saveProgress();
 }
@@ -332,15 +338,23 @@ function update() {
     raindrops.forEach((r, i) => { r.y += r.s; if (r.y > 400) raindrops.splice(i, 1); });
     if (lightningAlpha > 0) lightningAlpha -= 0.05;
 
-    if (currentTime >= DAY_DURATION) {
-        if (gameState === "GOAL_REACHED" || carsRemaining <= 0) {
-            if (gameState !== "WIN_DAY") { 
-                gameState = "WIN_DAY"; sfxVitoriaAudio.play();
-                videoVitoria.style.display = 'block'; videoVitoria.play().catch(e => {});
-                dayNumber++; 
-                setTimeout(() => { videoVitoria.style.display = 'none'; resetDay(); }, 4000); 
+     if (currentTime >= DAY_DURATION) {
+    if (carsRemaining <= 0) {
+        if (gameState !== "WIN_DAY") { 
+            gameState = "WIN_DAY"; 
+            dayNumber++; 
+            
+            // Atualiza o baseGoal respeitando o limite de 300
+            if (dayNumber < 11) {
+                baseGoal = 200 + ((dayNumber - 1) * 10);
+            } else {
+                baseGoal = 300;
             }
-        } else { 
+            
+            saveProgress();
+            setTimeout(() => { resetDay(); }, 4000); 
+        }
+    } else { 
             if (gameState !== "GAME_OVER") { 
                 gameState = "GAME_OVER"; sfxDerrota.play();
                 videoDerrota.style.display = 'block'; videoDerrota.play().catch(e => {});
