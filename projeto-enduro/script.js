@@ -119,15 +119,26 @@ function togglePause() {
     }
 }
 
-function resetGame() {
-    dayNumber = 1; baseGoal = 200; odometerNow = 0; totalPassesOdometer = 0; 
+ function resetGame() {
+    dayNumber = 1; 
+    baseGoal = 200; // Reinicia para o valor do Dia 1
+    odometerNow = 0; 
+    totalPassesOdometer = 0; 
     resetDay();
     if (gameState !== "PLAYING") { gameState = "PLAYING"; update(); }
 }
 
-function resetDay() {
+ function resetDay() {
     currentTime = 0; playerDist = 0; speed = 0; enemies = []; totalPasses = 0; 
-    carsRemaining = 200 + ((dayNumber - 1) * 10);
+    
+    // Nova lógica: Aumenta de 10 em 10 até o dia 10 (chegando a 290). 
+    // Do dia 11 em diante, fixa em 300.
+    if (dayNumber < 11) {
+        carsRemaining = 200 + ((dayNumber - 1) * 10);
+    } else {
+        carsRemaining = 300;
+    }
+    
     gameState = "PLAYING"; isPaused = false; hasPlayedGoalMedia = false;
     if (sfxChuva) { sfxChuva.pause(); sfxChuva.currentTime = 0; }
     saveProgress();
@@ -279,16 +290,23 @@ function update() {
         sfxVitoriaAudio.play().catch(e => {});
     }
 
-     if (currentTime >= DAY_DURATION) {
-        if (carsRemaining <= 0) {
-            if (gameState !== "WIN_DAY") { 
-                gameState = "WIN_DAY"; 
-                dayNumber++; 
+      if (currentTime >= DAY_DURATION) {
+    if (carsRemaining <= 0) {
+        if (gameState !== "WIN_DAY") { 
+            gameState = "WIN_DAY"; 
+            dayNumber++; 
+            
+            // Atualiza o baseGoal respeitando o limite de 300
+            if (dayNumber < 11) {
                 baseGoal = 200 + ((dayNumber - 1) * 10);
-                saveProgress();
-                setTimeout(() => { resetDay(); }, 4000); 
+            } else {
+                baseGoal = 300;
             }
-        } else { 
+            
+            saveProgress();
+            setTimeout(() => { resetDay(); }, 4000); 
+        }
+    } else { 
             if (gameState !== "GAME_OVER") { 
                 gameState = "GAME_OVER"; sfxDerrota.play();
                 saveProgress(); 
