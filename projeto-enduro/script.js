@@ -133,7 +133,7 @@ function resetDay() {
     saveProgress();
 }
 
- function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasFog = false, isRainy = false) {
+  function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasFog = false, isRainy = false) {
     let s = scale * 1.2;
     if (s < 0.02 || s > 30) return;
     let w = 45 * s; let h = 22 * s;
@@ -141,15 +141,31 @@ function resetDay() {
     ctx.translate(x, y);
     if(isPlayer) ctx.rotate((roadCurve / 80) * Math.PI / 180);
     
-    // Renderização dos Faróis (Luzes Vermelhas e Faixo de Luz)
+    // 1. DESENHO DAS RODAS (Base)
+    ctx.fillStyle = "#111"; 
+    ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8); // Traseiras
+    ctx.fillRect(w * 0.25, -h * 0.1, w * 0.25, h * 0.8);  // Dianteiras
+
+    // 2. FARÓIS REDONDOS (Sempre acesos, entre as rodas dianteiras)
+    // Desenhamos eles ANTES do corpo para parecerem embutidos ou na frente
+    const headlightSize = 2.5 * s; 
+    ctx.fillStyle = "#FF0000"; // Cor vermelha clássica
+    
+    // Farol Esquerdo
+    ctx.beginPath();
+    ctx.arc(w * 0.22, h * 0.25, headlightSize, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Farol Direito
+    ctx.beginPath();
+    ctx.arc(w * 0.22, h * 0.55, headlightSize, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 3. EFEITO DE BRILHO (Opcional: apenas se quiser o feixe de luz no chão)
     if (nightMode || hasFog || isRainy) {
-        ctx.fillStyle = "#FF0000"; // Faróis Vermelhos
-        ctx.fillRect(-w * 0.35, h * 0.2, w * 0.15, h * 0.25); 
-        ctx.fillRect(w * 0.20, h * 0.2, w * 0.15, h * 0.25); 
-        
         let lightLength = h * 3; 
         let gradient = ctx.createLinearGradient(0, 0, 0, -lightLength);
-        gradient.addColorStop(0, "rgba(255, 255, 200, 0.25)"); 
+        gradient.addColorStop(0, "rgba(255, 255, 200, 0.2)"); 
         gradient.addColorStop(1, "rgba(255, 255, 200, 0)");
         ctx.fillStyle = gradient;
         ctx.beginPath();
@@ -158,25 +174,13 @@ function resetDay() {
         ctx.fill();
     }
 
-    // Corpo do Carro
-    if (nightMode) {
-        ctx.fillStyle = "#000000"; // Força preto total no modo noturno
-    } else {
-        ctx.fillStyle = color; // Cor original para o dia
-    }
-
-    // Desenho da silhueta se não estiver invisível no fog extremo
+    // 4. CORPO DO CARRO (Preto se noite, Colorido se dia)
     if (!(hasFog && !isRainy && !nightMode)) {
-        // Pneus/Base
-        ctx.fillStyle = "#111"; 
-        ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8);
-        ctx.fillRect(w * 0.25, -h * 0.1, w * 0.25, h * 0.8);
-        
-        // Aplica a cor (Preto se noite, Colorido se dia)
         ctx.fillStyle = nightMode ? "#000" : color; 
         ctx.fillRect(-w * 0.25, h * 0.1, w * 0.5, h * 0.4); 
         ctx.fillRect(-w * 0.5, -h * 0.3, w, h * 0.2); 
     }
+    
     ctx.restore();
 }
 
