@@ -230,7 +230,7 @@ function togglePause() {
  * Desenha o carro de F1 com sistema de camadas para iluminação.
  * Camadas: Feixe de Luz (Fundo) -> Corpo/Aerofólio (Meio) -> Lanternas (Topo)
  */
-function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasFog = false, isRainy = false) {
+ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasFog = false, isRainy = false) {
     let s = scale * 1.2;
     if (s < 0.02 || s > 30) return;
     let w = 45 * s; let h = 22 * s;
@@ -243,6 +243,25 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasF
     const lightY = h * 0.1; 
     const leftX = -w * 0.2;
     const rightX = w * 0.2;
+
+    // --- NOVO: REFLEXO NO ASFALTO MOLHADO ---
+    if (isRainy || hasFog) {
+        ctx.save();
+        // Criamos um reflexo que "estica" para baixo do carro
+        let reflectGrd = ctx.createLinearGradient(0, h * 0.5, 0, h * 2.5);
+        
+        // Se estiver de noite ou neblina, o reflexo é mais forte
+        let opacity = nightMode ? 0.4 : 0.2;
+        
+        reflectGrd.addColorStop(0, `rgba(255, 255, 255, ${opacity})`); // Brilho dos faróis brancos
+        reflectGrd.addColorStop(0.5, `rgba(255, 0, 0, ${opacity * 0.5})`); // Toque vermelho das lanternas
+        reflectGrd.addColorStop(1, "rgba(0, 0, 0, 0)"); // Desvanece no asfalto
+        
+        ctx.fillStyle = reflectGrd;
+        // Desenha o reflexo centralizado abaixo do carro
+        ctx.fillRect(-w * 0.4, h * 0.5, w * 0.8, h * 2); 
+        ctx.restore();
+    }
 
     // --- CAMADA 1: FEIXE DE LUZ (FUNDO) ---
     if (nightMode || hasFog || isRainy) {
@@ -264,15 +283,13 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasF
     }
 
     // --- CAMADA 2: CORPO DO CARRO E AEROFÓLIOS (MEIO) ---
-    // Pneus
     ctx.fillStyle = "#111"; 
     ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8);
     ctx.fillRect(w * 0.25, -h * 0.1, w * 0.25, h * 0.8);
     
-    // Corpo Central e Aerofólio Traseiro
     ctx.fillStyle = bodyColor; 
     ctx.fillRect(-w * 0.25, h * 0.1, w * 0.5, h * 0.4); 
-    ctx.fillRect(-w * 0.5, -h * 0.3, w, h * 0.2); // Este retângulo agora "cobre" a base da luz
+    ctx.fillRect(-w * 0.5, -h * 0.3, w, h * 0.2); 
 
     // --- CAMADA 3: LANTERNAS VERMELHAS (TOPO) ---
     if (nightMode || hasFog || isRainy) {
