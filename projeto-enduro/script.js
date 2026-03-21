@@ -144,18 +144,59 @@ function togglePause() {
     saveProgress();
 }
 
- function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasFog = false, isRainy = false) {
+  function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasFog = false, isRainy = false) {
     let s = scale * 1.2;
     if (s < 0.02 || s > 30) return;
     let w = 45 * s; let h = 22 * s;
+    
     ctx.save();
     ctx.translate(x, y);
     if(isPlayer) ctx.rotate((roadCurve / 80) * Math.PI / 180);
     
-    // --- COR DO CORPO (Preto apenas na Noite) ---
     let bodyColor = nightMode ? "#000000" : color;
+    const lightY = h * 0.1; 
+    const leftX = -w * 0.2;
+    const rightX = w * 0.2;
 
-    // Pneus e Carcaça Original
+    // --- NOVO: REFLEXO NO ASFALTO MOLHADO ---
+    if (isRainy || hasFog) {
+        ctx.save();
+        // Criamos um reflexo que "estica" para baixo do carro
+        let reflectGrd = ctx.createLinearGradient(0, h * 0.5, 0, h * 2.5);
+        
+        // Se estiver de noite ou neblina, o reflexo é mais forte
+        let opacity = nightMode ? 0.4 : 0.2;
+        
+        reflectGrd.addColorStop(0, `rgba(255, 255, 255, ${opacity})`); // Brilho dos faróis brancos
+        reflectGrd.addColorStop(0.5, `rgba(255, 0, 0, ${opacity * 0.5})`); // Toque vermelho das lanternas
+        reflectGrd.addColorStop(1, "rgba(0, 0, 0, 0)"); // Desvanece no asfalto
+        
+        ctx.fillStyle = reflectGrd;
+        // Desenha o reflexo centralizado abaixo do carro
+        ctx.fillRect(-w * 0.4, h * 0.5, w * 0.8, h * 2); 
+        ctx.restore();
+    }
+
+    // --- CAMADA 1: FEIXE DE LUZ (FUNDO) ---
+    if (nightMode || hasFog || isRainy) {
+        const coneLength = h * 2.5; 
+        const coneExpansion = w * 1.2; 
+
+        let gradient = ctx.createLinearGradient(0, lightY, 0, lightY - coneLength);
+        gradient.addColorStop(0, "rgba(255, 255, 255, 0.4)"); 
+        gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
+
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.moveTo(leftX, lightY);
+        ctx.lineTo(rightX, lightY);
+        ctx.lineTo(coneExpansion / 2, lightY - coneLength);
+        ctx.lineTo(-coneExpansion / 2, lightY - coneLength);
+        ctx.closePath();
+        ctx.fill();
+    }
+
+    // --- CAMADA 2: CORPO DO CARRO E AEROFÓLIOS (MEIO) ---
     ctx.fillStyle = "#111"; 
     ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8);
     ctx.fillRect(w * 0.25, -h * 0.1, w * 0.25, h * 0.8);
@@ -164,32 +205,9 @@ function togglePause() {
     ctx.fillRect(-w * 0.25, h * 0.1, w * 0.5, h * 0.4); 
     ctx.fillRect(-w * 0.5, -h * 0.3, w, h * 0.2); 
 
-    // --- LANTERNAS E CONE DE LUZ (Noite, Chuva ou Neblina) ---
+    // --- CAMADA 3: LANTERNAS VERMELHAS (TOPO) ---
     if (nightMode || hasFog || isRainy) {
-        const lightY = h * 0.1; // Posição frontal no corpo
-        const leftX = -w * 0.2;
-        const rightX = w * 0.2;
-        
-        // 1. FEIXE EM FORMATO DE CONE (Projetado para cima)
-        const coneLength = h * 2.5; // Comprimento discreto do cone
-        const coneExpansion = w * 1.2; // Largura da parte de cima do cone
-
-        let gradient = ctx.createLinearGradient(0, lightY, 0, lightY - coneLength);
-        gradient.addColorStop(0, "rgba(255, 255, 255, 0.26)"); 
-        gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
-
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        // O Cone: começa estreito nos faróis e abre para cima
-        ctx.moveTo(leftX, lightY);               // Ponto inferior esquerdo (farol)
-        ctx.lineTo(rightX, lightY);              // Ponto inferior direito (farol)
-        ctx.lineTo(coneExpansion / 2, lightY - coneLength);  // Topo direito (largo)
-        ctx.lineTo(-coneExpansion / 2, lightY - coneLength); // Topo esquerdo (largo)
-        ctx.closePath();
-        ctx.fill();
-
-        // 2. CÍRCULOS DAS LANTERNAS (Por cima do cone)
-        ctx.fillStyle = "#FFFFFF"; 
+        ctx.fillStyle = "#ff0707"; 
         const headlightSize = 2.8 * s; 
         
         ctx.beginPath();

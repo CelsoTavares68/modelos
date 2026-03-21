@@ -226,10 +226,6 @@ function togglePause() {
     updateUI();     // Atualiza a interface visual imediatamente
 }
 
-  /**
- * Desenha o carro de F1 com sistema de camadas para iluminação.
- * Camadas: Feixe de Luz (Fundo) -> Corpo/Aerofólio (Meio) -> Lanternas (Topo)
- */
  function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasFog = false, isRainy = false) {
     let s = scale * 1.2;
     if (s < 0.02 || s > 30) return;
