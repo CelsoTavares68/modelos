@@ -32,7 +32,7 @@ let passTotalOdo = parseInt(localStorage.getItem('enduro_passTotalOdo')) || 0;  
 let passTotalBest = parseInt(localStorage.getItem('enduro_passTotalBest')) || 0; // 4. Recorde total histórico
 
 const maxSpeed = 18; 
-const STAGE_DURATION = 3900; 
+const STAGE_DURATION = 3600; 
 const DAY_DURATION = STAGE_DURATION * 9; 
 let currentTime = 0; 
 
@@ -271,7 +271,7 @@ function togglePause() {
         ctx.fill();
 
         // 2. CÍRCULOS DAS LANTERNAS (Por cima do cone)
-        ctx.fillStyle = "#FFFFFF"; 
+        ctx.fillStyle = "#ff0707"; 
         const headlightSize = 2.8 * s; 
         
         ctx.beginPath();
@@ -435,7 +435,7 @@ function update() {
         enemy.lastY = 200 + (p * 140); enemy.lastX = screenX; enemy.lastP = p;
     });
 
-    if (gameTick % 100 === 0 && enemies.length < 100) {
+    if (gameTick % 90 === 0 && enemies.length < 100) {
         enemies.push({ 
             lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 6.0, 
             color: ["#F0F", "#0FF", "#0F0", "#FF0", "#f47d28", "#a5a3a3", "rgb(0, 26, 255)", "rgb(27, 104, 27)" ][Math.floor(Math.random() * 8)],
