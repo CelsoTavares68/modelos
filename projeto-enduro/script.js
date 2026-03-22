@@ -144,7 +144,7 @@ function togglePause() {
     saveProgress();
 }
 
-   function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasFog = false, isRainy = false) {
+    function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasFog = false, isRainy = false) {
     let s = scale * 1.2;
     if (s < 0.02 || s > 30) return;
     let w = 45 * s; let h = 22 * s;
@@ -158,33 +158,63 @@ function togglePause() {
     const leftX = -w * 0.2;
     const rightX = w * 0.2;
 
-    // --- CORREÇÃO: REFLEXOS DISTINTOS (BRANCO PARA FRENTE, VERMELHO PARA TRÁS) ---
-    if (isRainy || hasFog) {
+    // --- REFLEXOS: ATIVADOS APENAS NA CHUVA (isRainy) ---
+    if (isRainy) {
         ctx.save();
         
-        // 1. Reflexo Branco (Faróis projetados para a frente/horizonte)
-        // O gradiente começa na base do carro e sobe (y negativo)
+        // 1. Reflexo Branco (Faróis para a frente/horizonte)
         let whiteReflect = ctx.createLinearGradient(0, 0, 0, -h * 2);
         whiteReflect.addColorStop(0, nightMode ? "rgba(255, 255, 255, 0.3)" : "rgba(255, 255, 255, 0.1)");
         whiteReflect.addColorStop(1, "rgba(255, 255, 255, 0)");
         
         ctx.fillStyle = whiteReflect;
-        // Desenhamos o rastro "atrás" do desenho (que na estrada é a frente do carro)
         ctx.fillRect(-w * 0.3, -h * 0.5, w * 0.6, h * 1.5);
 
-        // 2. Reflexo Vermelho (Lanternas traseiras viradas para o jogador)
-        // O gradiente desce suavemente em direção ao fundo da tela
+        // 2. Reflexo Vermelho (Lanternas traseiras para o jogador)
         let redReflect = ctx.createLinearGradient(0, h * 0.5, 0, h * 1.5);
         redReflect.addColorStop(0, "rgba(255, 0, 0, 0.4)");
         redReflect.addColorStop(1, "rgba(255, 0, 0, 0)");
         
         ctx.fillStyle = redReflect;
-        // Dois pequenos reflexos, um abaixo de cada lanterna
         ctx.fillRect(leftX - (2*s), h * 0.4, 4*s, h * 0.8);
         ctx.fillRect(rightX - (2*s), h * 0.4, 4*s, h * 0.8);
         
         ctx.restore();
     }
+
+    // --- CAMADA 1: FEIXE DE LUZ (FUNDO) ---
+    if (nightMode || hasFog || isRainy) {
+        const coneLength = h * 2.5; 
+        const coneExpansion = w * 1.2; 
+        let gradient = ctx.createLinearGradient(0, lightY, 0, lightY - coneLength);
+        gradient.addColorStop(0, "rgba(255, 255, 255, 0.4)"); 
+        gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.moveTo(leftX, lightY); ctx.lineTo(rightX, lightY);
+        ctx.lineTo(coneExpansion / 2, lightY - coneLength);
+        ctx.lineTo(-coneExpansion / 2, lightY - coneLength);
+        ctx.closePath(); ctx.fill();
+    }
+
+    // --- CAMADA 2: CORPO E AEROFÓLIO (MEIO) ---
+    ctx.fillStyle = "#111"; 
+    ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8);
+    ctx.fillRect(w * 0.25, -h * 0.1, w * 0.25, h * 0.8);
+    ctx.fillStyle = bodyColor; 
+    ctx.fillRect(-w * 0.25, h * 0.1, w * 0.5, h * 0.4); 
+    ctx.fillRect(-w * 0.5, -h * 0.3, w, h * 0.2); 
+
+    // --- CAMADA 3: LANTERNAS VERMELHAS (TOPO) ---
+    if (nightMode || hasFog || isRainy) {
+        ctx.fillStyle = "#ff0707"; 
+        const headlightSize = 2.8 * s; 
+        ctx.beginPath(); ctx.arc(leftX, lightY, headlightSize, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(rightX, lightY, headlightSize, 0, Math.PI * 2); ctx.fill();
+    }
+    
+    ctx.restore();
+}
 
     // --- (Restante do código: Camada 1, 2 e 3 permanecem iguais) ---
     // Camada 1: Feixe Branco (Cone)
@@ -307,28 +337,29 @@ function update() {
         sfxVitoriaAudio.play().catch(e => {});
     }
 
-      if (currentTime >= DAY_DURATION) {
-    if (carsRemaining <= 0) {
-        if (gameState !== "WIN_DAY") { 
-            gameState = "WIN_DAY"; 
-            dayNumber++; 
-            
-            // Atualiza o baseGoal respeitando o limite de 300
-            if (dayNumber < 11) {
-                baseGoal = 200 + ((dayNumber - 1) * 10);
-            } else {
-                baseGoal = 300;
+       // --- LÓGICA DE FIM DE DIA E TRANSIÇÃO ---
+    if (currentTime >= DAY_DURATION) {
+        if (carsRemaining <= 0) {
+            // Vitória do Dia: Jogador cumpriu a meta
+            if (gameState !== "WIN_DAY") { 
+                gameState = "WIN_DAY"; 
+                dayNumber++; // Avança para o próximo dia (Ex: 10 -> 11)
+                
+                saveProgress(); // Salva o novo dia e recordes
+                
+                // Aguarda 4 segundos com a tela de vitória e reinicia as variáveis do dia
+                setTimeout(() => { resetDay(); }, 4000); 
             }
-            
-            saveProgress();
-            setTimeout(() => { resetDay(); }, 4000); 
-        }
-    } else { 
+        } else { 
+            // Derrota: O tempo acabou e ainda restavam carros
             if (gameState !== "GAME_OVER") { 
-                gameState = "GAME_OVER"; sfxDerrota.play();
-                saveProgress(); 
+                gameState = "GAME_OVER"; 
+                if (audioCtx.state === 'running') sfxDerrota.play();
+                videoDerrota.style.display = 'block'; 
+                videoDerrota.play().catch(e => {});
             }
         }
+        // Trava o cronômetro no limite para evitar bugs visuais enquanto a tela de vitória aparece
         currentTime = DAY_DURATION - 1; 
     }
 
