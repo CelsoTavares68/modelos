@@ -185,13 +185,24 @@ function togglePause() {
     }
 }
 
- function resetGame() {
+  function resetGame() {
     dayNumber = 1; 
-    baseGoal = 200; // Reinicia para o valor do Dia 1
+    baseGoal = 200; 
     odometerNow = 0; 
-    totalPassesOdometer = 0; 
+    
+    // CORREÇÃO: Usando o nome exato da variável que está na linha 34
+    passTotalOdo = 0; 
+    passDayNow = 0; 
+    
     resetDay();
-    if (gameState !== "PLAYING") { gameState = "PLAYING"; update(); }
+    
+    // Atualiza o painel visual imediatamente
+    updateUI(); 
+    
+    if (gameState !== "PLAYING") { 
+        gameState = "PLAYING"; 
+        update(); 
+    }
 }
 
   function resetDay() {
@@ -448,9 +459,9 @@ function update() {
         enemy.lastY = 200 + (p * 140); enemy.lastX = screenX; enemy.lastP = p;
     });
 
-    if (gameTick % 90 === 0 && enemies.length < 100) {
+    if (gameTick % 80 === 0 && enemies.length < 100) {
         enemies.push({ 
-            lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 6.0, 
+            lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 5.0, 
             color: ["#F0F", "#0FF", "#0F0", "#FF0", "#f47d28", "#a5a3a3", "rgb(0, 26, 255)", "rgb(27, 104, 27)" ][Math.floor(Math.random() * 8)],
             isOvertaken: false 
         });
