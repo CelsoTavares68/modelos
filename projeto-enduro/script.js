@@ -123,7 +123,7 @@ function togglePause() {
     dayNumber = 1; 
     baseGoal = 200; // Reinicia para o valor do Dia 1
     odometerNow = 0; 
-    totalPassesOdometer = 0; 
+     totalPassesOdometer = 0; 
     resetDay();
     if (gameState !== "PLAYING") { gameState = "PLAYING"; update(); }
 }
@@ -206,41 +206,6 @@ function togglePause() {
     ctx.fillRect(-w * 0.5, -h * 0.3, w, h * 0.2); 
 
     // --- CAMADA 3: LANTERNAS VERMELHAS (TOPO) ---
-    if (nightMode || hasFog || isRainy) {
-        ctx.fillStyle = "#ff0707"; 
-        const headlightSize = 2.8 * s; 
-        ctx.beginPath(); ctx.arc(leftX, lightY, headlightSize, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.arc(rightX, lightY, headlightSize, 0, Math.PI * 2); ctx.fill();
-    }
-    
-    ctx.restore();
-}
-
-    // --- (Restante do código: Camada 1, 2 e 3 permanecem iguais) ---
-    // Camada 1: Feixe Branco (Cone)
-    if (nightMode || hasFog || isRainy) {
-        const coneLength = h * 2.5; 
-        const coneExpansion = w * 1.2; 
-        let gradient = ctx.createLinearGradient(0, lightY, 0, lightY - coneLength);
-        gradient.addColorStop(0, "rgba(255, 255, 255, 0.4)"); 
-        gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.moveTo(leftX, lightY); ctx.lineTo(rightX, lightY);
-        ctx.lineTo(coneExpansion / 2, lightY - coneLength);
-        ctx.lineTo(-coneExpansion / 2, lightY - coneLength);
-        ctx.closePath(); ctx.fill();
-    }
-
-    // Camada 2: Corpo
-    ctx.fillStyle = "#111"; 
-    ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8);
-    ctx.fillRect(w * 0.25, -h * 0.1, w * 0.25, h * 0.8);
-    ctx.fillStyle = bodyColor; 
-    ctx.fillRect(-w * 0.25, h * 0.1, w * 0.5, h * 0.4); 
-    ctx.fillRect(-w * 0.5, -h * 0.3, w, h * 0.2); 
-
-    // Camada 3: Lanternas Vermelhas
     if (nightMode || hasFog || isRainy) {
         ctx.fillStyle = "#ff0707"; 
         const headlightSize = 2.8 * s; 
