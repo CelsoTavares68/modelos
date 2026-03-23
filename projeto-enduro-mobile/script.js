@@ -238,18 +238,18 @@ function togglePause() {
     updateUI();     // Atualiza a interface visual imediatamente
 }
 
-    function createWheelSpray(x, y, scale) {
-    for (let i = 0; i < 4; i++) {
+   function createWheelSpray(x, y, scale) {
+    for (let i = 0; i < 3; i++) {
         wheelSprays.push({
-            x: x + (Math.random() - 0.5) * (50 * scale), 
-            y: y, // Nasce exatamente no Y passado (chão)
-            vx: (Math.random() - 0.5) * 4, // Mais dispersão lateral
-            vy: -Math.random() * 1.5,      // Sobe menos (fica mais rente ao chão)
+            x: x + (Math.random() - 0.5) * (10 * scale), // Reduzi a dispersão inicial no nascimento
+            y: y,
+            vx: (Math.random() - 0.5) * 2, 
+            vy: Math.random() * 2 + 1, // VY POSITIVO faz a partícula ir para BAIXO (atrás do carro na perspectiva)
             life: 1.0, 
-            s: Math.max(scale * (Math.random() * 4 + 2), 0.7) 
+            s: Math.max(scale * (Math.random() * 5 + 3), 1.0) 
         });
     }
-}
+}  
 
    function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasFog = false, isRainy = false) {
     let s = scale * 1.2;
@@ -376,13 +376,13 @@ function togglePause() {
       if (speed > 2) {
     // Reduzi o X (de 40 para 34) para as partículas saírem de dentro da roda
     // Mantive o Y em 390/395 para ficar rente ao chão
-    createWheelSpray(200 - 34, 392, 0.85); // Roda Esquerda
-    createWheelSpray(200 + 34, 392, 0.85); // Roda Direita
+    createWheelSpray(200 - 32, 388, 0.85); // Roda Esquerda
+    createWheelSpray(200 + 32, 388, 0.85); // Roda Direita
     
     enemies.forEach(e => {
         if (e.lastP > 0.01) { 
             // Ajuste no Y dos inimigos para o spray nascer no pé do carro deles
-            createWheelSpray(e.lastX, e.lastY + (10 * e.lastP), e.lastP * 0.85);
+            createWheelSpray(e.lastX, e.lastY + (8 * e.lastP), e.lastP * 0.85);
         }
     });
 }
