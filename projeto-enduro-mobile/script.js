@@ -239,16 +239,19 @@ function togglePause() {
     updateUI();     // Atualiza a interface visual imediatamente
 }
 
-function createWheelSpray(x, y, scale) {
-    // Cria 2 a 3 gotículas por frame para não sobrecarregar o processamento
-    for (let i = 0; i < 2; i++) {
+  function createWheelSpray(x, y, scale) {
+    // 4 partículas para manter a intensidade
+    for (let i = 0; i < 4; i++) {
         wheelSprays.push({
-            x: x + (Math.random() - 0.5) * (40 * scale), // Espalha perto das rodas
-            y: y + (5 * scale), // Sai da base do carro
-            vx: (Math.random() - 0.5) * 2, // Velocidade horizontal aleatória
-            vy: -Math.random() * 3, // Voa um pouco para cima antes de cair
-            life: 1.0, // Opacidade inicial
-            s: scale * (Math.random() * 3 + 1) // Tamanho da gota
+            // O segredo é somar o deslocamento (random) multiplicado pela escala
+            // ao valor X e Y já transformados do carro
+            x: x + (Math.random() - 0.5) * (45 * scale), 
+            y: y + (2 * scale), 
+            vx: (Math.random() - 0.5) * 3, 
+            vy: -Math.random() * 2, 
+            life: 1.0, 
+            // Garante tamanho mínimo visível no horizonte
+            s: Math.max(scale * (Math.random() * 4 + 2), 0.7) 
         });
     }
 }
@@ -390,12 +393,18 @@ function createWheelSpray(x, y, scale) {
         for (let i = 0; i < 12; i++) raindrops.push({ x: Math.random() * 400, y: -20, s: Math.random() * 10 + 22 });
         
         // NOVO: Gerar spray das rodas
-        if (speed > 2) {
-            createWheelSpray(200, 360, 0.85); // Spray do jogador
-            enemies.forEach(e => {
-                if (e.lastP > 0.3 && e.lastP < 1.0) createWheelSpray(e.lastX, e.lastY, e.lastP * 0.85);
-            });
-        }
+        if (isRaining && speed > 2) {
+        // Spray do jogador (posição fixa na tela)
+        createWheelSpray(200, 360, 0.85); 
+
+        enemies.forEach(e => {
+            // Removemos a trava de 0.3. Agora, se o carro existir (lastP > 0),
+            // ele já começa a soltar spray lá no fundo.
+            if (e.lastP > 0.01) { 
+                createWheelSpray(e.lastX, e.lastY, e.lastP * 0.85);
+            }
+        });
+    }
     }
 
     // Atualizar física da chuva e do spray
@@ -568,7 +577,7 @@ function createWheelSpray(x, y, scale) {
 
         // NOVO: Desenhar o spray das rodas (gotículas voando)
         wheelSprays.forEach(p => {
-            ctx.fillStyle = `rgba(200, 210, 255, ${p.life * 0.4})`; 
+            ctx.fillStyle = `rgba(200, 230, 255, ${p.life * 0.6})`; 
             ctx.beginPath();
             ctx.arc(p.x, p.y, p.s, 0, Math.PI * 2);
             ctx.fill();
