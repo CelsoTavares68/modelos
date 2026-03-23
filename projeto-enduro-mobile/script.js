@@ -373,16 +373,16 @@ function togglePause() {
         for (let i = 0; i < 12; i++) raindrops.push({ x: Math.random() * 400, y: -20, s: Math.random() * 10 + 22 });
         
         // Geração do Spray
-        if (speed > 2) {
-    // 395 é a base visual das rodas traseiras do jogador
-    // 40 é o deslocamento lateral para alinhar com os pneus largos de F1
-    createWheelSpray(200 - 35, 390, 0.85); // Roda Esquerda
-    createWheelSpray(200 + 35, 390, 0.85); // Roda Direita
+      if (speed > 2) {
+    // Reduzi o X (de 40 para 34) para as partículas saírem de dentro da roda
+    // Mantive o Y em 390/395 para ficar rente ao chão
+    createWheelSpray(200 - 34, 392, 0.85); // Roda Esquerda
+    createWheelSpray(200 + 34, 392, 0.85); // Roda Direita
     
-    // Mantenha a lógica dos inimigos como está, já que estão perfeitos
     enemies.forEach(e => {
         if (e.lastP > 0.01) { 
-            createWheelSpray(e.lastX, e.lastY + (12* e.lastP), e.lastP * 0.85);
+            // Ajuste no Y dos inimigos para o spray nascer no pé do carro deles
+            createWheelSpray(e.lastX, e.lastY + (10 * e.lastP), e.lastP * 0.85);
         }
     });
 }
