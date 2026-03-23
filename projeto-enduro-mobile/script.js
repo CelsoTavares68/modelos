@@ -471,7 +471,7 @@ function togglePause() {
         let w = 20 + p * 800;
         if (carsRemaining <= 0 && i > 250 && i < 265) drawFinishLine(i, w, x);
         let asphaltColor1 = (currentStage === 1) ? "#FFFFFF" : (colors.nightMode ? "#050505" : "#333");
-        let asphaltColor2 = (currentStage === 1) ? "#E00" : (colors.nightMode ? "#0a0a0a" : "#3d3d3d");
+        let asphaltColor2 = (currentStage === 1) ? "#E0E0E0" : (colors.nightMode ? "#0a0a0a" : "#3d3d3d");
         ctx.fillStyle = Math.sin(i * 0.5 + playerDist * 0.2) > 0 ? asphaltColor1 : asphaltColor2;
         ctx.fillRect(x - w/2, i, w, 4);
         ctx.fillStyle = Math.sin(i * 0.5 + playerDist * 0.2) > 0 ? (colors.nightMode ? "#600" : "red") : (colors.nightMode ? "#888" : "white");
