@@ -374,17 +374,17 @@ function togglePause() {
         
         // Geração do Spray
         if (speed > 2) {
-            // Spray do jogador: Ajustado Y para 390 (rodas traseiras)
-            createWheelSpray(200 - 35, 390, 0.85); 
-            createWheelSpray(200 + 35, 390, 0.85); 
+    // 392 é o ponto exato onde os pneus traseiros tocam a pista na sua escala
+    // O valor 35 afasta o spray para os lados, alinhando com a largura do carro
+    createWheelSpray(200 - 35, 392, 0.85); // Roda Esquerda
+    createWheelSpray(200 + 35, 392, 0.85); // Roda Direita
 
-            enemies.forEach(e => {
-                if (e.lastP > 0.01) { 
-                    // Spray dos inimigos (seguindo a base proporcional ao tamanho)
-                    createWheelSpray(e.lastX, e.lastY + (14 * e.lastP), e.lastP * 0.85);
-                }
-            });
+    enemies.forEach(e => {
+        if (e.lastP > 0.01) { 
+            createWheelSpray(e.lastX, e.lastY + (14 * e.lastP), e.lastP * 0.85);
         }
+    });
+}
     }
 
     // Atualização física
