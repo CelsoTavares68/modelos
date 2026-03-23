@@ -457,7 +457,7 @@ function togglePause() {
     ctx.fillStyle = colors.sky; ctx.fillRect(0, 0, 400, 200);
     ctx.fillStyle = colors.grass; ctx.fillRect(0, 200, 400, 200);
     
-    // 1. Montanhas (Fundo estático)
+    // 1. Montanhas
     let mtShift = (roadCurve * 0.6);
     for (let i = -3; i < 9; i++) {
         let bx = (i * 100) + mtShift;
@@ -487,9 +487,9 @@ function togglePause() {
 
     let hasFog = colors.fog > 0;
 
-    // --- LÓGICA DE EMPILHAMENTO CORRIGIDA ---
-
-    // 3. DESENHA O SPRAY PRIMEIRO (Para ficar atrás dos carros)
+    // --- CORREÇÃO DO SPRAY DO JOGADOR ---
+    
+    // 3. DESENHAR O SPRAY PRIMEIRO (Fica atrás de todos os carros)
     if (isRaining) {
         wheelSprays.forEach(p => {
             ctx.fillStyle = `rgba(220, 230, 255, ${p.life * 0.4})`; 
@@ -497,24 +497,24 @@ function togglePause() {
         });
     }
 
-    // 4. Desenha Inimigos à frente (ordenados por distância)
+    // 4. DESENHAR INIMIGOS (Mantendo sua lógica original de Z-index)
     enemies.sort((a, b) => b.z - a.z).forEach(e => {
         if (e.lastP > 0 && e.lastP < 1.0) {
             drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, hasFog, isRaining);
         }
     });
 
-    // 5. Desenha o Carro do Jogador (Agora ele cobre a origem do spray)
+    // 5. DESENHAR O CARRO DO JOGADOR (Por último para sobrepor o spray)
     drawF1Car(200, 350, 0.85, "#E00", true, colors.nightMode, hasFog, isRaining); 
 
-    // 6. Desenha Inimigos ultrapassados
+    // 6. DESENHAR INIMIGOS ULTRAPASSADOS
     enemies.forEach(e => {
         if (e.lastP >= 1.0) {
             drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, hasFog, isRaining);
         }
     });
 
-    // 7. Efeitos de Clima (Neblina e Chuva caindo)
+    // 7. Efeitos de Clima e HUD (Sempre no topo)
     if (colors.fog > 0) { ctx.fillStyle = `rgba(140,145,160,${colors.fog})`; ctx.fillRect(0, 55, 400, 345); }
 
     if (isRaining) {
@@ -527,7 +527,7 @@ function togglePause() {
         ctx.fillRect(0, 55, 400, 345); 
     }
 
-    // 8. Interface (HUD)
+    // HUD
     ctx.fillStyle = "black"; ctx.fillRect(0, 0, 400, 55);
     ctx.fillStyle = (gameState === "GOAL_REACHED" || gameState === "WIN_DAY") ? "lime" : "yellow";
     ctx.font = "bold 18px Courier";
