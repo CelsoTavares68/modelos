@@ -353,98 +353,65 @@ function togglePause() {
     if (gameTick % 4 === 0) playEngineSound();
 
     // Verificação de Recordes
-    if (playerDist / 1000 > dayBestRecord) {
-        dayBestRecord = playerDist / 1000;
-        localStorage.setItem('enduro_dayBest', dayBestRecord);
-    }
-    if (odometerNow > totalBestRecord) {
-        totalBestRecord = odometerNow;
-        localStorage.setItem('enduro_totalBest', totalBestRecord);
-    }
-    if (passDayNow > passDayBest) {
-        passDayBest = passDayNow;
-        localStorage.setItem('enduro_passDayBest', passDayBest);
-    }
-    if (passTotalOdo > passTotalBest) {
-        passTotalBest = passTotalOdo;
-        localStorage.setItem('enduro_passTotalBest', passTotalBest);
-    }
+    if (playerDist / 1000 > dayBestRecord) { dayBestRecord = playerDist / 1000; localStorage.setItem('enduro_dayBest', dayBestRecord); }
+    if (odometerNow > totalBestRecord) { totalBestRecord = odometerNow; localStorage.setItem('enduro_totalBest', totalBestRecord); }
+    if (passDayNow > passDayBest) { passDayBest = passDayNow; localStorage.setItem('enduro_passDayBest', passDayBest); }
+    if (passTotalOdo > passTotalBest) { passTotalBest = passTotalOdo; localStorage.setItem('enduro_passTotalBest', passTotalBest); }
 
     updateUI();
 
-    // --- LÓGICA DE CLIMA E PARTÍCULAS ---
     if (isRaining || warningLightning) {
         if (isRaining && sfxChuva.paused && audioCtx.state === 'running') sfxChuva.play().catch(e => {}); 
         if (Math.random() > 0.996) { 
             lightningAlpha = 0.7; 
-            if (audioCtx.state === 'running') {
-                sfxTrovao.volume = warningLightning ? 0.05 : 0.2; 
-                sfxTrovao.play().catch(e => {});
-            }
+            if (audioCtx.state === 'running') { sfxTrovao.volume = warningLightning ? 0.05 : 0.2; sfxTrovao.play().catch(e => {}); }
         }
     } else { sfxChuva.pause(); }
 
     if (isRaining) {
+        // Chuva
         for (let i = 0; i < 12; i++) raindrops.push({ x: Math.random() * 400, y: -20, s: Math.random() * 10 + 22 });
         
-          // --- LÓGICA DO SPRAY (SEPARADA E AJUSTADA) ---
-    if (isRaining && speed > 2) {
-        // Spray do jogador: Posicionado nas rodas traseiras (Y=380)
-        // Criamos dois pontos de origem para as rodas esquerda e direita
-        createWheelSpray(200 - 30, 385, 0.85); // Roda Esquerda
-        createWheelSpray(200 + 30, 385, 0.85); // Roda Direita
+        // Geração do Spray
+        if (speed > 2) {
+            // Spray do jogador: Ajustado Y para 390 (rodas traseiras)
+            createWheelSpray(200 - 35, 390, 0.85); 
+            createWheelSpray(200 + 35, 390, 0.85); 
 
-        enemies.forEach(e => {
-            if (e.lastP > 0.01) { 
-                // Spray dos inimigos (segue a base do carro na perspectiva)
-                createWheelSpray(e.lastX, e.lastY + (12 * e.lastP), e.lastP * 0.85);
-            }
-        });
-    }
+            enemies.forEach(e => {
+                if (e.lastP > 0.01) { 
+                    // Spray dos inimigos (seguindo a base proporcional ao tamanho)
+                    createWheelSpray(e.lastX, e.lastY + (14 * e.lastP), e.lastP * 0.85);
+                }
+            });
+        }
     }
 
-    // Atualizar física da chuva e do spray
+    // Atualização física
     raindrops.forEach((r, i) => { r.y += r.s; if (r.y > 400) raindrops.splice(i, 1); });
     for (let i = wheelSprays.length - 1; i >= 0; i--) {
         let p = wheelSprays[i];
-        p.x += p.vx; p.y += p.vy; p.vy += 0.2; p.life -= 0.08;
+        p.x += p.vx; p.y += p.vy; p.vy += 0.2; p.life -= 0.06;
         if (p.life <= 0) wheelSprays.splice(i, 1);
     }
     if (lightningAlpha > 0) lightningAlpha -= 0.05;
 
-    // --- LÓGICA DE FIM DE DIA E TRANSIÇÃO ---
+    // Fim do Dia
     if (currentTime >= DAY_DURATION) {
         if (carsRemaining <= 0) {
-            if (gameState !== "WIN_DAY") { 
-                gameState = "WIN_DAY"; 
-                saveProgress(); 
-                setTimeout(() => { 
-                    dayNumber++; 
-                    resetDay(); 
-                }, 4000); 
-            }
+            if (gameState !== "WIN_DAY") { gameState = "WIN_DAY"; saveProgress(); setTimeout(() => { dayNumber++; resetDay(); }, 4000); }
         } else { 
-            if (gameState !== "GAME_OVER") { 
-                gameState = "GAME_OVER"; 
-                if (audioCtx.state === 'running') sfxDerrota.play();
-                videoDerrota.style.display = 'block'; 
-                videoDerrota.play().catch(e => {});
-            }
+            if (gameState !== "GAME_OVER") { gameState = "GAME_OVER"; if (audioCtx.state === 'running') sfxDerrota.play(); videoDerrota.style.display = 'block'; videoDerrota.play().catch(e => {}); }
         }
         currentTime = DAY_DURATION; 
     }
 
-    // --- MOVIMENTAÇÃO E FÍSICA ---
     let offRoad = Math.abs(playerX) > 380;
     if (keys.ArrowLeft) leftPressTime++; else leftPressTime = 0;
     if (keys.ArrowRight) rightPressTime++; else rightPressTime = 0;
-
     let isBraking = (leftPressTime > 75 || rightPressTime > 75 || keys.ArrowDown); 
     if (isBraking) speed = Math.max(speed - 0.15, 0); 
-    else {
-        if (offRoad) speed = Math.min(speed + 0.01, 2); 
-        else speed = Math.min(speed + ((speed < 5) ? 0.02 : 0.06), maxSpeed);
-    }
+    else { if (offRoad) speed = Math.min(speed + 0.01, 2); else speed = Math.min(speed + ((speed < 5) ? 0.02 : 0.06), maxSpeed); }
 
     playerX -= (roadCurve * 0.06) * (speed / maxSpeed); 
     if (keys.ArrowLeft) playerX -= 4.2;
@@ -457,56 +424,39 @@ function togglePause() {
     }
     roadCurve += (targetCurve - roadCurve) * curveSpeed;
 
-    // --- INIMIGOS E COLISÃO ---
     enemies.forEach((enemy) => {
         let effectiveEnemySpeed = (speed < 15) ? 15 : enemy.v; 
         enemy.z -= (speed - effectiveEnemySpeed);
         let p = 1 - (enemy.z / 4000); 
         let roadWidth = 20 + p * 800;
         let screenX = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p) + (enemy.lane * roadWidth * 0.5);
-        
-        if (p > 0.92 && p < 1.05 && Math.abs(screenX - 200) < 50) { 
-            speed = -4; enemy.z += 800; playCrashSound(); 
-        }
-
+        if (p > 0.92 && p < 1.05 && Math.abs(screenX - 200) < 50) { speed = -4; enemy.z += 800; playCrashSound(); }
         if (gameState === "PLAYING" || gameState === "GOAL_REACHED") {
             if (enemy.z <= 0 && !enemy.isOvertaken) { 
-                carsRemaining--; passDayNow++; passTotalOdo++;
-                enemy.isOvertaken = true; 
-                if (carsRemaining <= 0 && !vitoriaTocada) { 
-                    gameState = "GOAL_REACHED"; 
-                    sfxVitoriaAudio.play().catch(e => {}); 
-                    vitoriaTocada = true; 
-                }
+                carsRemaining--; passDayNow++; passTotalOdo++; enemy.isOvertaken = true; 
+                if (carsRemaining <= 0 && !vitoriaTocada) { gameState = "GOAL_REACHED"; sfxVitoriaAudio.play().catch(e => {}); vitoriaTocada = true; }
             }
-            if (enemy.z > 0 && enemy.isOvertaken) { 
-                carsRemaining++; passDayNow--; passTotalOdo--;
-                enemy.isOvertaken = false; 
-            }
+            if (enemy.z > 0 && enemy.isOvertaken) { carsRemaining++; passDayNow--; passTotalOdo--; enemy.isOvertaken = false; }
             if (carsRemaining <= 0) { carsRemaining = 0; gameState = "GOAL_REACHED"; }
         }
         enemy.lastY = 200 + (p * 140); enemy.lastX = screenX; enemy.lastP = p;
     });
 
     if (gameTick % 75 === 0 && enemies.length < 100) {
-        enemies.push({ 
-            lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 5.0, 
-            color: ["#F0F", "#0FF", "#0F0", "#FF0", "#f47d28", "#a5a3a3", "rgb(0, 26, 255)", "rgb(27, 104, 27)" ][Math.floor(Math.random() * 8)],
-            isOvertaken: false 
-        });
+        enemies.push({ lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 5.0, color: ["#F0F", "#0FF", "#0F0", "#FF0", "#f47d28", "#a5a3a3", "rgb(0, 26, 255)", "rgb(27, 104, 27)" ][Math.floor(Math.random() * 8)], isOvertaken: false });
     }
 
     enemies = enemies.filter(e => e.z > -18000 && e.z < 6000);
     draw(colors, isRaining, currentStage);
-    
     if (gameTick % 300 === 0) saveProgress();
     requestAnimationFrame(update);
 }
 
-  function draw(colors, isRaining, currentStage) {
+   function draw(colors, isRaining, currentStage) {
     ctx.fillStyle = colors.sky; ctx.fillRect(0, 0, 400, 200);
     ctx.fillStyle = colors.grass; ctx.fillRect(0, 200, 400, 200);
     
+    // Montanhas
     let mtShift = (roadCurve * 0.6);
     for (let i = -3; i < 9; i++) {
         let bx = (i * 100) + mtShift;
@@ -515,67 +465,47 @@ function togglePause() {
         if (colors.snowCaps) { ctx.fillStyle = "white"; ctx.beginPath(); ctx.moveTo(bx, 130); ctx.lineTo(bx - 25, 155); ctx.lineTo(bx + 25, 155); ctx.fill(); }
     }
 
-    if (lightningAlpha > 0 && (currentStage === 2 || currentStage === 6)) { 
-        ctx.fillStyle = `rgba(255, 255, 255, ${lightningAlpha})`; 
-        ctx.fillRect(0, 55, 400, 145); 
-    }
-
+    // Pista
     let isSnowStage = (currentStage === 1);
     for (let i = 200; i < 400; i += 4) {
         let p = (i - 200) / 140; 
         let x = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p);
         let w = 20 + p * 800;
-
-        if (carsRemaining <= 0 && i > 250 && i < 265) {
-            drawFinishLine(i, w, x);
-        }
-
+        if (carsRemaining <= 0 && i > 250 && i < 265) drawFinishLine(i, w, x);
         let asphaltColor1 = isSnowStage ? "#FFFFFF" : (colors.nightMode ? "#050505" : "#333");
         let asphaltColor2 = isSnowStage ? "#E0E0E0" : (colors.nightMode ? "#0a0a0a" : "#3d3d3d");
-
         ctx.fillStyle = Math.sin(i * 0.5 + playerDist * 0.2) > 0 ? asphaltColor1 : asphaltColor2;
         ctx.fillRect(x - w/2, i, w, 4);
-        
-        let curbColor1 = colors.nightMode ? "#600" : "red";
-        let curbColor2 = colors.nightMode ? "#888" : "white";
-        ctx.fillStyle = Math.sin(i * 0.5 + playerDist * 0.2) > 0 ? curbColor1 : curbColor2;
-        ctx.fillRect(x - w/2 - 12*p, i, 12*p, 4);
-        ctx.fillRect(x + w/2, i, 12*p, 4); 
     }
 
     let hasFog = colors.fog > 0;
     
-    // 1. DESENHAR INIMIGOS (Primeiro os distantes, depois os próximos)
-    enemies.sort((a,b) => b.z - a.z).forEach(e => {
-        drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, hasFog, isRaining);
-    });
-
-    // 2. DESENHAR O CARRO DO JOGADOR
+    // 1. DESENHAR CARRO DO JOGADOR
     drawF1Car(200, 350, 0.85, "#E00", true, colors.nightMode, hasFog, isRaining); 
 
-    // 3. DESENHAR O SPRAY (Depois dos carros para ficar NA FRENTE deles)
+    // 2. DESENHAR INIMIGOS
+    enemies.sort((a,b) => b.z - a.z).forEach(e => {
+        if (e.lastP > 0) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, hasFog, isRaining);
+    });
+
+    // 3. DESENHAR O SPRAY (Agora NA FRENTE dos carros)
     if (isRaining) {
         wheelSprays.forEach(p => {
             ctx.fillStyle = `rgba(220, 230, 255, ${p.life * 0.5})`; 
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.s, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.beginPath(); ctx.arc(p.x, p.y, p.s, 0, Math.PI * 2); ctx.fill();
         });
     }
 
     if (colors.fog > 0) { ctx.fillStyle = `rgba(140,145,160,${colors.fog})`; ctx.fillRect(0, 55, 400, 345); }
 
-    // 4. RENDERIZAÇÃO DA CHUVA (Caindo sobre tudo)
+    // 4. CHUVA
     if (isRaining) {
         ctx.strokeStyle = "rgba(200, 210, 255, 0.51)"; ctx.lineWidth = 1.2;
         raindrops.forEach(r => { ctx.beginPath(); ctx.moveTo(r.x, r.y); ctx.lineTo(r.x + 1.5, r.y + 12); ctx.stroke(); });
     }
 
-    // HUD e Mensagens de Vitória (Sempre no topo)
-    if (lightningAlpha > 0 && (currentStage === 3 || currentStage === 7)) { 
-        ctx.fillStyle = `rgba(255, 255, 255, ${lightningAlpha})`; 
-        ctx.fillRect(0, 55, 400, 345); 
-    }
+    // HUD e Lightning
+    if (lightningAlpha > 0 && (currentStage === 3 || currentStage === 7)) { ctx.fillStyle = `rgba(255, 255, 255, ${lightningAlpha})`; ctx.fillRect(0, 55, 400, 345); }
 
     ctx.fillStyle = "black"; ctx.fillRect(0, 0, 400, 55);
     ctx.fillStyle = (gameState === "GOAL_REACHED" || gameState === "WIN_DAY") ? "lime" : "yellow";
@@ -588,8 +518,7 @@ function togglePause() {
     if (gameState === "WIN_DAY") {
         ctx.fillStyle = "rgba(0,0,0,0.7)"; ctx.fillRect(0, 55, 400, 345);
         ctx.fillStyle = "lime"; ctx.textAlign = "center";
-        ctx.font = "bold 25px Courier"; 
-        ctx.fillText(`DIA ${dayNumber} COMPLETO!`, 200, 180);
+        ctx.font = "bold 25px Courier"; ctx.fillText(`DIA ${dayNumber} COMPLETO!`, 200, 180);
         ctx.textAlign = "left";
     }
 }
