@@ -238,17 +238,19 @@ function togglePause() {
     updateUI();     // Atualiza a interface visual imediatamente
 }
 
-  function createWheelSpray(x, y, scale) {
-    // 4 partículas para manter a intensidade solicitada
+   function createWheelSpray(x, y, scale) {
+    // 4 partículas para manter a intensidade
     for (let i = 0; i < 4; i++) {
         wheelSprays.push({
+            // O segredo é somar o deslocamento (random) multiplicado pela escala
+            // ao valor X e Y já transformados do carro
             x: x + (Math.random() - 0.5) * (45 * scale), 
-            y: y + (5 * scale), 
+            y: y + (2 * scale), 
             vx: (Math.random() - 0.5) * 3, 
-            vy: -Math.random() * 3, 
+            vy: -Math.random() * 2, 
             life: 1.0, 
-            // Math.max garante que mesmo longe o spray seja minimamente visível
-            s: Math.max(scale * (Math.random() * 4 + 2), 0.8) 
+            // Garante tamanho mínimo visível no horizonte
+            s: Math.max(scale * (Math.random() * 4 + 2), 0.7) 
         });
     }
 }
@@ -396,7 +398,7 @@ function togglePause() {
             enemies.forEach(e => {
                 // Gera spray se o carro estiver na frente (0.3 < p < 1.0) 
                 // OU se ele acabou de ser ultrapassado (p > 1.0)
-                if (e.lastP > 0.5) { 
+                if (e.lastP > 0.01) { 
                     // Se p > 1.0, o carro está atrás do jogador, mas ainda gera rastro
                     createWheelSpray(e.lastX, e.lastY, e.lastP * 0.85);
                 }
