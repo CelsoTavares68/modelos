@@ -387,18 +387,20 @@ function togglePause() {
     if (isRaining) {
         for (let i = 0; i < 12; i++) raindrops.push({ x: Math.random() * 400, y: -20, s: Math.random() * 10 + 22 });
         
-         // --- LÓGICA DO SPRAY (AJUSTE DE ALTURA PARA AS RODAS) ---
-if (isRaining && speed > 2) {
-    createWheelSpray(200, 385, 0.85); // Spray do jogador (ajustado para baixo)
+          // --- LÓGICA DO SPRAY (SEPARADA E AJUSTADA) ---
+    if (isRaining && speed > 2) {
+        // Spray do jogador: Posicionado nas rodas traseiras (Y=380)
+        // Criamos dois pontos de origem para as rodas esquerda e direita
+        createWheelSpray(200 - 30, 385, 0.85); // Roda Esquerda
+        createWheelSpray(200 + 30, 385, 0.85); // Roda Direita
 
-    enemies.forEach(e => {
-        if (e.lastP > 0.01) { 
-            // Aumentamos o multiplicador de e.lastP para empurrar o spray para baixo
-            // O valor '15 * e.lastP' garante que o spray acompanhe a base do carro na perspectiva
-            createWheelSpray(e.lastX, e.lastY + (12 * e.lastP), e.lastP * 0.85);
-        }
-    });
-}
+        enemies.forEach(e => {
+            if (e.lastP > 0.01) { 
+                // Spray dos inimigos (segue a base do carro na perspectiva)
+                createWheelSpray(e.lastX, e.lastY + (12 * e.lastP), e.lastP * 0.85);
+            }
+        });
+    }
     }
 
     // Atualizar física da chuva e do spray
@@ -548,37 +550,37 @@ if (isRaining && speed > 2) {
 
     let hasFog = colors.fog > 0;
     
-    // Desenha inimigos ao fundo
-    enemies.sort((a,b) => b.z - a.z).forEach(e => {
-        if (e.lastP > 0 && e.lastP < 0.92) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, hasFog, isRaining);
-    });
-    
-    // Desenha o carro do jogador
-    drawF1Car(200, 350, 0.85, "#E00", true, colors.nightMode, hasFog, isRaining); 
-    
-    // Desenha inimigos muito próximos (frente do jogador)
-    enemies.forEach(e => {
-        if (e.lastP >= 0.92) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, hasFog, isRaining);
-    });
-
-    // Efeito de Neblina
-    if (colors.fog > 0) { ctx.fillStyle = `rgba(140,145,160,${colors.fog})`; ctx.fillRect(0, 55, 400, 345); }
-
-    // --- RENDERIZAÇÃO DA CHUVA ---
+    // --- 1. DESENHAR O SPRAY (ATRÁS DOS CARROS) ---
     if (isRaining) {
-        ctx.strokeStyle = "rgba(200, 210, 255, 0.51)"; ctx.lineWidth = 1.2;
-        raindrops.forEach(r => { ctx.beginPath(); ctx.moveTo(r.x, r.y); ctx.lineTo(r.x + 1.5, r.y + 12); ctx.stroke(); });
-
-      // Desenhar o spray das rodas
         wheelSprays.forEach(p => {
             ctx.fillStyle = `rgba(220, 230, 255, ${p.life * 0.5})`; 
             ctx.beginPath();
             ctx.arc(p.x, p.y, p.s, 0, Math.PI * 2);
             ctx.fill();
-        });   
+        });
     }
 
-    // Relâmpago frontal em tempestades
+    // 2. DESENHAR INIMIGOS AO FUNDO
+    enemies.sort((a,b) => b.z - a.z).forEach(e => {
+        if (e.lastP > 0 && e.lastP < 0.92) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, hasFog, isRaining);
+    });
+    
+    // 3. DESENHAR O CARRO DO JOGADOR (POR CIMA DO SEU PRÓPRIO SPRAY)
+    drawF1Car(200, 350, 0.85, "#E00", true, colors.nightMode, hasFog, isRaining); 
+    
+    // 4. DESENHAR INIMIGOS MUITO PRÓXIMOS
+    enemies.forEach(e => {
+        if (e.lastP >= 0.92) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, hasFog, isRaining);
+    });
+
+    if (colors.fog > 0) { ctx.fillStyle = `rgba(140,145,160,${colors.fog})`; ctx.fillRect(0, 55, 400, 345); }
+
+    // --- 5. RENDERIZAÇÃO DA CHUVA (POR CIMA DE TUDO) ---
+    if (isRaining) {
+        ctx.strokeStyle = "rgba(200, 210, 255, 0.51)"; ctx.lineWidth = 1.2;
+        raindrops.forEach(r => { ctx.beginPath(); ctx.moveTo(r.x, r.y); ctx.lineTo(r.x + 1.5, r.y + 12); ctx.stroke(); });
+    }
+
     if (lightningAlpha > 0 && (currentStage === 3 || currentStage === 7)) { 
         ctx.fillStyle = `rgba(255, 255, 255, ${lightningAlpha})`; 
         ctx.fillRect(0, 55, 400, 345); 
@@ -598,7 +600,6 @@ if (isRaining && speed > 2) {
         ctx.fillStyle = "rgba(0,0,0,0.7)"; ctx.fillRect(0, 55, 400, 345);
         ctx.fillStyle = "lime"; ctx.textAlign = "center";
         ctx.font = "bold 25px Courier"; 
-        // Correção do dayNumber (removido o -1)
         ctx.fillText(`DIA ${dayNumber} COMPLETO!`, 200, 180);
         ctx.textAlign = "left";
     }
