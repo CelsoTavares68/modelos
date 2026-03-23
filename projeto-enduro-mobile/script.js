@@ -398,7 +398,7 @@ function togglePause() {
             enemies.forEach(e => {
                 // Gera spray se o carro estiver na frente (0.3 < p < 1.0) 
                 // OU se ele acabou de ser ultrapassado (p > 1.0)
-                if (e.lastP > 0.01) { 
+                if (e.lastP > 0.05) { 
                     // Se p > 1.0, o carro está atrás do jogador, mas ainda gera rastro
                     createWheelSpray(e.lastX, e.lastY, e.lastP * 0.85);
                 }
