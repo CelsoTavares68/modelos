@@ -487,32 +487,32 @@ function togglePause() {
 
     let hasFog = colors.fog > 0;
 
-    // --- LÓGICA DE EMPILHAMENTO (Z-INDEX) ---
+    // --- LÓGICA DE EMPILHAMENTO CORRIGIDA ---
 
-    // 3. Desenha Inimigos à frente (ordenados por distância)
-    enemies.sort((a, b) => b.z - a.z).forEach(e => {
-        if (e.lastP > 0 && e.lastP < 1.0) {
-            drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, hasFog, isRaining);
-        }
-    });
-
-    // 4. Desenha o Carro do Jogador
-    drawF1Car(200, 350, 0.85, "#E00", true, colors.nightMode, hasFog, isRaining); 
-
-    // 5. Desenha Inimigos ultrapassados (que devem estar à frente do jogador)
-    enemies.forEach(e => {
-        if (e.lastP >= 1.0) {
-            drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, hasFog, isRaining);
-        }
-    });
-
-    // 6. Desenha o Spray por cima dos carros (Efeito de névoa de água)
+    // 3. DESENHA O SPRAY PRIMEIRO (Para ficar atrás dos carros)
     if (isRaining) {
         wheelSprays.forEach(p => {
             ctx.fillStyle = `rgba(220, 230, 255, ${p.life * 0.4})`; 
             ctx.beginPath(); ctx.arc(p.x, p.y, p.s, 0, Math.PI * 2); ctx.fill();
         });
     }
+
+    // 4. Desenha Inimigos à frente (ordenados por distância)
+    enemies.sort((a, b) => b.z - a.z).forEach(e => {
+        if (e.lastP > 0 && e.lastP < 1.0) {
+            drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, hasFog, isRaining);
+        }
+    });
+
+    // 5. Desenha o Carro do Jogador (Agora ele cobre a origem do spray)
+    drawF1Car(200, 350, 0.85, "#E00", true, colors.nightMode, hasFog, isRaining); 
+
+    // 6. Desenha Inimigos ultrapassados
+    enemies.forEach(e => {
+        if (e.lastP >= 1.0) {
+            drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, hasFog, isRaining);
+        }
+    });
 
     // 7. Efeitos de Clima (Neblina e Chuva caindo)
     if (colors.fog > 0) { ctx.fillStyle = `rgba(140,145,160,${colors.fog})`; ctx.fillRect(0, 55, 400, 345); }
