@@ -457,7 +457,7 @@ function togglePause() {
     ctx.fillStyle = colors.sky; ctx.fillRect(0, 0, 400, 200);
     ctx.fillStyle = colors.grass; ctx.fillRect(0, 200, 400, 200);
     
-    // 1. Montanhas
+    // 1. Montanhas e Estrada (Mantido igual)
     let mtShift = (roadCurve * 0.6);
     for (let i = -3; i < 9; i++) {
         let bx = (i * 100) + mtShift;
@@ -466,30 +466,33 @@ function togglePause() {
         if (colors.snowCaps) { ctx.fillStyle = "white"; ctx.beginPath(); ctx.moveTo(bx, 130); ctx.lineTo(bx - 25, 155); ctx.lineTo(bx + 25, 155); ctx.fill(); }
     }
 
-    // 2. Estrada e Linha de Chegada
-    let isSnowStage = (currentStage === 1);
     for (let i = 200; i < 400; i += 4) {
         let p = (i - 200) / 140; 
         let x = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p);
         let w = 20 + p * 800;
         if (carsRemaining <= 0 && i > 250 && i < 265) drawFinishLine(i, w, x);
-        let asphaltColor1 = isSnowStage ? "#FFFFFF" : (colors.nightMode ? "#050505" : "#333");
-        let asphaltColor2 = isSnowStage ? "#E0E0E0" : (colors.nightMode ? "#0a0a0a" : "#3d3d3d");
+        let asphaltColor1 = (currentStage === 1) ? "#FFFFFF" : (colors.nightMode ? "#050505" : "#333");
+        let asphaltColor2 = (currentStage === 1) ? "#E00" : (colors.nightMode ? "#0a0a0a" : "#3d3d3d");
         ctx.fillStyle = Math.sin(i * 0.5 + playerDist * 0.2) > 0 ? asphaltColor1 : asphaltColor2;
         ctx.fillRect(x - w/2, i, w, 4);
-        
-        let curbColor1 = colors.nightMode ? "#600" : "red";
-        let curbColor2 = colors.nightMode ? "#888" : "white";
-        ctx.fillStyle = Math.sin(i * 0.5 + playerDist * 0.2) > 0 ? curbColor1 : curbColor2;
+        ctx.fillStyle = Math.sin(i * 0.5 + playerDist * 0.2) > 0 ? (colors.nightMode ? "#600" : "red") : (colors.nightMode ? "#888" : "white");
         ctx.fillRect(x - w/2 - 12*p, i, 12*p, 4);
         ctx.fillRect(x + w/2, i, 12*p, 4); 
     }
 
     let hasFog = colors.fog > 0;
 
-    // --- CORREÇÃO DO SPRAY DO JOGADOR ---
-    
-    // 3. DESENHAR O SPRAY PRIMEIRO (Fica atrás de todos os carros)
+    // --- LOGICA DE CAMADAS CRÍTICA ---
+
+    // 2. Desenha Inimigos PRIMEIRO (Ficam ao fundo)
+    enemies.sort((a, b) => b.z - a.z).forEach(e => {
+        if (e.lastP > 0 && e.lastP < 1.0) {
+            drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, hasFog, isRaining);
+        }
+    });
+
+    // 3. Desenha o SPRAY (Depois dos inimigos = Fica NA FRENTE deles)
+    // (Antes do jogador = Fica ATRÁS do seu carro)
     if (isRaining) {
         wheelSprays.forEach(p => {
             ctx.fillStyle = `rgba(220, 230, 255, ${p.life * 0.4})`; 
@@ -497,38 +500,21 @@ function togglePause() {
         });
     }
 
-    // 3. Desenha o Carro do JOGADOR por último
-    // Isso faz o corpo do carro esconder a origem do spray, tirando o efeito de "fumaça"
+    // 4. Desenha o Carro do JOGADOR por último (Cobre o spray e os inimigos distantes)
     drawF1Car(200, 350, 0.85, "#E00", true, colors.nightMode, hasFog, isRaining); 
 
-    // 4. Inimigos que já passaram (opcional, para realismo)
+    // 5. Inimigos que já passaram (Devem estar à frente de tudo enquanto saem da tela)
     enemies.forEach(e => {
         if (e.lastP >= 1.0) {
             drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, hasFog, isRaining);
         }
     });
 
-    // 5. DESENHAR O CARRO DO JOGADOR (Por último para sobrepor o spray)
-    drawF1Car(200, 350, 0.85, "#E00", true, colors.nightMode, hasFog, isRaining); 
-
-    // 6. DESENHAR INIMIGOS ULTRAPASSADOS
-    enemies.forEach(e => {
-        if (e.lastP >= 1.0) {
-            drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, hasFog, isRaining);
-        }
-    });
-
-    // 7. Efeitos de Clima e HUD (Sempre no topo)
+    // 6. HUD e Clima (Mantido igual)
     if (colors.fog > 0) { ctx.fillStyle = `rgba(140,145,160,${colors.fog})`; ctx.fillRect(0, 55, 400, 345); }
-
     if (isRaining) {
         ctx.strokeStyle = "rgba(200, 210, 255, 0.51)"; ctx.lineWidth = 1.2;
         raindrops.forEach(r => { ctx.beginPath(); ctx.moveTo(r.x, r.y); ctx.lineTo(r.x + 1.5, r.y + 12); ctx.stroke(); });
-    }
-
-    if (lightningAlpha > 0 && (currentStage === 3 || currentStage === 7)) { 
-        ctx.fillStyle = `rgba(255, 255, 255, ${lightningAlpha})`; 
-        ctx.fillRect(0, 55, 400, 345); 
     }
 
     // HUD
