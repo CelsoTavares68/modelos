@@ -243,10 +243,10 @@ function togglePause() {
         wheelSprays.push({
             x: x + (Math.random() - 0.5) * (5 * scale), 
             y: y,
-            vx: (Math.random() - 0.5) * 3, 
-            vy: Math.random() * 1.5 + 0.5, // VY positivo joga a partícula para BAIXO
+            vx: (Math.random() - 0.5) * 2, 
+            vy: Math.random() * 2 + 1, // VY positivo joga a água para trás/baixo
             life: 1.0, 
-            s: Math.max(scale * (Math.random() * 8 + 4), 1.0) // Partículas um pouco maiores para parecer spray
+            s: Math.max(scale * (Math.random() * 5 + 3), 1.0) 
         });
     }
 }
@@ -374,15 +374,14 @@ function togglePause() {
         
         // Geração do Spray
        if (speed > 2) {
-    // Y=396 coloca o spray na base exata onde o pneu toca o asfalto
-    // X=38 alinha com a extremidade das rodas traseiras largas
-    createWheelSpray(200 - 38, 396, 0.85); // Roda Esquerda
-    createWheelSpray(200 + 38, 396, 0.85); // Roda Direita
+    // Y=388 traz o spray para mais perto da traseira, eliminando o vácuo
+    // X=32 alinha com o centro dos pneus traseiros na escala 0.85
+    createWheelSpray(200 - 32, 388, 0.85); 
+    createWheelSpray(200 + 32, 388, 0.85); 
     
     enemies.forEach(e => {
         if (e.lastP > 0.01) { 
-            // Inimigos: Spray nasce na base do carro deles (lastY + deslocamento)
-            createWheelSpray(e.lastX, e.lastY + (12 * e.lastP), e.lastP * 0.85);
+            createWheelSpray(e.lastX, e.lastY + (8 * e.lastP), e.lastP * 0.85);
         }
     });
 }
