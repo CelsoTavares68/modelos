@@ -238,16 +238,17 @@ function togglePause() {
     updateUI();     // Atualiza a interface visual imediatamente
 }
 
- function createWheelSpray(x, y, scale) {
-    // Aumentado para 4 partículas por frame para maior intensidade
+  function createWheelSpray(x, y, scale) {
+    // 4 partículas para manter a intensidade solicitada
     for (let i = 0; i < 4; i++) {
         wheelSprays.push({
             x: x + (Math.random() - 0.5) * (45 * scale), 
             y: y + (5 * scale), 
-            vx: (Math.random() - 0.5) * 3, // Velocidade lateral aumentada
-            vy: -Math.random() * 4,        // Salto vertical maior
+            vx: (Math.random() - 0.5) * 3, 
+            vy: -Math.random() * 3, 
             life: 1.0, 
-            s: scale * (Math.random() * 4 + 1.5) // Partículas levemente maiores
+            // Math.max garante que mesmo longe o spray seja minimamente visível
+            s: Math.max(scale * (Math.random() * 4 + 2), 0.8) 
         });
     }
 }
@@ -395,7 +396,7 @@ function togglePause() {
             enemies.forEach(e => {
                 // Gera spray se o carro estiver na frente (0.3 < p < 1.0) 
                 // OU se ele acabou de ser ultrapassado (p > 1.0)
-                if (e.lastP > 0.3) { 
+                if (e.lastP > 0.5) { 
                     // Se p > 1.0, o carro está atrás do jogador, mas ainda gera rastro
                     createWheelSpray(e.lastX, e.lastY, e.lastP * 0.85);
                 }
@@ -571,13 +572,13 @@ function togglePause() {
         ctx.strokeStyle = "rgba(200, 210, 255, 0.51)"; ctx.lineWidth = 1.2;
         raindrops.forEach(r => { ctx.beginPath(); ctx.moveTo(r.x, r.y); ctx.lineTo(r.x + 1.5, r.y + 12); ctx.stroke(); });
 
-        // Desenhar o spray das rodas (Mais visível)
+      // Desenhar o spray das rodas
         wheelSprays.forEach(p => {
-            ctx.fillStyle = `rgba(220, 230, 255, ${p.life * 0.6})`; // Opacidade base aumentada de 0.4 para 0.6
+            ctx.fillStyle = `rgba(220, 230, 255, ${p.life * 0.5})`; 
             ctx.beginPath();
             ctx.arc(p.x, p.y, p.s, 0, Math.PI * 2);
             ctx.fill();
-        });
+        });   
     }
 
     // Relâmpago frontal em tempestades
