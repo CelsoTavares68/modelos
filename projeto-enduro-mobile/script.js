@@ -238,16 +238,16 @@ function togglePause() {
     updateUI();     // Atualiza a interface visual imediatamente
 }
 
-function createWheelSpray(x, y, scale) {
-    // Cria 2 a 3 gotículas por frame para não sobrecarregar o processamento
-    for (let i = 0; i < 2; i++) {
+ function createWheelSpray(x, y, scale) {
+    // Aumentado para 4 partículas por frame para maior intensidade
+    for (let i = 0; i < 4; i++) {
         wheelSprays.push({
-            x: x + (Math.random() - 0.5) * (40 * scale), // Espalha perto das rodas
-            y: y + (5 * scale), // Sai da base do carro
-            vx: (Math.random() - 0.5) * 2, // Velocidade horizontal aleatória
-            vy: -Math.random() * 3, // Voa um pouco para cima antes de cair
-            life: 1.0, // Opacidade inicial
-            s: scale * (Math.random() * 3 + 1) // Tamanho da gota
+            x: x + (Math.random() - 0.5) * (45 * scale), 
+            y: y + (5 * scale), 
+            vx: (Math.random() - 0.5) * 3, // Velocidade lateral aumentada
+            vy: -Math.random() * 4,        // Salto vertical maior
+            life: 1.0, 
+            s: scale * (Math.random() * 4 + 1.5) // Partículas levemente maiores
         });
     }
 }
@@ -388,11 +388,17 @@ function createWheelSpray(x, y, scale) {
     if (isRaining) {
         for (let i = 0; i < 12; i++) raindrops.push({ x: Math.random() * 400, y: -20, s: Math.random() * 10 + 22 });
         
-        // NOVO: Gerar spray das rodas
+        // NOVO: Gerar spray das rodas (Intensificado e Persistente)
         if (speed > 2) {
             createWheelSpray(200, 360, 0.85); // Spray do jogador
+
             enemies.forEach(e => {
-                if (e.lastP > 0.3 && e.lastP < 1.0) createWheelSpray(e.lastX, e.lastY, e.lastP * 0.85);
+                // Gera spray se o carro estiver na frente (0.3 < p < 1.0) 
+                // OU se ele acabou de ser ultrapassado (p > 1.0)
+                if (e.lastP > 0.3) { 
+                    // Se p > 1.0, o carro está atrás do jogador, mas ainda gera rastro
+                    createWheelSpray(e.lastX, e.lastY, e.lastP * 0.85);
+                }
             });
         }
     }
@@ -565,9 +571,9 @@ function createWheelSpray(x, y, scale) {
         ctx.strokeStyle = "rgba(200, 210, 255, 0.51)"; ctx.lineWidth = 1.2;
         raindrops.forEach(r => { ctx.beginPath(); ctx.moveTo(r.x, r.y); ctx.lineTo(r.x + 1.5, r.y + 12); ctx.stroke(); });
 
-        // NOVO: Desenhar o spray das rodas (gotículas voando)
+        // Desenhar o spray das rodas (Mais visível)
         wheelSprays.forEach(p => {
-            ctx.fillStyle = `rgba(200, 210, 255, ${p.life * 0.4})`; 
+            ctx.fillStyle = `rgba(220, 230, 255, ${p.life * 0.6})`; // Opacidade base aumentada de 0.4 para 0.6
             ctx.beginPath();
             ctx.arc(p.x, p.y, p.s, 0, Math.PI * 2);
             ctx.fill();
