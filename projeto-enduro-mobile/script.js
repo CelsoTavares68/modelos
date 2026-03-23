@@ -503,7 +503,7 @@ function togglePause() {
     requestAnimationFrame(update);
 }
 
- function draw(colors, isRaining, currentStage) {
+  function draw(colors, isRaining, currentStage) {
     ctx.fillStyle = colors.sky; ctx.fillRect(0, 0, 400, 200);
     ctx.fillStyle = colors.grass; ctx.fillRect(0, 200, 400, 200);
     
