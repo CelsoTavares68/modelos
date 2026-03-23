@@ -452,11 +452,11 @@ function togglePause() {
     requestAnimationFrame(update);
 }
 
-   function draw(colors, isRaining, currentStage) {
+  function draw(colors, isRaining, currentStage) {
     ctx.fillStyle = colors.sky; ctx.fillRect(0, 0, 400, 200);
     ctx.fillStyle = colors.grass; ctx.fillRect(0, 200, 400, 200);
     
-    // Montanhas
+    // 1. Montanhas (Fundo estático)
     let mtShift = (roadCurve * 0.6);
     for (let i = -3; i < 9; i++) {
         let bx = (i * 100) + mtShift;
@@ -465,7 +465,7 @@ function togglePause() {
         if (colors.snowCaps) { ctx.fillStyle = "white"; ctx.beginPath(); ctx.moveTo(bx, 130); ctx.lineTo(bx - 25, 155); ctx.lineTo(bx + 25, 155); ctx.fill(); }
     }
 
-    // Pista
+    // 2. Estrada e Linha de Chegada
     let isSnowStage = (currentStage === 1);
     for (let i = 200; i < 400; i += 4) {
         let p = (i - 200) / 140; 
@@ -476,37 +476,57 @@ function togglePause() {
         let asphaltColor2 = isSnowStage ? "#E0E0E0" : (colors.nightMode ? "#0a0a0a" : "#3d3d3d");
         ctx.fillStyle = Math.sin(i * 0.5 + playerDist * 0.2) > 0 ? asphaltColor1 : asphaltColor2;
         ctx.fillRect(x - w/2, i, w, 4);
+        
+        let curbColor1 = colors.nightMode ? "#600" : "red";
+        let curbColor2 = colors.nightMode ? "#888" : "white";
+        ctx.fillStyle = Math.sin(i * 0.5 + playerDist * 0.2) > 0 ? curbColor1 : curbColor2;
+        ctx.fillRect(x - w/2 - 12*p, i, 12*p, 4);
+        ctx.fillRect(x + w/2, i, 12*p, 4); 
     }
 
     let hasFog = colors.fog > 0;
-    
-    // 1. DESENHAR CARRO DO JOGADOR
-    drawF1Car(200, 350, 0.85, "#E00", true, colors.nightMode, hasFog, isRaining); 
 
-    // 2. DESENHAR INIMIGOS
-    enemies.sort((a,b) => b.z - a.z).forEach(e => {
-        if (e.lastP > 0) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, hasFog, isRaining);
+    // --- LÓGICA DE EMPILHAMENTO (Z-INDEX) ---
+
+    // 3. Desenha Inimigos à frente (ordenados por distância)
+    enemies.sort((a, b) => b.z - a.z).forEach(e => {
+        if (e.lastP > 0 && e.lastP < 1.0) {
+            drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, hasFog, isRaining);
+        }
     });
 
-    // 3. DESENHAR O SPRAY (Agora NA FRENTE dos carros)
+    // 4. Desenha o Carro do Jogador
+    drawF1Car(200, 350, 0.85, "#E00", true, colors.nightMode, hasFog, isRaining); 
+
+    // 5. Desenha Inimigos ultrapassados (que devem estar à frente do jogador)
+    enemies.forEach(e => {
+        if (e.lastP >= 1.0) {
+            drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, hasFog, isRaining);
+        }
+    });
+
+    // 6. Desenha o Spray por cima dos carros (Efeito de névoa de água)
     if (isRaining) {
         wheelSprays.forEach(p => {
-            ctx.fillStyle = `rgba(220, 230, 255, ${p.life * 0.5})`; 
+            ctx.fillStyle = `rgba(220, 230, 255, ${p.life * 0.4})`; 
             ctx.beginPath(); ctx.arc(p.x, p.y, p.s, 0, Math.PI * 2); ctx.fill();
         });
     }
 
+    // 7. Efeitos de Clima (Neblina e Chuva caindo)
     if (colors.fog > 0) { ctx.fillStyle = `rgba(140,145,160,${colors.fog})`; ctx.fillRect(0, 55, 400, 345); }
 
-    // 4. CHUVA
     if (isRaining) {
         ctx.strokeStyle = "rgba(200, 210, 255, 0.51)"; ctx.lineWidth = 1.2;
         raindrops.forEach(r => { ctx.beginPath(); ctx.moveTo(r.x, r.y); ctx.lineTo(r.x + 1.5, r.y + 12); ctx.stroke(); });
     }
 
-    // HUD e Lightning
-    if (lightningAlpha > 0 && (currentStage === 3 || currentStage === 7)) { ctx.fillStyle = `rgba(255, 255, 255, ${lightningAlpha})`; ctx.fillRect(0, 55, 400, 345); }
+    if (lightningAlpha > 0 && (currentStage === 3 || currentStage === 7)) { 
+        ctx.fillStyle = `rgba(255, 255, 255, ${lightningAlpha})`; 
+        ctx.fillRect(0, 55, 400, 345); 
+    }
 
+    // 8. Interface (HUD)
     ctx.fillStyle = "black"; ctx.fillRect(0, 0, 400, 55);
     ctx.fillStyle = (gameState === "GOAL_REACHED" || gameState === "WIN_DAY") ? "lime" : "yellow";
     ctx.font = "bold 18px Courier";
@@ -518,7 +538,8 @@ function togglePause() {
     if (gameState === "WIN_DAY") {
         ctx.fillStyle = "rgba(0,0,0,0.7)"; ctx.fillRect(0, 55, 400, 345);
         ctx.fillStyle = "lime"; ctx.textAlign = "center";
-        ctx.font = "bold 25px Courier"; ctx.fillText(`DIA ${dayNumber} COMPLETO!`, 200, 180);
+        ctx.font = "bold 25px Courier"; 
+        ctx.fillText(`DIA ${dayNumber} COMPLETO!`, 200, 180);
         ctx.textAlign = "left";
     }
 }
