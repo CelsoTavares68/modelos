@@ -530,13 +530,8 @@ function togglePause() {
             drawFinishLine(i, w, x);
         }
 
-        let asphaltColor1, asphaltColor2;
-        if (isSnowStage) {
-            asphaltColor1 = "#FFFFFF"; asphaltColor2 = "#E0E0E0"; 
-        } else {
-            asphaltColor1 = colors.nightMode ? "#050505" : "#333"; 
-            asphaltColor2 = colors.nightMode ? "#0a0a0a" : "#3d3d3d";
-        }
+        let asphaltColor1 = isSnowStage ? "#FFFFFF" : (colors.nightMode ? "#050505" : "#333");
+        let asphaltColor2 = isSnowStage ? "#E0E0E0" : (colors.nightMode ? "#0a0a0a" : "#3d3d3d");
 
         ctx.fillStyle = Math.sin(i * 0.5 + playerDist * 0.2) > 0 ? asphaltColor1 : asphaltColor2;
         ctx.fillRect(x - w/2, i, w, 4);
@@ -550,7 +545,15 @@ function togglePause() {
 
     let hasFog = colors.fog > 0;
     
-    // --- 1. DESENHAR O SPRAY (ATRÁS DOS CARROS) ---
+    // 1. DESENHAR INIMIGOS (Primeiro os distantes, depois os próximos)
+    enemies.sort((a,b) => b.z - a.z).forEach(e => {
+        drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, hasFog, isRaining);
+    });
+
+    // 2. DESENHAR O CARRO DO JOGADOR
+    drawF1Car(200, 350, 0.85, "#E00", true, colors.nightMode, hasFog, isRaining); 
+
+    // 3. DESENHAR O SPRAY (Depois dos carros para ficar NA FRENTE deles)
     if (isRaining) {
         wheelSprays.forEach(p => {
             ctx.fillStyle = `rgba(220, 230, 255, ${p.life * 0.5})`; 
@@ -560,33 +563,20 @@ function togglePause() {
         });
     }
 
-    // 2. DESENHAR INIMIGOS AO FUNDO
-    enemies.sort((a,b) => b.z - a.z).forEach(e => {
-        if (e.lastP > 0 && e.lastP < 0.92) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, hasFog, isRaining);
-    });
-    
-    // 3. DESENHAR O CARRO DO JOGADOR (POR CIMA DO SEU PRÓPRIO SPRAY)
-    drawF1Car(200, 350, 0.85, "#E00", true, colors.nightMode, hasFog, isRaining); 
-    
-    // 4. DESENHAR INIMIGOS MUITO PRÓXIMOS
-    enemies.forEach(e => {
-        if (e.lastP >= 0.92) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, hasFog, isRaining);
-    });
-
     if (colors.fog > 0) { ctx.fillStyle = `rgba(140,145,160,${colors.fog})`; ctx.fillRect(0, 55, 400, 345); }
 
-    // --- 5. RENDERIZAÇÃO DA CHUVA (POR CIMA DE TUDO) ---
+    // 4. RENDERIZAÇÃO DA CHUVA (Caindo sobre tudo)
     if (isRaining) {
         ctx.strokeStyle = "rgba(200, 210, 255, 0.51)"; ctx.lineWidth = 1.2;
         raindrops.forEach(r => { ctx.beginPath(); ctx.moveTo(r.x, r.y); ctx.lineTo(r.x + 1.5, r.y + 12); ctx.stroke(); });
     }
 
+    // HUD e Mensagens de Vitória (Sempre no topo)
     if (lightningAlpha > 0 && (currentStage === 3 || currentStage === 7)) { 
         ctx.fillStyle = `rgba(255, 255, 255, ${lightningAlpha})`; 
         ctx.fillRect(0, 55, 400, 345); 
     }
 
-    // --- INTERFACE SUPERIOR (HUD) ---
     ctx.fillStyle = "black"; ctx.fillRect(0, 0, 400, 55);
     ctx.fillStyle = (gameState === "GOAL_REACHED" || gameState === "WIN_DAY") ? "lime" : "yellow";
     ctx.font = "bold 18px Courier";
@@ -595,7 +585,6 @@ function togglePause() {
     ctx.fillStyle = "#444"; ctx.fillRect(260, 20, 120, 15);
     ctx.fillStyle = "lime"; ctx.fillRect(260, 20, (currentTime/DAY_DURATION) * 120, 15);
 
-    // --- MENSAGEM DE VITÓRIA DO DIA ---
     if (gameState === "WIN_DAY") {
         ctx.fillStyle = "rgba(0,0,0,0.7)"; ctx.fillRect(0, 55, 400, 345);
         ctx.fillStyle = "lime"; ctx.textAlign = "center";
