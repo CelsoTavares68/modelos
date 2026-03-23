@@ -376,13 +376,13 @@ function togglePause() {
         if (speed > 2) {
     // 395 é a base visual das rodas traseiras do jogador
     // 40 é o deslocamento lateral para alinhar com os pneus largos de F1
-    createWheelSpray(200 - 40, 395, 0.85); // Roda Esquerda
-    createWheelSpray(200 + 40, 395, 0.85); // Roda Direita
+    createWheelSpray(200 - 35, 390, 0.85); // Roda Esquerda
+    createWheelSpray(200 + 35, 390, 0.85); // Roda Direita
     
     // Mantenha a lógica dos inimigos como está, já que estão perfeitos
     enemies.forEach(e => {
         if (e.lastP > 0.01) { 
-            createWheelSpray(e.lastX, e.lastY + (14 * e.lastP), e.lastP * 0.85);
+            createWheelSpray(e.lastX, e.lastY + (12* e.lastP), e.lastP * 0.85);
         }
     });
 }
@@ -497,9 +497,13 @@ function togglePause() {
         });
     }
 
-    // 4. DESENHAR INIMIGOS (Mantendo sua lógica original de Z-index)
-    enemies.sort((a, b) => b.z - a.z).forEach(e => {
-        if (e.lastP > 0 && e.lastP < 1.0) {
+    // 3. Desenha o Carro do JOGADOR por último
+    // Isso faz o corpo do carro esconder a origem do spray, tirando o efeito de "fumaça"
+    drawF1Car(200, 350, 0.85, "#E00", true, colors.nightMode, hasFog, isRaining); 
+
+    // 4. Inimigos que já passaram (opcional, para realismo)
+    enemies.forEach(e => {
+        if (e.lastP >= 1.0) {
             drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, hasFog, isRaining);
         }
     });
