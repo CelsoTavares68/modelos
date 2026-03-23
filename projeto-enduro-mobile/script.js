@@ -238,18 +238,14 @@ function togglePause() {
     updateUI();     // Atualiza a interface visual imediatamente
 }
 
-   function createWheelSpray(x, y, scale) {
-    // 4 partículas para manter a intensidade
+    function createWheelSpray(x, y, scale) {
     for (let i = 0; i < 4; i++) {
         wheelSprays.push({
-            // O segredo é somar o deslocamento (random) multiplicado pela escala
-            // ao valor X e Y já transformados do carro
-            x: x + (Math.random() - 0.5) * (45 * scale), 
-            y: y + (2 * scale), 
-            vx: (Math.random() - 0.5) * 3, 
-            vy: -Math.random() * 2, 
+            x: x + (Math.random() - 0.5) * (50 * scale), 
+            y: y, // Nasce exatamente no Y passado (chão)
+            vx: (Math.random() - 0.5) * 4, // Mais dispersão lateral
+            vy: -Math.random() * 1.5,      // Sobe menos (fica mais rente ao chão)
             life: 1.0, 
-            // Garante tamanho mínimo visível no horizonte
             s: Math.max(scale * (Math.random() * 4 + 2), 0.7) 
         });
     }
@@ -391,19 +387,18 @@ function togglePause() {
     if (isRaining) {
         for (let i = 0; i < 12; i++) raindrops.push({ x: Math.random() * 400, y: -20, s: Math.random() * 10 + 22 });
         
-        // NOVO: Gerar spray das rodas (Intensificado e Persistente)
-        if (speed > 2) {
-            createWheelSpray(200, 360, 0.85); // Spray do jogador
+         // --- LÓGICA DO SPRAY (AJUSTE DE ALTURA PARA AS RODAS) ---
+if (isRaining && speed > 2) {
+    createWheelSpray(200, 385, 0.85); // Spray do jogador (ajustado para baixo)
 
-            enemies.forEach(e => {
-                // Gera spray se o carro estiver na frente (0.3 < p < 1.0) 
-                // OU se ele acabou de ser ultrapassado (p > 1.0)
-                if (e.lastP > 0.05) { 
-                    // Se p > 1.0, o carro está atrás do jogador, mas ainda gera rastro
-                    createWheelSpray(e.lastX, e.lastY, e.lastP * 0.85);
-                }
-            });
+    enemies.forEach(e => {
+        if (e.lastP > 0.01) { 
+            // Aumentamos o multiplicador de e.lastP para empurrar o spray para baixo
+            // O valor '15 * e.lastP' garante que o spray acompanhe a base do carro na perspectiva
+            createWheelSpray(e.lastX, e.lastY + (12 * e.lastP), e.lastP * 0.85);
         }
+    });
+}
     }
 
     // Atualizar física da chuva e do spray
