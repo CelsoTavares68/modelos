@@ -374,11 +374,12 @@ function togglePause() {
         
         // Geração do Spray
         if (speed > 2) {
-    // 392 é o ponto exato onde os pneus traseiros tocam a pista na sua escala
-    // O valor 35 afasta o spray para os lados, alinhando com a largura do carro
-    createWheelSpray(200 - 35, 392, 0.85); // Roda Esquerda
-    createWheelSpray(200 + 35, 392, 0.85); // Roda Direita
-
+    // 395 é a base visual das rodas traseiras do jogador
+    // 40 é o deslocamento lateral para alinhar com os pneus largos de F1
+    createWheelSpray(200 - 40, 395, 0.85); // Roda Esquerda
+    createWheelSpray(200 + 40, 395, 0.85); // Roda Direita
+    
+    // Mantenha a lógica dos inimigos como está, já que estão perfeitos
     enemies.forEach(e => {
         if (e.lastP > 0.01) { 
             createWheelSpray(e.lastX, e.lastY + (14 * e.lastP), e.lastP * 0.85);
