@@ -266,8 +266,8 @@ function togglePause() {
     let s = scale * 1.2;
     if (s < 0.02 || s > 30) return;
 
-    let w = 45 * s; 
-    let h = 22 * s; 
+    let w = 45 * s;
+    let h = 22 * s;
     
     ctx.save();
     ctx.translate(x, y);
@@ -275,7 +275,7 @@ function togglePause() {
     if(isPlayer) ctx.rotate((roadCurve / 80) * Math.PI / 180);
     
     let bodyColor = nightMode ? "#000000" : color;
-    const lightY = h * 0.1; 
+    const lightY = h * 0.1;
     const leftX = -w * 0.2;
     const rightX = w * 0.2;
 
@@ -299,10 +299,10 @@ function togglePause() {
 
     // --- CAMADA 2: FEIXE DE LUZ ---
     if (nightMode || hasFog || isRainy) {
-        const coneLength = h * 2.5; 
-        const coneExpansion = w * 1.2; 
+        const coneLength = h * 2.5;
+        const coneExpansion = w * 1.2;
         let gradient = ctx.createLinearGradient(0, lightY, 0, lightY - coneLength);
-        gradient.addColorStop(0, "rgba(255, 255, 255, 0.4)"); 
+        gradient.addColorStop(0, "rgba(255, 255, 255, 0.4)");
         gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
         ctx.fillStyle = gradient;
         ctx.beginPath();
@@ -313,30 +313,41 @@ function togglePause() {
     }
 
     // --- CAMADA 3: CORPO E PNEUS ---
-    ctx.fillStyle = "#111"; 
-    ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8); // Roda esquerda
-    ctx.fillRect(w * 0.25, -h * 0.1, w * 0.25, h * 0.8); // Roda direita
+    ctx.fillStyle = "#111";
+    ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8);
+    ctx.fillRect(w * 0.25, -h * 0.1, w * 0.25, h * 0.8);
     
-    ctx.fillStyle = bodyColor; 
-    ctx.fillRect(-w * 0.25, h * 0.1, w * 0.5, h * 0.4);  // Cockpit
-    ctx.fillRect(-w * 0.5, -h * 0.3, w, h * 0.2);        // Aerofólio
+    ctx.fillStyle = bodyColor;
+    ctx.fillRect(-w * 0.25, h * 0.1, w * 0.5, h * 0.4);
+    ctx.fillRect(-w * 0.5, -h * 0.3, w, h * 0.2);
 
-    // --- CAMADA 4: CAPACETE (IDENTIFICAÇÃO DE EQUIPE) ---
-    // Se for o jogador, mantém o icônico amarelo. Se for inimigo, 
-    // usamos uma cor baseada na cor do carro para parecer uniforme de equipe.
+    // --- CAMADA 4: CAPACETE (CORES POR EQUIPE) ---
+    let helmetColor = "#FFFFFF"; // Cor padrão
+
     if (isPlayer) {
-        ctx.fillStyle = "#FFFF00"; // Amarelo clássico para você
+        helmetColor = "#FFFF00"; // Teu amarelo icônico
     } else {
-        // Cria uma variação um pouco mais clara da cor do carro para o capacete
-        ctx.fillStyle = color; 
+        // Mapeamento: Para cada cor de carro inimigo, uma cor de capacete diferente
+        const helmetMap = {
+            "#F0F": "#00FFFF", // Carro Magenta -> Capacete Ciano
+            "#0FF": "#FF00FF", // Carro Ciano -> Capacete Magenta
+            "#0F0": "#FFFFFF", // Carro Verde -> Capacete Branco
+            "#FF0": "#0000FF", // Carro Amarelo -> Capacete Azul
+            "#f47d28": "#1a7a1a", // Carro Laranja -> Capacete Verde
+            "#a5a3a3": "#E00",    // Carro Cinza -> Capacete Vermelho
+            "rgb(0, 26, 255)": "#FFD700", // Carro Azul -> Capacete Dourado
+            "rgb(27, 104, 27)": "#DDD"    // Carro Verde Escuro -> Capacete Cinza Claro
+        };
+        helmetColor = helmetMap[color] || "#FFFFFF";
     }
-    
+
+    ctx.fillStyle = helmetColor;
     ctx.beginPath();
-    // Desenha apenas o topo arredondado (capacete visto de trás)
+    // Desenho arredondado do capacete (visto de trás, sem viseira)
     ctx.arc(0, h * 0.1, 3.8 * s, 0, Math.PI, true); 
     ctx.fill();
 
-    // Detalhe de brilho no topo do capacete para dar volume
+    // Detalhe de reflexo no capacete
     ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
     ctx.beginPath();
     ctx.arc(1 * s, h * 0.05, 1.5 * s, 0, Math.PI * 2);
@@ -345,7 +356,7 @@ function togglePause() {
     // --- CAMADA 5: LANTERNAS COM BRILHO ---
     if (nightMode || hasFog || isRainy) {
         ctx.save();
-        const headlightSize = 2.8 * s; 
+        const headlightSize = 2.8 * s;
         ctx.shadowBlur = 15 * s;
         ctx.shadowColor = "#ff0000";
         ctx.fillStyle = "#ff5555";
