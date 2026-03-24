@@ -431,37 +431,40 @@ function togglePause() {
 
     // --- LÓGICA DE SPRAY NA CHUVA ---
       // --- LÓGICA DE SPRAY NA CHUVA (VERSÃO FINALIZADA) ---
-    if (isRaining) {
-        // 1. Spray do Jogador (Apenas se estiver correndo)
+     if (isRaining) {
+        // 1. Spray do seu carro
         if (speed > 2) {
             createWheelSpray(200 - 15, 360, 0.85); 
             createWheelSpray(200 + 15, 360, 0.85); 
         }
 
-        // 2. Spray dos Inimigos (Correção: Desde o horizonte até a ultrapassagem)
+        // 2. Spray dos Inimigos (Sem filtros de distância/proximidade)
         enemies.forEach(e => {
-            // Condição: O carro precisa estar visível (lastP > 0) 
-            // e ter velocidade própria (e.sp ou e.v)
-            if (e.lastP > 0.01 && (e.sp > 0 || e.v > 0)) { 
+            // Condição simples: Se o carro apareceu (lastP > 0) e tem velocidade (e.sp)
+            // O e.lastP > 0 garante que começa lá no horizonte (z=4000)
+            if (e.lastP > 0 && e.sp > 0) { 
                 
-                // OTIMIZAÇÃO: Carros muito distantes (p pequeno) criam spray 
-                // apenas em alguns frames para economizar CPU sem sumir do horizonte.
-                let shouldDrawSpray = true;
-                if (e.lastP < 0.2 && gameTick % 3 !== 0) shouldDrawSpray = false;
-                if (window.innerWidth < 600 && gameTick % 2 !== 0) shouldDrawSpray = false;
+                // OTIMIZAÇÃO APENAS DE FREQUÊNCIA (Para não pesar no celular)
+                // Não removemos o spray, apenas reduzimos a densidade se estiver muito longe
+                let skipFrame = false;
+                if (window.innerWidth < 600) {
+                    if (e.lastP < 0.2 && gameTick % 3 !== 0) skipFrame = true; // Longe: desenha 1 de 3 frames
+                    else if (gameTick % 2 !== 0) skipFrame = true;            // Perto: desenha 1 de 2 frames
+                }
 
-                if (shouldDrawSpray) {
+                if (!skipFrame) {
                     let carHeightScale = 11 * (e.lastP * 0.85);
                     let groundY = e.lastY + carHeightScale;
                     let wheelOffset = 18 * (e.lastP * 0.85);
 
+                    // Cria spray nos dois pneus
                     createWheelSpray(e.lastX - wheelOffset, groundY, e.lastP * 0.85);
                     createWheelSpray(e.lastX + wheelOffset, groundY, e.lastP * 0.85);
                 }
             }
         });
 
-        // 3. Chuva no vidro (Densidade equilibrada)
+        // 3. Gotas de chuva no ecrã
         let rainDensity = (window.innerWidth < 600) ? 8 : 12;
         for (let i = 0; i < rainDensity; i++) {
             raindrops.push({ x: Math.random() * 400, y: -20, s: Math.random() * 10 + 22 });
