@@ -262,7 +262,7 @@ function togglePause() {
     }
 }
 
-    function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasFog = false, isRainy = false) {
+     function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasFog = false, isRainy = false) {
     let s = scale * 1.2;
     if (s < 0.02 || s > 30) return;
 
@@ -312,7 +312,7 @@ function togglePause() {
         ctx.closePath(); ctx.fill();
     }
 
-    // --- CAMADA 3: CORPO, PNEUS E CAPACETE ---
+    // --- CAMADA 3: CORPO E PNEUS ---
     ctx.fillStyle = "#111"; 
     ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8); // Roda esquerda
     ctx.fillRect(w * 0.25, -h * 0.1, w * 0.25, h * 0.8); // Roda direita
@@ -321,16 +321,28 @@ function togglePause() {
     ctx.fillRect(-w * 0.25, h * 0.1, w * 0.5, h * 0.4);  // Cockpit
     ctx.fillRect(-w * 0.5, -h * 0.3, w, h * 0.2);        // Aerofólio
 
-    // DETALHE: CAPACETE DO PILOTO
-    ctx.fillStyle = isPlayer ? "#FFFF00" : "#FFFFFF"; // Amarelo para jogador, Branco para rivais
+    // --- CAMADA 4: CAPACETE (IDENTIFICAÇÃO DE EQUIPE) ---
+    // Se for o jogador, mantém o icônico amarelo. Se for inimigo, 
+    // usamos uma cor baseada na cor do carro para parecer uniforme de equipe.
+    if (isPlayer) {
+        ctx.fillStyle = "#FFFF00"; // Amarelo clássico para você
+    } else {
+        // Cria uma variação um pouco mais clara da cor do carro para o capacete
+        ctx.fillStyle = color; 
+    }
+    
     ctx.beginPath();
-    ctx.arc(0, h * 0.1, 3.5 * s, 0, Math.PI, true); 
+    // Desenha apenas o topo arredondado (capacete visto de trás)
+    ctx.arc(0, h * 0.1, 3.8 * s, 0, Math.PI, true); 
     ctx.fill();
-    // Viseira
-    ctx.fillStyle = "#000";
-    ctx.fillRect(-2 * s, h * 0.03, 4 * s, 1.5 * s);
 
-    // --- CAMADA 4: LANTERNAS COM BRILHO ---
+    // Detalhe de brilho no topo do capacete para dar volume
+    ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+    ctx.beginPath();
+    ctx.arc(1 * s, h * 0.05, 1.5 * s, 0, Math.PI * 2);
+    ctx.fill();
+
+    // --- CAMADA 5: LANTERNAS COM BRILHO ---
     if (nightMode || hasFog || isRainy) {
         ctx.save();
         const headlightSize = 2.8 * s; 
