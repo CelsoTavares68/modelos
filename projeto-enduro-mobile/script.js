@@ -400,9 +400,9 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasF
     else {
         if (offRoad) speed = Math.min(speed + 0.01, 2); 
         else {
+            // AJUSTE DE PERFORMANCE: Mantendo a aceleração constante mesmo na chuva
             let accelBase = (speed < 5) ? 0.02 : 0.06;
-            let finalAccel = isRaining ? accelBase * 1.2 : accelBase;
-            speed = Math.min(speed + finalAccel, maxSpeed);
+            speed = Math.min(speed + accelBase, maxSpeed);
         }
     }
 
@@ -418,8 +418,9 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasF
     roadCurve += (targetCurve - roadCurve) * curveSpeed;
 
     enemies.forEach((enemy) => {
-        let rainFactor = isRaining ? 0.9 : 1.0;
-        let effectiveEnemySpeed = (speed < 15) ? 15 : (enemy.v * rainFactor); 
+        // AJUSTE DE INIMIGOS: Eles não ficam lentos na chuva, mantendo a dificuldade equilibrada
+        let effectiveEnemySpeed = (speed < 15) ? 15 : enemy.v; 
+        
         enemy.z -= (speed - effectiveEnemySpeed);
         let p = 1 - (enemy.z / 4000); 
         let roadWidth = 20 + p * 800;
