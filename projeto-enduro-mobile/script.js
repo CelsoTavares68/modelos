@@ -32,7 +32,7 @@ let passTotalOdo = parseInt(localStorage.getItem('enduro_passTotalOdo')) || 0;  
 let passTotalBest = parseInt(localStorage.getItem('enduro_passTotalBest')) || 0; // 4. Recorde total histórico
 
 const maxSpeed = 19; 
-const STAGE_DURATION = 2600; 
+const STAGE_DURATION = 2500; 
 const DAY_DURATION = STAGE_DURATION * 9; 
 let currentTime = 0; 
 
@@ -429,34 +429,30 @@ function togglePause() {
         }
     } else { sfxChuva.pause(); }
 
+     // --- LÓGICA DE SPRAY NA CHUVA (CORRIGIDA) ---
     if (isRaining) {
-        for (let i = 0; i < 12; i++) raindrops.push({ x: Math.random() * 400, y: -20, s: Math.random() * 10 + 22 });
-        
-        // NOVO: Gerar spray das rodas
-         if (isRaining && speed > 2) {
-    // 1. SPRAY DO JOGADOR (Dividido em duas rodas)
-    // Roda Esquerda do Jogador
-    createWheelSpray(200 - 15, 360, 0.85); 
-    // Roda Direita do Jogador
-    createWheelSpray(200 + 15, 360, 0.85); 
-
-    enemies.forEach(e => {
-        if (e.lastP > 0.01) { 
-            // CÁLCULO DA POSIÇÃO:
-            let carHeightScale = 11 * (e.lastP * 0.85);
-            let groundY = e.lastY + carHeightScale;
-            
-            // Largura visual do carro para afastar o spray para as rodas
-            let wheelOffset = 18 * (e.lastP * 0.85);
-
-            // 2. SPRAY DOS INIMIGOS (Dividido em duas rodas)
-            // Roda Esquerda do Inimigo
-            createWheelSpray(e.lastX - wheelOffset, groundY, e.lastP * 0.85);
-            // Roda Direita do Inimigo
-            createWheelSpray(e.lastX + wheelOffset, groundY, e.lastP * 0.85);
+        // 1. Spray do Jogador: Só aparece se o jogador estiver em movimento (speed > 2)
+        if (speed > 2) {
+            createWheelSpray(200 - 15, 360, 0.85); 
+            createWheelSpray(200 + 15, 360, 0.85); 
         }
-    });
-}
+
+        // 2. Spray dos Inimigos: Depende da velocidade deles, não da tua!
+        enemies.forEach(e => {
+            // e.sp é a velocidade individual do inimigo. 
+            // Se ele estiver a mover-se (e.sp > 0), o spray deve aparecer.
+            if (e.lastP > 0.01 && e.sp > 0) { 
+                let carHeightScale = 11 * (e.lastP * 0.85);
+                let groundY = e.lastY + carHeightScale;
+                let wheelOffset = 18 * (e.lastP * 0.85);
+
+                createWheelSpray(e.lastX - wheelOffset, groundY, e.lastP * 0.85);
+                createWheelSpray(e.lastX + wheelOffset, groundY, e.lastP * 0.85);
+            }
+        });
+
+        // Criação das gotas de chuva no ecrã
+        for (let i = 0; i < 12; i++) raindrops.push({ x: Math.random() * 400, y: -20, s: Math.random() * 10 + 22 });
     }
 
     // Atualizar física da chuva e do spray

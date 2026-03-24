@@ -83,6 +83,11 @@ canvas {
     min-height: 0; 
 }
 
+canvas {
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+
 /* 6. SETAS MOBILE - POSICIONAMENTO */
 .mobile-controls {
     width: 100%;
