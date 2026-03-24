@@ -240,17 +240,15 @@ function togglePause() {
 }
 
    function createWheelSpray(x, y, scale) {
-    // Geramos 6 partículas para um efeito mais preenchido em V
+    // 6 partículas para um efeito em V mais visível
     for (let i = 0; i < 6; i++) {
-        // Define se a partícula vai para a esquerda (-1) ou direita (1)
-        let side = (i % 2 === 0) ? -1 : 1;
-        
+        let side = (i % 2 === 0) ? -1 : 1; // Alterna entre esquerda e direita
         wheelSprays.push({
-            x: x + (side * 10 * scale), // Começa levemente deslocado do centro da roda
+            x: x + (side * 10 * scale), 
             y: y,
-            // vx: joga a partícula para os lados em V, vy: joga para cima e para trás
+            // vx define a abertura do V, vy joga para trás
             vx: (side * (Math.random() * 3 + 2)) * scale, 
-            vy: -(Math.random() * 3 + 1) * scale, 
+            vy: -(Math.random() * 2 + 1) * scale, 
             life: 1.0,
             opacity: 0.4 + Math.random() * 0.3
         });
@@ -410,12 +408,9 @@ function togglePause() {
 
     // Atualizar física da chuva e do spray
     raindrops.forEach((r, i) => { r.y += r.s; if (r.y > 400) raindrops.splice(i, 1); });
-     for (let i = wheelSprays.length - 1; i >= 0; i--) {
+    for (let i = wheelSprays.length - 1; i >= 0; i--) {
         let p = wheelSprays[i];
-        p.x += p.vx; 
-        p.y += p.vy; 
-        p.vy += 0.1; // Diminuí de 0.2 para 0.1 para as gotas flutuarem um pouco mais
-        p.life -= 0.04; // Diminuí a perda de vida para o rastro ser mais longo
+        p.x += p.vx; p.y += p.vy; p.vy += 0.2; p.life -= 0.08;
         if (p.life <= 0) wheelSprays.splice(i, 1);
     }
     if (lightningAlpha > 0) lightningAlpha -= 0.05;
@@ -447,11 +442,14 @@ function togglePause() {
     if (keys.ArrowLeft) leftPressTime++; else leftPressTime = 0;
     if (keys.ArrowRight) rightPressTime++; else rightPressTime = 0;
 
-    let isBraking = (leftPressTime > 75 || rightPressTime > 75 || keys.ArrowDown); 
+     let isBraking = (leftPressTime > 75 || rightPressTime > 75 || keys.ArrowDown); 
     if (isBraking) speed = Math.max(speed - 0.15, 0); 
     else {
         if (offRoad) speed = Math.min(speed + 0.01, 2); 
-        else speed = Math.min(speed + ((speed < 5) ? 0.02 : 0.06), maxSpeed);
+        else {
+            // Mantém a aceleração máxima original de 0.06 até chegar em 19
+            speed = Math.min(speed + ((speed < 5) ? 0.02 : 0.06), maxSpeed);
+        }
     }
 
     playerX -= (roadCurve * 0.06) * (speed / maxSpeed); 
@@ -584,7 +582,7 @@ function togglePause() {
             ctx.strokeStyle = `rgba(200, 230, 255, ${p.life * p.opacity})`;
             ctx.beginPath();
             ctx.moveTo(p.x, p.y);
-            // O traço segue a direção da velocidade da partícula (vx e vy)
+            // O traço segue a direção vx e vy da partícula
             ctx.lineTo(p.x + p.vx, p.y + p.vy); 
             ctx.stroke();
         });
