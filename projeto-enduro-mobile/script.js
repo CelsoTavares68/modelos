@@ -239,19 +239,20 @@ function togglePause() {
     updateUI();     // Atualiza a interface visual imediatamente
 }
 
-  function createWheelSpray(x, y, scale) {
-    // 4 partículas para manter a intensidade
-    for (let i = 0; i < 4; i++) {
+   function createWheelSpray(x, y, scale) {
+    // Geramos 6 partículas para um efeito mais preenchido em V
+    for (let i = 0; i < 6; i++) {
+        // Define se a partícula vai para a esquerda (-1) ou direita (1)
+        let side = (i % 2 === 0) ? -1 : 1;
+        
         wheelSprays.push({
-            // O segredo é somar o deslocamento (random) multiplicado pela escala
-            // ao valor X e Y já transformados do carro
-            x: x + (Math.random() - 0.5) * (45 * scale), 
-            y: y + (2 * scale), 
-            vx: (Math.random() - 0.5) * 3, 
-            vy: -Math.random() * 2, 
-            life: 1.0, 
-            // Garante tamanho mínimo visível no horizonte
-            s: Math.max(scale * (Math.random() * 4 + 2), 0.7) 
+            x: x + (side * 10 * scale), // Começa levemente deslocado do centro da roda
+            y: y,
+            // vx: joga a partícula para os lados em V, vy: joga para cima e para trás
+            vx: (side * (Math.random() * 3 + 2)) * scale, 
+            vy: -(Math.random() * 3 + 1) * scale, 
+            life: 1.0,
+            opacity: 0.4 + Math.random() * 0.3
         });
     }
 }
@@ -409,9 +410,12 @@ function togglePause() {
 
     // Atualizar física da chuva e do spray
     raindrops.forEach((r, i) => { r.y += r.s; if (r.y > 400) raindrops.splice(i, 1); });
-    for (let i = wheelSprays.length - 1; i >= 0; i--) {
+     for (let i = wheelSprays.length - 1; i >= 0; i--) {
         let p = wheelSprays[i];
-        p.x += p.vx; p.y += p.vy; p.vy += 0.2; p.life -= 0.08;
+        p.x += p.vx; 
+        p.y += p.vy; 
+        p.vy += 0.1; // Diminuí de 0.2 para 0.1 para as gotas flutuarem um pouco mais
+        p.life -= 0.04; // Diminuí a perda de vida para o rastro ser mais longo
         if (p.life <= 0) wheelSprays.splice(i, 1);
     }
     if (lightningAlpha > 0) lightningAlpha -= 0.05;
@@ -577,10 +581,12 @@ function togglePause() {
 
         // NOVO: Desenhar o spray das rodas (gotículas voando)
         wheelSprays.forEach(p => {
-            ctx.fillStyle = `rgba(200, 230, 255, ${p.life * 0.6})`; 
+            ctx.strokeStyle = `rgba(200, 230, 255, ${p.life * p.opacity})`;
             ctx.beginPath();
-            ctx.arc(p.x, p.y, p.s, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.moveTo(p.x, p.y);
+            // O traço segue a direção da velocidade da partícula (vx e vy)
+            ctx.lineTo(p.x + p.vx, p.y + p.vy); 
+            ctx.stroke();
         });
     }
 
