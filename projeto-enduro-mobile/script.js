@@ -31,7 +31,7 @@ let passDayBest = parseInt(localStorage.getItem('enduro_passDayBest')) || 0;    
 let passTotalOdo = parseInt(localStorage.getItem('enduro_passTotalOdo')) || 0;   // 3. Odômetro total de carros
 let passTotalBest = parseInt(localStorage.getItem('enduro_passTotalBest')) || 0; // 4. Recorde total histórico
 
-const maxSpeed = 19; 
+const maxSpeed = 20; 
 const STAGE_DURATION = 2700; 
 const DAY_DURATION = STAGE_DURATION * 9; 
 let currentTime = 0; 
@@ -262,18 +262,16 @@ function togglePause() {
     }
 }
 
-   function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasFog = false, isRainy = false) {
+    function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasFog = false, isRainy = false) {
     let s = scale * 1.2;
-    // Proteção para não desenhar escalas inválidas que podem travar o canvas
     if (s < 0.02 || s > 30) return;
 
-    let w = 45 * s; // Largura do carro proporcional à escala
-    let h = 22 * s; // Altura do carro proporcional à escala
+    let w = 45 * s; 
+    let h = 22 * s; 
     
     ctx.save();
     ctx.translate(x, y);
 
-    // Se for o jogador, inclina o carro levemente de acordo com a curva da estrada
     if(isPlayer) ctx.rotate((roadCurve / 80) * Math.PI / 180);
     
     let bodyColor = nightMode ? "#000000" : color;
@@ -281,29 +279,25 @@ function togglePause() {
     const leftX = -w * 0.2;
     const rightX = w * 0.2;
 
-    // --- CAMADA 1: REFLEXOS NO ASFALTO (APENAS NA CHUVA) ---
+    // --- CAMADA 1: REFLEXOS NO ASFALTO (CHUVA) ---
     if (isRainy) {
         ctx.save();
-        
-        // Reflexo Branco (Luzes dianteiras no chão molhado)
         let whiteReflect = ctx.createLinearGradient(0, 0, 0, -h * 2);
         whiteReflect.addColorStop(0, nightMode ? "rgba(255, 255, 255, 0.3)" : "rgba(255, 255, 255, 0.1)");
         whiteReflect.addColorStop(1, "rgba(255, 255, 255, 0)");
         ctx.fillStyle = whiteReflect;
         ctx.fillRect(-w * 0.3, -h * 0.5, w * 0.6, h * 1.5);
 
-        // Reflexo Vermelho (Lanternas traseiras no chão molhado)
         let redReflect = ctx.createLinearGradient(0, h * 0.5, 0, h * 1.5);
         redReflect.addColorStop(0, "rgba(255, 0, 0, 0.4)");
         redReflect.addColorStop(1, "rgba(255, 0, 0, 0)");
         ctx.fillStyle = redReflect;
         ctx.fillRect(leftX - (2*s), h * 0.4, 4*s, h * 0.8);
         ctx.fillRect(rightX - (2*s), h * 0.4, 4*s, h * 0.8);
-        
         ctx.restore();
     }
 
-    // --- CAMADA 2: FEIXE DE LUZ (EFEITO DE FAROL NO AR) ---
+    // --- CAMADA 2: FEIXE DE LUZ ---
     if (nightMode || hasFog || isRainy) {
         const coneLength = h * 2.5; 
         const coneExpansion = w * 1.2; 
@@ -312,50 +306,43 @@ function togglePause() {
         gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
         ctx.fillStyle = gradient;
         ctx.beginPath();
-        ctx.moveTo(leftX, lightY); 
-        ctx.lineTo(rightX, lightY);
+        ctx.moveTo(leftX, lightY); ctx.lineTo(rightX, lightY);
         ctx.lineTo(coneExpansion / 2, lightY - coneLength);
         ctx.lineTo(-coneExpansion / 2, lightY - coneLength);
-        ctx.closePath(); 
-        ctx.fill();
+        ctx.closePath(); ctx.fill();
     }
 
-    // --- CAMADA 3: CORPO DO CARRO E PNEUS ---
-    // Pneus/Sombra base
+    // --- CAMADA 3: CORPO, PNEUS E CAPACETE ---
     ctx.fillStyle = "#111"; 
     ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8); // Roda esquerda
     ctx.fillRect(w * 0.25, -h * 0.1, w * 0.25, h * 0.8); // Roda direita
     
-    // Fuselagem e Aerofólio
     ctx.fillStyle = bodyColor; 
-    ctx.fillRect(-w * 0.25, h * 0.1, w * 0.5, h * 0.4);  // Cockpit/Corpo
-    ctx.fillRect(-w * 0.5, -h * 0.3, w, h * 0.2);        // Aerofólio Traseiro
+    ctx.fillRect(-w * 0.25, h * 0.1, w * 0.5, h * 0.4);  // Cockpit
+    ctx.fillRect(-w * 0.5, -h * 0.3, w, h * 0.2);        // Aerofólio
 
-    // --- CAMADA 4: LANTERNAS COM BRILHO (GLOW) ---
+    // DETALHE: CAPACETE DO PILOTO
+    ctx.fillStyle = isPlayer ? "#FFFF00" : "#FFFFFF"; // Amarelo para jogador, Branco para rivais
+    ctx.beginPath();
+    ctx.arc(0, h * 0.1, 3.5 * s, 0, Math.PI, true); 
+    ctx.fill();
+    // Viseira
+    ctx.fillStyle = "#000";
+    ctx.fillRect(-2 * s, h * 0.03, 4 * s, 1.5 * s);
+
+    // --- CAMADA 4: LANTERNAS COM BRILHO ---
     if (nightMode || hasFog || isRainy) {
-        ctx.save(); 
-        
+        ctx.save();
         const headlightSize = 2.8 * s; 
-        
-        // Efeito de iluminação intensa
-        ctx.shadowBlur = 15 * s;      
-        ctx.shadowColor = "#ff0000";  
-        ctx.fillStyle = "#ff5555";    
-
-        // Lanterna Esquerda
-        ctx.beginPath(); 
-        ctx.arc(leftX, lightY, headlightSize, 0, Math.PI * 2); 
-        ctx.fill();
-
-        // Lanterna Direita
-        ctx.beginPath(); 
-        ctx.arc(rightX, lightY, headlightSize, 0, Math.PI * 2); 
-        ctx.fill();
-        
-        ctx.restore(); 
+        ctx.shadowBlur = 15 * s;
+        ctx.shadowColor = "#ff0000";
+        ctx.fillStyle = "#ff5555";
+        ctx.beginPath(); ctx.arc(leftX, lightY, headlightSize, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(rightX, lightY, headlightSize, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
     }
 
-    ctx.restore(); // Finaliza todas as transformações deste carro específico
+    ctx.restore();
 }
 
  function update() {
@@ -537,7 +524,7 @@ function togglePause() {
         enemy.lastY = 200 + (p * 140); enemy.lastX = screenX; enemy.lastP = p;
     });
 
-    if (gameTick % 75 === 0 && enemies.length < 100) {
+    if (gameTick % 70 === 0 && enemies.length < 100) {
         enemies.push({ 
             lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 4.0, 
             color: ["#F0F", "#0FF", "#0F0", "#FF0", "#f47d28", "#a5a3a3", "rgb(0, 26, 255)", "rgb(27, 104, 27)" ][Math.floor(Math.random() * 8)],
