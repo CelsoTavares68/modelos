@@ -238,17 +238,20 @@ function togglePause() {
     saveProgress(); // Salva o estado atual (com passDayNow zerado) no LocalStorage
     updateUI();     // Atualiza a interface visual imediatamente
 }
- 
-function createWheelSpray(x, y, scale) {
-    for (let i = 0; i < 6; i++) {
-        let side = (i % 2 === 0) ? -1 : 1; 
+
+  function createWheelSpray(x, y, scale) {
+    // 4 partículas para manter a intensidade
+    for (let i = 0; i < 4; i++) {
         wheelSprays.push({
-            x: x + (side * 10 * scale), 
-            y: y,
-            vx: (side * (Math.random() * 3 + 2)) * scale, 
-            vy: -(Math.random() * 2 + 1) * scale, 
-            life: 1.0,
-            opacity: 0.4 + Math.random() * 0.3
+            // O segredo é somar o deslocamento (random) multiplicado pela escala
+            // ao valor X e Y já transformados do carro
+            x: x + (Math.random() - 0.5) * (45 * scale), 
+            y: y + (2 * scale), 
+            vx: (Math.random() - 0.5) * 3, 
+            vy: -Math.random() * 2, 
+            life: 1.0, 
+            // Garante tamanho mínimo visível no horizonte
+            s: Math.max(scale * (Math.random() * 4 + 2), 0.7) 
         });
     }
 }
@@ -440,15 +443,12 @@ function createWheelSpray(x, y, scale) {
     if (keys.ArrowLeft) leftPressTime++; else leftPressTime = 0;
     if (keys.ArrowRight) rightPressTime++; else rightPressTime = 0;
 
-     let isBraking = (leftPressTime > 75 || rightPressTime > 75 || keys.ArrowDown); 
+    let isBraking = (leftPressTime > 75 || rightPressTime > 75 || keys.ArrowDown); 
     if (isBraking) speed = Math.max(speed - 0.15, 0); 
     else {
         if (offRoad) speed = Math.min(speed + 0.01, 2); 
-         else {
-        // ACELERAÇÃO DIRETA PARA 19 (maxSpeed)
-        speed = Math.min(speed + 0.06, maxSpeed); 
+        else speed = Math.min(speed + ((speed < 5) ? 0.02 : 0.06), maxSpeed);
     }
-}
 
     playerX -= (roadCurve * 0.06) * (speed / maxSpeed); 
     if (keys.ArrowLeft) playerX -= 4.2;
@@ -577,13 +577,12 @@ function createWheelSpray(x, y, scale) {
 
         // NOVO: Desenhar o spray das rodas (gotículas voando)
         wheelSprays.forEach(p => {
-        ctx.strokeStyle = `rgba(200, 230, 255, ${p.life * p.opacity})`;
-        ctx.beginPath();
-        ctx.moveTo(p.x, p.y);
-        ctx.lineTo(p.x + p.vx, p.y + p.vy); // Traço na direção do movimento
-        ctx.stroke();
-    });
-}
+            ctx.fillStyle = `rgba(200, 230, 255, ${p.life * 0.6})`; 
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.s, 0, Math.PI * 2);
+            ctx.fill();
+        });
+    }
 
     // Relâmpago frontal em tempestades
     if (lightningAlpha > 0 && (currentStage === 3 || currentStage === 7)) { 
