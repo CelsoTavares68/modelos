@@ -70,22 +70,13 @@ body, html {
 .stat-box .value { font-size: 10px; color: #ffff00; font-weight: bold; }
 
  /* 5. O JOGO - AJUSTE DINÂMICO */
-canvas { 
+ canvas { 
     flex: 1; 
     display: block;
-    width: auto;
-    max-width: 100%;
+    width: 100%; /* Garante que use a largura do container */
+    max-width: 400px; /* Não deixa esticar demais e perder performance */
     height: auto;
-    max-height: 100%;
-    margin: 0 auto; 
-    background: #000;
-    object-fit: contain;
-    min-height: 0; 
-}
-
-canvas {
-    image-rendering: pixelated;
-    image-rendering: crisp-edges;
+    image-rendering: pixelated; /* Mantém o visual retrô e é mais leve */
 }
 
 /* 6. SETAS MOBILE - POSICIONAMENTO */
