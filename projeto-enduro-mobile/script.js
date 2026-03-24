@@ -87,7 +87,8 @@ function drawFinishLine(y, roadWidth, xPos) {
     }
 }
 
- function updateUI() {
+// --- SUA FUNÇÃO DE ATUALIZAÇÃO DO APP RESTAURADA ---
+function updateApp() {
     if(document.getElementById('ui-dist')) document.getElementById('ui-dist').innerText = (playerDist / 1000).toFixed(1) + " KM";
     if(document.getElementById('ui-day-best')) document.getElementById('ui-day-best').innerText = dayBestRecord.toFixed(1) + " KM";
     if(document.getElementById('ui-total-now')) document.getElementById('ui-total-now').innerText = (odometerNow / 1000).toFixed(1) + " KM";
@@ -98,7 +99,7 @@ function drawFinishLine(y, roadWidth, xPos) {
     if(document.getElementById('ui-passes-total-best')) document.getElementById('ui-passes-total-best').innerText = passTotalBest;
 }
 
- function saveProgress() {
+function saveProgress() {
     const data = { 
         dayNumber, carsRemaining, playerDist, currentTime, odometerNow,
         passDayNow, passTotalOdo 
@@ -190,7 +191,7 @@ function resetGame() {
     passTotalOdo = 0; 
     passDayNow = 0; 
     resetDay();
-    updateUI(); 
+    updateApp(); 
     if (gameState !== "PLAYING") { 
         gameState = "PLAYING"; 
         update(); 
@@ -216,7 +217,7 @@ function resetDay() {
         sfxChuva.currentTime = 0; 
     }
     saveProgress(); 
-    updateUI();     
+    updateApp();     
 }
 
 function createWheelSpray(x, y, scale, currentSpeed) {
@@ -292,7 +293,7 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasF
     ctx.restore();
 }
 
- function update() {
+function update() {
     if (isPaused) return; 
     let currentStage = Math.min(Math.floor(currentTime / STAGE_DURATION), 8);
     let isRaining = (currentStage === 3 || currentStage === 7);
@@ -338,7 +339,8 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasF
         localStorage.setItem('enduro_passTotalBest', passTotalBest);
     }
 
-    updateUI();
+    // --- CHAMADA DA SUA FUNÇÃO DE ATUALIZAÇÃO REINSERIDA ---
+    updateApp();
 
     if (isRaining || warningLightning) {
         if (isRaining && sfxChuva.paused && audioCtx.state === 'running') sfxChuva.play().catch(e => {}); 
@@ -400,7 +402,7 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasF
     else {
         if (offRoad) speed = Math.min(speed + 0.01, 2); 
         else {
-            // AJUSTE DE PERFORMANCE: Mantendo a aceleração constante mesmo na chuva
+            // VELOCIDADE NA CHUVA: Mantendo aceleração constante
             let accelBase = (speed < 5) ? 0.02 : 0.06;
             speed = Math.min(speed + accelBase, maxSpeed);
         }
@@ -418,9 +420,7 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasF
     roadCurve += (targetCurve - roadCurve) * curveSpeed;
 
     enemies.forEach((enemy) => {
-        // AJUSTE DE INIMIGOS: Eles não ficam lentos na chuva, mantendo a dificuldade equilibrada
         let effectiveEnemySpeed = (speed < 15) ? 15 : enemy.v; 
-        
         enemy.z -= (speed - effectiveEnemySpeed);
         let p = 1 - (enemy.z / 4000); 
         let roadWidth = 20 + p * 800;
@@ -454,7 +454,7 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasF
     requestAnimationFrame(update);
 }
 
- function draw(colors, isRaining, currentStage) {
+function draw(colors, isRaining, currentStage) {
     ctx.fillStyle = colors.sky; ctx.fillRect(0, 0, 400, 200);
     ctx.fillStyle = colors.grass; ctx.fillRect(0, 200, 400, 200);
     let mtShift = (roadCurve * 0.6);
