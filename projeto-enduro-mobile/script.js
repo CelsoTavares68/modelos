@@ -393,18 +393,24 @@ function togglePause() {
         for (let i = 0; i < 12; i++) raindrops.push({ x: Math.random() * 400, y: -20, s: Math.random() * 10 + 22 });
         
         // NOVO: Gerar spray das rodas
-        if (isRaining && speed > 2) {
-        // Spray do jogador (posição fixa na tela)
-        createWheelSpray(200, 360, 0.85); 
+         if (isRaining && speed > 2) {
+    // Spray do jogador (posição fixa na tela já está boa)
+    createWheelSpray(200, 360, 0.85); 
 
-        enemies.forEach(e => {
-            // Removemos a trava de 0.3. Agora, se o carro existir (lastP > 0),
-            // ele já começa a soltar spray lá no fundo.
-            if (e.lastP > 0.01) { 
-                createWheelSpray(e.lastX, e.lastY, e.lastP * 0.85);
-            }
-        });
-    }
+    enemies.forEach(e => {
+        if (e.lastP > 0.01) { 
+            // CÁLCULO DA ALTURA VISUAL:
+            // No drawF1Car, a altura base 'h' é 22 * escala.
+            // Para o spray ficar no chão, pegamos o centro (e.lastY) 
+            // e somamos metade da altura do carro (11 * escala).
+            let carHeightScale = 11 * (e.lastP * 0.85);
+            let groundY = e.lastY + carHeightScale;
+
+            // Chamada com a nova posição vertical no chão
+            createWheelSpray(e.lastX, groundY, e.lastP * 0.85);
+        }
+    });
+}
     }
 
     // Atualizar física da chuva e do spray
