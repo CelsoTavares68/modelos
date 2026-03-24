@@ -424,20 +424,26 @@ function togglePause() {
         
         // NOVO: Gerar spray das rodas
          if (isRaining && speed > 2) {
-    // Spray do jogador (posição fixa na tela já está boa)
-    createWheelSpray(200, 360, 0.85); 
+    // 1. SPRAY DO JOGADOR (Dividido em duas rodas)
+    // Roda Esquerda do Jogador
+    createWheelSpray(200 - 15, 360, 0.85); 
+    // Roda Direita do Jogador
+    createWheelSpray(200 + 15, 360, 0.85); 
 
     enemies.forEach(e => {
         if (e.lastP > 0.01) { 
-            // CÁLCULO DA ALTURA VISUAL:
-            // No drawF1Car, a altura base 'h' é 22 * escala.
-            // Para o spray ficar no chão, pegamos o centro (e.lastY) 
-            // e somamos metade da altura do carro (11 * escala).
+            // CÁLCULO DA POSIÇÃO:
             let carHeightScale = 11 * (e.lastP * 0.85);
             let groundY = e.lastY + carHeightScale;
+            
+            // Largura visual do carro para afastar o spray para as rodas
+            let wheelOffset = 18 * (e.lastP * 0.85);
 
-            // Chamada com a nova posição vertical no chão
-            createWheelSpray(e.lastX, groundY, e.lastP * 0.85);
+            // 2. SPRAY DOS INIMIGOS (Dividido em duas rodas)
+            // Roda Esquerda do Inimigo
+            createWheelSpray(e.lastX - wheelOffset, groundY, e.lastP * 0.85);
+            // Roda Direita do Inimigo
+            createWheelSpray(e.lastX + wheelOffset, groundY, e.lastP * 0.85);
         }
     });
 }
