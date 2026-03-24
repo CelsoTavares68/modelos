@@ -350,7 +350,19 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasF
     });
 
     if (gameTick % 75 === 0 && enemies.length < 100) {
-        enemies.push({ lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 5.0, color: "cyan", isOvertaken: false });
+        // Restaurando o array com as suas 8 cores originais
+        const coresOriginais = [
+            "#F0F", "#0FF", "#0F0", "#FF0", 
+            "#f47d28", "#a5a3a3", "rgb(0, 26, 255)", "rgb(27, 104, 27)"
+        ];
+        
+        enemies.push({ 
+            lane: (Math.random() - 0.5) * 1.8, 
+            z: 4000, 
+            v: 5.0, 
+            color: coresOriginais[Math.floor(Math.random() * coresOriginais.length)],
+            isOvertaken: false 
+        });
     }
 
     enemies = enemies.filter(e => e.z > -18000 && e.z < 6000);
