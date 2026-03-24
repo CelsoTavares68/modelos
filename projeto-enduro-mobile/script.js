@@ -417,7 +417,7 @@ function togglePause() {
 
     updateUI();
 
-    // --- LÓGICA DE CLIMA E PARTÍCULAS ---
+    // --- LÓGICA DE CLIMA E RELÂMPAGOS ---
     if (isRaining || warningLightning) {
         if (isRaining && sfxChuva.paused && audioCtx.state === 'running') sfxChuva.play().catch(e => {}); 
         if (Math.random() > 0.996) { 
@@ -429,33 +429,27 @@ function togglePause() {
         }
     } else { sfxChuva.pause(); }
 
-     // --- LÓGICA DE SPRAY NA CHUVA (CORRIGIDA) ---
+    // --- LÓGICA DE SPRAY NA CHUVA ---
     if (isRaining) {
-        // 1. Spray do Jogador: Só aparece se o jogador estiver em movimento (speed > 2)
         if (speed > 2) {
             createWheelSpray(200 - 15, 360, 0.85); 
             createWheelSpray(200 + 15, 360, 0.85); 
         }
 
-        // 2. Spray dos Inimigos: Depende da velocidade deles, não da tua!
         enemies.forEach(e => {
-            // e.sp é a velocidade individual do inimigo. 
-            // Se ele estiver a mover-se (e.sp > 0), o spray deve aparecer.
-            if (e.lastP > 0.01 && e.sp > 0) { 
+            if (e.lastP > 0.01 && (e.sp > 0 || e.v > 0)) { 
                 let carHeightScale = 11 * (e.lastP * 0.85);
                 let groundY = e.lastY + carHeightScale;
                 let wheelOffset = 18 * (e.lastP * 0.85);
-
                 createWheelSpray(e.lastX - wheelOffset, groundY, e.lastP * 0.85);
                 createWheelSpray(e.lastX + wheelOffset, groundY, e.lastP * 0.85);
             }
         });
 
-        // Criação das gotas de chuva no ecrã
         for (let i = 0; i < 12; i++) raindrops.push({ x: Math.random() * 400, y: -20, s: Math.random() * 10 + 22 });
     }
 
-    // Atualizar física da chuva e do spray
+    // Atualizar partículas
     raindrops.forEach((r, i) => { r.y += r.s; if (r.y > 400) raindrops.splice(i, 1); });
     for (let i = wheelSprays.length - 1; i >= 0; i--) {
         let p = wheelSprays[i];
@@ -464,21 +458,15 @@ function togglePause() {
     }
     if (lightningAlpha > 0) lightningAlpha -= 0.05;
 
-    // --- LÓGICA DE FIM DE DIA E TRANSIÇÃO ---
-     if (currentTime >= DAY_DURATION) {
-        // Mudança: Verificamos se carsRemaining é 0 OU se o estado já é GOAL_REACHED
+    // --- LÓGICA DE FIM DE DIA ---
+    if (currentTime >= DAY_DURATION) {
         if (carsRemaining <= 0 || gameState === "GOAL_REACHED") {
             if (gameState !== "WIN_DAY") { 
                 gameState = "WIN_DAY"; 
                 saveProgress(); 
-                // Pequeno delay para o jogador ver a mensagem de sucesso
-                setTimeout(() => { 
-                    dayNumber++; 
-                    resetDay(); 
-                }, 4000); 
+                setTimeout(() => { dayNumber++; resetDay(); }, 4000); 
             }
         } else { 
-            // Só entra em GAME_OVER se o tempo acabou E a meta não foi batida
             if (gameState !== "GAME_OVER" && gameState !== "WIN_DAY") { 
                 gameState = "GAME_OVER"; 
                 if (audioCtx.state === 'running') sfxDerrota.play();
@@ -515,6 +503,7 @@ function togglePause() {
     // --- INIMIGOS E COLISÃO ---
     enemies.forEach((enemy) => {
         let effectiveEnemySpeed = (speed < 15) ? 15 : enemy.v; 
+        enemy.sp = effectiveEnemySpeed; // Importante para o spray
         enemy.z -= (speed - effectiveEnemySpeed);
         let p = 1 - (enemy.z / 4000); 
         let roadWidth = 20 + p * 800;
