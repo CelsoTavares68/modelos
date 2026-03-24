@@ -75,6 +75,7 @@ videoDerrota.style.width = '400px'; videoDerrota.style.height = '345px';
 videoDerrota.style.display = 'none'; videoDerrota.style.zIndex = '10';
 videoDerrota.muted = true; videoDerrota.load();
 document.body.appendChild(videoDerrota);
+videoDerrota.onended = () => { videoDerrota.style.display = 'none'; };
 
 const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
 
@@ -191,14 +192,12 @@ function togglePause() {
     dayNumber = 1; 
     baseGoal = 200; 
     odometerNow = 0; 
-    
-    // CORREÇÃO: Usando o nome exato da variável que está na linha 34
     passTotalOdo = 0; 
     passDayNow = 0; 
     
+    // Ao chamar resetDay aqui, os vídeos já serão escondidos pela nova lógica acima
     resetDay();
     
-    // Atualiza o painel visual imediatamente
     updateUI(); 
     
     if (gameState !== "PLAYING") { 
@@ -207,25 +206,33 @@ function togglePause() {
     }
 }
 
-  function resetDay() {
+   function resetDay() {
     // 1. Reinicialização de Variáveis de Jogo
     currentTime = 0; 
     playerDist = 0; 
     speed = 0; 
     enemies = []; 
     
-    // 2. Reinicialização de Contadores de Ultrapassagem
-    passDayNow = 0; // Zera a contagem para o novo dia começar do zero
-    vitoriaTocada = false; // Permite que o som de vitória toque no próximo objetivo
+    // --- NOVO: Limpar vídeos da tela ---
+    videoDerrota.style.display = 'none';
+    videoDerrota.pause();
+    videoDerrota.currentTime = 0;
 
-    // 3. Definição da Meta de Carros (Dificuldade Progressiva)
+    videoVitoria.style.display = 'none';
+    videoVitoria.pause();
+    videoVitoria.currentTime = 0;
+
+    // 2. Reinicialização de Contadores
+    passDayNow = 0; 
+    vitoriaTocada = false; 
+
+    // 3. Meta de Carros
     if (dayNumber < 11) {
         carsRemaining = 200 + ((dayNumber - 1) * 10);
     } else {
         carsRemaining = 300;
     }
     
-    // 4. Estado do Jogo e Áudio
     gameState = "PLAYING"; 
     isPaused = false;
     
@@ -234,9 +241,8 @@ function togglePause() {
         sfxChuva.currentTime = 0; 
     }
 
-    // 5. Persistência
-    saveProgress(); // Salva o estado atual (com passDayNow zerado) no LocalStorage
-    updateUI();     // Atualiza a interface visual imediatamente
+    saveProgress(); 
+    updateUI();     
 }
 
   function createWheelSpray(x, y, scale) {
@@ -447,18 +453,21 @@ function togglePause() {
     if (lightningAlpha > 0) lightningAlpha -= 0.05;
 
     // --- LÓGICA DE FIM DE DIA E TRANSIÇÃO ---
-    if (currentTime >= DAY_DURATION) {
-        if (carsRemaining <= 0) {
+     if (currentTime >= DAY_DURATION) {
+        // Mudança: Verificamos se carsRemaining é 0 OU se o estado já é GOAL_REACHED
+        if (carsRemaining <= 0 || gameState === "GOAL_REACHED") {
             if (gameState !== "WIN_DAY") { 
                 gameState = "WIN_DAY"; 
                 saveProgress(); 
+                // Pequeno delay para o jogador ver a mensagem de sucesso
                 setTimeout(() => { 
                     dayNumber++; 
                     resetDay(); 
                 }, 4000); 
             }
         } else { 
-            if (gameState !== "GAME_OVER") { 
+            // Só entra em GAME_OVER se o tempo acabou E a meta não foi batida
+            if (gameState !== "GAME_OVER" && gameState !== "WIN_DAY") { 
                 gameState = "GAME_OVER"; 
                 if (audioCtx.state === 'running') sfxDerrota.play();
                 videoDerrota.style.display = 'block'; 
