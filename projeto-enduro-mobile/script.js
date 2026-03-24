@@ -238,15 +238,13 @@ function togglePause() {
     saveProgress(); // Salva o estado atual (com passDayNow zerado) no LocalStorage
     updateUI();     // Atualiza a interface visual imediatamente
 }
-
-   function createWheelSpray(x, y, scale) {
-    // 6 partículas para um efeito em V mais visível
+ 
+function createWheelSpray(x, y, scale) {
     for (let i = 0; i < 6; i++) {
-        let side = (i % 2 === 0) ? -1 : 1; // Alterna entre esquerda e direita
+        let side = (i % 2 === 0) ? -1 : 1; 
         wheelSprays.push({
             x: x + (side * 10 * scale), 
             y: y,
-            // vx define a abertura do V, vy joga para trás
             vx: (side * (Math.random() * 3 + 2)) * scale, 
             vy: -(Math.random() * 2 + 1) * scale, 
             life: 1.0,
@@ -446,11 +444,11 @@ function togglePause() {
     if (isBraking) speed = Math.max(speed - 0.15, 0); 
     else {
         if (offRoad) speed = Math.min(speed + 0.01, 2); 
-        else {
-            // Mantém a aceleração máxima original de 0.06 até chegar em 19
-            speed = Math.min(speed + ((speed < 5) ? 0.02 : 0.06), maxSpeed);
-        }
+         else {
+        // ACELERAÇÃO DIRETA PARA 19 (maxSpeed)
+        speed = Math.min(speed + 0.06, maxSpeed); 
     }
+}
 
     playerX -= (roadCurve * 0.06) * (speed / maxSpeed); 
     if (keys.ArrowLeft) playerX -= 4.2;
@@ -579,14 +577,13 @@ function togglePause() {
 
         // NOVO: Desenhar o spray das rodas (gotículas voando)
         wheelSprays.forEach(p => {
-            ctx.strokeStyle = `rgba(200, 230, 255, ${p.life * p.opacity})`;
-            ctx.beginPath();
-            ctx.moveTo(p.x, p.y);
-            // O traço segue a direção vx e vy da partícula
-            ctx.lineTo(p.x + p.vx, p.y + p.vy); 
-            ctx.stroke();
-        });
-    }
+        ctx.strokeStyle = `rgba(200, 230, 255, ${p.life * p.opacity})`;
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(p.x + p.vx, p.y + p.vy); // Traço na direção do movimento
+        ctx.stroke();
+    });
+}
 
     // Relâmpago frontal em tempestades
     if (lightningAlpha > 0 && (currentStage === 3 || currentStage === 7)) { 
