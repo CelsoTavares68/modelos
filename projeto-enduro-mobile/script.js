@@ -430,35 +430,42 @@ function togglePause() {
     } else { sfxChuva.pause(); }
 
     // --- LÓGICA DE SPRAY NA CHUVA ---
-     if (isRaining) {
-        // Spray do jogador: criado apenas em frames pares para poupar 50% de CPU
-        if (speed > 2 && gameTick % 2 === 0) {
+      // --- LÓGICA DE SPRAY NA CHUVA (VERSÃO FINALIZADA) ---
+    if (isRaining) {
+        // 1. Spray do Jogador (Apenas se estiver correndo)
+        if (speed > 2) {
             createWheelSpray(200 - 15, 360, 0.85); 
             createWheelSpray(200 + 15, 360, 0.85); 
         }
 
-        // Spray dos Inimigos: OTIMIZADO (Apenas os 3 mais próximos)
-        let nearEnemies = enemies
-            .filter(e => e.lastP > 0.15 && e.lastP < 1.0)
-            .sort((a, b) => b.lastP - a.lastP)
-            .slice(0, 3); // Limita a 3 carros para não travar o celular
-
-        nearEnemies.forEach(e => {
-            if (e.sp > 0 || e.v > 0) { 
-                let carHeightScale = 11 * (e.lastP * 0.85);
-                let groundY = e.lastY + carHeightScale;
-                let wheelOffset = 18 * (e.lastP * 0.85);
+        // 2. Spray dos Inimigos (Correção: Desde o horizonte até a ultrapassagem)
+        enemies.forEach(e => {
+            // Condição: O carro precisa estar visível (lastP > 0) 
+            // e ter velocidade própria (e.sp ou e.v)
+            if (e.lastP > 0.01 && (e.sp > 0 || e.v > 0)) { 
                 
-                if (gameTick % 2 === 0) { // Reduz densidade de partículas
+                // OTIMIZAÇÃO: Carros muito distantes (p pequeno) criam spray 
+                // apenas em alguns frames para economizar CPU sem sumir do horizonte.
+                let shouldDrawSpray = true;
+                if (e.lastP < 0.2 && gameTick % 3 !== 0) shouldDrawSpray = false;
+                if (window.innerWidth < 600 && gameTick % 2 !== 0) shouldDrawSpray = false;
+
+                if (shouldDrawSpray) {
+                    let carHeightScale = 11 * (e.lastP * 0.85);
+                    let groundY = e.lastY + carHeightScale;
+                    let wheelOffset = 18 * (e.lastP * 0.85);
+
                     createWheelSpray(e.lastX - wheelOffset, groundY, e.lastP * 0.85);
                     createWheelSpray(e.lastX + wheelOffset, groundY, e.lastP * 0.85);
                 }
             }
         });
 
-        // Chuva na tela: 6 gotas no celular, 12 no PC/Tablet
-        let rainDensity = (window.innerWidth < 600) ? 6 : 12;
-        for (let i = 0; i < rainDensity; i++) raindrops.push({ x: Math.random() * 400, y: -20, s: Math.random() * 10 + 22 });
+        // 3. Chuva no vidro (Densidade equilibrada)
+        let rainDensity = (window.innerWidth < 600) ? 8 : 12;
+        for (let i = 0; i < rainDensity; i++) {
+            raindrops.push({ x: Math.random() * 400, y: -20, s: Math.random() * 10 + 22 });
+        }
     }
 
     // Atualizar partículas
