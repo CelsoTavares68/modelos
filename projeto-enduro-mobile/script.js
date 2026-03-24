@@ -258,11 +258,16 @@ function togglePause() {
 
    function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasFog = false, isRainy = false) {
     let s = scale * 1.2;
+    // Proteção para não desenhar escalas inválidas que podem travar o canvas
     if (s < 0.02 || s > 30) return;
-    let w = 45 * s; let h = 22 * s;
+
+    let w = 45 * s; // Largura do carro proporcional à escala
+    let h = 22 * s; // Altura do carro proporcional à escala
     
     ctx.save();
     ctx.translate(x, y);
+
+    // Se for o jogador, inclina o carro levemente de acordo com a curva da estrada
     if(isPlayer) ctx.rotate((roadCurve / 80) * Math.PI / 180);
     
     let bodyColor = nightMode ? "#000000" : color;
@@ -270,23 +275,21 @@ function togglePause() {
     const leftX = -w * 0.2;
     const rightX = w * 0.2;
 
-    // --- REFLEXOS: ATIVADOS APENAS NA CHUVA (isRainy) ---
+    // --- CAMADA 1: REFLEXOS NO ASFALTO (APENAS NA CHUVA) ---
     if (isRainy) {
         ctx.save();
         
-        // 1. Reflexo Branco (Faróis para a frente/horizonte)
+        // Reflexo Branco (Luzes dianteiras no chão molhado)
         let whiteReflect = ctx.createLinearGradient(0, 0, 0, -h * 2);
         whiteReflect.addColorStop(0, nightMode ? "rgba(255, 255, 255, 0.3)" : "rgba(255, 255, 255, 0.1)");
         whiteReflect.addColorStop(1, "rgba(255, 255, 255, 0)");
-        
         ctx.fillStyle = whiteReflect;
         ctx.fillRect(-w * 0.3, -h * 0.5, w * 0.6, h * 1.5);
 
-        // 2. Reflexo Vermelho (Lanternas traseiras para o jogador)
+        // Reflexo Vermelho (Lanternas traseiras no chão molhado)
         let redReflect = ctx.createLinearGradient(0, h * 0.5, 0, h * 1.5);
         redReflect.addColorStop(0, "rgba(255, 0, 0, 0.4)");
         redReflect.addColorStop(1, "rgba(255, 0, 0, 0)");
-        
         ctx.fillStyle = redReflect;
         ctx.fillRect(leftX - (2*s), h * 0.4, 4*s, h * 0.8);
         ctx.fillRect(rightX - (2*s), h * 0.4, 4*s, h * 0.8);
@@ -294,7 +297,7 @@ function togglePause() {
         ctx.restore();
     }
 
-    // --- CAMADA 1: FEIXE DE LUZ (FUNDO) ---
+    // --- CAMADA 2: FEIXE DE LUZ (EFEITO DE FAROL NO AR) ---
     if (nightMode || hasFog || isRainy) {
         const coneLength = h * 2.5; 
         const coneExpansion = w * 1.2; 
@@ -303,42 +306,50 @@ function togglePause() {
         gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
         ctx.fillStyle = gradient;
         ctx.beginPath();
-        ctx.moveTo(leftX, lightY); ctx.lineTo(rightX, lightY);
+        ctx.moveTo(leftX, lightY); 
+        ctx.lineTo(rightX, lightY);
         ctx.lineTo(coneExpansion / 2, lightY - coneLength);
         ctx.lineTo(-coneExpansion / 2, lightY - coneLength);
-        ctx.closePath(); ctx.fill();
+        ctx.closePath(); 
+        ctx.fill();
     }
 
-    // --- CAMADA 2: CORPO E AEROFÓLIO (MEIO) ---
+    // --- CAMADA 3: CORPO DO CARRO E PNEUS ---
+    // Pneus/Sombra base
     ctx.fillStyle = "#111"; 
-    ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8);
-    ctx.fillRect(w * 0.25, -h * 0.1, w * 0.25, h * 0.8);
+    ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8); // Roda esquerda
+    ctx.fillRect(w * 0.25, -h * 0.1, w * 0.25, h * 0.8); // Roda direita
+    
+    // Fuselagem e Aerofólio
     ctx.fillStyle = bodyColor; 
-    ctx.fillRect(-w * 0.25, h * 0.1, w * 0.5, h * 0.4); 
-    ctx.fillRect(-w * 0.5, -h * 0.3, w, h * 0.2); 
+    ctx.fillRect(-w * 0.25, h * 0.1, w * 0.5, h * 0.4);  // Cockpit/Corpo
+    ctx.fillRect(-w * 0.5, -h * 0.3, w, h * 0.2);        // Aerofólio Traseiro
 
-    // --- CAMADA 3: LANTERNAS VERMELHAS (TOPO) ---
+    // --- CAMADA 4: LANTERNAS COM BRILHO (GLOW) ---
     if (nightMode || hasFog || isRainy) {
-    ctx.save(); // Salva o estado para o brilho não afetar outros desenhos
-    
-    const headlightSize = 2.8 * s; 
-    
-    // Configuração do Brilho (Glow)
-    ctx.shadowBlur = 15 * s;      // Intensidade do brilho (proporcional ao tamanho)
-    ctx.shadowColor = "#ff0000";  // Cor do brilho
-    ctx.fillStyle = "#ff5555";    // Cor do centro (um pouco mais clara para parecer incandescente)
+        ctx.save(); 
+        
+        const headlightSize = 2.8 * s; 
+        
+        // Efeito de iluminação intensa
+        ctx.shadowBlur = 15 * s;      
+        ctx.shadowColor = "#ff0000";  
+        ctx.fillStyle = "#ff5555";    
 
-    // Lanterna Esquerda
-    ctx.beginPath(); 
-    ctx.arc(leftX, lightY, headlightSize, 0, Math.PI * 2); 
-    ctx.fill();
+        // Lanterna Esquerda
+        ctx.beginPath(); 
+        ctx.arc(leftX, lightY, headlightSize, 0, Math.PI * 2); 
+        ctx.fill();
 
-    // Lanterna Direita
-    ctx.beginPath(); 
-    ctx.arc(rightX, lightY, headlightSize, 0, Math.PI * 2); 
-    ctx.fill();
-    
-    ctx.restore(); // Restaura o estado original do contexto
+        // Lanterna Direita
+        ctx.beginPath(); 
+        ctx.arc(rightX, lightY, headlightSize, 0, Math.PI * 2); 
+        ctx.fill();
+        
+        ctx.restore(); 
+    }
+
+    ctx.restore(); // Finaliza todas as transformações deste carro específico
 }
 
  function update() {
@@ -594,7 +605,6 @@ function togglePause() {
         ctx.strokeStyle = "rgba(200, 210, 255, 0.51)"; ctx.lineWidth = 1.2;
         raindrops.forEach(r => { ctx.beginPath(); ctx.moveTo(r.x, r.y); ctx.lineTo(r.x + 1.5, r.y + 12); ctx.stroke(); });
 
-        // NOVO: Desenhar o spray das rodas (gotículas voando)
         wheelSprays.forEach(p => {
             ctx.fillStyle = `rgba(200, 230, 255, ${p.life * 0.6})`; 
             ctx.beginPath();
@@ -603,13 +613,12 @@ function togglePause() {
         });
     }
 
-    // Relâmpago frontal em tempestades
     if (lightningAlpha > 0 && (currentStage === 3 || currentStage === 7)) { 
         ctx.fillStyle = `rgba(255, 255, 255, ${lightningAlpha})`; 
         ctx.fillRect(0, 55, 400, 345); 
     }
 
-    // --- INTERFACE SUPERIOR (HUD) ---
+    // HUD
     ctx.fillStyle = "black"; ctx.fillRect(0, 0, 400, 55);
     ctx.fillStyle = (gameState === "GOAL_REACHED" || gameState === "WIN_DAY") ? "lime" : "yellow";
     ctx.font = "bold 18px Courier";
@@ -618,16 +627,14 @@ function togglePause() {
     ctx.fillStyle = "#444"; ctx.fillRect(260, 20, 120, 15);
     ctx.fillStyle = "lime"; ctx.fillRect(260, 20, (currentTime/DAY_DURATION) * 120, 15);
 
-    // --- MENSAGEM DE VITÓRIA DO DIA ---
     if (gameState === "WIN_DAY") {
         ctx.fillStyle = "rgba(0,0,0,0.7)"; ctx.fillRect(0, 55, 400, 345);
         ctx.fillStyle = "lime"; ctx.textAlign = "center";
         ctx.font = "bold 25px Courier"; 
-        // Correção do dayNumber (removido o -1)
         ctx.fillText(`DIA ${dayNumber} COMPLETO!`, 200, 180);
         ctx.textAlign = "left";
     }
-}
+} // <--- FECHA A FUNÇÃO DRAW()
 
 function updateApp() {
     navigator.serviceWorker.getRegistration().then(reg => {
@@ -636,4 +643,5 @@ function updateApp() {
     });
 }
 
-update();
+// Inicia o loop do jogo
+update();  
