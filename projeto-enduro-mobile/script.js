@@ -319,13 +319,26 @@ function togglePause() {
 
     // --- CAMADA 3: LANTERNAS VERMELHAS (TOPO) ---
     if (nightMode || hasFog || isRainy) {
-        ctx.fillStyle = "#ff0707"; 
-        const headlightSize = 2.8 * s; 
-        ctx.beginPath(); ctx.arc(leftX, lightY, headlightSize, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.arc(rightX, lightY, headlightSize, 0, Math.PI * 2); ctx.fill();
-    }
+    ctx.save(); // Salva o estado para o brilho não afetar outros desenhos
     
-    ctx.restore();
+    const headlightSize = 2.8 * s; 
+    
+    // Configuração do Brilho (Glow)
+    ctx.shadowBlur = 15 * s;      // Intensidade do brilho (proporcional ao tamanho)
+    ctx.shadowColor = "#ff0000";  // Cor do brilho
+    ctx.fillStyle = "#ff5555";    // Cor do centro (um pouco mais clara para parecer incandescente)
+
+    // Lanterna Esquerda
+    ctx.beginPath(); 
+    ctx.arc(leftX, lightY, headlightSize, 0, Math.PI * 2); 
+    ctx.fill();
+
+    // Lanterna Direita
+    ctx.beginPath(); 
+    ctx.arc(rightX, lightY, headlightSize, 0, Math.PI * 2); 
+    ctx.fill();
+    
+    ctx.restore(); // Restaura o estado original do contexto
 }
 
  function update() {
