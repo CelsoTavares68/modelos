@@ -32,7 +32,7 @@ let passTotalOdo = parseInt(localStorage.getItem('enduro_passTotalOdo')) || 0;  
 let passTotalBest = parseInt(localStorage.getItem('enduro_passTotalBest')) || 0; // 4. Recorde total histórico
 
 const maxSpeed = 19; 
-const STAGE_DURATION = 2500; 
+const STAGE_DURATION = 2700; 
 const DAY_DURATION = STAGE_DURATION * 9; 
 let currentTime = 0; 
 
@@ -331,12 +331,12 @@ function togglePause() {
         const helmetMap = {
             "#F0F": "#00FFFF", // Carro Magenta -> Capacete Ciano
             "#0FF": "#FF00FF", // Carro Ciano -> Capacete Magenta
-            "#0F0": "#FFFFFF", // Carro Verde -> Capacete Branco
+            "#0F0": "#777070", // Carro Verde -> Capacete Branco
             "#FF0": "#0000FF", // Carro Amarelo -> Capacete Azul
             "#f47d28": "#1a7a1a", // Carro Laranja -> Capacete Verde
             "#a5a3a3": "#E00",    // Carro Cinza -> Capacete Vermelho
-            "rgb(0, 26, 255)": "#FFD700", // Carro Azul -> Capacete Dourado
-            "rgb(27, 104, 27)": "#DDD"    // Carro Verde Escuro -> Capacete Cinza Claro
+            "rgb(0, 26, 255)": "#907c0c", // Carro Azul -> Capacete Dourado
+            "rgb(27, 104, 27)": "#ec7171"    // Carro Verde Escuro -> Capacete Cinza Claro
         };
         helmetColor = helmetMap[color] || "#FFFFFF";
     }
@@ -358,8 +358,8 @@ function togglePause() {
         ctx.save();
         const headlightSize = 2.8 * s;
         ctx.shadowBlur = 15 * s;
-        ctx.shadowColor = "#ff0000";
-        ctx.fillStyle = "#ff5555";
+        ctx.shadowColor = "#e61e1e";
+        ctx.fillStyle = "#fa3636";
         ctx.beginPath(); ctx.arc(leftX, lightY, headlightSize, 0, Math.PI * 2); ctx.fill();
         ctx.beginPath(); ctx.arc(rightX, lightY, headlightSize, 0, Math.PI * 2); ctx.fill();
         ctx.restore();
@@ -554,7 +554,7 @@ function togglePause() {
         enemy.lastY = 200 + (p * 140); enemy.lastX = screenX; enemy.lastP = p;
     });
 
-    if (gameTick % 70 === 0 && enemies.length < 100) {
+    if (gameTick % 60 === 0 && enemies.length < 100) {
         enemies.push({ 
             lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 4.0, 
             color: ["#F0F", "#0FF", "#0F0", "#FF0", "#f47d28", "#a5a3a3", "rgb(0, 26, 255)", "rgb(27, 104, 27)" ][Math.floor(Math.random() * 8)],
