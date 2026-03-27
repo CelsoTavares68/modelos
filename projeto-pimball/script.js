@@ -1,5 +1,4 @@
- // 1. Configurações Iniciais do Matter.js
-const { Engine, Render, Runner, Bodies, Composite, Body, Events, Constraint } = Matter;
+ const { Engine, Render, Runner, Bodies, Composite, Body, Events, Constraint } = Matter;
 
 const engine = Engine.create();
 const world = engine.world;
@@ -7,138 +6,79 @@ const world = engine.world;
 const render = Render.create({
     element: document.getElementById('game-container'),
     engine: engine,
-    options: {
-        width: 400,
-        height: 600,
-        wireframes: false,
-        background: '#111'
-    }
+    options: { width: 400, height: 600, wireframes: false, background: '#111' }
 });
 
-// 2. Variáveis de Controle
+// Variáveis de Jogo
 let bolasRestantes = 5;
 let bolaAtual = null;
 let pontuacao = 0;
-
-// 3. Estrutura do Campo (Paredes e Guias)
-const paredeEsq = Bodies.rectangle(5, 300, 10, 600, { isStatic: true });
-const paredeDir = Bodies.rectangle(395, 300, 10, 600, { isStatic: true });
-const teto = Bodies.rectangle(200, 5, 400, 10, { isStatic: true });
-const calhaInterior = Bodies.rectangle(345, 350, 10, 500, { isStatic: true });
-
-// Guia Superior CORRIGIDA: Agora inclina para a esquerda para a bola entrar no campo
-const guiaSuperior = Bodies.rectangle(350, 45, 120, 20, { 
-    isStatic: true, 
-    angle: Math.PI * 0.15, 
-    render: { fillStyle: '#444' } 
-});
-
-// Base Inferior (Buraco)
-const baseEsq = Bodies.rectangle(80, 580, 180, 20, { isStatic: true, angle: 0.3, render: { fillStyle: '#333' } });
-const baseDir = Bodies.rectangle(270, 580, 150, 20, { isStatic: true, angle: -0.3, render: { fillStyle: '#333' } });
-
-// 4. Lançador CORRIGIDO (Base abaixo do pistão)
-const lancadorBase = Bodies.rectangle(372, 595, 40, 10, { isStatic: true, render: { fillStyle: '#222' } });
-const pistao = Bodies.rectangle(372, 570, 34, 30, { restitution: 0, friction: 0, label: 'pistao', render: { fillStyle: '#ff4444' } });
-
-const molaPistao = Constraint.create({
-    bodyA: lancadorBase,
-    pointA: { x: 0, y: 0 },
-    bodyB: pistao,
-    pointB: { x: 0, y: 15 }, 
-    stiffness: 0.5,
-    length: 5,
-    render: { visible: true, strokeStyle: '#ff4444' }
-});
-
-// 5. Seletores de UI e Placar
 const scoreElement = document.getElementById('score');
 const ballsElement = document.getElementById('balls-count');
 
-function atualizarPlacar(pontosGanhos) {
-    pontuacao += pontosGanhos;
-    scoreElement.innerText = pontuacao.toString().padStart(4, '0');
-    scoreElement.classList.add('bump');
-    setTimeout(() => scoreElement.classList.remove('bump'), 100);
-}
+// 1. CENÁRIO E CALHA
+const paredeEsq = Bodies.rectangle(5, 300, 10, 600, { isStatic: true });
+const paredeDir = Bodies.rectangle(395, 300, 10, 600, { isStatic: true });
+const teto = Bodies.rectangle(200, 5, 400, 10, { isStatic: true });
+const calhaInterior = Bodies.rectangle(340, 370, 10, 460, { isStatic: true, render: { fillStyle: '#333' } });
 
-// 6. Sensores e Paletas
-function criarBumper(x, y, pontos, cor = '#00d2ff') {
-    return Bodies.circle(x, y, 20, {
-        isStatic: true,
-        label: 'bumper',
-        plugin: { pontos: pontos },
-        render: { fillStyle: cor }
-    });
-}
+// Guia Superior (Rampa de entrada no campo)
+const guiaSuperior = Bodies.rectangle(310, 60, 150, 20, { 
+    isStatic: true, angle: -Math.PI * 0.1, render: { fillStyle: '#444' } 
+});
 
-const bumpers = [
-    criarBumper(100, 150, 100),
-    criarBumper(200, 100, 250, '#ff0055'),
-    criarBumper(300, 150, 100),
-    criarBumper(100, 400, 50),
-    criarBumper(240, 400, 50)
-];
+// 2. LANÇADOR (Ajustado)
+const lancadorBase = Bodies.rectangle(370, 590, 40, 20, { isStatic: true });
+const pistao = Bodies.rectangle(370, 560, 30, 40, { label: 'pistao', render: { fillStyle: '#ff4444' } });
+const molaPistao = Constraint.create({
+    bodyA: lancadorBase, bodyB: pistao, pointB: { x: 0, y: 15 }, stiffness: 0.5, length: 5
+});
 
- // --- FUNÇÃO DE PALETA COM TRAVA (LIMITES) ---
+// 3. PALETAS COM TRAVA LÓGICA
 function criarFlipper(x, y, lado) {
-    // Definimos os ângulos permitidos (em radianos)
-    // 0.6 radianos é aprox. 35 graus
-    const limiteEsq = { min: -0.6, max: 0.2 };
-    const limiteDir = { min: -0.2, max: 0.6 };
-    const limite = lado === 'esq' ? limiteEsq : limiteDir;
-
     const flipper = Bodies.rectangle(x, y, 75, 15, {
         chamfer: { radius: 7 },
         render: { fillStyle: '#e74c3c' },
-        label: 'flipper',
-        // Aqui está o segredo: restringir a rotação do próprio corpo
-        frictionAir: 0.05,
-        collisionFilter: { group: Body.nextGroup(true) }
+        label: 'flipper_' + lado
     });
 
-    // Pivô (Onde ela gira)
     const pivot = Constraint.create({
         pointA: { x: x + (lado === 'esq' ? -35 : 35), y: y },
         bodyB: flipper,
         pointB: { x: (lado === 'esq' ? -35 : 35), y: 0 },
-        stiffness: 1,
-        length: 0
+        stiffness: 1, length: 0
     });
 
-    // Adicionamos uma "trava" lógica que verifica o ângulo a cada frame
-    Events.on(engine, 'beforeUpdate', () => {
-        if (flipper.angle < limite.min) {
-            Body.setAngle(flipper, limite.min);
-            Body.setAngularVelocity(flipper, 0);
-        }
-        if (flipper.angle > limite.max) {
-            Body.setAngle(flipper, limite.max);
-            Body.setAngularVelocity(flipper, 0);
-        }
-        
-        // Mola de retorno constante (puxa para baixo se não houver força)
-        const forcaRetorno = lado === 'esq' ? 0.002 : -0.002;
-        Body.setAngularVelocity(flipper, flipper.angularVelocity + forcaRetorno);
-    });
-
-    return { body: flipper, pivot: pivot };
+    return { body: flipper, pivot: pivot, lado: lado };
 }
 
-// Criando com as novas coordenadas
-const fEsq = criarFlipper(130, 520, 'esq');
-const fDir = criarFlipper(225, 520, 'dir');
+const fEsq = criarFlipper(130, 530, 'esq');
+const fDir = criarFlipper(230, 530, 'dir');
 
-// 7. Funções de Jogo
+// 4. BUMPERS
+const bumpers = [
+    Bodies.circle(100, 150, 20, { isStatic: true, label: 'bumper', plugin: { pontos: 100 }, render: { fillStyle: '#00d2ff' } }),
+    Bodies.circle(200, 100, 20, { isStatic: true, label: 'bumper', plugin: { pontos: 250 }, render: { fillStyle: '#ff0055' } }),
+    Bodies.circle(300, 150, 20, { isStatic: true, label: 'bumper', plugin: { pontos: 100 }, render: { fillStyle: '#00d2ff' } })
+];
+
+// 5. LÓGICA DE MOVIMENTO (TRAVAS E RETORNO)
+Events.on(engine, 'beforeUpdate', () => {
+    const forcaRetorno = 0.1;
+    // Retorno automático da paleta esquerda
+    if (fEsq.body.angle < 0.2) Body.setAngle(fEsq.body, fEsq.body.angle + forcaRetorno);
+    if (fEsq.body.angle > 0.2) Body.setAngle(fEsq.body, 0.2);
+
+    // Retorno automático da paleta direita
+    if (fDir.body.angle > -0.2) Body.setAngle(fDir.body, fDir.body.angle - forcaRetorno);
+    if (fDir.body.angle < -0.2) Body.setAngle(fDir.body, -0.2);
+});
+
+// 6. FUNÇÕES DE DISPARO E BOLA
 function novaBola() {
     if (bolasRestantes > 0 && (!bolaAtual || bolaAtual.position.y > 600)) {
         if (bolaAtual) Composite.remove(world, bolaAtual);
-        bolaAtual = Bodies.circle(372, 530, 10, {
-            restitution: 0.5,
-            density: 0.002,
-            label: 'bola',
-            render: { fillStyle: '#eee' }
-        });
+        bolaAtual = Bodies.circle(370, 520, 11, { restitution: 0.5, label: 'bola', render: { fillStyle: '#fff' } });
         Composite.add(world, bolaAtual);
         bolasRestantes--;
         ballsElement.innerText = bolasRestantes;
@@ -146,58 +86,54 @@ function novaBola() {
 }
 
 function disparar() {
-    if (bolaAtual && bolaAtual.position.x > 350) {
-        Body.applyForce(pistao, pistao.position, { x: 0, y: -0.5 });
-        setTimeout(() => {
-            if (bolaAtual) Body.setVelocity(bolaAtual, { x: 0, y: -25 });
-        }, 30);
+    if (bolaAtual && bolaAtual.position.x > 340) {
+        Body.setVelocity(bolaAtual, { x: 0, y: -30 });
     }
 }
 
-// 8. Eventos e Colisões
-Events.on(engine, 'collisionStart', (event) => {
-    event.pairs.forEach((pair) => {
-        const labels = [pair.bodyA.label, pair.bodyB.label];
-        if (labels.includes('bumper')) {
-            const b = pair.bodyA.label === 'bumper' ? pair.bodyA : pair.bodyB;
-            atualizarPlacar(b.plugin.pontos);
-            b.render.fillStyle = '#fff';
-            setTimeout(() => b.render.fillStyle = '#00d2ff', 100);
-        }
-    });
+// 7. CONTROLES (Eventos de Clique/Touch)
+document.getElementById('btn-left').addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    Body.setAngle(fEsq.body, -0.6); // Força a paleta para cima instantaneamente
 });
 
-// Detectar se a bola caiu para remover do mundo
-Events.on(engine, 'afterUpdate', () => {
-    if (bolaAtual && bolaAtual.position.y > 650) {
-        Composite.remove(world, bolaAtual);
-        bolaAtual = null;
-        if (bolasRestantes === 0) alert("Fim de Jogo! Pontos: " + pontuacao);
-    }
+document.getElementById('btn-right').addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    Body.setAngle(fDir.body, 0.6); // Força a paleta para cima instantaneamente
 });
 
-// 9. Controles Mobile
 document.getElementById('btn-launch').addEventListener('touchstart', (e) => {
     e.preventDefault();
     if (!bolaAtual || bolaAtual.position.y > 600) novaBola();
     else disparar();
 });
 
-document.getElementById('btn-left').addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    Body.setAngularVelocity(fEsq.body, -0.45);
+// Suporte para Mouse (Testar no PC)
+document.getElementById('btn-left').onmousedown = () => Body.setAngle(fEsq.body, -0.6);
+document.getElementById('btn-right').onmousedown = () => Body.setAngle(fDir.body, 0.6);
+document.getElementById('btn-launch').onclick = () => {
+    if (!bolaAtual || bolaAtual.position.y > 600) novaBola();
+    else disparar();
+};
+
+// 8. COLISÕES E PLACAR
+Events.on(engine, 'collisionStart', (event) => {
+    event.pairs.forEach(pair => {
+        if (pair.bodyA.label === 'bumper' || pair.bodyB.label === 'bumper') {
+            const b = pair.bodyA.label === 'bumper' ? pair.bodyA : pair.bodyB;
+            pontuacao += b.plugin.pontos;
+            scoreElement.innerText = pontuacao.toString().padStart(4, '0');
+            b.render.fillStyle = '#fff';
+            setTimeout(() => b.render.fillStyle = '#00d2ff', 100);
+        }
+    });
 });
 
-document.getElementById('btn-right').addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    Body.setAngularVelocity(fDir.body, 0.45);
-});
-
-// 10. Inicialização
+// 9. INICIALIZAÇÃO
 Composite.add(world, [
-    paredeEsq, paredeDir, teto, calhaInterior, guiaSuperior, 
-    baseEsq, baseDir, lancadorBase, pistao, molaPistao,
-    ...bumpers, fEsq.body, fEsq.pivot, fDir.body, fDir.pivot
+    paredeEsq, paredeDir, teto, calhaInterior, guiaSuperior,
+    lancadorBase, pistao, molaPistao, ...bumpers,
+    fEsq.body, fEsq.pivot, fDir.body, fDir.pivot
 ]);
 
 Render.run(render);
