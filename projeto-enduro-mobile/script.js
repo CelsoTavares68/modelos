@@ -302,7 +302,7 @@ function togglePause() {
         const coneLength = h * 2.5;
         const coneExpansion = w * 1.2;
         let gradient = ctx.createLinearGradient(0, lightY, 0, lightY - coneLength);
-        gradient.addColorStop(0, "rgba(255, 255, 255, 0.4)");
+        gradient.addColorStop(0, "rgba(255, 255, 255, 0.26)");
         gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
         ctx.fillStyle = gradient;
         ctx.beginPath();
