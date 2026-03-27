@@ -1,4 +1,4 @@
- // 1. Configurações Iniciais do Matter.js
+ / 1. Configurações Iniciais do Matter.js
 const { Engine, Render, Runner, Bodies, Composite, Body, Events, Constraint } = Matter;
 
 const engine = Engine.create();
@@ -30,11 +30,11 @@ const teto = Bodies.rectangle(200, 5, 400, 10, { isStatic: true });
 // Calha do Lançador (Afastada da parede para a bola subir livre)
 const calhaInterior = Bodies.rectangle(345, 380, 10, 440, { isStatic: true, render: { fillStyle: '#333' } });
 
-// GUIA SUPERIOR CORRIGIDA: Ângulo positivo para criar rampa para a ESQUERDA
-// Posicionada para fechar o topo do canhão e guiar a bola para o campo
-const guiaSuperior = Bodies.rectangle(320, 50, 120, 20, { 
+// GUIA SUPERIOR CORRIGIDA: Ângulo negativo e posicionamento no canto superior direito
+// Funciona como um teto curvo em formato de barra invertida (\)
+const guiaSuperior = Bodies.rectangle(370, 40, 100, 20, { 
     isStatic: true, 
-    angle: Math.PI * 0.15, // Inclinação horária (Rampa para a esquerda)
+    angle: -Math.PI * 0.2, // Ângulo negativo para criar a inclinação (\)
     render: { fillStyle: '#444' } 
 });
 
