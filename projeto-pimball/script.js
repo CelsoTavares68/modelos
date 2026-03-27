@@ -80,23 +80,54 @@ const bumpers = [
     criarBumper(240, 400, 50)
 ];
 
+ // --- FUNÇÃO DE PALETA COM TRAVA (LIMITES) ---
 function criarFlipper(x, y, lado) {
-    const flipper = Bodies.rectangle(x, y, 70, 15, {
+    // Definimos os ângulos permitidos (em radianos)
+    // 0.6 radianos é aprox. 35 graus
+    const limiteEsq = { min: -0.6, max: 0.2 };
+    const limiteDir = { min: -0.2, max: 0.6 };
+    const limite = lado === 'esq' ? limiteEsq : limiteDir;
+
+    const flipper = Bodies.rectangle(x, y, 75, 15, {
         chamfer: { radius: 7 },
         render: { fillStyle: '#e74c3c' },
-        label: 'flipper'
+        label: 'flipper',
+        // Aqui está o segredo: restringir a rotação do próprio corpo
+        frictionAir: 0.05,
+        collisionFilter: { group: Body.nextGroup(true) }
     });
+
+    // Pivô (Onde ela gira)
     const pivot = Constraint.create({
         pointA: { x: x + (lado === 'esq' ? -35 : 35), y: y },
         bodyB: flipper,
         pointB: { x: (lado === 'esq' ? -35 : 35), y: 0 },
-        stiffness: 1, length: 0
+        stiffness: 1,
+        length: 0
     });
+
+    // Adicionamos uma "trava" lógica que verifica o ângulo a cada frame
+    Events.on(engine, 'beforeUpdate', () => {
+        if (flipper.angle < limite.min) {
+            Body.setAngle(flipper, limite.min);
+            Body.setAngularVelocity(flipper, 0);
+        }
+        if (flipper.angle > limite.max) {
+            Body.setAngle(flipper, limite.max);
+            Body.setAngularVelocity(flipper, 0);
+        }
+        
+        // Mola de retorno constante (puxa para baixo se não houver força)
+        const forcaRetorno = lado === 'esq' ? 0.002 : -0.002;
+        Body.setAngularVelocity(flipper, flipper.angularVelocity + forcaRetorno);
+    });
+
     return { body: flipper, pivot: pivot };
 }
 
-const fEsq = criarFlipper(130, 530, 'esq');
-const fDir = criarFlipper(230, 530, 'dir');
+// Criando com as novas coordenadas
+const fEsq = criarFlipper(130, 520, 'esq');
+const fDir = criarFlipper(225, 520, 'dir');
 
 // 7. Funções de Jogo
 function novaBola() {
