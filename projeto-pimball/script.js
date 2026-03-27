@@ -1,181 +1,195 @@
- const { Engine, Render, Runner, Bodies, Composite, Body, Events, Constraint } = Matter;
+ // 1. Configurações Iniciais do Matter.js
+const { Engine, Render, Runner, Bodies, Composite, Body, Events, Constraint } = Matter;
 
 const engine = Engine.create();
 const world = engine.world;
 
+// Ajustamos a altura para 600px para caber os botões no PWA
 const render = Render.create({
     element: document.getElementById('game-container'),
     engine: engine,
     options: {
         width: 400,
-        height: 700,
+        height: 600,
         wireframes: false,
         background: '#111'
     }
 });
 
-// --- VARIÁVEIS DE CONTROLO ---
+// 2. Variáveis de Controle
 let bolasRestantes = 5;
 let bolaAtual = null;
 let pontuacao = 0;
 
-// --- ESTRUTURA DO CAMPO ---
-const chao = Bodies.rectangle(200, 710, 410, 60, { isStatic: true });
-const paredeEsq = Bodies.rectangle(10, 350, 20, 700, { isStatic: true });
-const paredeDir = Bodies.rectangle(390, 350, 20, 700, { isStatic: true });
-const calhaLancador = Bodies.rectangle(340, 400, 10, 600, { isStatic: true }); // Separa o lançador do campo
+// 3. Estrutura do Campo (Paredes e Guias)
+const paredeEsq = Bodies.rectangle(5, 300, 10, 600, { isStatic: true });
+const paredeDir = Bodies.rectangle(395, 300, 10, 600, { isStatic: true });
+const teto = Bodies.rectangle(200, 5, 400, 10, { isStatic: true });
+const calhaInterior = Bodies.rectangle(345, 350, 10, 500, { isStatic: true }); // Separa o lançador
 
-// --- SENSORES DE PONTOS (BUMPERS) ---
-function criarBumper(x, y, pontos) {
-    const bumper = Bodies.circle(x, y, 25, {
+// Guia Diagonal Superior (Para jogar a bola no campo)
+const guiaSuperior = Bodies.rectangle(370, 60, 100, 20, { 
+    isStatic: true, 
+    angle: -Math.PI * 0.25, 
+    render: { fillStyle: '#444' } 
+});
+
+// Base Inferior Inclinada (Direciona a bola para o buraco/paletas)
+const baseEsq = Bodies.rectangle(80, 580, 180, 20, { isStatic: true, angle: 0.3, render: { fillStyle: '#333' } });
+const baseDir = Bodies.rectangle(270, 580, 150, 20, { isStatic: true, angle: -0.3, render: { fillStyle: '#333' } });
+
+// 4. Lançador (Pistão e Mola)
+const lancadorBase = Bodies.rectangle(372, 590, 40, 20, { isStatic: true });
+const pistao = Bodies.rectangle(372, 560, 34, 20, { restitution: 0, friction: 0, label: 'pistao' });
+const molaPistao = Constraint.create({
+    bodyA: lancadorBase, bodyB: pistao, stiffness: 0.1, length: 15, render: { visible: true }
+});
+
+// Seletores de UI
+const scoreElement = document.getElementById('score');
+const ballsElement = document.getElementById('balls-count');
+
+// Função para atualizar o placar com animação
+function atualizarPlacar(pontosGanhos) {
+    pontuacao += pontosGanhos;
+    
+    // Formata para ter sempre 4 dígitos (ex: 0050)
+    scoreElement.innerText = pontuacao.toString().padStart(4, '0');
+    
+    // Efeito de "pulo" no texto
+    scoreElement.classList.add('bump');
+    setTimeout(() => scoreElement.classList.remove('bump'), 100);
+}
+
+// Atualize a sua função de colisão (item 8 do script anterior):
+Events.on(engine, 'collisionStart', (event) => {
+    event.pairs.forEach((pair) => {
+        if (pair.bodyA.label === 'bumper' || pair.bodyB.label === 'bumper') {
+            const b = pair.bodyA.label === 'bumper' ? pair.bodyA : pair.bodyB;
+            
+            // Chama a nova função de placar
+            atualizarPlacar(b.plugin.pontos);
+            
+            // Efeito visual no bumper físico
+            b.render.fillStyle = '#fff';
+            setTimeout(() => b.render.fillStyle = '#00d2ff', 100);
+            
+            // Dica: Chame seu som de "pontos.mp3" aqui
+        }
+    });
+});
+
+// Atualize a sua função de nova bola para mostrar na tela:
+function novaBola() {
+    if (bolasRestantes > 0 && (!bolaAtual || bolaAtual.position.y > 600)) {
+        // ... (resto do código da função anterior)
+        
+        ballsElement.innerText = bolasRestantes; // Atualiza UI
+    }
+}
+
+// 5. Sensores de Pontos (Bumpers)
+function criarBumper(x, y, pontos, cor = '#00d2ff') {
+    const bumper = Bodies.circle(x, y, 20, {
         isStatic: true,
         label: 'bumper',
         plugin: { pontos: pontos },
-        render: { fillStyle: '#00d2ff' }
+        render: { fillStyle: cor }
     });
     return bumper;
 }
 
 const bumpers = [
     criarBumper(100, 150, 100),
-    criarBumper(200, 100, 200),
-    criarBumper(300, 150, 100)
+    criarBumper(200, 100, 250, '#ff0055'),
+    criarBumper(300, 150, 100),
+    criarBumper(100, 400, 50),
+    criarBumper(240, 400, 50)
 ];
 
-// --- LANÇADOR (MOLA) ---
-const lancadorBase = Bodies.rectangle(365, 680, 40, 20, { 
-    isStatic: true, 
-    render: { fillStyle: '#555' } 
-});
+// 6. Paletas (Flippers)
+function criarFlipper(x, y, lado) {
+    const flipper = Bodies.rectangle(x, y, 70, 15, {
+        chamfer: { radius: 7 },
+        render: { fillStyle: '#e74c3c' },
+        label: 'flipper'
+    });
 
-const pistao = Bodies.rectangle(365, 650, 35, 20, { 
-    render: { fillStyle: '#e74c3c' } 
-});
+    const pivot = Constraint.create({
+        pointA: { x: x + (lado === 'esq' ? -35 : 35), y: y },
+        bodyB: flipper,
+        pointB: { x: (lado === 'esq' ? -35 : 35), y: 0 },
+        stiffness: 1, length: 0
+    });
 
-// Mola que segura o pistão
-const mola = Constraint.create({
-    bodyA: lancadorBase,
-    bodyB: pistao,
-    stiffness: 0.1,
-    length: 20,
-    render: { visible: true, strokeStyle: '#fff' }
-});
+    return { body: flipper, pivot: pivot };
+}
 
-// --- LÓGICA DE JOGO ---
+const fEsq = criarFlipper(130, 530, 'esq');
+const fDir = criarFlipper(230, 530, 'dir');
 
-function lancarNovaBola() {
-    if (bolasRestantes > 0 && (!bolaAtual || bolaAtual.position.y > 700)) {
+// 7. Funções de Jogo
+function novaBola() {
+    if (bolasRestantes > 0 && (!bolaAtual || bolaAtual.position.y > 600)) {
         if (bolaAtual) Composite.remove(world, bolaAtual);
         
-        bolaAtual = Bodies.circle(365, 600, 12, {
-            restitution: 0.6,
-            density: 0.001,
+        bolaAtual = Bodies.circle(372, 530, 10, {
+            restitution: 0.5,
+            density: 0.002,
             label: 'bola',
-            render: { fillStyle: '#fff' }
+            render: { fillStyle: '#eee' }
         });
         
         Composite.add(world, bolaAtual);
         bolasRestantes--;
-        console.log(`Bolas restantes: ${bolasRestantes}`);
     }
 }
 
-// Detetar Colisões nos Bumpers
+function disparar() {
+    if (bolaAtual && bolaAtual.position.x > 350) {
+        Body.applyForce(pistao, pistao.position, { x: 0, y: -0.1 });
+        setTimeout(() => {
+            Body.setVelocity(bolaAtual, { x: 0, y: -22 });
+        }, 40);
+    }
+}
+
+// 8. Eventos e Colisões
 Events.on(engine, 'collisionStart', (event) => {
     event.pairs.forEach((pair) => {
         if (pair.bodyA.label === 'bumper' || pair.bodyB.label === 'bumper') {
-            const bumper = pair.bodyA.label === 'bumper' ? pair.bodyA : pair.bodyB;
-            pontuacao += bumper.plugin.pontos;
-            
-            // Efeito visual (brilho rápido)
-            bumper.render.fillStyle = '#fff';
-            setTimeout(() => bumper.render.fillStyle = '#00d2ff', 100);
-            
-            console.log("Pontuação:", pontuacao);
-            // Aqui podes disparar os teus áudios de colisão!
+            const b = pair.bodyA.label === 'bumper' ? pair.bodyA : pair.bodyB;
+            pontuacao += b.plugin.pontos;
+            b.render.fillStyle = '#fff';
+            setTimeout(() => b.render.fillStyle = '#00d2ff', 100);
+            // Insira seu áudio de bumper aqui!
         }
     });
 });
 
-// Controlos
-document.body.onkeydown = (e) => {
-    if (e.code === "Space") { // Barra de espaço para carregar a mola
-        Body.applyForce(pistao, pistao.position, { x: 0, y: -0.05 });
-    }
-    if (e.code === "KeyN") { // Tecla N para nova bola
-        lancarNovaBola();
-    }
-};
+// 9. Controles Mobile (Touch)
+document.getElementById('btn-launch').addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    if (!bolaAtual || bolaAtual.position.y > 600) novaBola();
+    else disparar();
+});
 
-Composite.add(world, [chao, paredeEsq, paredeDir, calhaLancador, ...bumpers, lancadorBase, pistao, mola]);
+document.getElementById('btn-left').addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    Body.setAngularVelocity(fEsq.body, -0.45);
+});
+
+document.getElementById('btn-right').addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    Body.setAngularVelocity(fDir.body, 0.45);
+});
+
+// 10. Inicialização
+Composite.add(world, [
+    paredeEsq, paredeDir, teto, calhaInterior, guiaSuperior, 
+    baseEsq, baseDir, lancadorBase, pistao, molaPistao,
+    ...bumpers, fEsq.body, fEsq.pivot, fDir.body, fDir.pivot
+]);
 
 Render.run(render);
 Runner.run(Runner.create(), engine);
-
-// --- NOVOS ELEMENTOS DO CENÁRIO ---
-
-// 1. Guia Diagonal (No topo da calha do lançador)
-const guiaDiagonal = Bodies.rectangle(370, 50, 100, 20, { 
-    isStatic: true, 
-    angle: -Math.PI * 0.25, // Inclinação de 45 graus
-    render: { fillStyle: '#555' }
-});
-
-// 2. Abertura Inferior (Onde a bola cai)
-// Em vez de um chão reto, fazemos dois blocos inclinados que deixam um buraco no meio
-const baseEsq = Bodies.rectangle(80, 680, 200, 20, { 
-    isStatic: true, angle: 0.2, render: { fillStyle: '#333' } 
-});
-const baseDir = Bodies.rectangle(260, 680, 150, 20, { 
-    isStatic: true, angle: -0.2, render: { fillStyle: '#333' } 
-});
-
-// 3. Sensores Inferiores (Perto das paletas)
-const sensorBaixoEsq = criarBumper(80, 500, 50);
-const sensorBaixoDir = criarBumper(280, 500, 50);
-
-// --- LÓGICA DOS BOTÕES (MOBILE & DESKTOP) ---
-
-const setupControls = () => {
-    const btnLeft = document.getElementById('btn-left');
-    const btnRight = document.getElementById('btn-right');
-    const btnLaunch = document.getElementById('btn-launch');
-
-    // Função para acionar os flippers (exemplo simplificado)
-    const moverFlipper = (flipper, forca) => {
-        Body.applyForce(flipper, flipper.position, { x: 0, y: forca });
-    };
-
-    // Eventos de Toque
-    btnLaunch.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        lancarNovaBola();
-        // Aplica força no pistão para compressão visual
-        Body.applyForce(pistao, pistao.position, { x: 0, y: 0.1 });
-    });
-
-    btnLeft.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        // Chame aqui a função que criamos antes para o flipper esquerdo
-    });
-
-    btnRight.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        // Chame aqui a função para o flipper direito
-    });
-};
-
-// Verificação se a bola caiu (Game Over / Perda de bola)
-Events.on(engine, 'afterUpdate', () => {
-    if (bolaAtual && bolaAtual.position.y > 750) {
-        Composite.remove(world, bolaAtual);
-        bolaAtual = null;
-        console.log("Bola perdida! Restantes:", bolasRestantes);
-        if (bolasRestantes === 0) alert("Fim de Jogo! Pontos: " + pontuacao);
-    }
-});
-
-// Adicionar os novos elementos ao Composite.add(...)
-Composite.add(world, [guiaDiagonal, baseEsq, baseDir, sensorBaixoEsq, sensorBaixoDir]);
-
-setupControls();
