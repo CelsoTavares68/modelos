@@ -324,18 +324,25 @@ function togglePause() {
     // NOVO: DETALHE DO MOTOR E ESCAPAMENTOS
     // Só aparece se NÃO for NightMode, conforme solicitado
     
-    if (!nightMode) {
+     if (!nightMode) {
         const engineY = h * 0.3;      // Altura na parte traseira
         const barWidth = w * 0.25;    // Largura da barra prateada
         const exhaustSize = 1.8 * s;  // Tamanho dos círculos dos escapamentos
 
         // 1. Barra Prateada (Ligação do Motor)
-        ctx.fillStyle = "#C0C0C0"; // Prata metálico
+        ctx.fillStyle = "#C0C0C0"; 
         ctx.fillRect(-barWidth / 2, engineY - (0.5 * s), barWidth, 1.2 * s);
 
-        // 2. Escapamentos (Círculos nas extremidades da barra)
-        ctx.fillStyle = "#333";    // Interior escuro do cano
-        ctx.strokeStyle = "#888";  // Borda metálica
+        // 2. NOVO: Meio-círculo do Motor (Acima da barra)
+        ctx.fillStyle = "#888"; // Cinza médio para o motor
+        ctx.beginPath();
+        // Desenha um semicírculo para cima (arco de 180 graus)
+        ctx.arc(0, engineY - (0.5 * s), barWidth * 0.3, Math.PI, 0); 
+        ctx.fill();
+
+        // 3. Escapamentos (Círculos nas extremidades da barra)
+        ctx.fillStyle = "#333";    
+        ctx.strokeStyle = "#888";  
         ctx.lineWidth = 0.5 * s;
 
         // Escapamento Esquerdo
