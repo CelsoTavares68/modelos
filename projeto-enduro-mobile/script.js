@@ -334,7 +334,7 @@ function togglePause() {
         ctx.fillRect(-barWidth / 2, engineY - (0.5 * s), barWidth, 1.2 * s);
 
         // 2. NOVO: Meio-círculo do Motor (Acima da barra)
-        ctx.fillStyle = "#888"; // Cinza médio para o motor
+        ctx.fillStyle = "#c0c0c0"; // Cinza médio para o motor
         ctx.beginPath();
         // Desenha um semicírculo para cima (arco de 180 graus)
         ctx.arc(0, engineY - (0.5 * s), barWidth * 0.3, Math.PI, 0); 
