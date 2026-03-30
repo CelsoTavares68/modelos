@@ -330,11 +330,11 @@ function togglePause() {
         const exhaustSize = 1.8 * s;  // Tamanho dos círculos dos escapamentos
 
         // 1. Barra Prateada (Ligação do Motor)
-        ctx.fillStyle = "#C0C0C0"; 
+        ctx.fillStyle = "#474646"; 
         ctx.fillRect(-barWidth / 2, engineY - (0.5 * s), barWidth, 1.2 * s);
 
         // 2. NOVO: Meio-círculo do Motor (Acima da barra)
-        ctx.fillStyle = "#c0c0c0"; // Cinza médio para o motor
+        ctx.fillStyle = "#474646"; // Cinza médio para o motor
         ctx.beginPath();
         // Desenha um semicírculo para cima (arco de 180 graus)
         ctx.arc(0, engineY - (0.5 * s), barWidth * 0.3, Math.PI, 0); 
