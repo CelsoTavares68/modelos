@@ -1,4 +1,4 @@
- const canvas = document.getElementById('gameCanvas');
+  const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 canvas.width = 400; canvas.height = 400;
 
@@ -18,8 +18,8 @@ let totalPassesOdometer = 0;
 let dayPassesBest = 0;         
 let totalPassesBest = 0;       
 
-const maxSpeed = 18; 
-const STAGE_DURATION = 4500; 
+const maxSpeed = 20; 
+const STAGE_DURATION = 2700; 
 const DAY_DURATION = STAGE_DURATION * 9; 
 let currentTime = 0; 
 
@@ -144,50 +144,47 @@ function togglePause() {
     saveProgress();
 }
 
-    function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasFog = false, isRainy = false) {
+      function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasFog = false, isRainy = false) {
     let s = scale * 1.2;
     if (s < 0.02 || s > 30) return;
-    let w = 45 * s; let h = 22 * s;
+
+    let w = 45 * s;
+    let h = 22 * s;
     
     ctx.save();
     ctx.translate(x, y);
+
     if(isPlayer) ctx.rotate((roadCurve / 80) * Math.PI / 180);
     
     let bodyColor = nightMode ? "#000000" : color;
-    const lightY = h * 0.1; 
+    const lightY = h * 0.1;
     const leftX = -w * 0.2;
     const rightX = w * 0.2;
 
-    // --- REFLEXOS: ATIVADOS APENAS NA CHUVA (isRainy) ---
+    // --- CAMADA 1: REFLEXOS NO ASFALTO (CHUVA) ---
     if (isRainy) {
         ctx.save();
-        
-        // 1. Reflexo Branco (Faróis para a frente/horizonte)
         let whiteReflect = ctx.createLinearGradient(0, 0, 0, -h * 2);
         whiteReflect.addColorStop(0, nightMode ? "rgba(255, 255, 255, 0.3)" : "rgba(255, 255, 255, 0.1)");
         whiteReflect.addColorStop(1, "rgba(255, 255, 255, 0)");
-        
         ctx.fillStyle = whiteReflect;
         ctx.fillRect(-w * 0.3, -h * 0.5, w * 0.6, h * 1.5);
 
-        // 2. Reflexo Vermelho (Lanternas traseiras para o jogador)
         let redReflect = ctx.createLinearGradient(0, h * 0.5, 0, h * 1.5);
         redReflect.addColorStop(0, "rgba(255, 0, 0, 0.4)");
         redReflect.addColorStop(1, "rgba(255, 0, 0, 0)");
-        
         ctx.fillStyle = redReflect;
         ctx.fillRect(leftX - (2*s), h * 0.4, 4*s, h * 0.8);
         ctx.fillRect(rightX - (2*s), h * 0.4, 4*s, h * 0.8);
-        
         ctx.restore();
     }
 
-    // --- CAMADA 1: FEIXE DE LUZ (FUNDO) ---
+    // --- CAMADA 2: FEIXE DE LUZ ---
     if (nightMode || hasFog || isRainy) {
-        const coneLength = h * 2.5; 
-        const coneExpansion = w * 1.2; 
+        const coneLength = h * 2.5;
+        const coneExpansion = w * 1.2;
         let gradient = ctx.createLinearGradient(0, lightY, 0, lightY - coneLength);
-        gradient.addColorStop(0, "rgba(255, 255, 255, 0.4)"); 
+        gradient.addColorStop(0, "rgba(255, 255, 255, 0.26)");
         gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
         ctx.fillStyle = gradient;
         ctx.beginPath();
@@ -197,22 +194,93 @@ function togglePause() {
         ctx.closePath(); ctx.fill();
     }
 
-    // --- CAMADA 2: CORPO E AEROFÓLIO (MEIO) ---
-    ctx.fillStyle = "#111"; 
+    // --- CAMADA 3: CORPO E PNEUS ---
+    ctx.fillStyle = "#111"; // Pneus
     ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8);
     ctx.fillRect(w * 0.25, -h * 0.1, w * 0.25, h * 0.8);
-    ctx.fillStyle = bodyColor; 
-    ctx.fillRect(-w * 0.25, h * 0.1, w * 0.5, h * 0.4); 
-    ctx.fillRect(-w * 0.5, -h * 0.3, w, h * 0.2); 
+    
+    ctx.fillStyle = bodyColor; // Cor do carro (vermelho ou cor da equipe)
+    ctx.fillRect(-w * 0.25, h * 0.1, w * 0.5, h * 0.4); // Cockpit central
+    ctx.fillRect(-w * 0.5, -h * 0.3, w, h * 0.2);        // Aerofólio
 
-    // --- CAMADA 3: LANTERNAS VERMELHAS (TOPO) ---
+    // NOVO: DETALHE DO MOTOR E ESCAPAMENTOS
+    // Só aparece se NÃO for NightMode, conforme solicitado
+     if (!nightMode) {
+        const engineY = h * 0.3;      // Altura na parte traseira
+        const barWidth = w * 0.25;    // Largura da barra prateada
+        const exhaustSize = 1.8 * s;  // Tamanho dos círculos dos escapamentos
+
+        // 1. Barra Prateada (Ligação do Motor)
+        ctx.fillStyle = "#383737 "; 
+        ctx.fillRect(-barWidth / 2, engineY - (0.5 * s), barWidth, 1.2 * s);
+
+        // 2. NOVO: Meio-círculo do Motor (Acima da barra)
+        ctx.fillStyle = "#383737"; // Cinza médio para o motor
+        ctx.beginPath();
+        // Desenha um semicírculo para cima (arco de 180 graus)
+        ctx.arc(0, engineY - (0.5 * s), barWidth * 0.3, Math.PI, 0); 
+        ctx.fill();
+
+        // 3. Escapamentos (Círculos nas extremidades da barra)
+        ctx.fillStyle = "#888";    
+        ctx.strokeStyle = "#888";  
+        ctx.lineWidth = 0.5 * s;
+
+        // Escapamento Esquerdo
+        ctx.beginPath();
+        ctx.arc(-barWidth / 2, engineY, exhaustSize, 0, Math.PI * 2);
+        ctx.fill(); ctx.stroke();
+
+        // Escapamento Direito
+        ctx.beginPath();
+        ctx.arc(barWidth / 2, engineY, exhaustSize, 0, Math.PI * 2);
+        ctx.fill(); ctx.stroke();
+    }
+
+     // --- CAMADA 4: CAPACETE (CORES POR EQUIPE / PRETO À NOITE) ---
+    let helmetColor = "#FFFFFF"; // Cor padrão
+
+    if (nightMode) {
+        // Se for modo noturno, o capacete vira uma silhueta preta
+        helmetColor = "#000000";
+    } else if (isPlayer) {
+        helmetColor = "#FFFF00"; // Amarelo para o jogador
+    } else {
+        // Mapeamento de cores para os inimigos
+        const helmetMap = {
+            "#F0F": "#00FFFF", "#0FF": "#FF00FF", "#0F0": "#777070",
+            "#FF0": "#0000FF", "#f47d28": "#1a7a1a", "#a5a3a3": "#E00",
+            "rgb(0, 26, 255)": "#907c0c", "rgb(27, 104, 27)": "#ec7171"
+        };
+        helmetColor = helmetMap[color] || "#FFFFFF";
+    }
+
+    ctx.fillStyle = helmetColor;
+    ctx.beginPath();
+    // Desenho do capacete
+    ctx.arc(0, h * 0.1, 3.8 * s, 0, Math.PI, true); 
+    ctx.fill();
+
+    // Detalhe de reflexo (Apenas se NÃO for noite para manter a silhueta)
+    if (!nightMode) {
+        ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+        ctx.beginPath();
+        ctx.arc(1 * s, h * 0.05, 1.5 * s, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    // --- CAMADA 5: LANTERNAS COM BRILHO ---
     if (nightMode || hasFog || isRainy) {
-        ctx.fillStyle = "#ff0707"; 
-        const headlightSize = 2.8 * s; 
+        ctx.save();
+        const headlightSize = 2.8 * s;
+        ctx.shadowBlur = 15 * s;
+        ctx.shadowColor = "#e61e1e";
+        ctx.fillStyle = "#fa3636";
         ctx.beginPath(); ctx.arc(leftX, lightY, headlightSize, 0, Math.PI * 2); ctx.fill();
         ctx.beginPath(); ctx.arc(rightX, lightY, headlightSize, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
     }
-    
+
     ctx.restore();
 }
 
@@ -380,16 +448,16 @@ function update() {
     });
 
     // --- LÓGICA DE INIMIGOS EM DUPLA ---
-    if (gameTick % 240 === 0 && enemies.length < 100) {
+    if (gameTick % 70 === 0 && enemies.length < 100) {
         enemies.push({ 
-            lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 7.5, 
+            lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 3.0, 
              color: ["#F0F", "#0FF", "#0F0", "#FF0", "#f47d28", "#a5a3a3", "rgb(0, 26, 255)", "rgb(27, 104, 27)" ][Math.floor(Math.random() * 8)],
             isOvertaken: false 
         });
     }
-    if (gameTick % 240 === 80 && enemies.length < 100) {
+    if (gameTick % 70 === 120 && enemies.length < 100) {
         enemies.push({ 
-            lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 7.0, 
+            lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 3.0, 
             color: ["#F0F", "#0FF", "#0F0", "#FF0", "#f47d28", "#a5a3a3", "rgb(0, 26, 255)", "rgb(27, 104, 27)"][Math.floor(Math.random() * 8)],
             isOvertaken: false 
         });
