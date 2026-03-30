@@ -341,7 +341,7 @@ function togglePause() {
         ctx.fill();
 
         // 3. Escapamentos (Círculos nas extremidades da barra)
-        ctx.fillStyle = "#333";    
+        ctx.fillStyle = "#7a7878";    
         ctx.strokeStyle = "#888";  
         ctx.lineWidth = 0.5 * s;
 
