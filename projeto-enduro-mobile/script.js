@@ -312,46 +312,74 @@ function togglePause() {
         ctx.closePath(); ctx.fill();
     }
 
-    // --- CAMADA 3: CORPO E PNEUS ---
-    ctx.fillStyle = "#111";
+     // --- CAMADA 3: CORPO E PNEUS ---
+    ctx.fillStyle = "#111"; // Pneus
     ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8);
     ctx.fillRect(w * 0.25, -h * 0.1, w * 0.25, h * 0.8);
     
-    ctx.fillStyle = bodyColor;
-    ctx.fillRect(-w * 0.25, h * 0.1, w * 0.5, h * 0.4);
-    ctx.fillRect(-w * 0.5, -h * 0.3, w, h * 0.2);
+    ctx.fillStyle = bodyColor; // Cor do carro (vermelho ou cor da equipe)
+    ctx.fillRect(-w * 0.25, h * 0.1, w * 0.5, h * 0.4); // Cockpit central
+    ctx.fillRect(-w * 0.5, -h * 0.3, w, h * 0.2);        // Aerofólio
 
-    // --- CAMADA 4: CAPACETE (CORES POR EQUIPE) ---
+    // NOVO: DETALHE DO MOTOR E ESCAPAMENTOS
+    // Só aparece se NÃO for NightMode, conforme solicitado
+    
+    if (!nightMode) {
+        const engineY = h * 0.3;      // Altura na parte traseira
+        const barWidth = w * 0.25;    // Largura da barra prateada
+        const exhaustSize = 1.8 * s;  // Tamanho dos círculos dos escapamentos
+
+        // 1. Barra Prateada (Ligação do Motor)
+        ctx.fillStyle = "#C0C0C0"; // Prata metálico
+        ctx.fillRect(-barWidth / 2, engineY - (0.5 * s), barWidth, 1.2 * s);
+
+        // 2. Escapamentos (Círculos nas extremidades da barra)
+        ctx.fillStyle = "#333";    // Interior escuro do cano
+        ctx.strokeStyle = "#888";  // Borda metálica
+        ctx.lineWidth = 0.5 * s;
+
+        // Escapamento Esquerdo
+        ctx.beginPath();
+        ctx.arc(-barWidth / 2, engineY, exhaustSize, 0, Math.PI * 2);
+        ctx.fill(); ctx.stroke();
+
+        // Escapamento Direito
+        ctx.beginPath();
+        ctx.arc(barWidth / 2, engineY, exhaustSize, 0, Math.PI * 2);
+        ctx.fill(); ctx.stroke();
+    }
+
+     // --- CAMADA 4: CAPACETE (CORES POR EQUIPE / PRETO À NOITE) ---
     let helmetColor = "#FFFFFF"; // Cor padrão
 
-    if (isPlayer) {
-        helmetColor = "#FFFF00"; // Teu amarelo icônico
+    if (nightMode) {
+        // Se for modo noturno, o capacete vira uma silhueta preta
+        helmetColor = "#000000";
+    } else if (isPlayer) {
+        helmetColor = "#FFFF00"; // Amarelo para o jogador
     } else {
-        // Mapeamento: Para cada cor de carro inimigo, uma cor de capacete diferente
+        // Mapeamento de cores para os inimigos
         const helmetMap = {
-            "#F0F": "#00FFFF", // Carro Magenta -> Capacete Ciano
-            "#0FF": "#FF00FF", // Carro Ciano -> Capacete Magenta
-            "#0F0": "#777070", // Carro Verde -> Capacete Branco
-            "#FF0": "#0000FF", // Carro Amarelo -> Capacete Azul
-            "#f47d28": "#1a7a1a", // Carro Laranja -> Capacete Verde
-            "#a5a3a3": "#E00",    // Carro Cinza -> Capacete Vermelho
-            "rgb(0, 26, 255)": "#907c0c", // Carro Azul -> Capacete Dourado
-            "rgb(27, 104, 27)": "#ec7171"    // Carro Verde Escuro -> Capacete Cinza Claro
+            "#F0F": "#00FFFF", "#0FF": "#FF00FF", "#0F0": "#777070",
+            "#FF0": "#0000FF", "#f47d28": "#1a7a1a", "#a5a3a3": "#E00",
+            "rgb(0, 26, 255)": "#907c0c", "rgb(27, 104, 27)": "#ec7171"
         };
         helmetColor = helmetMap[color] || "#FFFFFF";
     }
 
     ctx.fillStyle = helmetColor;
     ctx.beginPath();
-    // Desenho arredondado do capacete (visto de trás, sem viseira)
+    // Desenho do capacete
     ctx.arc(0, h * 0.1, 3.8 * s, 0, Math.PI, true); 
     ctx.fill();
 
-    // Detalhe de reflexo no capacete
-    ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
-    ctx.beginPath();
-    ctx.arc(1 * s, h * 0.05, 1.5 * s, 0, Math.PI * 2);
-    ctx.fill();
+    // Detalhe de reflexo (Apenas se NÃO for noite para manter a silhueta)
+    if (!nightMode) {
+        ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+        ctx.beginPath();
+        ctx.arc(1 * s, h * 0.05, 1.5 * s, 0, Math.PI * 2);
+        ctx.fill();
+    }
 
     // --- CAMADA 5: LANTERNAS COM BRILHO ---
     if (nightMode || hasFog || isRainy) {
