@@ -22,12 +22,13 @@ main {
     align-items: center;
     height: 100vh;
     width: 100vw;
-    padding: 20px;
+    padding: 10px; /* Reduzi um pouco o padding para ganhar espaço no mobile */
 }
 
 .container {
     position: relative;
     display: flex;
+    flex-direction: row; /* Mantém lado a lado em todos os dispositivos */
     align-items: center;
     justify-content: center;
 }
@@ -39,6 +40,7 @@ section#telefone {
     width: 311px;
     background: url('../imagens/frame-iphone.png') no-repeat;
     background-size: contain;
+    flex-shrink: 0; /* Impede que o telefone "esmague" em telas pequenas */
 }
 
 iframe#tela {
@@ -50,17 +52,17 @@ iframe#tela {
     border: none;
 }
 
-/* Seção das Redes Sociais - Desktop e Tablet */
+/* Seção das Redes Sociais */
 section#redes-sociais {
-    margin-left: 20px;
+    margin-left: 10px; /* Reduzi a margem para caber melhor no mobile */
     display: flex;
-    flex-direction: column;
+    flex-direction: column; /* Ícones um embaixo do outro, à direita */
 }
 
 section#redes-sociais img {
-    width: 50px;
-    height: 50px;
-    margin: 8px;
+    width: 45px; /* Diminuí levemente o tamanho dos ícones para o mobile */
+    height: 45px;
+    margin: 5px;
     border-radius: 50%;
     box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.4);
     transition: transform .4s, border .5s, box-shadow .4s;
@@ -74,48 +76,26 @@ section#redes-sociais img:hover {
 
 /* --- AJUSTES DE RESPONSIVIDADE --- */
 
-/* Celular (Telas pequenas) */
+/* Ajuste específico para Celulares */
 @media (max-width: 600px) {
-    main {
-        flex-direction: column;
-    }
-
-    .container {
-        flex-direction: column-reverse; /* Inverte a ordem: botões (top) e telefone (bottom) */
-    }
-
     section#telefone {
-        transform: scale(0.8);
-        margin-top: -30px;
+        transform: scale(0.7); /* Reduz o iPhone para sobrar espaço para os botões */
+        margin-left: -30px; /* Puxa o iPhone um pouco para a esquerda */
     }
 
     section#redes-sociais {
-        margin-left: 0;
-        margin-bottom: 10px; /* Espaço entre botões e o telefone */
-        flex-direction: row; /* Botões lado a lado no topo */
-        justify-content: center;
-        flex-wrap: wrap;
+        margin-left: 0px;
+    }
+
+    section#redes-sociais img {
+        width: 40px; /* Ícones menores para não quebrar o layout lateral */
+        height: 40px;
     }
 }
 
-/* Tablet (Telas médias) */
-@media (min-width: 601px) and (max-width: 1024px) {
-    .container {
-        flex-direction: row; /* Garante que fiquem lado a lado */
-    }
-
-    section#redes-sociais {
-        margin-left: 20px;
-        flex-direction: column; /* Botões em coluna à direita */
-    }
-
-    section#telefone {
-        transform: scale(0.9);
-    }
-}
-
+/* Ajuste para telas com pouca altura */
 @media (max-height: 700px) {
     section#telefone {
-        transform: scale(0.75);
+        transform: scale(0.65);
     }
 }
