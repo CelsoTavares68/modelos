@@ -1,6 +1,5 @@
- @charset "UTF-8";
+  @charset "UTF-8";
 
-/* Configurações de Reset */
 * {
     margin: 0;
     padding: 0;
@@ -8,30 +7,35 @@
     box-sizing: border-box;
 }
 
-body {
+/* Fundo ocupa a tela toda sem rolagens */
+html, body {
     height: 100vh;
     width: 100vw;
     background: url('imagens/fundo-madeira.jpg') no-repeat center center fixed;
     background-size: cover;
+    overflow: hidden; 
+}
+
+main {
     display: flex;
     justify-content: center;
     align-items: center;
-    overflow: hidden;
+    height: 100vh;
 }
 
+/* Container que agrupa iPhone + Botões */
 .container {
     display: flex;
-    align-items: flex-end; /* Alinha os ícones na base do telefone no desktop */
-    position: relative;
+    align-items: center;
+    gap: 20px; /* Espaço entre o iPhone e os botões */
 }
 
-/* Estilização do iPhone */
 section#telefone {
+    position: relative;
     height: 627px;
     width: 311px;
     background: url('imagens/frame-iphone.png') no-repeat;
     background-size: contain;
-    position: relative;
 }
 
 iframe#tela {
@@ -43,50 +47,45 @@ iframe#tela {
     border: none;
 }
 
-/* Menu de Ícones */
 section#redes-sociais {
     display: flex;
     flex-direction: column;
-    margin-left: 15px;
 }
 
 section#redes-sociais img {
     width: 50px;
     height: 50px;
     border-radius: 50%;
-    margin-bottom: 10px;
+    margin: 5px 0;
     box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.4);
-    transition: transform 0.3s, border 0.3s;
+    transition: 0.3s;
 }
 
 section#redes-sociais img:hover {
-    transform: scale(1.15);
+    transform: scale(1.1);
     border: 2px solid white;
 }
 
-/* Responsividade para Tablet e Celular */
-@media (max-width: 768px) {
-    body {
-        overflow-y: auto; /* Permite rolar se o celular for pequeno */
-    }
-
+/* Responsividade para Celular/Tablet */
+@media (max-width: 800px) {
+    body { overflow-y: auto; }
+    
     .container {
         flex-direction: column;
-        align-items: center;
+        padding: 20px 0;
     }
 
     section#telefone {
-        transform: scale(0.9);
-        margin-bottom: 20px;
+        transform: scale(0.9); /* Reduz um pouco para caber em telas menores */
     }
 
     section#redes-sociais {
-        flex-direction: row;
-        margin-left: 0;
-        margin-top: -30px; /* Sobrepõe levemente o frame para economizar espaço */
+        flex-direction: row; /* Botões ficam lado a lado no celular */
+        flex-wrap: wrap;
+        justify-content: center;
     }
 
     section#redes-sociais img {
-        margin: 5px;
+        margin: 10px;
     }
 }
