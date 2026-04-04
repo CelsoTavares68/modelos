@@ -13,7 +13,7 @@ html, body {
     width: 100vw;
     background: url('../imagens/fundo-madeira.jpg') no-repeat center center fixed;
     background-size: cover;
-    overflow: hidden; /* Evita barras de rolagem desnecessárias no desktop */
+    overflow: hidden; 
 }
 
 main {
@@ -50,7 +50,7 @@ iframe#tela {
     border: none;
 }
 
-/* Seção das Redes Sociais */
+/* Seção das Redes Sociais - Desktop e Tablet */
 section#redes-sociais {
     margin-left: 20px;
     display: flex;
@@ -72,36 +72,50 @@ section#redes-sociais img:hover {
     box-shadow: 5px 5px 15px rgba(255, 255, 255, 0.4);
 }
 
-/* RESPONSIVIDADE (Mobile e Tablet) */
-@media (max-width: 768px) {
-    main {
-        flex-direction: column; /* Coloca os ícones abaixo ou acima em telas pequenas */
-        overflow-y: auto;
-    }
+/* --- AJUSTES DE RESPONSIVIDADE --- */
 
-    .container {
+/* Celular (Telas pequenas) */
+@media (max-width: 600px) {
+    main {
         flex-direction: column;
     }
 
+    .container {
+        flex-direction: column-reverse; /* Inverte a ordem: botões (top) e telefone (bottom) */
+    }
+
     section#telefone {
-        transform: scale(0.9); /* Reduz um pouco o tamanho para caber em celulares comuns */
+        transform: scale(0.8);
+        margin-top: -30px;
     }
 
     section#redes-sociais {
         margin-left: 0;
-        margin-top: -40px; /* Aproxima os ícones do frame */
-        flex-direction: row; /* Ícones em linha no celular */
+        margin-bottom: 10px; /* Espaço entre botões e o telefone */
+        flex-direction: row; /* Botões lado a lado no topo */
         justify-content: center;
         flex-wrap: wrap;
     }
-    
-    section#redes-sociais br {
-        display: none; /* Remove a quebra de linha no mobile */
+}
+
+/* Tablet (Telas médias) */
+@media (min-width: 601px) and (max-width: 1024px) {
+    .container {
+        flex-direction: row; /* Garante que fiquem lado a lado */
+    }
+
+    section#redes-sociais {
+        margin-left: 20px;
+        flex-direction: column; /* Botões em coluna à direita */
+    }
+
+    section#telefone {
+        transform: scale(0.9);
     }
 }
 
 @media (max-height: 700px) {
     section#telefone {
-        transform: scale(0.8); /* Ajuste para telas com pouca altura */
+        transform: scale(0.75);
     }
 }
