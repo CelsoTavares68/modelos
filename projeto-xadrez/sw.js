@@ -1,4 +1,4 @@
-  const CACHE_NAME = 'chess-medieval-v2';
+  const CACHE_NAME = 'chess-medieval-v3';
 const ASSETS = [
   './',
   './index.html',
