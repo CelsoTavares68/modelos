@@ -1,4 +1,4 @@
- // --- 1. SETUP DO MOTOR E CENA ---
+  // --- 1. SETUP DO MOTOR E CENA ---
 const game = new Chess();
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x1a1a2e); 
@@ -25,7 +25,7 @@ const tiles = [];
 const particles = []; 
 let selectedPiece = null;
 
-// ÁUDIO E PLACAR
+// ADICIONADO: Variáveis de Áudio e Placar
 const somCaptura = new Audio('vidro-quebrando.mp3');
 let placar = { branca: 0, cinza: 0 };
 let jogoFinalizado = false;
@@ -34,7 +34,7 @@ const turnText = document.getElementById('turn-indicator');
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
-// --- 2. INTELIGÊNCIA ARTIFICIAL ---
+// --- 2. INTELIGÊNCIA ARTIFICIAL (DIFICULDADE MANTIDA) ---
 const weights = { p: 10, n: 32, b: 33, r: 50, q: 90, k: 900 };
 
 const boardValues = [
@@ -107,7 +107,7 @@ function saveGame() {
     const gameState = { 
         fen: game.fen(), 
         mode: document.getElementById('game-mode').value,
-        placar: placar
+        placar: placar // ADICIONADO: Salva o placar
     };
     localStorage.setItem('chess3d_save', JSON.stringify(gameState));
 }
@@ -118,9 +118,9 @@ function loadGame() {
         const data = JSON.parse(saved);
         game.load(data.fen);
         document.getElementById('game-mode').value = data.mode;
-        if (data.placar) placar = data.placar;
+        if (data.placar) placar = data.placar; // ADICIONADO: Recupera placar
     }
-    atualizarExibicaoPlacar();
+    atualizarExibicaoPlacar(); // ADICIONADO: Atualiza UI
     pieces.forEach(p => scene.remove(p));
     pieces.length = 0;
     const board = game.board();
@@ -137,7 +137,8 @@ function loadGame() {
     updateStatusUI();
 }
 
- function atualizarExibicaoPlacar() {
+// ADICIONADO: Função para atualizar números na tela
+function atualizarExibicaoPlacar() {
     const elBranca = document.getElementById('vitorias-branca');
     const elCinza = document.getElementById('vitorias-cinza');
     if(elBranca) elBranca.innerText = placar.branca;
@@ -240,12 +241,12 @@ function handleSpecialMoves(move) {
 }
 
 function tryMove(p, tx, tz) {
-    if (isAiThinking || jogoFinalizado) return;
+    if (isAiThinking || jogoFinalizado) return; // ADICIONADO: Trava movimento se jogo acabou
     const move = game.move({ from: toAlgebraic(p.userData.gridX, p.userData.gridZ), to: toAlgebraic(tx, tz), promotion: 'q' });
     if (move) {
         selectedPiece = null;
         if (move.captured) {
-            somCaptura.play();
+            somCaptura.play(); // ADICIONADO: Som de captura
             const victim = pieces.find(v => v.userData.gridX === tx && v.userData.gridZ === tz && v !== p);
             if (victim) { createExplosion(victim.position, victim.userData.originalColor); scene.remove(victim); pieces.splice(pieces.indexOf(victim), 1); }
         }
@@ -288,7 +289,7 @@ function playAiTurn() {
             const pos = fromAlgebraic(moveDetails.to);
 
             if (moveDetails.captured) {
-                somCaptura.play();
+                somCaptura.play(); // ADICIONADO: Som de captura na vez da IA
                 const victim = pieces.find(v => v.userData.gridX === pos.x && v.userData.gridZ === pos.z);
                 if (victim) { createExplosion(victim.position, victim.userData.originalColor); scene.remove(victim); pieces.splice(pieces.indexOf(victim), 1); }
             }
@@ -347,6 +348,7 @@ function updateStatusUI() {
     const isGameOver = game.game_over();
     
     if (isGameOver) {
+        // ADICIONADO: Lógica de contagem de vitórias
         if (isCheckmate && !jogoFinalizado) {
             jogoFinalizado = true;
             const vencedor = game.turn() === 'w' ? 'cinza' : 'branca';
@@ -380,9 +382,10 @@ function finalizeTurn(p) {
 
 function resetGame() {
     isAiThinking = false;
-    jogoFinalizado = false;
+    jogoFinalizado = false; // ADICIONADO: Reseta trava de fim de jogo
+    // localStorage.removeItem('chess3d_save'); // Comentado para não zerar placar salvo
     game.reset();
-    saveGame();
+    saveGame(); // Salva estado resetado (mantendo placar)
     pieces.forEach(p => scene.remove(p));
     pieces.length = 0;
     const layout = ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knight', 'rook'];
