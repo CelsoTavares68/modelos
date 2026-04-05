@@ -149,3 +149,19 @@ body {
     box-shadow: 0 4px 10px rgba(0,0,0,0.3);
     z-index: 200;
 }
+
+ #placar {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 50px;
+            font-family: 'Cinzel', serif;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+            z-index: 10;
+            pointer-events: none;
+        }
+        .vitorias { text-align: center; }
+        .vitorias span { display: block; font-size: 1.5rem; color: #ffcc00; }
