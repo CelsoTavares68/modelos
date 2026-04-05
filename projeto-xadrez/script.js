@@ -1,4 +1,4 @@
-  // --- 1. SETUP DO MOTOR E CENA ---
+ // --- 1. SETUP DO MOTOR E CENA ---
 const game = new Chess();
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x1a1a2e); 
@@ -25,11 +25,10 @@ const tiles = [];
 const particles = []; 
 let selectedPiece = null;
 
-// EFEITO SONORO
-const soundCapture = new Audio('vidro-quebrando.mp3');
-
-// PLACAR
-let winCount = { white: 0, black: 0 };
+// ÁUDIO E PLACAR
+const somCaptura = new Audio('vidro-quebrando.mp3');
+let placar = { branca: 0, cinza: 0 };
+let jogoFinalizado = false;
 
 const turnText = document.getElementById('turn-indicator');
 const raycaster = new THREE.Raycaster();
@@ -37,6 +36,7 @@ const mouse = new THREE.Vector2();
 
 // --- 2. INTELIGÊNCIA ARTIFICIAL ---
 const weights = { p: 10, n: 32, b: 33, r: 50, q: 90, k: 900 };
+
 const boardValues = [
     [0,  0,  0,  0,  0,  0,  0,  0],
     [5, 10, 10, -20, -20, 10, 10,  5],
@@ -107,7 +107,7 @@ function saveGame() {
     const gameState = { 
         fen: game.fen(), 
         mode: document.getElementById('game-mode').value,
-        wins: winCount 
+        placar: placar
     };
     localStorage.setItem('chess3d_save', JSON.stringify(gameState));
 }
@@ -118,9 +118,9 @@ function loadGame() {
         const data = JSON.parse(saved);
         game.load(data.fen);
         document.getElementById('game-mode').value = data.mode;
-        if(data.wins) winCount = data.wins;
+        if (data.placar) placar = data.placar;
     }
-    updateScoreUI();
+    atualizarExibicaoPlacar();
     pieces.forEach(p => scene.remove(p));
     pieces.length = 0;
     const board = game.board();
@@ -137,9 +137,9 @@ function loadGame() {
     updateStatusUI();
 }
 
-function updateScoreUI() {
-    document.getElementById('score-white').innerText = winCount.white;
-    document.getElementById('score-black').innerText = winCount.black;
+function atualizarExibicaoPlacar() {
+    document.getElementById('vitorias-branca').innerText = placar.branca;
+    document.getElementById('vitorias-cinza').innerText = placar.cinza;
 }
 
 // --- 4. CRIAÇÃO DAS PEÇAS ---
@@ -238,12 +238,12 @@ function handleSpecialMoves(move) {
 }
 
 function tryMove(p, tx, tz) {
-    if (isAiThinking) return;
+    if (isAiThinking || jogoFinalizado) return;
     const move = game.move({ from: toAlgebraic(p.userData.gridX, p.userData.gridZ), to: toAlgebraic(tx, tz), promotion: 'q' });
     if (move) {
         selectedPiece = null;
         if (move.captured) {
-            soundCapture.play().catch(()=>{}); // SOM DE VIDRO
+            somCaptura.play();
             const victim = pieces.find(v => v.userData.gridX === tx && v.userData.gridZ === tz && v !== p);
             if (victim) { createExplosion(victim.position, victim.userData.originalColor); scene.remove(victim); pieces.splice(pieces.indexOf(victim), 1); }
         }
@@ -257,7 +257,7 @@ function tryMove(p, tx, tz) {
 }
 
 function playAiTurn() {
-    if (game.game_over() || isAiThinking) return;
+    if (game.game_over() || isAiThinking || jogoFinalizado) return;
     isAiThinking = true;
     turnText.innerText = "IA A PENSAR...";
     turnText.style.color = "#ffcc00";
@@ -286,7 +286,7 @@ function playAiTurn() {
             const pos = fromAlgebraic(moveDetails.to);
 
             if (moveDetails.captured) {
-                soundCapture.play().catch(()=>{}); // SOM DE VIDRO
+                somCaptura.play();
                 const victim = pieces.find(v => v.userData.gridX === pos.x && v.userData.gridZ === pos.z);
                 if (victim) { createExplosion(victim.position, victim.userData.originalColor); scene.remove(victim); pieces.splice(pieces.indexOf(victim), 1); }
             }
@@ -316,7 +316,7 @@ function createBoard() {
 }
 
 function handleInteraction(clientX, clientY) {
-    if (isAiThinking || game.game_over()) return;
+    if (isAiThinking || game.game_over() || jogoFinalizado) return;
     mouse.x = (clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(clientY / window.innerHeight) * 2 + 1;
     raycaster.setFromCamera(mouse, camera);
@@ -343,23 +343,23 @@ window.addEventListener('mousedown', (e) => { handleInteraction(e.clientX, e.cli
 function updateStatusUI() {
     const isCheckmate = game.in_checkmate();
     const isGameOver = game.game_over();
+    
     if (isGameOver) {
-        if (isCheckmate) {
-            const winner = game.turn() === 'w' ? 'black' : 'white';
-            const colorName = winner === 'white' ? 'BRANCAS' : 'CINZAS';
-            turnText.innerText = `CHECKMATE! ${colorName} VENCEM`;
+        if (isCheckmate && !jogoFinalizado) {
+            jogoFinalizado = true;
+            const vencedor = game.turn() === 'w' ? 'cinza' : 'branca';
+            placar[vencedor]++;
+            atualizarExibicaoPlacar();
+            saveGame();
+
+            const nomeVencedor = vencedor === 'branca' ? 'BRANCAS' : 'CINZAS';
+            turnText.innerText = `CHECKMATE! ${nomeVencedor} VENCEM`;
             turnText.style.color = "#ff4444";
-            
-            // ATUALIZA PLACAR (apenas uma vez)
-            if(!this.scoreRecorded) {
-                winCount[winner]++;
-                updateScoreUI();
-                saveGame();
-                this.scoreRecorded = true;
-            }
-        } else { turnText.innerText = "EMPATE!"; turnText.style.color = "#888"; }
+        } else if (game.in_draw()) {
+            turnText.innerText = "EMPATE!"; 
+            turnText.style.color = "#888";
+        }
     } else {
-        this.scoreRecorded = false;
         turn = game.turn() === 'w' ? 'white' : 'black';
         const colorName = turn === 'white' ? 'BRANCAS' : 'CINZAS';
         turnText.innerText = game.in_check() ? `XEQUE! VEZ DAS ${colorName}` : `VEZ DAS ${colorName}`;
@@ -371,17 +371,16 @@ function finalizeTurn(p) {
     if(p) deselectPiece(p);
     saveGame();
     updateStatusUI();
-    if (document.getElementById('game-mode').value === 'pve' && game.turn() === 'b') {
+    if (document.getElementById('game-mode').value === 'pve' && game.turn() === 'b' && !jogoFinalizado) {
         setTimeout(playAiTurn, 300);
     }
 }
 
 function resetGame() {
     isAiThinking = false;
-    this.scoreRecorded = false;
-    // Não removemos o placar do localStorage no reset, apenas o FEN
+    jogoFinalizado = false;
     game.reset();
-    saveGame(); 
+    saveGame();
     pieces.forEach(p => scene.remove(p));
     pieces.length = 0;
     const layout = ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knight', 'rook'];
@@ -428,7 +427,7 @@ function createExplosion(pos, color) {
 
 function animate() {
     requestAnimationFrame(animate);
-    if (selectedPiece && !isAiThinking) {
+    if (selectedPiece && !isAiThinking && !jogoFinalizado) {
         selectedPiece.position.y = 0.3 + Math.sin(Date.now() * 0.005) * 0.15;
         selectedPiece.rotation.y += 0.01;
     }

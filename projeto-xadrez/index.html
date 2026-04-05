@@ -1,4 +1,4 @@
-  <!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
@@ -10,36 +10,28 @@
     <link rel="apple-touch-icon" href="icon-192.png">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&display=swap" rel="stylesheet">
     <style>
-        /* Estilização rápida para o placar */
-        #scoreboard {
+        #placar {
             position: absolute;
             top: 10px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
-            gap: 40px;
+            gap: 50px;
             font-family: 'Cinzel', serif;
-            font-size: 1.2rem;
             color: white;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-            pointer-events: none;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
             z-index: 10;
+            pointer-events: none;
         }
-        .score-box { text-align: center; min-width: 100px; }
-        .score-val { font-size: 1.8rem; display: block; color: #ffcc00; }
+        .vitorias { text-align: center; }
+        .vitorias span { display: block; font-size: 1.5rem; color: #ffcc00; }
     </style>
 </head>
 <body>
     <div id="ui-overlay">
-        <div id="scoreboard">
-            <div class="score-box">
-                CINZAS
-                <span id="score-black" class="score-val">0</span>
-            </div>
-            <div class="score-box">
-                BRANCAS
-                <span id="score-white" class="score-val">0</span>
-            </div>
+        <div id="placar">
+            <div class="vitorias">CINZAS<span id="vitorias-cinza">0</span></div>
+            <div class="vitorias">BRANCAS<span id="vitorias-branca">0</span></div>
         </div>
 
         <div id="status-panel">
