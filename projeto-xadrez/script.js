@@ -1,4 +1,4 @@
- // --- 1. SETUP DO MOTOR E CENA ---
+  // --- 1. SETUP DO MOTOR E CENA ---
 const game = new Chess();
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x1a1a2e); 
@@ -25,13 +25,18 @@ const tiles = [];
 const particles = []; 
 let selectedPiece = null;
 
+// EFEITO SONORO
+const soundCapture = new Audio('vidro-quebrando.mp3');
+
+// PLACAR
+let winCount = { white: 0, black: 0 };
+
 const turnText = document.getElementById('turn-indicator');
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
-// --- 2. INTELIGÊNCIA ARTIFICIAL (DIFICULDADE MANTIDA) ---
+// --- 2. INTELIGÊNCIA ARTIFICIAL ---
 const weights = { p: 10, n: 32, b: 33, r: 50, q: 90, k: 900 };
-
 const boardValues = [
     [0,  0,  0,  0,  0,  0,  0,  0],
     [5, 10, 10, -20, -20, 10, 10,  5],
@@ -99,7 +104,11 @@ function fromAlgebraic(s) {
 }
 
 function saveGame() {
-    const gameState = { fen: game.fen(), mode: document.getElementById('game-mode').value };
+    const gameState = { 
+        fen: game.fen(), 
+        mode: document.getElementById('game-mode').value,
+        wins: winCount 
+    };
     localStorage.setItem('chess3d_save', JSON.stringify(gameState));
 }
 
@@ -109,7 +118,9 @@ function loadGame() {
         const data = JSON.parse(saved);
         game.load(data.fen);
         document.getElementById('game-mode').value = data.mode;
+        if(data.wins) winCount = data.wins;
     }
+    updateScoreUI();
     pieces.forEach(p => scene.remove(p));
     pieces.length = 0;
     const board = game.board();
@@ -124,6 +135,11 @@ function loadGame() {
         }
     }
     updateStatusUI();
+}
+
+function updateScoreUI() {
+    document.getElementById('score-white').innerText = winCount.white;
+    document.getElementById('score-black').innerText = winCount.black;
 }
 
 // --- 4. CRIAÇÃO DAS PEÇAS ---
@@ -227,6 +243,7 @@ function tryMove(p, tx, tz) {
     if (move) {
         selectedPiece = null;
         if (move.captured) {
+            soundCapture.play().catch(()=>{}); // SOM DE VIDRO
             const victim = pieces.find(v => v.userData.gridX === tx && v.userData.gridZ === tz && v !== p);
             if (victim) { createExplosion(victim.position, victim.userData.originalColor); scene.remove(victim); pieces.splice(pieces.indexOf(victim), 1); }
         }
@@ -239,14 +256,12 @@ function tryMove(p, tx, tz) {
     }
 }
 
-// CORREÇÃO DO BUG DE TRAVAMENTO NA IA
 function playAiTurn() {
     if (game.game_over() || isAiThinking) return;
     isAiThinking = true;
     turnText.innerText = "IA A PENSAR...";
     turnText.style.color = "#ffcc00";
 
-    // Usamos RequestAnimationFrame para garantir que o texto mude ANTES do cálculo travar o CPU
     requestAnimationFrame(() => {
         requestAnimationFrame(() => {
             const moves = game.moves({ verbose: true });
@@ -271,6 +286,7 @@ function playAiTurn() {
             const pos = fromAlgebraic(moveDetails.to);
 
             if (moveDetails.captured) {
+                soundCapture.play().catch(()=>{}); // SOM DE VIDRO
                 const victim = pieces.find(v => v.userData.gridX === pos.x && v.userData.gridZ === pos.z);
                 if (victim) { createExplosion(victim.position, victim.userData.originalColor); scene.remove(victim); pieces.splice(pieces.indexOf(victim), 1); }
             }
@@ -329,11 +345,21 @@ function updateStatusUI() {
     const isGameOver = game.game_over();
     if (isGameOver) {
         if (isCheckmate) {
-            const winner = game.turn() === 'w' ? 'CINZAS' : 'BRANCAS';
-            turnText.innerText = `CHECKMATE! ${winner} VENCEM`;
+            const winner = game.turn() === 'w' ? 'black' : 'white';
+            const colorName = winner === 'white' ? 'BRANCAS' : 'CINZAS';
+            turnText.innerText = `CHECKMATE! ${colorName} VENCEM`;
             turnText.style.color = "#ff4444";
+            
+            // ATUALIZA PLACAR (apenas uma vez)
+            if(!this.scoreRecorded) {
+                winCount[winner]++;
+                updateScoreUI();
+                saveGame();
+                this.scoreRecorded = true;
+            }
         } else { turnText.innerText = "EMPATE!"; turnText.style.color = "#888"; }
     } else {
+        this.scoreRecorded = false;
         turn = game.turn() === 'w' ? 'white' : 'black';
         const colorName = turn === 'white' ? 'BRANCAS' : 'CINZAS';
         turnText.innerText = game.in_check() ? `XEQUE! VEZ DAS ${colorName}` : `VEZ DAS ${colorName}`;
@@ -352,8 +378,10 @@ function finalizeTurn(p) {
 
 function resetGame() {
     isAiThinking = false;
-    localStorage.removeItem('chess3d_save');
+    this.scoreRecorded = false;
+    // Não removemos o placar do localStorage no reset, apenas o FEN
     game.reset();
+    saveGame(); 
     pieces.forEach(p => scene.remove(p));
     pieces.length = 0;
     const layout = ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knight', 'rook'];
