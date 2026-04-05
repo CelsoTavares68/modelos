@@ -8,25 +8,24 @@ body {
     touch-action: none; 
 }
 
-/* --- 2. PAINEL DE STATUS (REBAIXADO PARA DAR ESPAÇO AO PLACAR) --- */
+ /* --- 2. PAINEL DE STATUS --- */
 #status-panel {
     position: absolute;
-    top: 85px; /* Aumentado de 10px para 85px para não cobrir o placar */
+    top: 60px; /* Espaço para o placar acima */
     left: 50%;
     transform: translateX(-50%);
     width: 95%;
-    max-width: 650px;
-    background: rgba(0, 0, 0, 0.85);
-    backdrop-filter: blur(8px);
-    padding: 12px;
+    max-width: 600px;
+    background: rgba(0, 0, 0, 0.6); /* Mais transparente para ver o tabuleiro por baixo */
+    backdrop-filter: blur(4px);
+    padding: 10px;
     border-radius: 12px;
-    border: 1px solid #886644;
+    border: 1px solid rgba(136, 102, 68, 0.5);
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     z-index: 100;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.6);
 }
 
 .controls-row {
@@ -61,35 +60,24 @@ body {
     justify-content: center;
 }
 
-/* --- 4. CONFIGURAÇÃO DO PLACAR (FIXO NO TOPO) --- */
+ /* --- 4. CONFIGURAÇÃO DO PLACAR --- */
 #placar {
     position: absolute;
-    top: 15px;
+    top: 5px;
     left: 50%;
     transform: translateX(-50%);
     display: flex;
-    gap: 60px;
+    gap: 40px;
     font-family: 'Cinzel', serif;
     color: white;
-    text-shadow: 2px 2px 4px rgba(0,0,0,1);
-    z-index: 200; /* Valor alto para ficar à frente de tudo */
+    text-shadow: 2px 2px 4px #000;
+    z-index: 200;
     pointer-events: none;
-    width: 100%;
-    justify-content: center;
 }
 
-.vitorias { 
-    text-align: center; 
-    font-size: 12px;
-    letter-spacing: 2px;
-}
+ .vitorias { text-align: center; font-size: 11px; }
 
-.vitorias span { 
-    display: block; 
-    font-size: 24px; 
-    color: #ffcc00; 
-    font-weight: bold;
-}
+ .vitorias span { display: block; font-size: 22px; color: #ffcc00; font-weight: bold; }
 
 /* --- 5. LOG DE MENSAGENS --- */
 #message-log {
@@ -106,16 +94,38 @@ body {
     z-index: 100;
 }
 
-/* --- 6. ADAPTAÇÃO MOBILE --- */
+/* --- 6. AJUSTES EXCLUSIVOS PARA PC (PRESERVANDO O 3D) --- */
+@media (min-width: 1024px) {
+    /* No PC, vamos encolher a interface para as laterais ou topo extremo */
+    #status-panel {
+        top: 10px;
+        left: 20px;
+        transform: none; /* Move para o canto superior esquerdo */
+        max-width: 280px; /* Fica pequeno e de lado */
+        background: rgba(0, 0, 0, 0.7);
+    }
+
+    #placar {
+        top: 10px;
+        left: auto;
+        right: 20px; /* Move o placar para o canto superior direito */
+        transform: none;
+        gap: 30px;
+    }
+
+    #message-log {
+        bottom: 10px;
+        font-size: 12px;
+    }
+}
+
+ /* --- 7. MANTER MOBILE COMO ESTAVA --- */
 @media (max-width: 600px) {
     #status-panel {
-        top: 75px;
+        top: 70px;
         width: 92%;
     }
     #placar {
-        gap: 40px;
-    }
-    .vitorias span {
-        font-size: 20px;
+        top: 5px;
     }
 }
