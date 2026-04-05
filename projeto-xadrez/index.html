@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
@@ -12,26 +12,30 @@
 </head>
 <body>
     <div id="ui-overlay">
-        <div id="placar">
-            <div class="vitorias">CINZAS<span id="vitorias-cinza">0</span></div>
-            <div class="vitorias">BRANCAS<span id="vitorias-branca">0</span></div>
-        </div>
-
         <div id="status-panel">
-            <div id="turn-indicator">VEZ DAS BRANCAS</div>
-            
-            <div class="controls-row">
-                <select id="game-mode">
-                    <option value="pve">Humano vs PC</option>
-                    <option value="pvp">Humano vs Humano</option>
-                </select>
-                
-                <select id="difficulty-level">
-                    <option value="easy">Fácil</option>
-                    <option value="hard">Difícil</option>
-                </select>
-                
-                <button id="reset-button" class="btn-ui">Novo Jogo</button>
+            <div class="score-side left">
+                CINZAS
+                <span id="vitorias-cinza">0</span>
+            </div>
+
+            <div id="main-controls">
+                <div id="turn-indicator">VEZ DAS BRANCAS</div>
+                <div class="controls-row">
+                    <select id="game-mode">
+                        <option value="pve">Humano vs PC</option>
+                        <option value="pvp">Humano vs Humano</option>
+                    </select>
+                    <select id="difficulty-level">
+                        <option value="easy">Fácil</option>
+                        <option value="hard">Difícil</option>
+                    </select>
+                    <button id="reset-button" class="btn-ui">Novo Jogo</button>
+                </div>
+            </div>
+
+            <div class="score-side right">
+                BRANCAS
+                <span id="vitorias-branca">0</span>
             </div>
         </div>
         
@@ -40,7 +44,6 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
-    
     <script src="script.js"></script>
 </body>
 </html>

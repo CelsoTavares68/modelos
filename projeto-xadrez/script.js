@@ -137,9 +137,11 @@ function loadGame() {
     updateStatusUI();
 }
 
-function atualizarExibicaoPlacar() {
-    document.getElementById('vitorias-branca').innerText = placar.branca;
-    document.getElementById('vitorias-cinza').innerText = placar.cinza;
+ function atualizarExibicaoPlacar() {
+    const elBranca = document.getElementById('vitorias-branca');
+    const elCinza = document.getElementById('vitorias-cinza');
+    if(elBranca) elBranca.innerText = placar.branca;
+    if(elCinza) elCinza.innerText = placar.cinza;
 }
 
 // --- 4. CRIAÇÃO DAS PEÇAS ---

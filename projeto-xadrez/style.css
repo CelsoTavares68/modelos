@@ -8,124 +8,100 @@ body {
     touch-action: none; 
 }
 
- /* --- 2. PAINEL DE STATUS --- */
+/* --- 2. PAINEL DE STATUS COM PLACAR INTEGRADO --- */
 #status-panel {
     position: absolute;
-    top: 60px; /* Espaço para o placar acima */
+    top: 10px;
     left: 50%;
     transform: translateX(-50%);
-    width: 95%;
-    max-width: 600px;
-    background: rgba(0, 0, 0, 0.6); /* Mais transparente para ver o tabuleiro por baixo */
-    backdrop-filter: blur(4px);
-    padding: 10px;
-    border-radius: 12px;
-    border: 1px solid rgba(136, 102, 68, 0.5);
+    width: 98%;
+    max-width: 850px;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(5px);
+    padding: 10px 20px;
+    border-radius: 15px;
+    border: 1px solid #886644;
+    display: flex;
+    justify-content: space-between; /* Coloca placares nas pontas e controles no meio */
+    align-items: center;
+    z-index: 100;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
+
+#main-controls {
+    flex: 2;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 8px;
-    z-index: 100;
+    padding: 0 15px;
 }
 
 .controls-row {
     display: flex;
     width: 100%;
-    gap: 8px;
+    gap: 5px;
 }
 
-#turn-indicator {
-    width: 100%;
+/* --- 3. ESTILO DOS PLACARES NAS LATERAIS --- */
+.score-side {
+    flex: 1;
     text-align: center;
+    color: #fff;
+    font-size: 10px;
+    letter-spacing: 1px;
+    min-width: 80px;
+}
+
+.score-side span {
+    display: block;
+    font-size: 24px;
+    color: #ffcc00;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px #000;
+}
+
+/* --- 4. ELEMENTOS DE UI --- */
+#turn-indicator {
     font-weight: bold;
     color: #f0d9b5;
-    text-shadow: 1px 1px 2px black;
-    font-size: 15px;
-    letter-spacing: 1px;
+    font-size: 14px;
+    text-transform: uppercase;
 }
 
-/* --- 3. BOTÕES E SELECTS --- */
 #game-mode, #difficulty-level, .btn-ui {
     flex: 1;
-    height: 42px;
+    height: 35px;
     background: #2a1a0a;
     color: #f0d9b5;
     border: 1px solid #886644;
-    border-radius: 6px;
+    border-radius: 4px;
     font-family: 'Cinzel', serif;
-    font-size: 13px;
+    font-size: 11px;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
- /* --- 4. CONFIGURAÇÃO DO PLACAR --- */
-#placar {
-    position: absolute;
-    top: 5px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 40px;
-    font-family: 'Cinzel', serif;
-    color: white;
-    text-shadow: 2px 2px 4px #000;
-    z-index: 200;
-    pointer-events: none;
-}
-
- .vitorias { text-align: center; font-size: 11px; }
-
- .vitorias span { display: block; font-size: 22px; color: #ffcc00; font-weight: bold; }
-
-/* --- 5. LOG DE MENSAGENS --- */
 #message-log {
     position: absolute;
     bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(0,0,0,0.6);
+    background: rgba(0,0,0,0.5);
     color: #fff;
-    padding: 8px 20px;
+    padding: 5px 15px;
     border-radius: 20px;
-    font-size: 14px;
+    font-size: 13px;
     pointer-events: none;
-    z-index: 100;
 }
 
-/* --- 6. AJUSTES EXCLUSIVOS PARA PC (PRESERVANDO O 3D) --- */
-@media (min-width: 1024px) {
-    /* No PC, vamos encolher a interface para as laterais ou topo extremo */
+/* --- 5. AJUSTE PARA CELULAR --- */
+@media (max-width: 650px) {
     #status-panel {
-        top: 10px;
-        left: 20px;
-        transform: none; /* Move para o canto superior esquerdo */
-        max-width: 280px; /* Fica pequeno e de lado */
-        background: rgba(0, 0, 0, 0.7);
+        flex-direction: row;
+        flex-wrap: wrap;
+        padding: 10px;
     }
-
-    #placar {
-        top: 10px;
-        left: auto;
-        right: 20px; /* Move o placar para o canto superior direito */
-        transform: none;
-        gap: 30px;
-    }
-
-    #message-log {
-        bottom: 10px;
-        font-size: 12px;
-    }
-}
-
- /* --- 7. MANTER MOBILE COMO ESTAVA --- */
-@media (max-width: 600px) {
-    #status-panel {
-        top: 70px;
-        width: 92%;
-    }
-    #placar {
-        top: 5px;
-    }
+    .score-side { font-size: 9px; min-width: 60px; }
+    .score-side span { font-size: 18px; }
+    #main-controls { order: 3; width: 100%; flex: none; margin-top: 10px; padding: 0; }
 }
