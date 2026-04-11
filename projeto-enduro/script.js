@@ -271,7 +271,7 @@ function update() {
     let colors = { sky: "#87CEEB", grass: "#1a7a1a", fog: 0, mt: "#555", nightMode: false, snowCaps: false };
     switch(currentStage) {
         case 0: colors.snowCaps = true; break; 
-        case 1: colors.sky = "#a6a4a4"; colors.grass = "#FFF"; colors.mt = "#c0baba"; colors.snowCaps = true; break; 
+        case 1: colors.sky = "#c5c4c4"; colors.grass = "#FFF"; colors.mt = "#a6a4a4"; colors.snowCaps = true; break; 
         case 2: colors.sky = "#ff8c00"; colors.grass = "#145c14"; colors.mt = "#442200"; break; 
         case 3: colors.sky = "#2c3e50"; colors.grass = "#0a2a0a"; colors.mt = "#1a1a1a"; colors.fog = 0.7; break; 
         case 4: colors.sky = "#111144"; colors.grass = "#001100"; colors.mt = "#111"; colors.nightMode = true; break; 
