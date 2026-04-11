@@ -30,7 +30,7 @@ let curveTimer = 0;
 let curveSpeed = 0.015; 
 
 let raindrops = []; 
-let splashes = []; // Novo: Array para as bolhas/respingos
+let splashes = []; 
 let lightningAlpha = 0; 
 
 const sfxChuva = new Audio('chuva.mp3');
@@ -132,7 +132,6 @@ function togglePause() {
  function resetDay() {
     currentTime = 0; playerDist = 0; speed = 0; enemies = []; totalPasses = 0; 
     
-    // CORREÇÃO: Limite fixo de 300 a partir do dia 11
     if (dayNumber < 11) {
         carsRemaining = 200 + ((dayNumber - 1) * 10);
     } else {
@@ -254,7 +253,6 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasF
     }
 
     if (nightMode || hasFog || isRainy) {
-        ctx.save();
         const headlightSize = 2.8 * s;
         ctx.shadowBlur = 15 * s;
         ctx.shadowColor = "#e61e1e";
@@ -339,16 +337,32 @@ function update() {
     if (isRaining) {
         for (let i = 0; i < 12; i++) raindrops.push({ x: Math.random() * 400, y: -20, s: Math.random() * 10 + 22 });
         
-        // NOVO: Gerar bolhas/splash nos pneus do jogador e inimigos visíveis
+        // --- AJUSTE NA INTENSIDADE E POSIÇÃO DAS BOLHAS ---
         if (speed > 2) {
-            // Bolhas no jogador
-            for(let j=0; j<2; j++) {
-                splashes.push({ x: 200 + (Math.random()-0.5)*40, y: 360 + Math.random()*10, r: Math.random()*2+1, a: 0.6 });
+            // Bolhas no jogador (Abaixo dos pneus)
+            for(let j=0; j<6; j++) { // Aumentado de 2 para 6
+                splashes.push({ 
+                    x: 200 + (Math.random()-0.5)*60, 
+                    y: 375 + Math.random()*15, // Ajustado para ficar mais baixo
+                    vx: (Math.random()-0.5)*2,
+                    vy: -Math.random()*2,
+                    r: Math.random()*3+1, 
+                    a: 0.8 
+                });
             }
-            // Bolhas nos inimigos próximos
+            // Bolhas nos inimigos (Na base traseira do carro)
             enemies.forEach(e => {
-                if (e.lastP > 0.6 && e.lastP < 1.0) {
-                    splashes.push({ x: e.lastX + (Math.random()-0.5)*20, y: e.lastY + Math.random()*5, r: Math.random()*1.5+0.5, a: 0.5 });
+                if (e.lastP > 0.4 && e.lastP < 1.0) {
+                    for(let k=0; k<4; k++) { // Aumentado para 4 por inimigo
+                        splashes.push({ 
+                            x: e.lastX + (Math.random()-0.5)*(40 * e.lastP), 
+                            y: e.lastY + (10 * e.lastP), // Posição corrigida para o pé do pneu
+                            vx: (Math.random()-0.5)*1.5,
+                            vy: -Math.random()*1.5,
+                            r: Math.random()*(3 * e.lastP)+0.5, 
+                            a: 0.7 
+                        });
+                    }
                 }
             });
         }
@@ -356,10 +370,10 @@ function update() {
     
     raindrops.forEach((r, i) => { r.y += r.s; if (r.y > 400) raindrops.splice(i, 1); });
     
-    // Atualizar e remover bolhas
     splashes.forEach((s, i) => { 
-        s.y -= 1; // Sobem um pouco
-        s.a -= 0.03; // Desaparecem
+        s.x += s.vx;
+        s.y += s.vy;
+        s.a -= 0.04; 
         if (s.a <= 0) splashes.splice(i, 1);
     });
 
@@ -500,10 +514,9 @@ function draw(colors, isRaining, currentStage) {
         ctx.fillRect(x + w/2, i, 12*p, 4); 
     }
 
-    // DESENHAR BOLHAS (Splashes)
     if (isRaining) {
         splashes.forEach(s => {
-            ctx.fillStyle = `rgba(255, 255, 255, ${s.a})`;
+            ctx.fillStyle = `rgba(220, 230, 255, ${s.a})`; // Cor levemente azulada/branca
             ctx.beginPath();
             ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
             ctx.fill();
