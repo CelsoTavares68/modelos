@@ -2,24 +2,29 @@
 const ctx = canvas.getContext('2d');
 canvas.width = 400; canvas.height = 400;
 
+// Impede o menu de contexto (clique direito)
+window.addEventListener('contextmenu', function (e) { 
+    e.preventDefault(); 
+}, false);
+
 let playerX = 0, speed = 0, gameTick = 0, playerDist = 0;
-let dayNumber = 1, baseGoal = 200, carsRemaining = baseGoal;
+let dayNumber = 1, baseGoal = 200, carsRemaining = baseGoal; 
 let gameState = "PLAYING"; 
 let isPaused = false;
+let vitoriaTocada = false; 
 
 // --- SISTEMA DE RECORDES ---
-let dayBestRecord = 0;     
-let odometerNow = 0;       
-let totalBestRecord = 0;   
-let hasPlayedGoalMedia = false; 
+let odometerNow = 0;
+let dayBestRecord = parseFloat(localStorage.getItem('enduro_dayBest')) || 0;
+let totalBestRecord = parseFloat(localStorage.getItem('enduro_totalBest')) || 0;
 
-let totalPasses = 0;           
-let totalPassesOdometer = 0;   
-let dayPassesBest = 0;         
-let totalPassesBest = 0;       
+let passDayNow = 0;                                               
+let passDayBest = parseInt(localStorage.getItem('enduro_passDayBest')) || 0;     
+let passTotalOdo = parseInt(localStorage.getItem('enduro_passTotalOdo')) || 0;   
+let passTotalBest = parseInt(localStorage.getItem('enduro_passTotalBest')) || 0; 
 
-const maxSpeed = 20; 
-const STAGE_DURATION = 2700; 
+const maxSpeed = 19; 
+const STAGE_DURATION = 2250; 
 const DAY_DURATION = STAGE_DURATION * 9; 
 let currentTime = 0; 
 
@@ -30,61 +35,100 @@ let curveTimer = 0;
 let curveSpeed = 0.015; 
 
 let raindrops = []; 
-let splashes = []; // Agora suporta coordenadas Z para rastro real
 let lightningAlpha = 0; 
+let wheelSprays = []; 
 
 const sfxChuva = new Audio('chuva.mp3');
 sfxChuva.loop = true;
 sfxChuva.volume = 0.5; 
 const sfxTrovao = new Audio('trovao.mp3');
-sfxTrovao.volume = 0.7;
-const sfxDerrota = new Audio('game_over.mp3');
+sfxTrovao.volume = 0.2; 
 const sfxVitoriaAudio = new Audio('vitoria.mp3');
+const sfxDerrota = new Audio('game_over.mp3');
+
+const videoVitoria = document.createElement('video');
+videoVitoria.src = 'bandeira_vitoria.mp4';
+videoVitoria.style.position = 'absolute';
+videoVitoria.style.top = '55px'; videoVitoria.style.left = '0';
+videoVitoria.style.width = '400px'; videoVitoria.style.height = '345px';
+videoVitoria.style.display = 'none'; videoVitoria.style.zIndex = '10';
+videoVitoria.muted = true; videoVitoria.load();
+document.body.appendChild(videoVitoria);
+
+const videoDerrota = document.createElement('video');
+videoDerrota.src = 'game_over.mp4';
+videoDerrota.style.position = 'absolute';
+videoDerrota.style.top = '55px'; videoDerrota.style.left = '0';
+videoDerrota.style.width = '400px'; videoDerrota.style.height = '345px';
+videoDerrota.style.display = 'none'; videoDerrota.style.zIndex = '10';
+videoDerrota.muted = true; videoDerrota.load();
+document.body.appendChild(videoDerrota);
+videoDerrota.onended = () => { videoDerrota.style.display = 'none'; };
+
+// --- CONTROLES DE TECLADO (PC) ---
+const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
+
+window.addEventListener('keydown', e => { 
+    if (keys.hasOwnProperty(e.code)) {
+        keys[e.code] = true;
+        e.preventDefault(); // Impede o scroll da página com as setas
+    }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+});
+
+window.addEventListener('keyup', e => { 
+    if (keys.hasOwnProperty(e.code)) keys[e.code] = false; 
+});
+
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function drawFinishLine(y, roadWidth, xPos) {
+    const squares = 10;
+    const size = roadWidth / squares;
+    for (let i = 0; i < squares; i++) {
+        ctx.fillStyle = (i % 2 === 0) ? "#fff" : "#000";
+        ctx.fillRect(xPos - roadWidth/2 + (i * size), y, size, 10);
+    }
+}
+
+function updateUI() {
+    if(document.getElementById('ui-dist')) document.getElementById('ui-dist').innerText = (playerDist / 1000).toFixed(1) + " KM";
+    if(document.getElementById('ui-day-best')) document.getElementById('ui-day-best').innerText = dayBestRecord.toFixed(1) + " KM";
+    if(document.getElementById('ui-total-now')) document.getElementById('ui-total-now').innerText = (odometerNow / 1000).toFixed(1) + " KM";
+    if(document.getElementById('ui-total-best')) document.getElementById('ui-total-best').innerText = (totalBestRecord / 1000).toFixed(1) + " KM";
+
+    if(document.getElementById('ui-pass-day')) document.getElementById('ui-pass-day').innerText = passDayNow;
+    if(document.getElementById('ui-passes-day-best')) document.getElementById('ui-passes-day-best').innerText = passDayBest;
+    if(document.getElementById('ui-total-passes-now')) document.getElementById('ui-total-passes-now').innerText = passTotalOdo;
+    if(document.getElementById('ui-passes-total-best')) document.getElementById('ui-passes-total-best').innerText = passTotalBest;
+}
 
 function saveProgress() {
-    const gameData = {
-        dayNumber: dayNumber,
-        carsRemaining: carsRemaining,
-        playerDist: playerDist,
-        currentTime: currentTime,
-        odometerNow: odometerNow,
-        dayBestRecord: dayBestRecord,
-        totalBestRecord: totalBestRecord,
-        hasPlayedGoalMedia: hasPlayedGoalMedia,
-        dayPassesBest: dayPassesBest,
-        totalPassesBest: totalPassesBest,
-        totalPassesOdometer: totalPassesOdometer
+    const data = { 
+        dayNumber, carsRemaining, playerDist, currentTime, odometerNow,
+        passDayNow, passTotalOdo 
     };
-    localStorage.setItem('enduro_pro_data', JSON.stringify(gameData));
+    localStorage.setItem('enduro_save', JSON.stringify(data));
+    localStorage.setItem('enduro_passDayBest', passDayBest);
+    localStorage.setItem('enduro_passTotalBest', passTotalBest);
+    localStorage.setItem('enduro_dayBest', dayBestRecord);
+    localStorage.setItem('enduro_totalBest', totalBestRecord);
 }
 
 function loadProgress() {
-    const savedData = localStorage.getItem('enduro_pro_data');
-    if (savedData) {
-        const data = JSON.parse(savedData);
+    const saved = localStorage.getItem('enduro_save');
+    if (saved) {
+        const data = JSON.parse(saved);
         dayNumber = data.dayNumber;
         carsRemaining = data.carsRemaining;
         playerDist = data.playerDist;
         currentTime = data.currentTime;
         odometerNow = data.odometerNow || 0;
-        dayBestRecord = data.dayBestRecord || 0;
-        totalBestRecord = data.totalBestRecord || 0;
-        hasPlayedGoalMedia = data.hasPlayedGoalMedia || false;
-        dayPassesBest = data.dayPassesBest || 0;
-        totalPassesBest = data.totalPassesBest || 0;
-        totalPassesOdometer = data.totalPassesOdometer || 0;
+        passDayNow = data.passDayNow || 0;
+        passTotalOdo = data.passTotalOdo || 0;
     }
 }
 loadProgress();
-
-const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-window.addEventListener('keydown', e => { 
-    if (keys.hasOwnProperty(e.code)) keys[e.code] = true; 
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-});
-window.addEventListener('keyup', e => { if (keys.hasOwnProperty(e.code)) keys[e.code] = false; });
 
 function playEngineSound() {
     if (isPaused || speed <= 0 || audioCtx.state !== 'running') return;
@@ -105,56 +149,60 @@ function playCrashSound() {
     osc.type = 'square';
     osc.frequency.setValueAtTime(80, audioCtx.currentTime);
     gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.5);
+    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.4);
     osc.connect(gain); gain.connect(audioCtx.destination);
-    osc.start(); osc.stop(audioCtx.currentTime + 0.5);
+    osc.start(); osc.stop(audioCtx.currentTime + 0.4);
 }
 
 function togglePause() {
-    if (gameState === "PLAYING") {
+    if (gameState === "PLAYING" || gameState === "GOAL_REACHED") {
         isPaused = !isPaused;
         const btn = document.getElementById('pauseBtn');
         if (btn) btn.innerText = isPaused ? "Retomar" : "Pausar";
-        if (isPaused) { sfxChuva.pause(); saveProgress(); } 
-        else { audioCtx.resume(); update(); }
+        if (isPaused) { sfxChuva.pause(); saveProgress(); }
+        if (!isPaused) { audioCtx.resume(); update(); }
     }
 }
 
- function resetGame() {
-    dayNumber = 1; 
-    baseGoal = 200; 
-    odometerNow = 0; 
-    totalPassesOdometer = 0; 
+function resetGame() {
+    dayNumber = 1; baseGoal = 200; odometerNow = 0; passTotalOdo = 0; passDayNow = 0; 
     resetDay();
+    updateUI(); 
     if (gameState !== "PLAYING") { gameState = "PLAYING"; update(); }
 }
 
- function resetDay() {
-    currentTime = 0; playerDist = 0; speed = 0; enemies = []; totalPasses = 0; splashes = [];
-    
-    if (dayNumber < 11) {
-        carsRemaining = 200 + ((dayNumber - 1) * 10);
-    } else {
-        carsRemaining = 300;
-    }
-    
-    gameState = "PLAYING"; isPaused = false; hasPlayedGoalMedia = false;
+function resetDay() {
+    currentTime = 0; playerDist = 0; speed = 0; enemies = []; 
+    videoDerrota.style.display = 'none'; videoDerrota.pause(); videoDerrota.currentTime = 0;
+    videoVitoria.style.display = 'none'; videoVitoria.pause(); videoVitoria.currentTime = 0;
+    passDayNow = 0; vitoriaTocada = false; 
+    if (dayNumber < 11) { carsRemaining = 200 + ((dayNumber - 1) * 10); } else { carsRemaining = 300; }
+    gameState = "PLAYING"; isPaused = false;
     if (sfxChuva) { sfxChuva.pause(); sfxChuva.currentTime = 0; }
-    saveProgress();
+    saveProgress(); updateUI();     
+}
+
+function createWheelSpray(x, y, scale) {
+    for (let i = 0; i < 4; i++) {
+        wheelSprays.push({
+            x: x + (Math.random() - 0.5) * (45 * scale), 
+            y: y + (2 * scale), 
+            vx: (Math.random() - 0.5) * 3, 
+            vy: -Math.random() * 2, 
+            life: 1.0, 
+            s: Math.max(scale * (Math.random() * 4 + 2), 0.7) 
+        });
+    }
 }
 
 function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasFog = false, isRainy = false) {
     let s = scale * 1.2;
     if (s < 0.02 || s > 30) return;
-
     let w = 45 * s;
     let h = 22 * s;
-    
     ctx.save();
     ctx.translate(x, y);
-
     if(isPlayer) ctx.rotate((roadCurve / 80) * Math.PI / 180);
-    
     let bodyColor = nightMode ? "#000000" : color;
     const lightY = h * 0.1;
     const leftX = -w * 0.2;
@@ -167,13 +215,6 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasF
         whiteReflect.addColorStop(1, "rgba(255, 255, 255, 0)");
         ctx.fillStyle = whiteReflect;
         ctx.fillRect(-w * 0.3, -h * 0.5, w * 0.6, h * 1.5);
-
-        let redReflect = ctx.createLinearGradient(0, h * 0.5, 0, h * 1.5);
-        redReflect.addColorStop(0, "rgba(255, 0, 0, 0.4)");
-        redReflect.addColorStop(1, "rgba(255, 0, 0, 0)");
-        ctx.fillStyle = redReflect;
-        ctx.fillRect(leftX - (2*s), h * 0.4, 4*s, h * 0.8);
-        ctx.fillRect(rightX - (2*s), h * 0.4, 4*s, h * 0.8);
         ctx.restore();
     }
 
@@ -191,77 +232,39 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasF
         ctx.closePath(); ctx.fill();
     }
 
-    ctx.fillStyle = "#111"; // Pneus
+    ctx.fillStyle = "#111"; 
     ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8);
     ctx.fillRect(w * 0.25, -h * 0.1, w * 0.25, h * 0.8);
-    
     ctx.fillStyle = bodyColor; 
     ctx.fillRect(-w * 0.25, h * 0.1, w * 0.5, h * 0.4); 
     ctx.fillRect(-w * 0.5, -h * 0.3, w, h * 0.2);        
 
-     if (!nightMode) {
+    if (!nightMode) {
         const engineY = h * 0.3;      
         const barWidth = w * 0.25;    
         const exhaustSize = 1.8 * s;  
-
-        ctx.fillStyle = "#383737 "; 
+        ctx.fillStyle = "#474646"; 
         ctx.fillRect(-barWidth / 2, engineY - (0.5 * s), barWidth, 1.2 * s);
-
-        ctx.fillStyle = "#383737"; 
         ctx.beginPath();
         ctx.arc(0, engineY - (0.5 * s), barWidth * 0.3, Math.PI, 0); 
         ctx.fill();
-
-        ctx.fillStyle = "#888";    
-        ctx.strokeStyle = "#888";  
-        ctx.lineWidth = 0.5 * s;
-
-        ctx.beginPath();
-        ctx.arc(-barWidth / 2, engineY, exhaustSize, 0, Math.PI * 2);
-        ctx.fill(); ctx.stroke();
-
-        ctx.beginPath();
-        ctx.arc(barWidth / 2, engineY, exhaustSize, 0, Math.PI * 2);
-        ctx.fill(); ctx.stroke();
     }
 
-    let helmetColor = "#FFFFFF"; 
-
-    if (nightMode) {
-        helmetColor = "#000000";
-    } else if (isPlayer) {
-        helmetColor = "#FFFF00"; 
-    } else {
-        const helmetMap = {
-            "#F0F": "#00FFFF", "#0FF": "#FF00FF", "#0F0": "#777070",
-            "#FF0": "#0000FF", "#f47d28": "#1a7a1a", "#a5a3a3": "#E00",
-            "rgb(0, 26, 255)": "#907c0c", "rgb(27, 104, 27)": "#ec7171"
-        };
-        helmetColor = helmetMap[color] || "#FFFFFF";
-    }
-
+    let helmetColor = nightMode ? "#000000" : (isPlayer ? "#FFFF00" : color);
     ctx.fillStyle = helmetColor;
     ctx.beginPath();
     ctx.arc(0, h * 0.1, 3.8 * s, 0, Math.PI, true); 
     ctx.fill();
 
-    if (!nightMode) {
-        ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
-        ctx.beginPath();
-        ctx.arc(1 * s, h * 0.05, 1.5 * s, 0, Math.PI * 2);
-        ctx.fill();
-    }
-
     if (nightMode || hasFog || isRainy) {
-        const headlightSize = 2.8 * s;
+        ctx.save();
         ctx.shadowBlur = 15 * s;
         ctx.shadowColor = "#e61e1e";
         ctx.fillStyle = "#fa3636";
-        ctx.beginPath(); ctx.arc(leftX, lightY, headlightSize, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.arc(rightX, lightY, headlightSize, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(leftX, lightY, 2.8 * s, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(rightX, lightY, 2.8 * s, 0, Math.PI * 2); ctx.fill();
         ctx.restore();
     }
-
     ctx.restore();
 }
 
@@ -269,18 +272,18 @@ function update() {
     if (isPaused) return; 
     let currentStage = Math.min(Math.floor(currentTime / STAGE_DURATION), 8);
     let isRaining = (currentStage === 3 || currentStage === 7);
-    let hasLightning = (currentStage === 2 || currentStage === 3 || currentStage === 6 || currentStage === 7); 
+    let warningLightning = (currentStage === 2 || currentStage === 6);
 
     let colors = { sky: "#87CEEB", grass: "#1a7a1a", fog: 0, mt: "#555", nightMode: false, snowCaps: false };
     switch(currentStage) {
         case 0: colors.snowCaps = true; break; 
-        case 1: colors.sky = "#B0C4DE"; colors.grass = "#FFFFFF"; colors.mt = "#5F9EA0"; colors.snowCaps = true; break; 
+        case 1: colors.sky = "#DDD"; colors.grass = "#FFF"; colors.mt = "#999"; colors.snowCaps = true; break; 
         case 2: colors.sky = "#ff8c00"; colors.grass = "#145c14"; colors.mt = "#442200"; break; 
         case 3: colors.sky = "#2c3e50"; colors.grass = "#0a2a0a"; colors.mt = "#1a1a1a"; colors.fog = 0.7; break; 
-        case 4: colors.sky = "#0d0d0e"; colors.grass = "#080808"; colors.mt = "#111"; colors.nightMode = true; break; 
-        case 5: colors.sky = "#000011"; colors.grass = "#000800"; colors.mt = "#000"; colors.fog = 0.9; colors.nightMode = true; break; 
-        case 6: colors.sky = "#000011"; colors.grass = "#000800"; colors.mt = "#000"; colors.nightMode = true; break; 
-        case 7: colors.sky = "#2c3e50"; colors.grass = "#0a2a0a"; colors.mt = "#1a1a1a"; colors.fog = 0.6; break; 
+        case 4: colors.sky = "#111144"; colors.grass = "#001100"; colors.mt = "#111"; colors.nightMode = true; break; 
+        case 5: colors.sky = "#000011"; colors.grass = "#000000"; colors.mt = "#111"; colors.fog = 0.9; colors.nightMode = true; break; 
+        case 6: colors.sky = "#111144"; colors.grass = "#001100"; colors.mt = "#111"; colors.nightMode = true; break; 
+        case 7: colors.sky = "#2c3e50"; colors.grass = "#0a2a0a"; colors.mt = "#1a1a1a"; colors.fog = 0.7; break; 
         case 8: colors.sky = "#ade1f2"; colors.grass = "#1a7a1a"; colors.mt = "#555"; colors.snowCaps = true; break; 
     }
 
@@ -291,129 +294,79 @@ function update() {
         return; 
     }
 
-    gameTick++; 
-    if (speed > 0) {
-        let delta = (speed / 10);
-        playerDist += delta;
-        odometerNow += delta; 
-    }
-    currentTime++; 
+    gameTick++; playerDist += speed; odometerNow += speed; currentTime++; 
     if (gameTick % 4 === 0) playEngineSound();
-    
-    if (playerDist > dayBestRecord) dayBestRecord = playerDist;
-    if (odometerNow > totalBestRecord) totalBestRecord = odometerNow;
 
-    const uiDist = document.getElementById('ui-dist');
-    const uiDayBest = document.getElementById('ui-day-best');
-    const uiTotalNow = document.getElementById('ui-total-now');
-    const uiTotalBest = document.getElementById('ui-total-best');
-    const uiPasses = document.getElementById('ui-passes');
-    const uiPassesDay = document.getElementById('ui-passes-day-best');
-    const uiPassesTotal = document.getElementById('ui-passes-total-best');
-    const uiOdoPassesNow = document.getElementById('ui-total-passes-now');
-    
-    if(uiDist) uiDist.innerText = (playerDist / 100).toFixed(1);
-    if(uiDayBest) uiDayBest.innerText = (dayBestRecord / 100).toFixed(1);
-    if(uiTotalNow) uiTotalNow.innerText = (odometerNow / 100).toFixed(1);
-    if(uiTotalBest) uiTotalBest.innerText = (totalBestRecord / 100).toFixed(1);
-    if(uiPasses) uiPasses.innerText = totalPasses;
-    if(uiPassesDay) uiPassesDay.innerText = dayPassesBest;
-    if(uiPassesTotal) uiPassesTotal.innerText = totalPassesBest;
-    if(uiOdoPassesNow) uiOdoPassesNow.innerText = totalPassesOdometer;
+    if (playerDist / 1000 > dayBestRecord) { dayBestRecord = playerDist / 1000; }
+    if (odometerNow > totalBestRecord) { totalBestRecord = odometerNow; }
+    if (passDayNow > passDayBest) { passDayBest = passDayNow; }
+    if (passTotalOdo > passTotalBest) { passTotalBest = passTotalOdo; }
 
-    if (gameTick % 300 === 0) saveProgress();
+    updateUI();
 
-    if (hasLightning) {
+    if (isRaining || warningLightning) {
         if (isRaining && sfxChuva.paused && audioCtx.state === 'running') sfxChuva.play().catch(e => {}); 
         if (Math.random() > 0.996) { 
             lightningAlpha = 0.7; 
             if (audioCtx.state === 'running') {
-                sfxTrovao.volume = (currentStage === 2 || currentStage === 6) ? 0.2 : 0.7;
+                sfxTrovao.volume = warningLightning ? 0.05 : 0.2; 
                 sfxTrovao.play().catch(e => {});
             }
         }
     } else { sfxChuva.pause(); }
 
     if (isRaining) {
-        for (let i = 0; i < 12; i++) raindrops.push({ x: Math.random() * 400, y: -20, s: Math.random() * 10 + 22 });
-        
-        if (speed > 2) {
-            // Bolhas no jogador (posicionadas na frente/embaixo)
-            for(let j=0; j<8; j++) { 
-                splashes.push({ 
-                    lane: (playerX / 400) + (Math.random()-0.5)*0.3,
-                    z: 50, // Perto do jogador
-                    vx: (Math.random()-0.5)*2,
-                    vy: -Math.random()*2,
-                    r: Math.random()*4+1, 
-                    a: 0.8 
-                });
+        if (speed > 2) { createWheelSpray(200 - 15, 360, 0.85); createWheelSpray(200 + 15, 360, 0.85); }
+        enemies.forEach(e => {
+            if (e.lastP > 0 && e.lastP < 1.1 && e.sp > 0) { 
+                let wheelOffset = 18 * (e.lastP * 0.85);
+                createWheelSpray(e.lastX - wheelOffset, e.lastY + 10*e.lastP, e.lastP * 0.85);
+                createWheelSpray(e.lastX + wheelOffset, e.lastY + 10*e.lastP, e.lastP * 0.85);
             }
-            // Bolhas nos inimigos (Geradas na posição Z do inimigo)
-            enemies.forEach(e => {
-                if (e.z > -500 && e.z < 4000) {
-                    for(let k=0; k<5; k++) { 
-                        splashes.push({ 
-                            lane: e.lane + (Math.random()-0.5)*0.1, 
-                            z: e.z + 20, // Gerado na posição do carro
-                            vx: (Math.random()-0.5)*1.5,
-                            vy: -Math.random()*1.5,
-                            r: Math.random()*2 + 1, 
-                            a: 0.7 
-                        });
-                    }
-                }
-            });
-        }
+        });
+        for (let i = 0; i < 10; i++) raindrops.push({ x: Math.random() * 400, y: -20, s: Math.random() * 10 + 22 });
     }
-    
-    raindrops.forEach((r, i) => { r.y += r.s; if (r.y > 400) raindrops.splice(i, 1); });
-    
-    // Atualiza lógica das bolhas (elas se movem com a pista agora)
-    splashes.forEach((s, i) => { 
-        s.z -= speed; // As bolhas "ficam" no chão enquanto você corre
-        s.a -= 0.02; 
-        if (s.a <= 0 || s.z < -1000) splashes.splice(i, 1);
-    });
 
+    raindrops.forEach((r, i) => { r.y += r.s; if (r.y > 400) raindrops.splice(i, 1); });
+    for (let i = wheelSprays.length - 1; i >= 0; i--) {
+        let p = wheelSprays[i];
+        p.x += p.vx; p.y += p.vy; p.vy += 0.2; p.life -= 0.08;
+        if (p.life <= 0) wheelSprays.splice(i, 1);
+    }
     if (lightningAlpha > 0) lightningAlpha -= 0.05;
 
-    if (carsRemaining <= 0 && !hasPlayedGoalMedia) {
-        hasPlayedGoalMedia = true;
-        carsRemaining = 0; 
-        sfxVitoriaAudio.play().catch(e => {});
-    }
-
     if (currentTime >= DAY_DURATION) {
-        if (carsRemaining <= 0) {
-            if (gameState !== "WIN_DAY") { 
-                gameState = "WIN_DAY"; 
-                dayNumber++; 
-                saveProgress(); 
-                setTimeout(() => { resetDay(); }, 4000); 
-            }
+        if (carsRemaining <= 0 || gameState === "GOAL_REACHED") {
+            if (gameState !== "WIN_DAY") { gameState = "WIN_DAY"; saveProgress(); setTimeout(() => { dayNumber++; resetDay(); }, 4000); }
         } else { 
             if (gameState !== "GAME_OVER") { 
                 gameState = "GAME_OVER"; 
                 if (audioCtx.state === 'running') sfxDerrota.play();
+                videoDerrota.style.display = 'block'; videoDerrota.play().catch(e => {});
             }
         }
-        currentTime = DAY_DURATION - 1; 
+        currentTime = DAY_DURATION; 
     }
 
+    // --- LÓGICA DE FÍSICA PARA PC ---
     let offRoad = Math.abs(playerX) > 380;
+    
+    // Aceleração (Seta Cima) / Freio (Seta Baixo)
     if (keys.ArrowUp) {
-        let accel = (speed < 5) ? 0.015 : 0.08; 
-        speed = Math.min(speed + accel, offRoad ? 2 : maxSpeed);
+        if (offRoad) speed = Math.min(speed + 0.01, 2); 
+        else speed = Math.min(speed + ((speed < 5) ? 0.03 : 0.07), maxSpeed);
     } else if (keys.ArrowDown) {
         speed = Math.max(speed - 0.2, 0); 
     } else {
-        speed = Math.max(speed - 0.05, 0); 
+        speed = Math.max(speed - 0.05, 0); // Desaceleração natural
     }
 
+    // Curva da estrada afeta o carro
     playerX -= (roadCurve * 0.06) * (speed / maxSpeed); 
-    if (keys.ArrowLeft) playerX -= 5;
-    if (keys.ArrowRight) playerX += 5;
+    
+    // Direção (Seta Esquerda / Direita)
+    if (keys.ArrowLeft) playerX -= 4.5;
+    if (keys.ArrowRight) playerX += 4.5;
     playerX = Math.max(-480, Math.min(480, playerX));
 
     if (--curveTimer <= 0) { 
@@ -424,147 +377,91 @@ function update() {
 
     enemies.forEach((enemy) => {
         let effectiveEnemySpeed = (speed < 15) ? 15 : enemy.v; 
+        enemy.sp = effectiveEnemySpeed;
         enemy.z -= (speed - effectiveEnemySpeed);
         let p = 1 - (enemy.z / 4000); 
         let roadWidth = 20 + p * 800;
         let screenX = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p) + (enemy.lane * roadWidth * 0.5);
         
         if (p > 0.92 && p < 1.05 && Math.abs(screenX - 200) < 50) { 
-             speed = -4; enemy.z += (maxSpeed * 120); playCrashSound();
-        }
-        
-        if (p > 1.0 && !enemy.isOvertaken) { 
-            enemy.isOvertaken = true;
-            totalPasses++;         
-            totalPassesOdometer++; 
-            if (totalPasses > dayPassesBest) dayPassesBest = totalPasses;
-            if (totalPassesOdometer > totalPassesBest) totalPassesBest = totalPassesOdometer;
-            if (!hasPlayedGoalMedia) carsRemaining--; 
-        } 
-        
-        if (p < 1.0 && enemy.isOvertaken) { 
-            enemy.isOvertaken = false;
-            totalPasses = Math.max(0, totalPasses - 1);
-            totalPassesOdometer = Math.max(0, totalPassesOdometer - 1);
-            if (!hasPlayedGoalMedia) carsRemaining++; 
+            speed = -4; enemy.z += 800; playCrashSound(); 
         }
 
+        if (gameState === "PLAYING" || gameState === "GOAL_REACHED") {
+            if (enemy.z <= 0 && !enemy.isOvertaken) { 
+                carsRemaining--; passDayNow++; passTotalOdo++;
+                enemy.isOvertaken = true; 
+                if (carsRemaining <= 0 && !vitoriaTocada) { 
+                    gameState = "GOAL_REACHED"; sfxVitoriaAudio.play().catch(e => {}); vitoriaTocada = true; 
+                }
+            }
+            if (enemy.z > 0 && enemy.isOvertaken) { carsRemaining++; passDayNow--; passTotalOdo--; enemy.isOvertaken = false; }
+            if (carsRemaining <= 0) { carsRemaining = 0; gameState = "GOAL_REACHED"; }
+        }
         enemy.lastY = 200 + (p * 140); enemy.lastX = screenX; enemy.lastP = p;
     });
 
-    if (gameTick % 70 === 0 && enemies.length < 100) {
+    if (gameTick % 60 === 0 && enemies.length < 100) {
         enemies.push({ 
-            lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 3.0, 
-             color: ["#F0F", "#0FF", "#0F0", "#FF0", "#f47d28", "#a5a3a3", "rgb(0, 26, 255)", "rgb(27, 104, 27)" ][Math.floor(Math.random() * 8)],
+            lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 4.0, 
+            color: ["#F0F", "#0FF", "#0F0", "#FF0", "#f47d28", "#a5a3a3", "rgb(0, 26, 255)", "rgb(27, 104, 27)" ][Math.floor(Math.random() * 8)],
             isOvertaken: false 
         });
     }
 
-    enemies = enemies.filter(e => e.z > -18800 && e.z < 6000);
+    enemies = enemies.filter(e => e.z > -18000 && e.z < 6000);
     draw(colors, isRaining, currentStage);
+    if (gameTick % 300 === 0) saveProgress();
     requestAnimationFrame(update);
 }
 
 function draw(colors, isRaining, currentStage) {
     ctx.fillStyle = colors.sky; ctx.fillRect(0, 0, 400, 200);
     ctx.fillStyle = colors.grass; ctx.fillRect(0, 200, 400, 200);
-    
     let mtShift = (roadCurve * 0.6);
     for (let i = -3; i < 9; i++) {
         let bx = (i * 100) + mtShift;
         ctx.fillStyle = colors.mt;
         ctx.beginPath(); ctx.moveTo(bx - 70, 200); ctx.lineTo(bx, 130); ctx.lineTo(bx + 70, 200); ctx.fill();
-        if (colors.snowCaps) { ctx.fillStyle = "white"; ctx.beginPath(); ctx.moveTo(bx, 130); ctx.lineTo(bx - 25, 155); ctx.lineTo(bx + 25, 155); ctx.fill(); }
     }
-
     if (lightningAlpha > 0 && (currentStage === 2 || currentStage === 6)) { 
-        ctx.fillStyle = `rgba(255, 255, 255, ${lightningAlpha})`; 
-        ctx.fillRect(0, 55, 400, 145); 
+        ctx.fillStyle = `rgba(255, 255, 255, ${lightningAlpha})`; ctx.fillRect(0, 55, 400, 145); 
     }
-
     let isSnowStage = (currentStage === 1);
     for (let i = 200; i < 400; i += 4) {
         let p = (i - 200) / 140; 
         let x = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p);
         let w = 20 + p * 800;
-        
-        let asphaltColor1, asphaltColor2;
-        if (isSnowStage) {
-            let snowPattern = Math.sin(i * 0.5 + playerDist * 0.2);
-            asphaltColor1 = snowPattern > -0.4 ? "#FFFFFF" : "#F8F8F8"; 
-            asphaltColor2 = snowPattern > -0.4 ? "#FFFFFF" : "#F0F0F0";
-        } else {
-            asphaltColor1 = colors.nightMode ? "#050505" : "#333"; 
-            asphaltColor2 = colors.nightMode ? "#0a0a0a" : "#3d3d3d";
-        }
-
+        if (carsRemaining <= 0 && i > 250 && i < 265) drawFinishLine(i, w, x);
+        let asphaltColor1 = isSnowStage ? "#FFF" : (colors.nightMode ? "#050505" : "#333");
+        let asphaltColor2 = isSnowStage ? "#EEE" : (colors.nightMode ? "#0a0a0a" : "#3d3d3d");
         ctx.fillStyle = Math.sin(i * 0.5 + playerDist * 0.2) > 0 ? asphaltColor1 : asphaltColor2;
         ctx.fillRect(x - w/2, i, w, 4);
-        
-        let curbColor1, curbColor2;
-        if (colors.nightMode) {
-            curbColor1 = "#600"; curbColor2 = "#888";
-        } else {
-            curbColor1 = "red"; curbColor2 = "white";
-        }
-        
-        ctx.fillStyle = Math.sin(i * 0.5 + playerDist * 0.2) > 0 ? curbColor1 : curbColor2;
-        ctx.fillRect(x - w/2 - 12*p, i, 12*p, 4);
-        ctx.fillRect(x + w/2, i, 12*p, 4); 
     }
-
-    // --- DESENHO DAS BOLHAS COM PERSPECTIVA ---
-    if (isRaining) {
-        splashes.forEach(s => {
-            let p = 1 - (s.z / 4000); // Profundidade da bolha
-            if (p > 0 && p < 1.2) {
-                let roadWidth = 20 + p * 800;
-                let sx = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p) + (s.lane * roadWidth * 0.5);
-                let sy = 200 + (p * 140);
-                
-                ctx.fillStyle = `rgba(230, 240, 255, ${s.a})`; 
-                ctx.beginPath();
-                ctx.arc(sx, sy, s.r * p, 0, Math.PI * 2);
-                ctx.fill();
-            }
-        });
-    }
-
-    let hasFog = colors.fog > 0;
     enemies.sort((a,b) => b.z - a.z).forEach(e => {
-        if (e.lastP > 0 && e.lastP < 0.92) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, hasFog, isRaining);
+        if (e.lastP > 0 && e.lastP < 0.92) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, colors.fog > 0, isRaining);
     });
-    
-    drawF1Car(200, 350, 0.85, "#E00", true, colors.nightMode, hasFog, isRaining); 
-    
+    drawF1Car(200, 350, 0.85, "#E00", true, colors.nightMode, colors.fog > 0, isRaining); 
     enemies.forEach(e => {
-        if (e.lastP >= 0.92) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, hasFog, isRaining);
+        if (e.lastP >= 0.92) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, colors.fog > 0, isRaining);
     });
-
     if (colors.fog > 0) { ctx.fillStyle = `rgba(140,145,160,${colors.fog})`; ctx.fillRect(0, 55, 400, 345); }
     if (isRaining) {
-        ctx.strokeStyle = "rgba(200, 210, 255, 0.49)"; ctx.lineWidth = 1.2;
+        ctx.strokeStyle = "rgba(200, 210, 255, 0.51)"; ctx.lineWidth = 1.2;
         raindrops.forEach(r => { ctx.beginPath(); ctx.moveTo(r.x, r.y); ctx.lineTo(r.x + 1.5, r.y + 12); ctx.stroke(); });
+        wheelSprays.forEach(p => { ctx.fillStyle = `rgba(200, 230, 255, ${p.life * 0.6})`; ctx.beginPath(); ctx.arc(p.x, p.y, p.s, 0, Math.PI * 2); ctx.fill(); });
     }
-
-    if (lightningAlpha > 0 && (currentStage === 3 || currentStage === 7)) { 
-        ctx.fillStyle = `rgba(255, 255, 255, ${lightningAlpha})`; 
-        ctx.fillRect(0, 55, 400, 345); 
-    }
-
     ctx.fillStyle = "black"; ctx.fillRect(0, 0, 400, 55);
-    ctx.fillStyle = (hasPlayedGoalMedia) ? "lime" : "yellow";
+    ctx.fillStyle = (gameState === "GOAL_REACHED" || gameState === "WIN_DAY") ? "lime" : "yellow";
     ctx.font = "bold 18px Courier";
-    let carText = (hasPlayedGoalMedia) ? "CARS: 000" : `CARS: ${carsRemaining}`;
-    ctx.fillText(carText, 15, 35);
-    ctx.fillStyle = "yellow"; ctx.fillText(`DAY: ${dayNumber}`, 180, 35);
-    ctx.fillStyle = "#444"; ctx.fillRect(280, 20, 100, 15);
-    ctx.fillStyle = "lime"; ctx.fillRect(280, 20, (currentTime/DAY_DURATION) * 100, 15);
-
+    ctx.fillText(gameState === "GOAL_REACHED" || gameState === "WIN_DAY" ? "GOAL OK!" : `CARS: ${carsRemaining}`, 15, 35);
+    ctx.fillStyle = "yellow"; ctx.fillText(`DAY: ${dayNumber}`, 160, 35);
+    ctx.fillStyle = "#444"; ctx.fillRect(260, 20, 120, 15);
+    ctx.fillStyle = "lime"; ctx.fillRect(260, 20, (currentTime/DAY_DURATION) * 120, 15);
     if (gameState === "WIN_DAY") {
         ctx.fillStyle = "rgba(0,0,0,0.7)"; ctx.fillRect(0, 55, 400, 345);
         ctx.fillStyle = "lime"; ctx.textAlign = "center";
-        ctx.font = "bold 25px Courier"; ctx.fillText(`DIA ${dayNumber-1} COMPLETO!`, 200, 180);
+        ctx.font = "bold 25px Courier"; ctx.fillText(`DIA ${dayNumber} COMPLETO!`, 200, 180);
         ctx.textAlign = "left";
     }
 }
