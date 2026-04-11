@@ -390,14 +390,13 @@ function togglePause() {
     }
 
     // --- MOVIMENTAÇÃO PC (ALTERAÇÃO SOLICITADA) ---
-    let offRoad = Math.abs(playerX) > 380;
+     let offRoad = Math.abs(playerX) > 380;
     
     // Seta Cima acelera, Seta Baixo freia
     if (keys.ArrowUp) {
-        if (offRoad) speed = Math.min(speed + 0.01, 2); 
-        else speed = Math.min(speed + ((speed < 5) ? 0.02 : 0.06), maxSpeed);
+        speed = Math.min(speed + (offRoad ? 0.01 : 0.06), maxSpeed);
     } else if (keys.ArrowDown) {
-        speed = Math.max(speed - 0.2, 0); 
+        speed = Math.max(speed - 0.2, 0);
     } else {
         speed = Math.max(speed - 0.05, 0); // Desaceleração natural
     }
@@ -407,31 +406,46 @@ function togglePause() {
     if (keys.ArrowRight) playerX += 4.2;
     playerX = Math.max(-480, Math.min(480, playerX));
 
-    if (--curveTimer <= 0) { 
-        if (Math.random() > 0.6) { targetCurve = 0; curveTimer = 100 + Math.random() * 200; }
-        else { targetCurve = (Math.random() - 0.5) * 160; curveTimer = 80 + Math.random() * 150; }
-    }
-    roadCurve += (targetCurve - roadCurve) * curveSpeed;
-
+    // --- LÓGICA DO PLACAR DE ULTRAPASSAGENS (CORRIGIDA) ---
     enemies.forEach((enemy) => {
-        let effectiveEnemySpeed = (speed < 15) ? 15 : enemy.v; 
-        enemy.sp = effectiveEnemySpeed;
-        enemy.z -= (speed - effectiveEnemySpeed);
+        let enemySpeed = (speed < 15) ? 15 : enemy.v; 
+        enemy.sp = enemySpeed;
+        enemy.z -= (speed - enemySpeed);
         let p = 1 - (enemy.z / 4000); 
-        let roadWidth = 20 + p * 800;
-        let screenX = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p) + (enemy.lane * roadWidth * 0.5);
-        if (p > 0.92 && p < 1.05 && Math.abs(screenX - 200) < 50) { speed = -4; enemy.z += 800; playCrashSound(); }
 
-        if (gameState === "PLAYING" || gameState === "GOAL_REACHED") {
-            if (enemy.z <= 0 && !enemy.isOvertaken) { 
-                carsRemaining--; passDayNow++; passTotalOdo++;
-                enemy.isOvertaken = true; 
-                if (carsRemaining <= 0 && !vitoriaTocada) { gameState = "GOAL_REACHED"; sfxVitoriaAudio.play().catch(e => {}); vitoriaTocada = true; }
+        // Detecta quando o carro passa pelo jogador (z <= 0)
+        if (enemy.z <= 0 && !enemy.isOvertaken) { 
+            enemy.isOvertaken = true;
+            if (gameState === "PLAYING") {
+                carsRemaining--; 
+                passDayNow++; 
+                passTotalOdo++;
+                
+                // Atualiza recordes de ultrapassagem instantaneamente
+                if (passDayNow > passDayBest) passDayBest = passDayNow;
+                if (passTotalOdo > passTotalBest) passTotalBest = passTotalOdo;
+                
+                if (carsRemaining <= 0) {
+                    carsRemaining = 0; 
+                    gameState = "GOAL_REACHED";
+                    sfxVitoriaAudio.play().catch(e => {}); 
+                    vitoriaTocada = true;
+                }
             }
-            if (enemy.z > 0 && enemy.isOvertaken) { carsRemaining++; passDayNow--; passTotalOdo--; enemy.isOvertaken = false; }
-            if (carsRemaining <= 0) { carsRemaining = 0; gameState = "GOAL_REACHED"; }
         }
-        enemy.lastY = 200 + (p * 140); enemy.lastX = screenX; enemy.lastP = p;
+        
+        let screenX = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p) + (enemy.lane * (20 + p * 800) * 0.5);
+        
+        // Colisão
+        if (p > 0.92 && p < 1.05 && Math.abs(screenX - 200) < 50) { 
+            speed = -4; 
+            enemy.z += 800; 
+            playCrashSound(); 
+        }
+        
+        enemy.lastY = 200 + (p * 140); 
+        enemy.lastX = screenX; 
+        enemy.lastP = p;
     });
 
     if (gameTick % 60 === 0 && enemies.length < 100) {
