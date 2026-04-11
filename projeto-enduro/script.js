@@ -407,36 +407,34 @@ function togglePause() {
     playerX = Math.max(-480, Math.min(480, playerX));
 
     // --- LÓGICA DO PLACAR DE ULTRAPASSAGENS (CORRIGIDA) ---
-    enemies.forEach((enemy) => {
+     enemies.forEach((enemy) => {
         let enemySpeed = (speed < 15) ? 15 : enemy.v; 
         enemy.z -= (speed - enemySpeed);
         let p = 1 - (enemy.z / 4000); 
 
-        // Quando o carro inimigo sai da tela (z <= 0), contamos a ultrapassagem
+        // Detecta quando o carro inimigo é ultrapassado e sai da tela (z <= 0)
         if (enemy.z <= 0 && !enemy.isOvertaken) { 
             enemy.isOvertaken = true;
             
             if (gameState === "PLAYING") {
-                // 1. Atualiza contagem do dia atual
-                carsRemaining--; 
-                passDayNow++; 
-                
-                // 2. Atualiza o hodômetro total de ultrapassagens (Total Now)
-                passTotalOdo++;
+                // 1. Atualiza a contagem imediata para o placar visual
+                carsRemaining--;      // Reduz a meta (CARS)
+                passDayNow++;         // Incrementa PASS (dia atual)
+                passTotalOdo++;       // Incrementa ODO.P (total histórico)
 
-                // 3. Verifica e atualiza o Recorde do Dia (Best Day)
+                // 2. Atualiza e guarda o Recorde do Dia (REC.P(D))
                 if (passDayNow > passDayBest) {
                     passDayBest = passDayNow;
                     localStorage.setItem('enduro_passDayBest', passDayBest);
                 }
 
-                // 4. Verifica e atualiza o Recorde Histórico (Best Total)
+                // 3. Atualiza e guarda o Recorde Histórico Global (REC.P(G))
                 if (passTotalOdo > passTotalBest) {
                     passTotalBest = passTotalOdo;
                     localStorage.setItem('enduro_passTotalBest', passTotalBest);
                 }
                 
-                // Lógica de vitória do dia
+                // Verifica condição de vitória do dia
                 if (carsRemaining <= 0) {
                     carsRemaining = 0; 
                     gameState = "GOAL_REACHED";
@@ -451,7 +449,7 @@ function togglePause() {
         if (p > 0.92 && p < 1.05 && Math.abs(screenX - 200) < 50) { 
             speed = -4; 
             enemy.z += 800; 
-            playCrashSound(); 
+            playCrashSound();
         }
         
         enemy.lastY = 200 + (p * 140); 
