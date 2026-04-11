@@ -420,7 +420,7 @@ function draw(colors, isRaining, currentStage) {
         let w = 20 + p * 800;
         if (carsRemaining <= 0 && i > 250 && i < 265) drawFinishLine(i, w, x);
         
-        let asphalt = colors.nightMode ? "#050505" : (currentStage === 1 ? "#FFF" : "#333");
+        let asphalt = colors.nightMode ? "#050505" : (currentStage === 1 ? "#FFF" : "#828181");
         ctx.fillStyle = Math.sin(i * 0.5 + playerDist * 0.2) > 0 ? asphalt : (colors.nightMode ? "#0a0a0a" : "#3d3d3d");
         ctx.fillRect(x - w/2, i, w, 4);
         ctx.fillStyle = Math.sin(i * 0.5 + playerDist * 0.2) > 0 ? "red" : "white";
