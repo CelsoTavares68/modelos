@@ -30,7 +30,7 @@ let curveTimer = 0;
 let curveSpeed = 0.015; 
 
 let raindrops = []; 
-let splashes = []; 
+let splashes = []; // Agora suporta coordenadas Z para rastro real
 let lightningAlpha = 0; 
 
 const sfxChuva = new Audio('chuva.mp3');
@@ -130,7 +130,7 @@ function togglePause() {
 }
 
  function resetDay() {
-    currentTime = 0; playerDist = 0; speed = 0; enemies = []; totalPasses = 0; 
+    currentTime = 0; playerDist = 0; speed = 0; enemies = []; totalPasses = 0; splashes = [];
     
     if (dayNumber < 11) {
         carsRemaining = 200 + ((dayNumber - 1) * 10);
@@ -338,28 +338,27 @@ function update() {
         for (let i = 0; i < 12; i++) raindrops.push({ x: Math.random() * 400, y: -20, s: Math.random() * 10 + 22 });
         
         if (speed > 2) {
-            // Bolhas no jogador
-            for(let j=0; j<6; j++) { 
+            // Bolhas no jogador (posicionadas na frente/embaixo)
+            for(let j=0; j<8; j++) { 
                 splashes.push({ 
-                    x: 200 + (Math.random()-0.5)*60, 
-                    y: 375 + Math.random()*15, 
+                    lane: (playerX / 400) + (Math.random()-0.5)*0.3,
+                    z: 50, // Perto do jogador
                     vx: (Math.random()-0.5)*2,
                     vy: -Math.random()*2,
-                    r: Math.random()*3+1, 
+                    r: Math.random()*4+1, 
                     a: 0.8 
                 });
             }
-            // Bolhas nos inimigos (AJUSTADO PARA A PARTE DA FRENTE)
+            // Bolhas nos inimigos (Geradas na posição Z do inimigo)
             enemies.forEach(e => {
-                if (e.lastP > 0.4 && e.lastP < 1.0) {
-                    for(let k=0; k<4; k++) { 
+                if (e.z > -500 && e.z < 4000) {
+                    for(let k=0; k<5; k++) { 
                         splashes.push({ 
-                            x: e.lastX + (Math.random()-0.5)*(40 * e.lastP), 
-                            // CORREÇÃO: Subtraindo em vez de somar para as bolhas saírem na frente (parte superior do desenho)
-                            y: e.lastY - (8 * e.lastP), 
+                            lane: e.lane + (Math.random()-0.5)*0.1, 
+                            z: e.z + 20, // Gerado na posição do carro
                             vx: (Math.random()-0.5)*1.5,
                             vy: -Math.random()*1.5,
-                            r: Math.random()*(3 * e.lastP)+0.5, 
+                            r: Math.random()*2 + 1, 
                             a: 0.7 
                         });
                     }
@@ -370,11 +369,11 @@ function update() {
     
     raindrops.forEach((r, i) => { r.y += r.s; if (r.y > 400) raindrops.splice(i, 1); });
     
+    // Atualiza lógica das bolhas (elas se movem com a pista agora)
     splashes.forEach((s, i) => { 
-        s.x += s.vx;
-        s.y += s.vy;
-        s.a -= 0.04; 
-        if (s.a <= 0) splashes.splice(i, 1);
+        s.z -= speed; // As bolhas "ficam" no chão enquanto você corre
+        s.a -= 0.02; 
+        if (s.a <= 0 || s.z < -1000) splashes.splice(i, 1);
     });
 
     if (lightningAlpha > 0) lightningAlpha -= 0.05;
@@ -514,12 +513,20 @@ function draw(colors, isRaining, currentStage) {
         ctx.fillRect(x + w/2, i, 12*p, 4); 
     }
 
+    // --- DESENHO DAS BOLHAS COM PERSPECTIVA ---
     if (isRaining) {
         splashes.forEach(s => {
-            ctx.fillStyle = `rgba(220, 230, 255, ${s.a})`; 
-            ctx.beginPath();
-            ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-            ctx.fill();
+            let p = 1 - (s.z / 4000); // Profundidade da bolha
+            if (p > 0 && p < 1.2) {
+                let roadWidth = 20 + p * 800;
+                let sx = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p) + (s.lane * roadWidth * 0.5);
+                let sy = 200 + (p * 140);
+                
+                ctx.fillStyle = `rgba(230, 240, 255, ${s.a})`; 
+                ctx.beginPath();
+                ctx.arc(sx, sy, s.r * p, 0, Math.PI * 2);
+                ctx.fill();
+            }
         });
     }
 
