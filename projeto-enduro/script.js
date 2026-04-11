@@ -337,26 +337,26 @@ function update() {
     if (isRaining) {
         for (let i = 0; i < 12; i++) raindrops.push({ x: Math.random() * 400, y: -20, s: Math.random() * 10 + 22 });
         
-        // --- AJUSTE NA INTENSIDADE E POSIÇÃO DAS BOLHAS ---
         if (speed > 2) {
-            // Bolhas no jogador (Abaixo dos pneus)
-            for(let j=0; j<6; j++) { // Aumentado de 2 para 6
+            // Bolhas no jogador
+            for(let j=0; j<6; j++) { 
                 splashes.push({ 
                     x: 200 + (Math.random()-0.5)*60, 
-                    y: 375 + Math.random()*15, // Ajustado para ficar mais baixo
+                    y: 375 + Math.random()*15, 
                     vx: (Math.random()-0.5)*2,
                     vy: -Math.random()*2,
                     r: Math.random()*3+1, 
                     a: 0.8 
                 });
             }
-            // Bolhas nos inimigos (Na base traseira do carro)
+            // Bolhas nos inimigos (AJUSTADO PARA A PARTE DA FRENTE)
             enemies.forEach(e => {
                 if (e.lastP > 0.4 && e.lastP < 1.0) {
-                    for(let k=0; k<4; k++) { // Aumentado para 4 por inimigo
+                    for(let k=0; k<4; k++) { 
                         splashes.push({ 
                             x: e.lastX + (Math.random()-0.5)*(40 * e.lastP), 
-                            y: e.lastY + (10 * e.lastP), // Posição corrigida para o pé do pneu
+                            // CORREÇÃO: Subtraindo em vez de somar para as bolhas saírem na frente (parte superior do desenho)
+                            y: e.lastY - (8 * e.lastP), 
                             vx: (Math.random()-0.5)*1.5,
                             vy: -Math.random()*1.5,
                             r: Math.random()*(3 * e.lastP)+0.5, 
@@ -516,7 +516,7 @@ function draw(colors, isRaining, currentStage) {
 
     if (isRaining) {
         splashes.forEach(s => {
-            ctx.fillStyle = `rgba(220, 230, 255, ${s.a})`; // Cor levemente azulada/branca
+            ctx.fillStyle = `rgba(220, 230, 255, ${s.a})`; 
             ctx.beginPath();
             ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
             ctx.fill();
