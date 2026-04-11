@@ -409,22 +409,34 @@ function togglePause() {
     // --- LÓGICA DO PLACAR DE ULTRAPASSAGENS (CORRIGIDA) ---
     enemies.forEach((enemy) => {
         let enemySpeed = (speed < 15) ? 15 : enemy.v; 
-        enemy.sp = enemySpeed;
         enemy.z -= (speed - enemySpeed);
         let p = 1 - (enemy.z / 4000); 
 
-        // Detecta quando o carro passa pelo jogador (z <= 0)
+        // Quando o carro inimigo sai da tela (z <= 0), contamos a ultrapassagem
         if (enemy.z <= 0 && !enemy.isOvertaken) { 
             enemy.isOvertaken = true;
+            
             if (gameState === "PLAYING") {
+                // 1. Atualiza contagem do dia atual
                 carsRemaining--; 
                 passDayNow++; 
+                
+                // 2. Atualiza o hodômetro total de ultrapassagens (Total Now)
                 passTotalOdo++;
+
+                // 3. Verifica e atualiza o Recorde do Dia (Best Day)
+                if (passDayNow > passDayBest) {
+                    passDayBest = passDayNow;
+                    localStorage.setItem('enduro_passDayBest', passDayBest);
+                }
+
+                // 4. Verifica e atualiza o Recorde Histórico (Best Total)
+                if (passTotalOdo > passTotalBest) {
+                    passTotalBest = passTotalOdo;
+                    localStorage.setItem('enduro_passTotalBest', passTotalBest);
+                }
                 
-                // Atualiza recordes de ultrapassagem instantaneamente
-                if (passDayNow > passDayBest) passDayBest = passDayNow;
-                if (passTotalOdo > passTotalBest) passTotalBest = passTotalOdo;
-                
+                // Lógica de vitória do dia
                 if (carsRemaining <= 0) {
                     carsRemaining = 0; 
                     gameState = "GOAL_REACHED";
@@ -434,9 +446,8 @@ function togglePause() {
             }
         }
         
+        // Mantém a lógica de posição e colisão original
         let screenX = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p) + (enemy.lane * (20 + p * 800) * 0.5);
-        
-        // Colisão
         if (p > 0.92 && p < 1.05 && Math.abs(screenX - 200) < 50) { 
             speed = -4; 
             enemy.z += 800; 
