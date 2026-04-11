@@ -2,12 +2,12 @@
 const ctx = canvas.getContext('2d');
 canvas.width = 400; canvas.height = 400;
 
-// Impede o menu de contexto
+// Impede o menu de contexto (clique direito ou segurar o dedo)
 window.addEventListener('contextmenu', function (e) { 
     e.preventDefault(); 
 }, false);
 
-// Impede gestos no canvas
+// Impede gestos de zoom e rolagem acidental no jogo
 window.addEventListener('touchstart', function(e) {
     if (e.target.tagName === 'CANVAS') {
         e.preventDefault();
@@ -25,10 +25,11 @@ let odometerNow = 0;
 let dayBestRecord = parseFloat(localStorage.getItem('enduro_dayBest')) || 0;
 let totalBestRecord = parseFloat(localStorage.getItem('enduro_totalBest')) || 0;
 
-let passDayNow = 0;
-let passDayBest = parseInt(localStorage.getItem('enduro_passDayBest')) || 0;
-let passTotalOdo = parseInt(localStorage.getItem('enduro_passTotalOdo')) || 0;
-let passTotalBest = parseInt(localStorage.getItem('enduro_passTotalBest')) || 0;
+// NOVOS RECORDES DE ULTRAPASSAGENS
+let passDayNow = 0;                                               
+let passDayBest = parseInt(localStorage.getItem('enduro_passDayBest')) || 0;     
+let passTotalOdo = parseInt(localStorage.getItem('enduro_passTotalOdo')) || 0;   
+let passTotalBest = parseInt(localStorage.getItem('enduro_passTotalBest')) || 0; 
 
 const maxSpeed = 19; 
 const STAGE_DURATION = 2250; 
@@ -72,14 +73,16 @@ videoDerrota.muted = true; videoDerrota.load();
 document.body.appendChild(videoDerrota);
 videoDerrota.onended = () => { videoDerrota.style.display = 'none'; };
 
-// Mapeamento de teclas
+// --- CONTROLES POR SETAS ---
 const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
 
 window.addEventListener('keydown', e => { 
     if (keys.hasOwnProperty(e.code)) keys[e.code] = true; 
     if (audioCtx.state === 'suspended') audioCtx.resume();
 });
-window.addEventListener('keyup', e => { if (keys.hasOwnProperty(e.code)) keys[e.code] = false; });
+window.addEventListener('keyup', e => { 
+    if (keys.hasOwnProperty(e.code)) keys[e.code] = false; 
+});
 
 function drawFinishLine(y, roadWidth, xPos) {
     const squares = 10;
@@ -95,7 +98,9 @@ function updateUI() {
     if(document.getElementById('ui-day-best')) document.getElementById('ui-day-best').innerText = dayBestRecord.toFixed(1) + " KM";
     if(document.getElementById('ui-total-now')) document.getElementById('ui-total-now').innerText = (odometerNow / 1000).toFixed(1) + " KM";
     if(document.getElementById('ui-total-best')) document.getElementById('ui-total-best').innerText = (totalBestRecord / 1000).toFixed(1) + " KM";
-    if(document.getElementById('ui-pass-day')) document.getElementById('ui-pass-day').innerText = passDayNow;
+    
+    // Placar de ultrapassagens (Corrigido conforme seu original)
+    if(document.getElementById('ui-passes')) document.getElementById('ui-passes').innerText = passDayNow;
     if(document.getElementById('ui-passes-day-best')) document.getElementById('ui-passes-day-best').innerText = passDayBest;
     if(document.getElementById('ui-total-passes-now')) document.getElementById('ui-total-passes-now').innerText = passTotalOdo;
     if(document.getElementById('ui-passes-total-best')) document.getElementById('ui-passes-total-best').innerText = passTotalBest;
@@ -242,6 +247,7 @@ function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasF
         ctx.fill();
     }
 
+    // Mantido capacetes coloridos conforme seu original
     let helmetColor = nightMode ? "#000" : (isPlayer ? "#FFFF00" : "#FFF");
     ctx.fillStyle = helmetColor;
     ctx.beginPath(); ctx.arc(0, h * 0.1, 3.8 * s, 0, Math.PI, true); ctx.fill();
@@ -327,21 +333,21 @@ function update() {
         currentTime = DAY_DURATION; 
     }
 
-    // --- LÓGICA DE MOVIMENTAÇÃO (CORRIGIDA) ---
+    // --- LÓGICA DE MOVIMENTAÇÃO POR SETAS (CORRIGIDA) ---
     let offRoad = Math.abs(playerX) > 380;
     
-    // ACELERAÇÃO: Só acelera se a tecla UP estiver pressionada
+    // Só acelera se pressionar ArrowUp
     if (keys.ArrowUp) {
         if (offRoad) speed = Math.min(speed + 0.01, 2); 
         else speed = Math.min(speed + ((speed < 5) ? 0.04 : 0.08), maxSpeed);
     } 
-    // FREIO: Seta para baixo freia forte
+    // Freio com ArrowDown
     else if (keys.ArrowDown) {
         speed = Math.max(speed - 0.2, 0); 
     } 
-    // INÉRCIA: Se não estiver acelerando nem freiando, o carro perde velocidade aos poucos
+    // Desaceleração natural
     else {
-        speed = Math.max(speed - 0.04, 0); 
+        speed = Math.max(speed - 0.03, 0); 
     }
 
     playerX -= (roadCurve * 0.06) * (speed / maxSpeed); 
@@ -393,25 +399,34 @@ function update() {
 function draw(colors, isRaining, currentStage) {
     ctx.fillStyle = colors.sky; ctx.fillRect(0, 0, 400, 200);
     ctx.fillStyle = colors.grass; ctx.fillRect(0, 200, 400, 200);
+    
+    // Mantido picos de neve e montanhas conforme original
     let mtShift = (roadCurve * 0.6);
     for (let i = -3; i < 9; i++) {
         let bx = (i * 100) + mtShift; ctx.fillStyle = colors.mt;
         ctx.beginPath(); ctx.moveTo(bx - 70, 200); ctx.lineTo(bx, 130); ctx.lineTo(bx + 70, 200); ctx.fill();
+        if (colors.snowCaps) {
+            ctx.fillStyle = "white"; ctx.beginPath(); ctx.moveTo(bx - 20, 151); ctx.lineTo(bx, 130); ctx.lineTo(bx + 20, 151); ctx.fill();
+        }
     }
+
     if (lightningAlpha > 0 && (currentStage === 2 || currentStage === 6)) { 
         ctx.fillStyle = `rgba(255, 255, 255, ${lightningAlpha})`; ctx.fillRect(0, 55, 400, 145); 
     }
+
     for (let i = 200; i < 400; i += 4) {
         let p = (i - 200) / 140; 
         let x = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p);
         let w = 20 + p * 800;
         if (carsRemaining <= 0 && i > 250 && i < 265) drawFinishLine(i, w, x);
+        
         let asphalt = colors.nightMode ? "#050505" : (currentStage === 1 ? "#FFF" : "#333");
         ctx.fillStyle = Math.sin(i * 0.5 + playerDist * 0.2) > 0 ? asphalt : (colors.nightMode ? "#0a0a0a" : "#3d3d3d");
         ctx.fillRect(x - w/2, i, w, 4);
         ctx.fillStyle = Math.sin(i * 0.5 + playerDist * 0.2) > 0 ? "red" : "white";
         ctx.fillRect(x - w/2 - 12*p, i, 12*p, 4); ctx.fillRect(x + w/2, i, 12*p, 4); 
     }
+
     enemies.sort((a,b) => b.z - a.z).forEach(e => {
         if (e.lastP > 0 && e.lastP < 0.92) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, colors.fog > 0, isRaining);
     });
@@ -419,12 +434,14 @@ function draw(colors, isRaining, currentStage) {
     enemies.forEach(e => {
         if (e.lastP >= 0.92) drawF1Car(e.lastX, e.lastY, e.lastP * 0.85, e.color, false, colors.nightMode, colors.fog > 0, isRaining);
     });
+
     if (colors.fog > 0) { ctx.fillStyle = `rgba(140,145,160,${colors.fog})`; ctx.fillRect(0, 55, 400, 345); }
     if (isRaining) {
         ctx.strokeStyle = "rgba(200, 210, 255, 0.5)"; ctx.lineWidth = 1.2;
         raindrops.forEach(r => { ctx.beginPath(); ctx.moveTo(r.x, r.y); ctx.lineTo(r.x + 1.5, r.y + 12); ctx.stroke(); });
         wheelSprays.forEach(p => { ctx.fillStyle = `rgba(200, 230, 255, ${p.life * 0.6})`; ctx.beginPath(); ctx.arc(p.x, p.y, p.s, 0, Math.PI * 2); ctx.fill(); });
     }
+
     ctx.fillStyle = "black"; ctx.fillRect(0, 0, 400, 55);
     ctx.fillStyle = (gameState === "GOAL_REACHED" || gameState === "WIN_DAY") ? "lime" : "yellow";
     ctx.font = "bold 18px Courier";
