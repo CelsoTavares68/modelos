@@ -1,4 +1,4 @@
-  /* Estilos Gerais */
+ /* Estilos Gerais */
 body {
     background-color: #1a252f;
     display: flex;
@@ -11,9 +11,9 @@ body {
     font-family: 'Georgia', serif;
 }
 
- .topo-agenda {
+.topo-agenda {
     position: absolute;
-    top: 20px;
+    top: 40px; /* Ajustado para não ficar colado no topo no PC */
     display: flex;
     gap: 15px;
     align-items: center;
@@ -45,12 +45,14 @@ body {
     background: #fffef0;
     border-radius: 15px;
     box-shadow: 0 30px 60px rgba(0,0,0,0.5);
-    padding: 40px;
+    /* Padding superior aumentado para 100px para a data descer no PC */
+    padding: 100px 40px 40px 40px; 
     display: flex;
     flex-direction: column;
     border-left: 15px solid #c0392b;
     transition: transform 0.2s;
     z-index: 5;
+    box-sizing: border-box; /* Impede que o padding aumente o tamanho da folha */
 }
 
 .nav-btn {
@@ -76,7 +78,8 @@ textarea {
     background-size: 100% 1.8em;
 }
 
-    @media (max-width: 1024px) {
+/* Ajustes para Mobile / Tablet */
+@media (max-width: 1024px) {
     .folha {
         width: 100vw;
         height: 100vh;
@@ -95,7 +98,7 @@ textarea {
         left: 0;
         width: 100%;
         height: 70px; 
-        /* ALTERAÇÃO: Fundo com a cor oficial #c0392b */
+        /* Cor oficial da Redoma no topo mobile */
         background: #c0392b; 
         display: flex;
         flex-direction: row; 
@@ -108,7 +111,7 @@ textarea {
     
     #relogio {
         font-size: 1.1rem;
-        color: white; /* Garante que o relógio fique legível no fundo vermelho */
+        color: white; 
         text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
     }
 
