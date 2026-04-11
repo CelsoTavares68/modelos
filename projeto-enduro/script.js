@@ -1,4 +1,4 @@
-  const canvas = document.getElementById('gameCanvas');
+ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 canvas.width = 400; canvas.height = 400;
 
@@ -30,6 +30,7 @@ let curveTimer = 0;
 let curveSpeed = 0.015; 
 
 let raindrops = []; 
+let splashes = []; // Novo: Array para as bolhas/respingos
 let lightningAlpha = 0; 
 
 const sfxChuva = new Audio('chuva.mp3');
@@ -121,9 +122,9 @@ function togglePause() {
 
  function resetGame() {
     dayNumber = 1; 
-    baseGoal = 200; // Reinicia para o valor do Dia 1
+    baseGoal = 200; 
     odometerNow = 0; 
-     totalPassesOdometer = 0; 
+    totalPassesOdometer = 0; 
     resetDay();
     if (gameState !== "PLAYING") { gameState = "PLAYING"; update(); }
 }
@@ -131,8 +132,7 @@ function togglePause() {
  function resetDay() {
     currentTime = 0; playerDist = 0; speed = 0; enemies = []; totalPasses = 0; 
     
-    // Nova lógica: Aumenta de 10 em 10 até o dia 10 (chegando a 290). 
-    // Do dia 11 em diante, fixa em 300.
+    // CORREÇÃO: Limite fixo de 300 a partir do dia 11
     if (dayNumber < 11) {
         carsRemaining = 200 + ((dayNumber - 1) * 10);
     } else {
@@ -144,7 +144,7 @@ function togglePause() {
     saveProgress();
 }
 
-      function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasFog = false, isRainy = false) {
+function drawF1Car(x, y, scale, color, isPlayer = false, nightMode = false, hasFog = false, isRainy = false) {
     let s = scale * 1.2;
     if (s < 0.02 || s > 30) return;
 
@@ -161,7 +161,6 @@ function togglePause() {
     const leftX = -w * 0.2;
     const rightX = w * 0.2;
 
-    // --- CAMADA 1: REFLEXOS NO ASFALTO (CHUVA) ---
     if (isRainy) {
         ctx.save();
         let whiteReflect = ctx.createLinearGradient(0, 0, 0, -h * 2);
@@ -179,7 +178,6 @@ function togglePause() {
         ctx.restore();
     }
 
-    // --- CAMADA 2: FEIXE DE LUZ ---
     if (nightMode || hasFog || isRainy) {
         const coneLength = h * 2.5;
         const coneExpansion = w * 1.2;
@@ -194,59 +192,47 @@ function togglePause() {
         ctx.closePath(); ctx.fill();
     }
 
-    // --- CAMADA 3: CORPO E PNEUS ---
     ctx.fillStyle = "#111"; // Pneus
     ctx.fillRect(-w * 0.5, -h * 0.1, w * 0.25, h * 0.8);
     ctx.fillRect(w * 0.25, -h * 0.1, w * 0.25, h * 0.8);
     
-    ctx.fillStyle = bodyColor; // Cor do carro (vermelho ou cor da equipe)
-    ctx.fillRect(-w * 0.25, h * 0.1, w * 0.5, h * 0.4); // Cockpit central
-    ctx.fillRect(-w * 0.5, -h * 0.3, w, h * 0.2);        // Aerofólio
+    ctx.fillStyle = bodyColor; 
+    ctx.fillRect(-w * 0.25, h * 0.1, w * 0.5, h * 0.4); 
+    ctx.fillRect(-w * 0.5, -h * 0.3, w, h * 0.2);        
 
-    // NOVO: DETALHE DO MOTOR E ESCAPAMENTOS
-    // Só aparece se NÃO for NightMode, conforme solicitado
      if (!nightMode) {
-        const engineY = h * 0.3;      // Altura na parte traseira
-        const barWidth = w * 0.25;    // Largura da barra prateada
-        const exhaustSize = 1.8 * s;  // Tamanho dos círculos dos escapamentos
+        const engineY = h * 0.3;      
+        const barWidth = w * 0.25;    
+        const exhaustSize = 1.8 * s;  
 
-        // 1. Barra Prateada (Ligação do Motor)
         ctx.fillStyle = "#383737 "; 
         ctx.fillRect(-barWidth / 2, engineY - (0.5 * s), barWidth, 1.2 * s);
 
-        // 2. NOVO: Meio-círculo do Motor (Acima da barra)
-        ctx.fillStyle = "#383737"; // Cinza médio para o motor
+        ctx.fillStyle = "#383737"; 
         ctx.beginPath();
-        // Desenha um semicírculo para cima (arco de 180 graus)
         ctx.arc(0, engineY - (0.5 * s), barWidth * 0.3, Math.PI, 0); 
         ctx.fill();
 
-        // 3. Escapamentos (Círculos nas extremidades da barra)
         ctx.fillStyle = "#888";    
         ctx.strokeStyle = "#888";  
         ctx.lineWidth = 0.5 * s;
 
-        // Escapamento Esquerdo
         ctx.beginPath();
         ctx.arc(-barWidth / 2, engineY, exhaustSize, 0, Math.PI * 2);
         ctx.fill(); ctx.stroke();
 
-        // Escapamento Direito
         ctx.beginPath();
         ctx.arc(barWidth / 2, engineY, exhaustSize, 0, Math.PI * 2);
         ctx.fill(); ctx.stroke();
     }
 
-     // --- CAMADA 4: CAPACETE (CORES POR EQUIPE / PRETO À NOITE) ---
-    let helmetColor = "#FFFFFF"; // Cor padrão
+    let helmetColor = "#FFFFFF"; 
 
     if (nightMode) {
-        // Se for modo noturno, o capacete vira uma silhueta preta
         helmetColor = "#000000";
     } else if (isPlayer) {
-        helmetColor = "#FFFF00"; // Amarelo para o jogador
+        helmetColor = "#FFFF00"; 
     } else {
-        // Mapeamento de cores para os inimigos
         const helmetMap = {
             "#F0F": "#00FFFF", "#0FF": "#FF00FF", "#0F0": "#777070",
             "#FF0": "#0000FF", "#f47d28": "#1a7a1a", "#a5a3a3": "#E00",
@@ -257,11 +243,9 @@ function togglePause() {
 
     ctx.fillStyle = helmetColor;
     ctx.beginPath();
-    // Desenho do capacete
     ctx.arc(0, h * 0.1, 3.8 * s, 0, Math.PI, true); 
     ctx.fill();
 
-    // Detalhe de reflexo (Apenas se NÃO for noite para manter a silhueta)
     if (!nightMode) {
         ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
         ctx.beginPath();
@@ -269,7 +253,6 @@ function togglePause() {
         ctx.fill();
     }
 
-    // --- CAMADA 5: LANTERNAS COM BRILHO ---
     if (nightMode || hasFog || isRainy) {
         ctx.save();
         const headlightSize = 2.8 * s;
@@ -293,12 +276,7 @@ function update() {
     let colors = { sky: "#87CEEB", grass: "#1a7a1a", fog: 0, mt: "#555", nightMode: false, snowCaps: false };
     switch(currentStage) {
         case 0: colors.snowCaps = true; break; 
-        case 1: 
-            colors.sky = "#B0C4DE"; 
-            colors.grass = "#FFFFFF"; 
-            colors.mt = "#5F9EA0"; 
-            colors.snowCaps = true; 
-            break; 
+        case 1: colors.sky = "#B0C4DE"; colors.grass = "#FFFFFF"; colors.mt = "#5F9EA0"; colors.snowCaps = true; break; 
         case 2: colors.sky = "#ff8c00"; colors.grass = "#145c14"; colors.mt = "#442200"; break; 
         case 3: colors.sky = "#2c3e50"; colors.grass = "#0a2a0a"; colors.mt = "#1a1a1a"; colors.fog = 0.7; break; 
         case 4: colors.sky = "#0d0d0e"; colors.grass = "#080808"; colors.mt = "#111"; colors.nightMode = true; break; 
@@ -360,8 +338,31 @@ function update() {
 
     if (isRaining) {
         for (let i = 0; i < 12; i++) raindrops.push({ x: Math.random() * 400, y: -20, s: Math.random() * 10 + 22 });
+        
+        // NOVO: Gerar bolhas/splash nos pneus do jogador e inimigos visíveis
+        if (speed > 2) {
+            // Bolhas no jogador
+            for(let j=0; j<2; j++) {
+                splashes.push({ x: 200 + (Math.random()-0.5)*40, y: 360 + Math.random()*10, r: Math.random()*2+1, a: 0.6 });
+            }
+            // Bolhas nos inimigos próximos
+            enemies.forEach(e => {
+                if (e.lastP > 0.6 && e.lastP < 1.0) {
+                    splashes.push({ x: e.lastX + (Math.random()-0.5)*20, y: e.lastY + Math.random()*5, r: Math.random()*1.5+0.5, a: 0.5 });
+                }
+            });
+        }
     }
+    
     raindrops.forEach((r, i) => { r.y += r.s; if (r.y > 400) raindrops.splice(i, 1); });
+    
+    // Atualizar e remover bolhas
+    splashes.forEach((s, i) => { 
+        s.y -= 1; // Sobem um pouco
+        s.a -= 0.03; // Desaparecem
+        if (s.a <= 0) splashes.splice(i, 1);
+    });
+
     if (lightningAlpha > 0) lightningAlpha -= 0.05;
 
     if (carsRemaining <= 0 && !hasPlayedGoalMedia) {
@@ -370,29 +371,20 @@ function update() {
         sfxVitoriaAudio.play().catch(e => {});
     }
 
-       // --- LÓGICA DE FIM DE DIA E TRANSIÇÃO ---
     if (currentTime >= DAY_DURATION) {
         if (carsRemaining <= 0) {
-            // Vitória do Dia: Jogador cumpriu a meta
             if (gameState !== "WIN_DAY") { 
                 gameState = "WIN_DAY"; 
-                dayNumber++; // Avança para o próximo dia (Ex: 10 -> 11)
-                
-                saveProgress(); // Salva o novo dia e recordes
-                
-                // Aguarda 4 segundos com a tela de vitória e reinicia as variáveis do dia
+                dayNumber++; 
+                saveProgress(); 
                 setTimeout(() => { resetDay(); }, 4000); 
             }
         } else { 
-            // Derrota: O tempo acabou e ainda restavam carros
             if (gameState !== "GAME_OVER") { 
                 gameState = "GAME_OVER"; 
                 if (audioCtx.state === 'running') sfxDerrota.play();
-                videoDerrota.style.display = 'block'; 
-                videoDerrota.play().catch(e => {});
             }
         }
-        // Trava o cronômetro no limite para evitar bugs visuais enquanto a tela de vitória aparece
         currentTime = DAY_DURATION - 1; 
     }
 
@@ -447,18 +439,10 @@ function update() {
         enemy.lastY = 200 + (p * 140); enemy.lastX = screenX; enemy.lastP = p;
     });
 
-    // --- LÓGICA DE INIMIGOS EM DUPLA ---
     if (gameTick % 70 === 0 && enemies.length < 100) {
         enemies.push({ 
             lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 3.0, 
              color: ["#F0F", "#0FF", "#0F0", "#FF0", "#f47d28", "#a5a3a3", "rgb(0, 26, 255)", "rgb(27, 104, 27)" ][Math.floor(Math.random() * 8)],
-            isOvertaken: false 
-        });
-    }
-    if (gameTick % 70 === 120 && enemies.length < 100) {
-        enemies.push({ 
-            lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 3.0, 
-            color: ["#F0F", "#0FF", "#0F0", "#FF0", "#f47d28", "#a5a3a3", "rgb(0, 26, 255)", "rgb(27, 104, 27)"][Math.floor(Math.random() * 8)],
             isOvertaken: false 
         });
     }
@@ -494,7 +478,6 @@ function draw(colors, isRaining, currentStage) {
         let asphaltColor1, asphaltColor2;
         if (isSnowStage) {
             let snowPattern = Math.sin(i * 0.5 + playerDist * 0.2);
-            // Proporção 70/30 e cor secundária muito clara (#F8F8F8)
             asphaltColor1 = snowPattern > -0.4 ? "#FFFFFF" : "#F8F8F8"; 
             asphaltColor2 = snowPattern > -0.4 ? "#FFFFFF" : "#F0F0F0";
         } else {
@@ -505,7 +488,6 @@ function draw(colors, isRaining, currentStage) {
         ctx.fillStyle = Math.sin(i * 0.5 + playerDist * 0.2) > 0 ? asphaltColor1 : asphaltColor2;
         ctx.fillRect(x - w/2, i, w, 4);
         
-        // Bordas (Curbs) - Sempre Vermelho e Branco
         let curbColor1, curbColor2;
         if (colors.nightMode) {
             curbColor1 = "#600"; curbColor2 = "#888";
@@ -516,6 +498,16 @@ function draw(colors, isRaining, currentStage) {
         ctx.fillStyle = Math.sin(i * 0.5 + playerDist * 0.2) > 0 ? curbColor1 : curbColor2;
         ctx.fillRect(x - w/2 - 12*p, i, 12*p, 4);
         ctx.fillRect(x + w/2, i, 12*p, 4); 
+    }
+
+    // DESENHAR BOLHAS (Splashes)
+    if (isRaining) {
+        splashes.forEach(s => {
+            ctx.fillStyle = `rgba(255, 255, 255, ${s.a})`;
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+            ctx.fill();
+        });
     }
 
     let hasFog = colors.fog > 0;
