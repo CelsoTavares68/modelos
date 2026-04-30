@@ -551,13 +551,14 @@ function togglePause() {
         if (p > 0.92 && p < 1.05 && Math.abs(screenX - 200) < 50) { 
             speed = -4; 
             playCrashSound(); 
-            // --- LOGICA CORRIGIDA: Resetar carros no horizonte espalhados ---
-            enemies.forEach((e, index) => {
-                if(e.z > 2000) { 
-                    // Espalha os carros para que não venham todos juntos
-                    e.z = 4000 + (index * 400); 
-                    e.isOvertaken = false;
-                }
+            
+            // --- NOVA LÓGICA DE COLISÃO: Limpa a lista para formar um por vez ---
+            enemies = []; // Remove todos os carros da pista
+            // Adiciona apenas um novo carro no horizonte para recomeçar
+            enemies.push({ 
+                lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 3.0, 
+                color: ["#F0F", "#0FF", "#0F0", "#FF0", "#f47d28", "#a5a3a3", "rgb(0, 26, 255)", "rgb(27, 104, 27)" ][Math.floor(Math.random() * 8)],
+                isOvertaken: false 
             });
         }
 
@@ -580,6 +581,7 @@ function togglePause() {
         enemy.lastY = 200 + (p * 140); enemy.lastX = screenX; enemy.lastP = p;
     });
 
+    // --- GERADOR DE CARROS (AQUI ELES SÃO FORMADOS UM POR VEZ) ---
     if (gameTick % 45 === 0 && enemies.length < 100) {
         enemies.push({ 
             lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 3.0, 
@@ -594,6 +596,8 @@ function togglePause() {
     if (gameTick % 300 === 0) saveProgress();
     requestAnimationFrame(update);
 }
+
+
 
  function draw(colors, isRaining, currentStage) {
     ctx.fillStyle = colors.sky; ctx.fillRect(0, 0, 400, 200);
