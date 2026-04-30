@@ -32,7 +32,7 @@ let passTotalOdo = parseInt(localStorage.getItem('enduro_passTotalOdo')) || 0;  
 let passTotalBest = parseInt(localStorage.getItem('enduro_passTotalBest')) || 0; // 4. Recorde total histórico
 
 const maxSpeed = 20; 
-const STAGE_DURATION = 1800; 
+const STAGE_DURATION = 1500; 
 const DAY_DURATION = STAGE_DURATION * 9; 
 let currentTime = 0; 
 
@@ -403,7 +403,7 @@ function togglePause() {
     ctx.restore();
 }
 
- function update() {
+  function update() {
     if (isPaused) return; 
     let currentStage = Math.min(Math.floor(currentTime / STAGE_DURATION), 8);
     let isRaining = (currentStage === 3 || currentStage === 7);
@@ -465,48 +465,36 @@ function togglePause() {
     } else { sfxChuva.pause(); }
 
     // --- LÓGICA DE SPRAY NA CHUVA ---
-      // --- LÓGICA DE SPRAY NA CHUVA (VERSÃO FINALIZADA) ---
      if (isRaining) {
-        // 1. Spray do seu carro
         if (speed > 2) {
             createWheelSpray(200 - 15, 360, 0.85); 
             createWheelSpray(200 + 15, 360, 0.85); 
         }
 
-        // 2. Spray dos Inimigos (Sem filtros de distância/proximidade)
         enemies.forEach(e => {
-            // Condição simples: Se o carro apareceu (lastP > 0) e tem velocidade (e.sp)
-            // O e.lastP > 0 garante que começa lá no horizonte (z=4000)
             if (e.lastP > 0 && e.sp > 0) { 
-                
-                // OTIMIZAÇÃO APENAS DE FREQUÊNCIA (Para não pesar no celular)
-                // Não removemos o spray, apenas reduzimos a densidade se estiver muito longe
                 let skipFrame = false;
                 if (window.innerWidth < 600) {
-                    if (e.lastP < 0.2 && gameTick % 3 !== 0) skipFrame = true; // Longe: desenha 1 de 3 frames
-                    else if (gameTick % 2 !== 0) skipFrame = true;            // Perto: desenha 1 de 2 frames
+                    if (e.lastP < 0.2 && gameTick % 3 !== 0) skipFrame = true; 
+                    else if (gameTick % 2 !== 0) skipFrame = true;            
                 }
 
                 if (!skipFrame) {
                     let carHeightScale = 11 * (e.lastP * 0.85);
                     let groundY = e.lastY + carHeightScale;
                     let wheelOffset = 18 * (e.lastP * 0.85);
-
-                    // Cria spray nos dois pneus
                     createWheelSpray(e.lastX - wheelOffset, groundY, e.lastP * 0.85);
                     createWheelSpray(e.lastX + wheelOffset, groundY, e.lastP * 0.85);
                 }
             }
         });
 
-        // 3. Gotas de chuva no ecrã
         let rainDensity = (window.innerWidth < 600) ? 8 : 12;
         for (let i = 0; i < rainDensity; i++) {
             raindrops.push({ x: Math.random() * 400, y: -20, s: Math.random() * 10 + 22 });
         }
     }
 
-    // Atualizar partículas
     raindrops.forEach((r, i) => { r.y += r.s; if (r.y > 400) raindrops.splice(i, 1); });
     for (let i = wheelSprays.length - 1; i >= 0; i--) {
         let p = wheelSprays[i];
@@ -560,14 +548,22 @@ function togglePause() {
     // --- INIMIGOS E COLISÃO ---
     enemies.forEach((enemy) => {
         let effectiveEnemySpeed = (speed < 15) ? 15 : enemy.v; 
-        enemy.sp = effectiveEnemySpeed; // Importante para o spray
+        enemy.sp = effectiveEnemySpeed; 
         enemy.z -= (speed - effectiveEnemySpeed);
         let p = 1 - (enemy.z / 4000); 
         let roadWidth = 20 + p * 800;
         let screenX = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p) + (enemy.lane * roadWidth * 0.5);
         
         if (p > 0.92 && p < 1.05 && Math.abs(screenX - 200) < 50) { 
-            speed = -4; enemy.z += 800; playCrashSound(); 
+            speed = -4; 
+            playCrashSound(); 
+            // --- ALTERAÇÃO AQUI: RESETAR CARROS ULTRAPASSADOS ---
+            enemies.forEach(e => {
+                if(e.z <= 0) {
+                    e.z = 4000;
+                    e.isOvertaken = false;
+                }
+            });
         }
 
         if (gameState === "PLAYING" || gameState === "GOAL_REACHED") {
