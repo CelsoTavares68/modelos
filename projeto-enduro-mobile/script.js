@@ -403,7 +403,8 @@ function togglePause() {
     ctx.restore();
 }
 
-     function update() {
+    
+function update() {
     if (isPaused) return; 
     let currentStage = Math.min(Math.floor(currentTime / STAGE_DURATION), 8);
     let isRaining = (currentStage === 3 || currentStage === 7);
@@ -543,7 +544,12 @@ function togglePause() {
     enemies.forEach((enemy) => {
         let effectiveEnemySpeed = (speed < 15) ? 15 : enemy.v; 
         enemy.sp = effectiveEnemySpeed; 
+        
+        // Esta linha permite que os carros te alcancem:
+        // Se sua speed for negativa (-4 na batida), (speed - enemySpeed) fica bem negativo, 
+        // e enemy.z DIMINUI (o carro se aproxima de você vindo de trás)[cite: 1]
         enemy.z -= (speed - effectiveEnemySpeed);
+        
         let p = 1 - (enemy.z / 4000); 
         let roadWidth = 20 + p * 800;
         let screenX = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p) + (enemy.lane * roadWidth * 0.5);
@@ -551,16 +557,12 @@ function togglePause() {
         if (p > 0.92 && p < 1.05 && Math.abs(screenX - 200) < 50) { 
             speed = -4; 
             playCrashSound(); 
-            // Lógica original: Apenas reseta a posição Z dos carros que passaram, sem apagar nada
-            enemies.forEach(e => {
-                if (e.z <= 0) {
-                    e.z = 4000;
-                    e.isOvertaken = false;
-                }
-            });
+            // REMOVIDO: Não resetamos mais os carros para o horizonte ao bater.
+            // Eles continuam onde estão, permitindo que os de trás te passem.[cite: 1]
         }
 
         if (gameState === "PLAYING" || gameState === "GOAL_REACHED") {
+            // Lógica de ultrapassagem (vinda de trás para frente)
             if (enemy.z <= 0 && !enemy.isOvertaken) { 
                 carsRemaining--; passDayNow++; passTotalOdo++;
                 enemy.isOvertaken = true; 
@@ -570,6 +572,7 @@ function togglePause() {
                     vitoriaTocada = true; 
                 }
             }
+            // Lógica de ser ultrapassado (o carro volta a ficar na sua frente z > 0)[cite: 1]
             if (enemy.z > 0 && enemy.isOvertaken) { 
                 carsRemaining++; passDayNow--; passTotalOdo--;
                 enemy.isOvertaken = false; 
@@ -587,6 +590,7 @@ function togglePause() {
         });
     }
 
+    // Filtro mantido para limpar carros que sumirem muito longe (performance)[cite: 1]
     enemies = enemies.filter(e => e.z > -18000 && e.z < 6000);
     draw(colors, isRaining, currentStage);
     
