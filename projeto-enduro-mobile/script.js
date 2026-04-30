@@ -403,7 +403,7 @@ function togglePause() {
     ctx.restore();
 }
 
-    function update() {
+     function update() {
     if (isPaused) return; 
     let currentStage = Math.min(Math.floor(currentTime / STAGE_DURATION), 8);
     let isRaining = (currentStage === 3 || currentStage === 7);
@@ -551,7 +551,7 @@ function togglePause() {
         if (p > 0.92 && p < 1.05 && Math.abs(screenX - 200) < 50) { 
             speed = -4; 
             playCrashSound(); 
-            // Retorno à lógica original de colisão
+            // Lógica original: Apenas reseta a posição Z dos carros que passaram, sem apagar nada
             enemies.forEach(e => {
                 if (e.z <= 0) {
                     e.z = 4000;
