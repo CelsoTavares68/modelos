@@ -403,7 +403,7 @@ function togglePause() {
     ctx.restore();
 }
 
-   function update() {
+    function update() {
     if (isPaused) return; 
     let currentStage = Math.min(Math.floor(currentTime / STAGE_DURATION), 8);
     let isRaining = (currentStage === 3 || currentStage === 7);
@@ -551,10 +551,12 @@ function togglePause() {
         if (p > 0.92 && p < 1.05 && Math.abs(screenX - 200) < 50) { 
             speed = -4; 
             playCrashSound(); 
-            // --- ALTERAÇÃO: Resetar carros que estão longe (no horizonte) ---
-            enemies.forEach(e => {
+            // --- LOGICA CORRIGIDA: Resetar carros no horizonte espalhados ---
+            enemies.forEach((e, index) => {
                 if(e.z > 2000) { 
-                    e.z = 4000;
+                    // Espalha os carros para que não venham todos juntos
+                    e.z = 4000 + (index * 400); 
+                    e.isOvertaken = false;
                 }
             });
         }
