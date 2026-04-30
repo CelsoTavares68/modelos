@@ -403,7 +403,7 @@ function togglePause() {
     ctx.restore();
 }
 
-  function update() {
+   function update() {
     if (isPaused) return; 
     let currentStage = Math.min(Math.floor(currentTime / STAGE_DURATION), 8);
     let isRaining = (currentStage === 3 || currentStage === 7);
@@ -432,7 +432,6 @@ function togglePause() {
     gameTick++; playerDist += speed; odometerNow += speed; currentTime++; 
     if (gameTick % 4 === 0) playEngineSound();
 
-    // Verificação de Recordes
     if (playerDist / 1000 > dayBestRecord) {
         dayBestRecord = playerDist / 1000;
         localStorage.setItem('enduro_dayBest', dayBestRecord);
@@ -452,7 +451,6 @@ function togglePause() {
 
     updateUI();
 
-    // --- LÓGICA DE CLIMA E RELÂMPAGOS ---
     if (isRaining || warningLightning) {
         if (isRaining && sfxChuva.paused && audioCtx.state === 'running') sfxChuva.play().catch(e => {}); 
         if (Math.random() > 0.996) { 
@@ -464,7 +462,6 @@ function togglePause() {
         }
     } else { sfxChuva.pause(); }
 
-    // --- LÓGICA DE SPRAY NA CHUVA ---
      if (isRaining) {
         if (speed > 2) {
             createWheelSpray(200 - 15, 360, 0.85); 
@@ -503,7 +500,6 @@ function togglePause() {
     }
     if (lightningAlpha > 0) lightningAlpha -= 0.05;
 
-    // --- LÓGICA DE FIM DE DIA ---
     if (currentTime >= DAY_DURATION) {
         if (carsRemaining <= 0 || gameState === "GOAL_REACHED") {
             if (gameState !== "WIN_DAY") { 
@@ -522,7 +518,6 @@ function togglePause() {
         currentTime = DAY_DURATION; 
     }
 
-    // --- MOVIMENTAÇÃO E FÍSICA ---
     let offRoad = Math.abs(playerX) > 380;
     if (keys.ArrowLeft) leftPressTime++; else leftPressTime = 0;
     if (keys.ArrowRight) rightPressTime++; else rightPressTime = 0;
@@ -545,7 +540,6 @@ function togglePause() {
     }
     roadCurve += (targetCurve - roadCurve) * curveSpeed;
 
-    // --- INIMIGOS E COLISÃO ---
     enemies.forEach((enemy) => {
         let effectiveEnemySpeed = (speed < 15) ? 15 : enemy.v; 
         enemy.sp = effectiveEnemySpeed; 
@@ -557,11 +551,10 @@ function togglePause() {
         if (p > 0.92 && p < 1.05 && Math.abs(screenX - 200) < 50) { 
             speed = -4; 
             playCrashSound(); 
-            // --- ALTERAÇÃO AQUI: RESETAR CARROS ULTRAPASSADOS ---
+            // --- ALTERAÇÃO: Resetar carros que estão longe (no horizonte) ---
             enemies.forEach(e => {
-                if(e.z <= 0) {
+                if(e.z > 2000) { 
                     e.z = 4000;
-                    e.isOvertaken = false;
                 }
             });
         }
