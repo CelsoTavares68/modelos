@@ -32,7 +32,7 @@ let passTotalOdo = parseInt(localStorage.getItem('enduro_passTotalOdo')) || 0;  
 let passTotalBest = parseInt(localStorage.getItem('enduro_passTotalBest')) || 0; // 4. Recorde total histórico
 
 const maxSpeed = 20; 
-const STAGE_DURATION = 1500; 
+const STAGE_DURATION = 1800; 
 const DAY_DURATION = STAGE_DURATION * 9; 
 let currentTime = 0; 
 
@@ -555,7 +555,7 @@ function update() {
         let screenX = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p) + (enemy.lane * roadWidth * 0.5);
         
         if (p > 0.92 && p < 1.05 && Math.abs(screenX - 200) < 50) { 
-            speed = -4; 
+            speed = -2; 
             playCrashSound(); 
             // REMOVIDO: Não resetamos mais os carros para o horizonte ao bater.
             // Eles continuam onde estão, permitindo que os de trás te passem.[cite: 1]
@@ -591,7 +591,7 @@ function update() {
     }
 
     // Filtro mantido para limpar carros que sumirem muito longe (performance)[cite: 1]
-    enemies = enemies.filter(e => e.z > -18000 && e.z < 6000);
+    enemies = enemies.filter(e => e.z > -12000 && e.z < 6000);
     draw(colors, isRaining, currentStage);
     
     if (gameTick % 300 === 0) saveProgress();
