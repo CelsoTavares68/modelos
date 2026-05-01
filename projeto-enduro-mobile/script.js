@@ -32,7 +32,7 @@ let passTotalOdo = parseInt(localStorage.getItem('enduro_passTotalOdo')) || 0;  
 let passTotalBest = parseInt(localStorage.getItem('enduro_passTotalBest')) || 0; // 4. Recorde total histórico
 
 const maxSpeed = 20; 
-const STAGE_DURATION = 1680; 
+const STAGE_DURATION = 1740; 
 const DAY_DURATION = STAGE_DURATION * 9; 
 let currentTime = 0; 
 
