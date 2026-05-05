@@ -546,7 +546,7 @@ function update() {
         enemy.sp = effectiveEnemySpeed; 
         
         // Esta linha permite que os carros te alcancem:
-        // Se sua speed for negativa (-4 na batida), (speed - enemySpeed) fica bem negativo, 
+        // Se sua speed for negativa (-3 na batida), (speed - enemySpeed) fica bem negativo, 
         // e enemy.z DIMINUI (o carro se aproxima de você vindo de trás)[cite: 1]
         enemy.z -= (speed - effectiveEnemySpeed);
         
@@ -555,7 +555,7 @@ function update() {
         let screenX = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p) + (enemy.lane * roadWidth * 0.5);
         
         if (p > 0.92 && p < 1.05 && Math.abs(screenX - 200) < 50) { 
-            speed = -4; 
+            speed = -3; 
             playCrashSound(); 
             // REMOVIDO: Não resetamos mais os carros para o horizonte ao bater.
             // Eles continuam onde estão, permitindo que os de trás te passem.[cite: 1]
@@ -591,7 +591,7 @@ function update() {
     }
 
     // Filtro mantido para limpar carros que sumirem muito longe (performance)[cite: 1]
-    enemies = enemies.filter(e => e.z > -12000 && e.z < 5000);
+    enemies = enemies.filter(e => e.z > -12000 && e.z < 4800);
     draw(colors, isRaining, currentStage);
     
     if (gameTick % 300 === 0) saveProgress();
