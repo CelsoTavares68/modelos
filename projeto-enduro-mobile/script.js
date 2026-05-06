@@ -302,7 +302,7 @@ function togglePause() {
         const coneLength = h * 2.5;
         const coneExpansion = w * 1.2;
         let gradient = ctx.createLinearGradient(0, lightY, 0, lightY - coneLength);
-        gradient.addColorStop(0, "rgba(255, 255, 255, 0.26)");
+        gradient.addColorStop(0, "rgba(255, 255, 255, 0.2)");
         gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
         ctx.fillStyle = gradient;
         ctx.beginPath();
@@ -591,7 +591,7 @@ function update() {
     }
 
     // Filtro mantido para limpar carros que sumirem muito longe (performance)[cite: 1]
-    enemies = enemies.filter(e => e.z > -12000 && e.z < 4800);
+    enemies = enemies.filter(e => e.z > -12000 && e.z < 4500);
     draw(colors, isRaining, currentStage);
     
     if (gameTick % 300 === 0) saveProgress();
