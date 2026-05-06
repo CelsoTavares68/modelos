@@ -32,7 +32,7 @@ let passTotalOdo = parseInt(localStorage.getItem('enduro_passTotalOdo')) || 0;  
 let passTotalBest = parseInt(localStorage.getItem('enduro_passTotalBest')) || 0; // 4. Recorde total histórico
 
 const maxSpeed = 20; 
-const STAGE_DURATION = 1800; 
+const STAGE_DURATION = 1700; 
 const DAY_DURATION = STAGE_DURATION * 9; 
 let currentTime = 0; 
 
@@ -555,7 +555,7 @@ function update() {
         let screenX = (200 - playerX * 0.05) + (roadCurve * p * p) - (playerX * p) + (enemy.lane * roadWidth * 0.5);
         
         if (p > 0.92 && p < 1.05 && Math.abs(screenX - 200) < 50) { 
-            speed = -2; 
+            speed = -3; 
             playCrashSound(); 
             // REMOVIDO: Não resetamos mais os carros para o horizonte ao bater.
             // Eles continuam onde estão, permitindo que os de trás te passem.[cite: 1]
