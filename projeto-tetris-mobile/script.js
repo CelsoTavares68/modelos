@@ -1,7 +1,7 @@
- const canvas = document.getElementById('gameCanvas');
+  const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const scoreElement = document.getElementById('score');
-const levelElement = document.getElementById('level'); // Note: Verifique se existe no HTML ou será ignorado
+const levelElement = document.getElementById('level');
 const highScoreElement = document.getElementById('highScore');
 const btnPause = document.getElementById('btnPause');
 
@@ -12,7 +12,6 @@ const sfxPares = new Audio('formarpares.mp3');
 const sfxMilPontos = new Audio('mil-pontos.mp3');
 const sfxFim = new Audio('fim.mp3');
 
-// Função de segurança para tocar áudio
 function playSFX(audio) {
     audio.pause();
     audio.currentTime = 0;
@@ -30,17 +29,16 @@ let score = 0;
 let level = 1;
 let speed = 1000;
 let isPaused = false;
-let isProcessingCombo = false; // Trava para evitar movimentos durante animações
+let isProcessingCombo = false;
 let gameLoop = null;
 let board = Array(ROWS).fill().map(() => Array(COLS).fill(null));
 let blinkingBlocks = [];
 let lastMilestone = 0;
-let nextPiece = randomPiece(); // Gera a primeira "reserva"
-let comboCount = 0; // Quantidade de explosões seguidas na mesma jogada
+let nextPiece = randomPiece();
+let comboCount = 0;
 let particles = [];
-let comboMessages = []; // Mensagens flutuantes de combo
+let comboMessages = [];
 
-// Recorde Local
 let highScore = parseInt(localStorage.getItem('fruitColumnsHighScore')) || 0;
 highScoreElement.innerText = highScore;
 
@@ -62,7 +60,6 @@ function randomPiece() {
 function draw(showBlinking = true) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Grade de fundo
     ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
     for(let i=0; i<COLS; i++) {
         for(let j=0; j<ROWS; j++) {
@@ -70,7 +67,6 @@ function draw(showBlinking = true) {
         }
     }
 
-    // Desenha Tabuleiro
     for (let r = 0; r < ROWS; r++) {
         for (let c = 0; c < COLS; c++) {
             if (board[r][c] !== null) {
@@ -82,7 +78,6 @@ function draw(showBlinking = true) {
         }
     }
 
-    // Desenha Peça Ativa (apenas se não estiver processando combo)
     if (!isProcessingCombo) {
         piece.items.forEach((fruitIdx, i) => {
             if (piece.y + i < ROWS) {
@@ -91,7 +86,6 @@ function draw(showBlinking = true) {
         });
     }
 
-    // Overlay de Pausa
     if (isPaused && blinkingBlocks.length === 0) {
         ctx.fillStyle = "rgba(0,0,0,0.6)";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -101,10 +95,7 @@ function draw(showBlinking = true) {
         ctx.fillText("PAUSADO", canvas.width/2, canvas.height/2);
     }
 
-    // Desenha Mensagens de Combo
     drawComboMessages();
-
-    // Desenha e atualiza partículas
     updateParticles();
     particles.forEach(p => {
         ctx.save(); 
@@ -116,7 +107,6 @@ function draw(showBlinking = true) {
         ctx.restore(); 
     });
 
-    // Se houver partículas ou animações, redesenhamos no próximo frame
     if (particles.length > 0 || blinkingBlocks.length > 0 || comboMessages.length > 0) {
         requestAnimationFrame(() => draw(showBlinking));
     }
@@ -163,7 +153,6 @@ function lockPiece() {
     piece.items.forEach((fruitIdx, i) => {
         if (piece.y + i < ROWS) board[piece.y + i][piece.x] = fruitIdx;
     });
-    
     clearMatches();
 }
 
@@ -172,25 +161,20 @@ function clearMatches() {
     let toRemove = [];
     let matchSet = new Set();
 
-    // Deteção de Trincas
     for (let r = 0; r < ROWS; r++) {
         for (let c = 0; c < COLS; c++) {
             let val = board[r][c];
             if (val === null) continue;
 
-            // Horizontal
             if (c + 2 < COLS && val === board[r][c + 1] && val === board[r][c + 2]) {
                 [0, 1, 2].forEach(i => matchSet.add(`${r},${c + i}`));
             }
-            // Vertical
             if (r + 2 < ROWS && val === board[r + 1][c] && val === board[r + 2][c]) {
                 [0, 1, 2].forEach(i => matchSet.add(`${r + i},${c}`));
             }
-            // Diagonal \
             if (r + 2 < ROWS && c + 2 < COLS && val === board[r + 1][c + 1] && val === board[r + 2][c + 2]) {
                 [0, 1, 2].forEach(i => matchSet.add(`${r + i},${c + i}`));
             }
-            // Diagonal /
             if (r - 2 >= 0 && c + 2 < COLS && val === board[r - 1][c + 1] && val === board[r - 2][c + 2]) {
                 [0, 1, 2].forEach(i => matchSet.add(`${r - i},${c + i}`));
             }
@@ -211,8 +195,6 @@ function clearMatches() {
             flashes++;
             if (flashes > 6) { 
                 clearInterval(flashInterval);
-                
-                // Cálculo de Pontuação com bónus de Combo (30%)
                 const basePoints = toRemove.length * 15;
                 const comboBonus = comboCount > 0 ? 1.3 : 1.0;
                 const pointsGained = Math.floor(basePoints * comboBonus);
@@ -223,16 +205,13 @@ function clearMatches() {
                 if (comboCount > 0) {
                     createComboMessage(toRemove[0].c, toRemove[0].r, `COMBO X${comboCount + 1}!`);
                 }
-                
                 comboCount++; 
 
-                // Criar partículas e remover do tabuleiro
                 toRemove.forEach(p => {
                     createParticles(p.c, p.r, "#00ffcc");
                     board[p.r][p.c] = null;
                 });
 
-                // Sistema de Nível
                 if (Math.floor(score / 1000) > lastMilestone) {
                     playSFX(sfxMilPontos);
                     lastMilestone = Math.floor(score / 1000);
@@ -294,6 +273,8 @@ function applyGravity() {
 }
 
 // --- 6. CONTROLOS E FLUXO ---
+document.addEventListener('contextmenu', event => event.preventDefault());
+
 function startGame() {
     clearInterval(gameLoop);
     gameLoop = setInterval(moveDown, speed);
@@ -328,13 +309,11 @@ window.resetGame = function() {
     draw();
 }
 
-document.addEventListener('contextmenu', event => event.preventDefault());
-
 function handleAction(type) {
     if (isPaused || isProcessingCombo) return;
     
-    // Opcional: Feedback tátil se disponível no dispositivo
-    if (navigator.vibrate) navigator.vibrate(10);
+    // RECOLOCADO: Som de movimento
+    playSFX(sfxDescida);
 
     switch(type) {
         case 'left': if (piece.x > 0 && !checkCollision(piece.x - 1, piece.y)) piece.x--; break;
@@ -353,21 +332,18 @@ const controls = { 'btnLeft': 'left', 'btnRight': 'right', 'btnDown': 'down', 'b
 Object.keys(controls).forEach(id => {
     const btn = document.getElementById(id);
     if(btn) {
-        // Usamos touchstart para resposta imediata no mobile
         btn.addEventListener('touchstart', (e) => {
-            e.preventDefault(); // Crucial: Impede zoom, seleção e cliques fantasmas
+            e.preventDefault();
             handleAction(controls[id]);
         }, { passive: false });
-
-        // Mantemos o click para funcionamento em Desktop, mas o e.preventDefault() no touch 
-        // impede que o click seja disparado logo em seguida no mobile.
+        
         btn.addEventListener('click', (e) => {
-            if (e.pointerType !== 'touch') { // Só executa se não for toque (evita duplo acionamento)
+            if (e.pointerType !== 'touch') {
                 handleAction(controls[id]);
             }
         });
     }
-}); 
+});
 
 function createParticles(x, y, color) {
     for (let i = 0; i < 8; i++) {
@@ -391,44 +367,34 @@ function updateParticles() {
     });
 }
 
-  // --- 5. SISTEMA DE COMBINAÇÕES (DURAÇÃO ESTENDIDA) ---
-
 function createComboMessage(x, r, text) {
     comboMessages.push({
         x: x * BLOCK_SIZE,
         y: r * BLOCK_SIZE,
         text: text,
-        life: 180 // Aumentado para 180 (aprox. 3 segundos a 60fps)
+        life: 180
     });
 }
 
 function drawComboMessages() {
     comboMessages = comboMessages.filter(m => m.life > 0);
     comboMessages.forEach(m => {
-        // Fade out mais lento: só começa a sumir de verdade nos últimos 60 frames
         let opacity = m.life > 60 ? 1.0 : m.life / 60;
-        
-        ctx.save(); // Salva o estado do contexto para não afetar outros desenhos
+        ctx.save();
         ctx.globalAlpha = opacity;
         ctx.fillStyle = "#ffcc00";
         ctx.shadowColor = "black";
         ctx.shadowBlur = 4;
         ctx.font = "bold 26px Arial";
         ctx.textAlign = "center";
-        
-        // Movimento de subida constante e bem lento
-        // O valor (180 - m.life) representa o tempo decorrido
         const elapsed = 180 - m.life;
-        const offset = elapsed * 0.4; // Multiplicador baixo = subida mais lenta
-        
+        const offset = elapsed * 0.4;
         ctx.fillText(m.text, m.x + 20, m.y - offset); 
-        
-        ctx.restore(); // Restaura o estado (limpa o alpha e o shadow)
+        ctx.restore();
         m.life--;
     });
 }
 
-// Inicialização
 updateNextPieceDisplay();
 startGame();
 draw();
