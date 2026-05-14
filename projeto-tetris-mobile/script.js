@@ -240,19 +240,21 @@ function clearMatches() {
     }
 }
 
-function finalizeTurn() {
-    piece = nextPiece;
-    nextPiece = randomPiece();
-    comboCount = 0;
-    updateNextPieceDisplay();
-
+ function finalizeTurn() {
+    // Tocar o som de derrota imediatamente ao detectar colisão no topo
     if (checkCollision(piece.x, piece.y)) {
         playSFX(sfxFim);
         setTimeout(() => {
             alert("FIM DE JOGO! Pontos: " + score);
             resetGame();
         }, 100);
+        return;
     }
+
+    piece = nextPiece;
+    nextPiece = randomPiece();
+    comboCount = 0;
+    updateNextPieceDisplay();
 }
 
 function applyGravity() {
