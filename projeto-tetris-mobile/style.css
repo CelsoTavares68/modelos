@@ -11,6 +11,14 @@
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     overflow: hidden;
     touch-action: none;
+    /* Impede seleção de texto em todo o app */
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    /* Remove o menu de contexto ao segurar (iOS/Android) */
+    -webkit-touch-callout: none;
+    /* Remove o flash cinza ao tocar em botões no Android */
+    -webkit-tap-highlight-color: transparent;
 }
 
 .game-container {
@@ -76,6 +84,8 @@ canvas {
     align-items: center;
     justify-content: center;
     touch-action: manipulation;
+    cursor: pointer;
+    outline: none;
 }
 
 .action-btn {

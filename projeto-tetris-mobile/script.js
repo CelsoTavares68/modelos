@@ -328,9 +328,13 @@ window.resetGame = function() {
     draw();
 }
 
+document.addEventListener('contextmenu', event => event.preventDefault());
+
 function handleAction(type) {
     if (isPaused || isProcessingCombo) return;
-    playSFX(sfxDescida);
+    
+    // Opcional: Feedback tátil se disponível no dispositivo
+    if (navigator.vibrate) navigator.vibrate(10);
 
     switch(type) {
         case 'left': if (piece.x > 0 && !checkCollision(piece.x - 1, piece.y)) piece.x--; break;
@@ -349,13 +353,21 @@ const controls = { 'btnLeft': 'left', 'btnRight': 'right', 'btnDown': 'down', 'b
 Object.keys(controls).forEach(id => {
     const btn = document.getElementById(id);
     if(btn) {
+        // Usamos touchstart para resposta imediata no mobile
         btn.addEventListener('touchstart', (e) => {
-            e.preventDefault();
+            e.preventDefault(); // Crucial: Impede zoom, seleção e cliques fantasmas
             handleAction(controls[id]);
         }, { passive: false });
-        btn.addEventListener('click', () => handleAction(controls[id]));
+
+        // Mantemos o click para funcionamento em Desktop, mas o e.preventDefault() no touch 
+        // impede que o click seja disparado logo em seguida no mobile.
+        btn.addEventListener('click', (e) => {
+            if (e.pointerType !== 'touch') { // Só executa se não for toque (evita duplo acionamento)
+                handleAction(controls[id]);
+            }
+        });
     }
-});
+}); 
 
 function createParticles(x, y, color) {
     for (let i = 0; i < 8; i++) {
