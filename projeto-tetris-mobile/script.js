@@ -139,7 +139,10 @@ function moveDown() {
 
 function checkCollision(nx, ny) {
     if (nx < 0 || nx >= COLS) return true;
+    // Verifica se a base da coluna de 3 peças ultrapassa o fundo
     if (ny + 2 >= ROWS) return true;
+    
+    // Verifica se alguma das 3 partes da peça colide com blocos já existentes
     for (let i = 0; i < 3; i++) {
         if (ny + i >= 0 && board[ny + i][nx] !== null) {
             return true;
@@ -240,21 +243,22 @@ function clearMatches() {
     }
 }
 
- function finalizeTurn() {
-    // Tocar o som de derrota imediatamente ao detectar colisão no topo
-    if (checkCollision(piece.x, piece.y)) {
-        playSFX(sfxFim);
-        setTimeout(() => {
-            alert("FIM DE JOGO! Pontos: " + score);
-            resetGame();
-        }, 100);
-        return;
-    }
-
+function finalizeTurn() {
+    // Nova lógica: Geramos a nova peça primeiro
     piece = nextPiece;
     nextPiece = randomPiece();
     comboCount = 0;
     updateNextPieceDisplay();
+
+    // SÓ finaliza o jogo se a nova peça já nascer colidindo com algo no topo
+    if (checkCollision(piece.x, piece.y)) {
+        playSFX(sfxFim);
+        clearInterval(gameLoop);
+        setTimeout(() => {
+            alert("FIM DE JOGO! Pontos: " + score);
+            resetGame();
+        }, 100);
+    }
 }
 
 function applyGravity() {
@@ -314,7 +318,6 @@ window.resetGame = function() {
 function handleAction(type) {
     if (isPaused || isProcessingCombo) return;
     
-    // RECOLOCADO: Som de movimento
     playSFX(sfxDescida);
 
     switch(type) {
