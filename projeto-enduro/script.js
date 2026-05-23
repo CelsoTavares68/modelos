@@ -31,8 +31,8 @@ let passDayBest = parseInt(localStorage.getItem('enduro_passDayBest')) || 0;
 let passTotalOdo = parseInt(localStorage.getItem('enduro_passTotalOdo')) || 0;   
 let passTotalBest = parseInt(localStorage.getItem('enduro_passTotalBest')) || 0; 
 
-const maxSpeed = 19; 
-const STAGE_DURATION = 2250; 
+const maxSpeed = 20; 
+const STAGE_DURATION = 1620; 
 const DAY_DURATION = STAGE_DURATION * 9; 
 let currentTime = 0; 
 
@@ -384,13 +384,13 @@ function update() {
 
     if (gameTick % 60 === 0 && enemies.length < 100) {
         enemies.push({ 
-            lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 4.0, 
+            lane: (Math.random() - 0.5) * 1.8, z: 4000, v: 2.5, 
             color: ["#F0F", "#0FF", "#0F0", "#FF0", "#f47d28", "#a5a3a3", "blue", "green" ][Math.floor(Math.random() * 8)],
             isOvertaken: false 
         });
     }
 
-    enemies = enemies.filter(e => e.z > -18000 && e.z < 6000);
+    enemies = enemies.filter(e => e.z > -12000 && e.z < 4300);
     draw(colors, isRaining, currentStage);
     if (gameTick % 300 === 0) saveProgress();
     requestAnimationFrame(update);
