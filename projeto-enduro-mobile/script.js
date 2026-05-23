@@ -591,7 +591,7 @@ function update() {
     }
 
     // Filtro mantido para limpar carros que sumirem muito longe (performance)[cite: 1]
-    enemies = enemies.filter(e => e.z > -12000 && e.z < 4500);
+    enemies = enemies.filter(e => e.z > -12000 && e.z < 4300);
     draw(colors, isRaining, currentStage);
     
     if (gameTick % 300 === 0) saveProgress();
