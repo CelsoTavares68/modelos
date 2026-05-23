@@ -269,8 +269,8 @@ function processarRanking(dataRanking) {
     const apenasAcoes = dataRanking.stocks.filter(s => s.stock.replace('.SA', '').length <= 6);
     const ordenado = [...apenasAcoes].sort((a, b) => (b.change || 0) - (a.change || 0));
 
-    const topAltas = ordenado.slice(0, 30);
-    const topBaixas = ordenado.slice(-30).reverse();
+    const topAltas = ordenado.slice(0, 15);
+    const topBaixas = ordenado.slice(-15).reverse();
 
     const formatLi = (a, c) => {
         let nome = a.name || a.stock;
