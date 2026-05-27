@@ -55,8 +55,7 @@ h2 {
 .saldo-positivo { color: #2e7d32; font-weight: bold; }
 .saldo-negativo { color: #d32f2f; font-weight: bold; }
 
-/* Configuração base de inputs e botões */
-input, button { 
+input, select, button { 
     padding: 12px; 
     margin: 5px 0; 
     width: 100%; 
@@ -66,76 +65,69 @@ input, button {
     font-size: 1em;
 }
 
-/* Transição global para efeitos de clique suave */
-button, .btn-tipo, .btn-excluir, .btn-filtro {
-    transition: transform 0.1s ease, background-color 0.2s ease, box-shadow 0.2s ease;
-    cursor: pointer;
-    outline: none;
-}
-
-/* Efeito Hover */
-button:hover, .btn-filtro:hover {
-    filter: brightness(0.95);
-}
-
-/* Efeito de clique físico (Active) */
-button:active, .btn-filtro:active, .btn-excluir:active {
-    transform: scale(0.97);
-    box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.1);
-}
-
-/* Botões rápidos de tipo (Receita e Despesa) */
+/* NOVOS ESTILOS PARA OS BOTÕES DE SELEÇÃO DE TIPO */
 .botoes-tipo {
     display: flex;
     gap: 10px;
-    margin: 8px 0;
+    margin: 5px 0;
     width: 100%;
     box-sizing: border-box;
 }
 
 .btn-tipo {
-    width: 50%;
-    margin: 0;
+    cursor: pointer;
     font-weight: bold;
-    border: none;
-    color: white;
-}
-
-.btn-tipo:active {
-    transform: scale(0.96);
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
+    opacity: 0.4; /* Opaco quando não selecionado */
 }
 
 .btn-tipo.receita {
-    background-color: #2e7d32;
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    border-color: #2e7d32;
 }
 
-.btn-tipo.receita:hover {
-    background-color: #256428;
+.btn-tipo.receita.ativo {
+    background-color: #2e7d32;
+    color: white;
+    opacity: 1;
 }
 
 .btn-tipo.despesa {
+    background-color: #ffebee;
+    color: #d32f2f;
+    border-color: #d32f2f;
+}
+
+.btn-tipo.despesa.ativo {
     background-color: #d32f2f;
+    color: white;
+    opacity: 1;
 }
 
-.btn-tipo.despesa:hover {
-    background-color: #b72424;
+.btn-add { 
+    background-color: #1a73e8; 
+    color: white; 
+    border: none; 
+    font-weight: bold; 
+    cursor: pointer; 
 }
 
-/* Botão de PDF Amarelo */
+/* ALTERADO PARA AMARELO COM TEXTO ESCURO */
 .btn-pdf { 
     background-color: #f1c40f; 
     color: #2c3e50; 
     border: none; 
+    cursor: pointer; 
     margin-top: 10px; 
     font-weight: bold;
-    box-shadow: 0 2px 5px rgba(241, 196, 15, 0.3);
 }
 
 .btn-pdf:hover {
     background-color: #f39c12;
 }
 
-/* Filtros e Tabela */
 .filtros { 
     display: flex; 
     gap: 5px; 
@@ -147,6 +139,7 @@ button:active, .btn-filtro:active, .btn-excluir:active {
 .btn-filtro { 
     background-color: #e4e6eb; 
     border: none; 
+    cursor: pointer; 
     padding: 8px; 
     font-size: 0.8em; 
     flex: 1; 
@@ -178,12 +171,12 @@ th { background-color: #f8f9fa; color: #555; }
     background-color: #ff4d4d; 
     color: white; 
     border: none; 
-    padding: 6px 12px; 
+    padding: 6px 10px; 
     border-radius: 4px; 
-    font-weight: bold;
+    cursor: pointer; 
 }
 
-/* DESIGN COMPACTO E TRAVADO PARA CELULAR */
+/* INTERFACE TOTALMENTE CORRIGIDA E ADAPTADA PARA CELULAR */
 @media screen and (max-width: 600px) {
     body {
         padding: 0; 
@@ -195,7 +188,7 @@ th { background-color: #f8f9fa; color: #555; }
         max-width: 100%; 
         border-radius: 0; 
         box-shadow: none; 
-        padding: 10px; /* Reduzido para aproximar os elementos das bordas */
+        padding: 10px; 
     }
 
     h2 {
@@ -207,6 +200,8 @@ th { background-color: #f8f9fa; color: #555; }
     .seletor-mes {
         padding: 8px;
         margin-bottom: 10px;
+        flex-direction: column; 
+        gap: 4px;
     }
 
     .resumo {
@@ -215,47 +210,37 @@ th { background-color: #f8f9fa; color: #555; }
         margin-bottom: 10px;
     }
 
-    /* Reduz o tamanho vertical de campos e botões para liberar espaço de tela */
-    input, button, .btn-filtro { 
+    input, select, button, .btn-filtro { 
         padding: 8px 10px; 
         margin: 3px 0; 
         font-size: 0.9em;
     }
 
-    .botoes-tipo {
-        margin: 4px 0;
-    }
-
-    .filtros {
-        margin-top: 10px;
-    }
-
-    /* Remove a coluna de texto tipo */
-    .col-tipo, .linha-tipo {
-        display: none;
+    /* Oculta as colunas Tipo e Saldo no mobile para abrir espaço máximo para os números grandes */
+    .col-tipo, .linha-tipo, .col-saldo, .linha-saldo {
+        display: none !important;
     }
     
     table {
         width: 100%;
-        font-size: 0.85em;
+        font-size: 0.8em; /* Reduz ligeiramente a base da fonte para dar mais folga */
         margin-top: 10px;
     }
 
-    /* Distribuição das colunas sem sobras */
+    /* Nova distribuição de larguras focada em valores gigantes */
     table th:nth-child(1), table td:nth-child(1) { width: 38%; } /* Descrição */
-    table th:nth-child(2), table td:nth-child(2) { width: 28%; } /* Valor */
-    table th:nth-child(4), table td:nth-child(4) { width: 22%; } /* Saldo */
-    table th:nth-child(5), table td:nth-child(5) { width: 12%; text-align: center; } /* Botão X */
+    table th:nth-child(2), table td:nth-child(2) { 
+        width: 48%; 
+        font-size: 0.95em; /* Garante boa legibilidade nos valores */
+    } 
+    table th:nth-child(5), table td:nth-child(5) { width: 14%; text-align: center; } /* Botão X */
 
-    /* AJUSTE SOLICITADO: Linhas do extrato bem mais juntas (espaço vertical mínimo) */
     th, td {
-        padding: 5px 2px; 
+        padding: 6px 2px; /* Linhas bem juntas conforme solicitado */
     }
 
     .btn-excluir {
         padding: 4px 8px;
         font-size: 0.85em;
     }
-    
-    .seletor-mes { flex-direction: column; gap: 4px; }
 }
