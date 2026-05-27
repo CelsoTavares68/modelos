@@ -1,9 +1,18 @@
  @charset "UTF-8";
 
+/* EVITA MOVIMENTOS LATERAIS: Força o navegador a travar qualquer rolagem para os lados */
+html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+    margin: 0;
+    padding: 0;
+}
+
 body { 
     font-family: 'Segoe UI', sans-serif; 
     background-color: #f0f2f5; 
     padding: 20px;
+    box-sizing: border-box;
 }
 
 .container { 
@@ -13,6 +22,7 @@ body {
     padding: 25px; 
     border-radius: 12px; 
     box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+    box-sizing: border-box;
 }
 
 h2 { 
@@ -79,6 +89,8 @@ button:active, .btn-filtro:active, .btn-excluir:active {
     display: flex;
     gap: 10px;
     margin: 8px 0;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .btn-tipo {
@@ -132,6 +144,8 @@ button:active, .btn-filtro:active, .btn-excluir:active {
     display: flex; 
     gap: 5px; 
     margin-top: 15px; 
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .btn-filtro { 
@@ -152,12 +166,14 @@ table {
     border-collapse: collapse;
     margin-top: 15px; 
     font-size: 0.95em; 
+    table-layout: fixed; 
 }
 
 th, td { 
     border-bottom: 1px solid #eee; 
     padding: 12px; 
     text-align: left; 
+    word-wrap: break-word; 
 }
 
 th { background-color: #f8f9fa; color: #555; }
@@ -171,22 +187,21 @@ th { background-color: #f8f9fa; color: #555; }
     font-weight: bold;
 }
 
-/* ALTERAÇÕES PARA TAMANHO TOTAL NO CELULAR */
+/* COMPORTAMENTO TOTALMENTE TRAVADO NO CELULAR */
 @media screen and (max-width: 600px) {
     body {
-        padding: 0; /* Remove as margens externas cinzas da tela do celular */
-        background-color: white; /* Deixa o fundo uniforme */
+        padding: 0; 
+        background-color: white; 
     }
 
     .container { 
         width: 100%; 
         max-width: 100%; 
-        border-radius: 0; /* Remove cantos arredondados para colar nas bordas do celular */
-        box-shadow: none; /* Remove a sombra desnecessária em tela cheia */
-        padding: 15px; /* Mantém um espaçamento interno confortável para os elementos */
+        border-radius: 0; 
+        box-shadow: none; 
+        padding: 12px; /* Reduz ligeiramente o preenchimento para aproveitar melhor as bordas */
     }
 
-    /* Oculta a coluna de texto RECEITA/DESPESA para sobrar espaço para o valor e botão de excluir */
     .col-tipo, .linha-tipo {
         display: none;
     }
@@ -196,8 +211,14 @@ th { background-color: #f8f9fa; color: #555; }
         font-size: 0.85em;
     }
 
+    /* Distribuição exata para encaixar 100% no visor sem sobras */
+    table th:nth-child(1), table td:nth-child(1) { width: 38%; } /* Descrição */
+    table th:nth-child(2), table td:nth-child(2) { width: 28%; } /* Valor */
+    table th:nth-child(4), table td:nth-child(4) { width: 22%; } /* Saldo */
+    table th:nth-child(5), table td:nth-child(5) { width: 12%; text-align: center; } /* Botão X */
+
     th, td {
-        padding: 10px 4px; /* Otimiza o espaçamento das células da tabela */
+        padding: 10px 2px; 
     }
     
     .resumo { font-size: 1.2em; }

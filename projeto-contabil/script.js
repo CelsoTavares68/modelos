@@ -32,7 +32,6 @@ function registrarPorTipo(tipo) {
     salvar();
     atualizarInterface();
     
-    // Limpa os campos após a inserção bem-sucedida
     document.getElementById('descricao').value = "";
     document.getElementById('valor').value = "";
 }
@@ -56,14 +55,12 @@ function atualizarInterface() {
         const indexReal = transacoes.indexOf(t);
         const linha = corpo.insertRow();
         
-        // Estrutura montada com as classes corretas para omitir a coluna de texto no mobile,
-        // mantendo as colunas financeiras organizadas de ponta a ponta.
         linha.innerHTML = `
             <td>${t.desc}</td>
             <td style="color:${isReceita?'#2e7d32':'#d32f2f'}; font-weight:500;">${isReceita?'+':'-'} ${formatarMoeda(t.valor)}</td>
             <td class="linha-tipo" style="color:${isReceita?'green':'red'}">${t.tipo.toUpperCase()}</td>
             <td style="font-weight:bold">${formatarMoeda(saldoAcumulado)}</td>
-            <td><button class="btn-excluir" onclick="removerItem(${indexReal})">X</button></td>
+            <td style="text-align:center;"><button class="btn-excluir" onclick="removerItem(${indexReal})">X</button></td>
         `;
     });
     
