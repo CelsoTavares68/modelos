@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'fluxo-caixa-v7';
+const CACHE_NAME = 'fluxo-caixa-v8';
 
 // 2. Lista de ficheiros que devem ser guardados para uso offline
 const assets = [
