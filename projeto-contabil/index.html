@@ -29,10 +29,11 @@
 
     <input type="text" id="descricao" placeholder="Descrição (ex: Venda de produto)">
     <input type="number" id="valor" step="0.01" placeholder="Valor (R$)">
-    <select id="tipo">
-        <option value="receita">Receita (+)</option>
-        <option value="despesa">Despesa (-)</option>
-    </select>
+    
+    <div class="botoes-tipo">
+        <button type="button" id="btn-tipo-receita" class="btn-tipo receita ativo" onclick="selecionarTipo('receita')">Receita (+)</button>
+        <button type="button" id="btn-tipo-despesa" class="btn-tipo despesa" onclick="selecionarTipo('despesa')">Despesa (-)</button>
+    </div>
     
     <button class="btn-add" onclick="adicionarTransicao()">Registrar Lançamento</button>
     <button class="btn-pdf" onclick="exportarPDF()">Gerar Extrato PDF</button>
@@ -58,7 +59,6 @@
 </div>
 
 <script>
-  // REGISTO DO SERVICE WORKER E GESTÃO DE ATUALIZAÇÕES
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('./sw.js')
@@ -69,7 +69,6 @@
             const worker = reg.installing;
             worker.onstatechange = () => {
               if (worker.state === 'installed' && navigator.serviceWorker.controller) {
-                // Notificação de atualização enviada ao utilizador
                 alert("O Fluxo de Caixa tem uma nova versão! Por favor, recarregue a página.");
                 window.location.reload();
               }

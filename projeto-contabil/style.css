@@ -1,4 +1,4 @@
-    @charset "UTF-8";
+   @charset "UTF-8";
 
 body { 
     font-family: 'Segoe UI', sans-serif; 
@@ -45,7 +45,8 @@ h2 {
 .saldo-positivo { color: #2e7d32; font-weight: bold; }
 .saldo-negativo { color: #d32f2f; font-weight: bold; }
 
-input, select, button { 
+/* NOVOS ESTILOS PARA OS BOTÕES DE SELEÇÃO DE TIPO */
+ input, button { 
     padding: 12px; 
     margin: 5px 0; 
     width: 100%; 
@@ -53,6 +54,47 @@ input, select, button {
     border-radius: 6px; 
     box-sizing: border-box; 
     font-size: 1em;
+}
+
+.botoes-tipo {
+    display: flex;
+    gap: 10px;
+    margin: 8px 0; /* Ajuste sutil de margem */
+}
+
+/* CORREÇÃO: Sobrescrever o width: 100% genérico para que fiquem lado a lado corretamente */
+.btn-tipo {
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
+    opacity: 0.4;
+    width: 50%; /* Garante metade do espaço para cada um de forma organizada */
+    margin: 0;  /* Remove margens verticais indesejadas */
+}
+
+.btn-tipo.receita {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    border-color: #2e7d32;
+}
+
+.btn-tipo.receita.ativo {
+    background-color: #2e7d32;
+    color: white;
+    opacity: 1;
+}
+
+.btn-tipo.despesa {
+    background-color: #ffebee;
+    color: #d32f2f;
+    border-color: #d32f2f;
+}
+
+.btn-tipo.despesa.ativo {
+    background-color: #d32f2f;
+    color: white;
+    opacity: 1;
 }
 
 .btn-add { 
@@ -63,13 +105,18 @@ input, select, button {
     cursor: pointer; 
 }
 
+/* ALTERADO PARA AMARELO COM TEXTO ESCURO */
 .btn-pdf { 
-    background-color: #e74c3c; 
-    color: white; 
+    background-color: #f1c40f; 
+    color: #2c3e50; 
     border: none; 
     cursor: pointer; 
     margin-top: 10px; 
     font-weight: bold;
+}
+
+.btn-pdf:hover {
+    background-color: #f39c12;
 }
 
 .filtros { 
@@ -116,9 +163,50 @@ th { background-color: #f8f9fa; color: #555; }
     cursor: pointer; 
 }
 
-/* RESPONSIVIDADE PARA CELULAR */
+/* ==========================================
+   NOVOS EFEITOS DE CLIQUES NOS BOTÕES
+   ========================================== */
+
+/* 1. Efeito base para todos os botões interativos */
+button, .btn-tipo, .btn-excluir, .btn-filtro {
+    transition: transform 0.1s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+    outline: none;
+}
+
+/* 2. Efeito ao passar o mouse (Hover) - focado em Desktop */
+button:hover, .btn-filtro:hover {
+    filter: brightness(0.95); /* Dá uma leve escurecida para indicar foco */
+}
+
+/* 3. Efeito de Pressão/Clique (Active) - Essencial para Mobile e Desktop */
+button:active, .btn-filtro:active, .btn-excluir:active {
+    transform: scale(0.97); /* O botão "encolhe" levemente, simulando que foi afundado */
+    box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.1); /* Cria uma sombra interna de profundidade */
+}
+
+/* 4. Ajuste específico para os botões de tipo (Receita / Despesa) */
+.btn-tipo:active {
+    transform: scale(0.96); /* Encolhe um pouquinho mais por serem botões de alternância lado a lado */
+}
+
+/* 5. Melhoria visual no botão de Registrar Lançamento (Sombra de elevação) */
+.btn-add {
+    box-shadow: 0 2px 5px rgba(26, 115, 232, 0.2);
+}
+.btn-add:active {
+    box-shadow: none; /* Perde a sombra de elevação ao ser pressionado */
+}
+
+/* 6. Melhoria visual no botão do PDF */
+.btn-pdf {
+    box-shadow: 0 2px 5px rgba(241, 196, 15, 0.3);
+}
+.btn-pdf:active {
+    box-shadow: none;
+}
+
 @media screen and (max-width: 600px) {
-    /* Esconde coluna de Saldo e Ações no celular */
     table th:nth-child(4), table td:nth-child(4),
     table th:nth-child(5), table td:nth-child(5) { 
         display: none; 
