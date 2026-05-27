@@ -1,6 +1,5 @@
  @charset "UTF-8";
 
-/* EVITA MOVIMENTOS LATERAIS: Força o navegador a travar qualquer rolagem para os lados */
 html, body {
     max-width: 100%;
     overflow-x: hidden;
@@ -165,11 +164,12 @@ th, td {
 
 th { background-color: #f8f9fa; color: #555; }
 
-/* Distribuição padrão no Computador (com Saldo) */
-table th:nth-child(1), table td:nth-child(1) { width: 45%; } /* Descrição */
-table th:nth-child(2), table td:nth-child(2) { width: 25%; } /* Valor */
-table th:nth-child(3), table td:nth-child(3) { width: 18%; } /* Saldo */
-table th:nth-child(4), table td:nth-child(4) { width: 12%; text-align: center; } /* Ações */
+/* DISTRIBUIÇÃO CORRETA PARA COMPUTADOR (5 colunas perfeitamente equilibradas) */
+table th:nth-child(1), table td:nth-child(1) { width: 35%; } /* Descrição */
+table th:nth-child(2), table td:nth-child(2) { width: 20%; } /* Valor */
+table th:nth-child(3), table td:nth-child(3) { width: 15%; } /* Tipo */
+table th:nth-child(4), table td:nth-child(4) { width: 18%; } /* Saldo */
+table th:nth-child(5), table td:nth-child(5) { width: 12%; text-align: center; } /* Ações */
 
 .btn-excluir { 
     background-color: #ff4d4d; 
@@ -180,7 +180,7 @@ table th:nth-child(4), table td:nth-child(4) { width: 12%; text-align: center; }
     cursor: pointer; 
 }
 
-/* COMPORTAMENTO SUPER COMPACTO PARA TELEMÓVEL */
+/* COMPORTAMENTO ADAPTADO PARA CELULAR */
 @media screen and (max-width: 600px) {
     body {
         padding: 0; 
@@ -220,8 +220,8 @@ table th:nth-child(4), table td:nth-child(4) { width: 12%; text-align: center; }
         font-size: 0.9em;
     }
     
-    /* SOLUÇÃO: Oculta a coluna do Saldo de forma limpa no telemóvel */
-    .col-saldo, .linha-saldo {
+    /* ESCONDE O TIPO E O SALDO NO CELULAR */
+    .col-tipo, .linha-tipo, .col-saldo, .linha-saldo {
         display: none !important;
     }
 
@@ -231,13 +231,13 @@ table th:nth-child(4), table td:nth-child(4) { width: 12%; text-align: center; }
         margin-top: 10px;
     }
 
-    /* Nova distribuição de larguras: Espaço gigante (50%) para valores com mais de 6 dígitos */
-    table th:nth-child(1), table td:nth-child(1) { width: 38%; } /* Descrição */
-    table th:nth-child(2), table td:nth-child(2) { width: 50%; } /* Valor */
-    table th:nth-child(4), table td:nth-child(4) { width: 12%; text-align: center; } /* Botão X */
+    /* Redistribuição do espaço restante no celular para caber mais de 6 dígitos */
+    table th:nth-child(1), table td:nth-child(1) { width: 40%; } /* Descrição */
+    table th:nth-child(2), table td:nth-child(2) { width: 46%; } /* Valor */
+    table th:nth-child(5), table td:nth-child(5) { width: 14%; text-align: center; } /* Ações (X) */
 
     th, td {
-        padding: 6px 2px; /* Linhas bem juntas */
+        padding: 6px 2px; 
     }
 
     .btn-excluir {

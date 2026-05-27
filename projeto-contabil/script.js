@@ -1,5 +1,6 @@
  let transacoes = [];
 let filtroTipo = 'todos';
+let tipoSelecionado = 'receita'; 
 
 function formatarMoeda(v) { 
     return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); 
@@ -18,15 +19,25 @@ function carregarDados() {
     atualizarInterface();
 }
 
-// Lógica unificada: valida e registra diretamente ao clicar no tipo
-function registrarPorTipo(tipo) {
+// Gerencia os cliques nos botões de Receita/Despesa e efetua o registro
+function selecionarTipo(tipo) {
+    tipoSelecionado = tipo;
+    document.getElementById('btn-tipo-receita').classList.remove('ativo');
+    document.getElementById('btn-tipo-despesa').classList.remove('ativo');
+    document.getElementById(`btn-tipo-${tipo}`).classList.add('ativo');
+    
+    // Executa a transação imediatamente
+    adicionarTransicao();
+}
+
+function adicionarTransicao() {
     const desc = document.getElementById('descricao').value.trim();
     const valor = parseFloat(document.getElementById('valor').value);
+    const tipo = tipoSelecionado; 
     const mes = document.getElementById('mes-referencia').value;
 
-    if (!desc || isNaN(valor)) {
-        return alert("Por favor, preencha a descrição e o valor antes de escolher o tipo.");
-    }
+    // Se o usuário clicar nos botões sem digitar nada, o sistema não faz nada
+    if (!desc || isNaN(valor)) return;
 
     transacoes.push({ desc, valor, tipo, mes });
     salvar();
@@ -42,14 +53,15 @@ function atualizarInterface() {
     corpo.innerHTML = "";
     let saldoAcumulado = 0;
 
+    // 1. Primeiro filtramos as transações apenas do mês selecionado
     const transacoesDoMes = transacoes.filter(t => t.mes === mesSelecionado);
 
+    // 2. Percorremos a lista calculando o saldo e aplicando o filtro de exibição (Tudo / Receita / Despesa)
     transacoesDoMes.forEach((t) => {
-        const isReceita = t.tipo === 'receita';
-        
-        if (isReceita) saldoAcumulado += t.valor;
+        if (t.tipo === 'receita') saldoAcumulado += t.valor;
         else saldoAcumulado -= t.valor;
 
+        // Se a transação não corresponder ao filtro ativo, ela calcula o saldo mas pula a exibição na tela
         if (filtroTipo !== 'todos' && t.tipo !== filtroTipo) return;
 
         const indexReal = transacoes.indexOf(t);
@@ -57,9 +69,9 @@ function atualizarInterface() {
         
         linha.innerHTML = `
             <td>${t.desc}</td>
-            <td style="color:${isReceita?'#2e7d32':'#d32f2f'}; font-weight:500;">${isReceita?'+':'-'} ${formatarMoeda(t.valor)}</td>
-            <td class="linha-tipo" style="color:${isReceita?'green':'red'}">${t.tipo.toUpperCase()}</td>
-            <td style="font-weight:bold">${formatarMoeda(saldoAcumulado)}</td>
+            <td style="color:${t.tipo==='receita'?'#2e7d32':'#d32f2f'}; font-weight: 600;">${formatarMoeda(t.valor)}</td>
+            <td class="linha-tipo" style="color:${t.tipo==='receita'?'#2e7d32':'#d32f2f'}">${t.tipo.toUpperCase()}</td>
+            <td class="linha-saldo" style="font-weight:bold">${formatarMoeda(saldoAcumulado)}</td>
             <td style="text-align:center;"><button class="btn-excluir" onclick="removerItem(${indexReal})">X</button></td>
         `;
     });
@@ -122,6 +134,7 @@ function salvar() {
     localStorage.setItem('minhasTransacoesBRL', JSON.stringify(transacoes)); 
 }
 
+// CORREÇÃO: Função corrigida com .classList.add() para os filtros funcionarem perfeitamente
 function filtrar(tipo) {
     filtroTipo = tipo;
     document.querySelectorAll('.btn-filtro').forEach(b => b.classList.remove('ativo'));

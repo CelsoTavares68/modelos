@@ -31,8 +31,8 @@
     <input type="number" id="valor" step="0.01" placeholder="Valor (R$)">
     
     <div class="botoes-tipo">
-        <button type="button" id="btn-tipo-receita" class="btn-tipo receita" onclick="registrarPorTipo('receita')">Receita (+)</button>
-        <button type="button" id="btn-tipo-despesa" class="btn-tipo despesa" onclick="registrarPorTipo('despesa')">Despesa (-)</button>
+        <button type="button" id="btn-tipo-receita" class="btn-tipo receita ativo" onclick="selecionarTipo('receita')">Receita (+)</button>
+        <button type="button" id="btn-tipo-despesa" class="btn-tipo despesa" onclick="selecionarTipo('despesa')">Despesa (-)</button>
     </div>
     
     <button class="btn-pdf" onclick="exportarPDF()">Gerar Extrato PDF</button>
@@ -49,7 +49,7 @@
                 <th>Descrição</th>
                 <th>Valor</th>
                 <th class="col-tipo">Tipo</th>
-                <th>Saldo</th>
+                <th class="col-saldo">Saldo</th>
                 <th>Ações</th>
             </tr>
         </thead>
@@ -62,7 +62,7 @@
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('./sw.js')
         .then(reg => {
-          console.log('Service Worker registado com sucesso!');
+          console.log('Service Worker registrado com sucesso!');
           
           reg.onupdatefound = () => {
             const worker = reg.installing;
@@ -74,7 +74,7 @@
             };
           };
         })
-        .catch(err => console.log('Erro ao registar o Service Worker:', err));
+        .catch(err => console.log('Erro ao registrar o Service Worker:', err));
     });
   }
 </script>
