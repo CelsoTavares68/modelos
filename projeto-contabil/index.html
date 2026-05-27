@@ -1,4 +1,4 @@
-  <!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
@@ -31,11 +31,10 @@
     <input type="number" id="valor" step="0.01" placeholder="Valor (R$)">
     
     <div class="botoes-tipo">
-        <button type="button" id="btn-tipo-receita" class="btn-tipo receita ativo" onclick="selecionarTipo('receita')">Receita (+)</button>
-        <button type="button" id="btn-tipo-despesa" class="btn-tipo despesa" onclick="selecionarTipo('despesa')">Despesa (-)</button>
+        <button type="button" id="btn-tipo-receita" class="btn-tipo receita" onclick="registrarPorTipo('receita')">Receita (+)</button>
+        <button type="button" id="btn-tipo-despesa" class="btn-tipo despesa" onclick="registrarPorTipo('despesa')">Despesa (-)</button>
     </div>
     
-    <button class="btn-add" onclick="adicionarTransicao()">Registrar Lançamento</button>
     <button class="btn-pdf" onclick="exportarPDF()">Gerar Extrato PDF</button>
 
     <div class="filtros">

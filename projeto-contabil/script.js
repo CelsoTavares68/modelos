@@ -1,6 +1,5 @@
      let transacoes = [];
 let filtroTipo = 'todos';
-let tipoSelecionado = 'receita'; // Padrão inicial igual ao botão ativo no HTML
 
 function formatarMoeda(v) { 
     return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); 
@@ -19,33 +18,23 @@ function carregarDados() {
     atualizarInterface();
 }
 
-// Nova função para gerenciar os cliques nos botões de Receita/Despesa
-function selecionarTipo(tipo) {
-    tipoSelecionado = tipo;
-    document.getElementById('btn-tipo-receita').classList.remove('ativo');
-    document.getElementById('btn-tipo-despesa').classList.remove('ativo');
-    
-    document.getElementById(`btn-tipo-${tipo}`).classList.add('ativo');
-}
-
- function adicionarTransicao() {
-    const desc = document.getElementById('descricao').value;
+// Lógica unificada: valida e regista diretamente ao clicar no tipo
+function registrarPorTipo(tipo) {
+    const desc = document.getElementById('descricao').value.trim();
     const valor = parseFloat(document.getElementById('valor').value);
-    const tipo = tipoSelecionado; 
     const mes = document.getElementById('mes-referencia').value;
 
-    if (!desc || isNaN(valor)) return alert("Preencha os campos corretamente.");
+    if (!desc || isNaN(valor)) {
+        return alert("Por favor, preencha a descrição e o valor antes de escolher o tipo.");
+    }
 
     transacoes.push({ desc, valor, tipo, mes });
     salvar();
     atualizarInterface();
     
-    // Limpa os campos de texto
+    // Limpa os campos após a inserção bem-sucedida
     document.getElementById('descricao').value = "";
     document.getElementById('valor').value = "";
-    
-    // MELHORIA: Reseta a seleção visual para 'receita' (padrão) após salvar
-    selecionarTipo('receita');
 }
 
 function atualizarInterface() {
@@ -53,11 +42,6 @@ function atualizarInterface() {
     const mesSelecionado = document.getElementById('mes-referencia').value;
     corpo.innerHTML = "";
     let saldoAcumulado = 0;
-
-    // MELHORIA: Limpa os campos de digitação ao trocar de mês ou aplicar filtros
-    // Isso evita registros acidentais em meses errados se o usuário mudar de ideia no meio
-    document.getElementById('descricao').value = "";
-    document.getElementById('valor').value = "";
 
     const transacoesDoMes = transacoes.filter(t => t.mes === mesSelecionado);
 

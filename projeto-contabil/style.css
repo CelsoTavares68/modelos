@@ -1,4 +1,4 @@
-   @charset "UTF-8";
+    @charset "UTF-8";
 
 body { 
     font-family: 'Segoe UI', sans-serif; 
@@ -45,8 +45,8 @@ h2 {
 .saldo-positivo { color: #2e7d32; font-weight: bold; }
 .saldo-negativo { color: #d32f2f; font-weight: bold; }
 
-/* NOVOS ESTILOS PARA OS BOTÕES DE SELEÇÃO DE TIPO */
- input, button { 
+/* Configuração base de inputs e botões */
+input, button { 
     padding: 12px; 
     margin: 5px 0; 
     width: 100%; 
@@ -56,69 +56,78 @@ h2 {
     font-size: 1em;
 }
 
+/* Transição global para efeitos de clique suave */
+button, .btn-tipo, .btn-excluir, .btn-filtro {
+    transition: transform 0.1s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+    outline: none;
+}
+
+/* Efeito Hover (passar o rato) */
+button:hover, .btn-filtro:hover {
+    filter: brightness(0.95);
+}
+
+/* Efeito de clique físico (Active) */
+button:active, .btn-filtro:active, .btn-excluir:active {
+    transform: scale(0.97);
+    box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Botões rápidos de tipo (Receita e Despesa) */
 .botoes-tipo {
     display: flex;
     gap: 10px;
-    margin: 8px 0; /* Ajuste sutil de margem */
+    margin: 8px 0;
 }
 
-/* CORREÇÃO: Sobrescrever o width: 100% genérico para que fiquem lado a lado corretamente */
 .btn-tipo {
-    cursor: pointer;
+    width: 50%;
+    margin: 0;
     font-weight: bold;
-    transition: all 0.2s ease;
-    border: 2px solid transparent;
-    opacity: 0.4;
-    width: 50%; /* Garante metade do espaço para cada um de forma organizada */
-    margin: 0;  /* Remove margens verticais indesejadas */
+    border: none;
+    color: white;
+}
+
+.btn-tipo:active {
+    transform: scale(0.96);
 }
 
 .btn-tipo.receita {
-    background-color: #e8f5e9;
-    color: #2e7d32;
-    border-color: #2e7d32;
+    background-color: #2e7d32;
 }
 
-.btn-tipo.receita.ativo {
-    background-color: #2e7d32;
-    color: white;
-    opacity: 1;
+.btn-tipo.receita:hover {
+    background-color: #256428;
 }
 
 .btn-tipo.despesa {
-    background-color: #ffebee;
-    color: #d32f2f;
-    border-color: #d32f2f;
-}
-
-.btn-tipo.despesa.ativo {
     background-color: #d32f2f;
-    color: white;
-    opacity: 1;
 }
 
-.btn-add { 
-    background-color: #1a73e8; 
-    color: white; 
-    border: none; 
-    font-weight: bold; 
-    cursor: pointer; 
+.btn-tipo.despesa:hover {
+    background-color: #b72424;
 }
 
-/* ALTERADO PARA AMARELO COM TEXTO ESCURO */
+/* Botão de PDF modificado para Amarelo com texto escuro */
 .btn-pdf { 
     background-color: #f1c40f; 
     color: #2c3e50; 
     border: none; 
-    cursor: pointer; 
     margin-top: 10px; 
     font-weight: bold;
+    box-shadow: 0 2px 5px rgba(241, 196, 15, 0.3);
 }
 
 .btn-pdf:hover {
     background-color: #f39c12;
 }
 
+.btn-pdf:active {
+    box-shadow: none;
+}
+
+/* Filtros e Tabela */
 .filtros { 
     display: flex; 
     gap: 5px; 
@@ -128,7 +137,6 @@ h2 {
 .btn-filtro { 
     background-color: #e4e6eb; 
     border: none; 
-    cursor: pointer; 
     padding: 8px; 
     font-size: 0.8em; 
     flex: 1; 
@@ -160,50 +168,6 @@ th { background-color: #f8f9fa; color: #555; }
     border: none; 
     padding: 6px 10px; 
     border-radius: 4px; 
-    cursor: pointer; 
-}
-
-/* ==========================================
-   NOVOS EFEITOS DE CLIQUES NOS BOTÕES
-   ========================================== */
-
-/* 1. Efeito base para todos os botões interativos */
-button, .btn-tipo, .btn-excluir, .btn-filtro {
-    transition: transform 0.1s ease, background-color 0.2s ease, box-shadow 0.2s ease;
-    cursor: pointer;
-    outline: none;
-}
-
-/* 2. Efeito ao passar o mouse (Hover) - focado em Desktop */
-button:hover, .btn-filtro:hover {
-    filter: brightness(0.95); /* Dá uma leve escurecida para indicar foco */
-}
-
-/* 3. Efeito de Pressão/Clique (Active) - Essencial para Mobile e Desktop */
-button:active, .btn-filtro:active, .btn-excluir:active {
-    transform: scale(0.97); /* O botão "encolhe" levemente, simulando que foi afundado */
-    box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.1); /* Cria uma sombra interna de profundidade */
-}
-
-/* 4. Ajuste específico para os botões de tipo (Receita / Despesa) */
-.btn-tipo:active {
-    transform: scale(0.96); /* Encolhe um pouquinho mais por serem botões de alternância lado a lado */
-}
-
-/* 5. Melhoria visual no botão de Registrar Lançamento (Sombra de elevação) */
-.btn-add {
-    box-shadow: 0 2px 5px rgba(26, 115, 232, 0.2);
-}
-.btn-add:active {
-    box-shadow: none; /* Perde a sombra de elevação ao ser pressionado */
-}
-
-/* 6. Melhoria visual no botão do PDF */
-.btn-pdf {
-    box-shadow: 0 2px 5px rgba(241, 196, 15, 0.3);
-}
-.btn-pdf:active {
-    box-shadow: none;
 }
 
 @media screen and (max-width: 600px) {
