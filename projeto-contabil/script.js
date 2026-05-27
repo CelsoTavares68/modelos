@@ -1,4 +1,4 @@
-     let transacoes = [];
+ let transacoes = [];
 let filtroTipo = 'todos';
 
 function formatarMoeda(v) { 
@@ -18,7 +18,7 @@ function carregarDados() {
     atualizarInterface();
 }
 
-// Lógica unificada: valida e regista diretamente ao clicar no tipo
+// Lógica unificada: valida e registra diretamente ao clicar no tipo
 function registrarPorTipo(tipo) {
     const desc = document.getElementById('descricao').value.trim();
     const valor = parseFloat(document.getElementById('valor').value);
@@ -46,17 +46,22 @@ function atualizarInterface() {
     const transacoesDoMes = transacoes.filter(t => t.mes === mesSelecionado);
 
     transacoesDoMes.forEach((t) => {
-        if (t.tipo === 'receita') saldoAcumulado += t.valor;
+        const isReceita = t.tipo === 'receita';
+        
+        if (isReceita) saldoAcumulado += t.valor;
         else saldoAcumulado -= t.valor;
 
         if (filtroTipo !== 'todos' && t.tipo !== filtroTipo) return;
 
         const indexReal = transacoes.indexOf(t);
         const linha = corpo.insertRow();
+        
+        // Estrutura montada com as classes corretas para omitir a coluna de texto no mobile,
+        // mantendo as colunas financeiras organizadas de ponta a ponta.
         linha.innerHTML = `
             <td>${t.desc}</td>
-            <td>${formatarMoeda(t.valor)}</td>
-            <td style="color:${t.tipo==='receita'?'green':'red'}">${t.tipo.toUpperCase()}</td>
+            <td style="color:${isReceita?'#2e7d32':'#d32f2f'}; font-weight:500;">${isReceita?'+':'-'} ${formatarMoeda(t.valor)}</td>
+            <td class="linha-tipo" style="color:${isReceita?'green':'red'}">${t.tipo.toUpperCase()}</td>
             <td style="font-weight:bold">${formatarMoeda(saldoAcumulado)}</td>
             <td><button class="btn-excluir" onclick="removerItem(${indexReal})">X</button></td>
         `;

@@ -1,4 +1,4 @@
-    @charset "UTF-8";
+ @charset "UTF-8";
 
 body { 
     font-family: 'Segoe UI', sans-serif; 
@@ -63,7 +63,7 @@ button, .btn-tipo, .btn-excluir, .btn-filtro {
     outline: none;
 }
 
-/* Efeito Hover (passar o rato) */
+/* Efeito Hover (passar o mouse) */
 button:hover, .btn-filtro:hover {
     filter: brightness(0.95);
 }
@@ -166,17 +166,40 @@ th { background-color: #f8f9fa; color: #555; }
     background-color: #ff4d4d; 
     color: white; 
     border: none; 
-    padding: 6px 10px; 
+    padding: 6px 12px; 
     border-radius: 4px; 
+    font-weight: bold;
 }
 
+/* ALTERAÇÕES PARA TAMANHO TOTAL NO CELULAR */
 @media screen and (max-width: 600px) {
-    table th:nth-child(4), table td:nth-child(4),
-    table th:nth-child(5), table td:nth-child(5) { 
-        display: none; 
+    body {
+        padding: 0; /* Remove as margens externas cinzas da tela do celular */
+        background-color: white; /* Deixa o fundo uniforme */
+    }
+
+    .container { 
+        width: 100%; 
+        max-width: 100%; 
+        border-radius: 0; /* Remove cantos arredondados para colar nas bordas do celular */
+        box-shadow: none; /* Remove a sombra desnecessária em tela cheia */
+        padding: 15px; /* Mantém um espaçamento interno confortável para os elementos */
+    }
+
+    /* Oculta a coluna de texto RECEITA/DESPESA para sobrar espaço para o valor e botão de excluir */
+    .col-tipo, .linha-tipo {
+        display: none;
+    }
+    
+    table {
+        width: 100%;
+        font-size: 0.85em;
+    }
+
+    th, td {
+        padding: 10px 4px; /* Otimiza o espaçamento das células da tabela */
     }
     
     .resumo { font-size: 1.2em; }
     .seletor-mes { flex-direction: column; }
-    table { font-size: 0.85em; }
 }
