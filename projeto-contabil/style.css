@@ -73,7 +73,7 @@ button, .btn-tipo, .btn-excluir, .btn-filtro {
     outline: none;
 }
 
-/* Efeito Hover (passar o mouse) */
+/* Efeito Hover */
 button:hover, .btn-filtro:hover {
     filter: brightness(0.95);
 }
@@ -121,7 +121,7 @@ button:active, .btn-filtro:active, .btn-excluir:active {
     background-color: #b72424;
 }
 
-/* Botão de PDF modificado para Amarelo com texto escuro */
+/* Botão de PDF Amarelo */
 .btn-pdf { 
     background-color: #f1c40f; 
     color: #2c3e50; 
@@ -133,10 +133,6 @@ button:active, .btn-filtro:active, .btn-excluir:active {
 
 .btn-pdf:hover {
     background-color: #f39c12;
-}
-
-.btn-pdf:active {
-    box-shadow: none;
 }
 
 /* Filtros e Tabela */
@@ -187,7 +183,7 @@ th { background-color: #f8f9fa; color: #555; }
     font-weight: bold;
 }
 
-/* COMPORTAMENTO TOTALMENTE TRAVADO NO CELULAR */
+/* DESIGN COMPACTO E TRAVADO PARA CELULAR */
 @media screen and (max-width: 600px) {
     body {
         padding: 0; 
@@ -199,9 +195,42 @@ th { background-color: #f8f9fa; color: #555; }
         max-width: 100%; 
         border-radius: 0; 
         box-shadow: none; 
-        padding: 12px; /* Reduz ligeiramente o preenchimento para aproveitar melhor as bordas */
+        padding: 10px; /* Reduzido para aproximar os elementos das bordas */
     }
 
+    h2 {
+        margin-top: 5px;
+        margin-bottom: 10px;
+        font-size: 1.4em;
+    }
+
+    .seletor-mes {
+        padding: 8px;
+        margin-bottom: 10px;
+    }
+
+    .resumo {
+        font-size: 1.1em;
+        padding: 8px;
+        margin-bottom: 10px;
+    }
+
+    /* Reduz o tamanho vertical de campos e botões para liberar espaço de tela */
+    input, button, .btn-filtro { 
+        padding: 8px 10px; 
+        margin: 3px 0; 
+        font-size: 0.9em;
+    }
+
+    .botoes-tipo {
+        margin: 4px 0;
+    }
+
+    .filtros {
+        margin-top: 10px;
+    }
+
+    /* Remove a coluna de texto tipo */
     .col-tipo, .linha-tipo {
         display: none;
     }
@@ -209,18 +238,24 @@ th { background-color: #f8f9fa; color: #555; }
     table {
         width: 100%;
         font-size: 0.85em;
+        margin-top: 10px;
     }
 
-    /* Distribuição exata para encaixar 100% no visor sem sobras */
-    table th:nth-child(1), table td:nth-child(1) { width: 36%; } /* Descrição */
-    table th:nth-child(2), table td:nth-child(2) { width: 26%; } /* Valor */
-    table th:nth-child(4), table td:nth-child(4) { width: 24%; } /* Saldo */
+    /* Distribuição das colunas sem sobras */
+    table th:nth-child(1), table td:nth-child(1) { width: 38%; } /* Descrição */
+    table th:nth-child(2), table td:nth-child(2) { width: 28%; } /* Valor */
+    table th:nth-child(4), table td:nth-child(4) { width: 22%; } /* Saldo */
     table th:nth-child(5), table td:nth-child(5) { width: 12%; text-align: center; } /* Botão X */
 
+    /* AJUSTE SOLICITADO: Linhas do extrato bem mais juntas (espaço vertical mínimo) */
     th, td {
-        padding: 10px 2px; 
+        padding: 5px 2px; 
+    }
+
+    .btn-excluir {
+        padding: 4px 8px;
+        font-size: 0.85em;
     }
     
-    .resumo { font-size: 1.2em; }
-    .seletor-mes { flex-direction: column; }
+    .seletor-mes { flex-direction: column; gap: 4px; }
 }
