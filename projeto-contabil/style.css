@@ -65,7 +65,6 @@ input, select, button {
     font-size: 1em;
 }
 
-/* NOVOS ESTILOS PARA OS BOTÕES DE SELEÇÃO DE TIPO */
 .botoes-tipo {
     display: flex;
     gap: 10px;
@@ -79,7 +78,7 @@ input, select, button {
     font-weight: bold;
     transition: all 0.2s ease;
     border: 2px solid transparent;
-    opacity: 0.4; /* Opaco quando não selecionado */
+    opacity: 0.4;
 }
 
 .btn-tipo.receita {
@@ -114,7 +113,6 @@ input, select, button {
     cursor: pointer; 
 }
 
-/* ALTERADO PARA AMARELO COM TEXTO ESCURO */
 .btn-pdf { 
     background-color: #f1c40f; 
     color: #2c3e50; 
@@ -167,6 +165,12 @@ th, td {
 
 th { background-color: #f8f9fa; color: #555; }
 
+/* Distribuição padrão no Computador (com Saldo) */
+table th:nth-child(1), table td:nth-child(1) { width: 45%; } /* Descrição */
+table th:nth-child(2), table td:nth-child(2) { width: 25%; } /* Valor */
+table th:nth-child(3), table td:nth-child(3) { width: 18%; } /* Saldo */
+table th:nth-child(4), table td:nth-child(4) { width: 12%; text-align: center; } /* Ações */
+
 .btn-excluir { 
     background-color: #ff4d4d; 
     color: white; 
@@ -176,7 +180,7 @@ th { background-color: #f8f9fa; color: #555; }
     cursor: pointer; 
 }
 
-/* INTERFACE TOTALMENTE CORRIGIDA E ADAPTADA PARA CELULAR */
+/* COMPORTAMENTO SUPER COMPACTO PARA TELEMÓVEL */
 @media screen and (max-width: 600px) {
     body {
         padding: 0; 
@@ -215,28 +219,25 @@ th { background-color: #f8f9fa; color: #555; }
         margin: 3px 0; 
         font-size: 0.9em;
     }
-
-    /* Oculta as colunas Tipo e Saldo no mobile para abrir espaço máximo para os números grandes */
-    .col-tipo, .linha-tipo, .col-saldo, .linha-saldo {
+    
+    /* SOLUÇÃO: Oculta a coluna do Saldo de forma limpa no telemóvel */
+    .col-saldo, .linha-saldo {
         display: none !important;
     }
-    
+
     table {
         width: 100%;
-        font-size: 0.8em; /* Reduz ligeiramente a base da fonte para dar mais folga */
+        font-size: 0.85em; 
         margin-top: 10px;
     }
 
-    /* Nova distribuição de larguras focada em valores gigantes */
+    /* Nova distribuição de larguras: Espaço gigante (50%) para valores com mais de 6 dígitos */
     table th:nth-child(1), table td:nth-child(1) { width: 38%; } /* Descrição */
-    table th:nth-child(2), table td:nth-child(2) { 
-        width: 48%; 
-        font-size: 0.95em; /* Garante boa legibilidade nos valores */
-    } 
-    table th:nth-child(5), table td:nth-child(5) { width: 14%; text-align: center; } /* Botão X */
+    table th:nth-child(2), table td:nth-child(2) { width: 50%; } /* Valor */
+    table th:nth-child(4), table td:nth-child(4) { width: 12%; text-align: center; } /* Botão X */
 
     th, td {
-        padding: 6px 2px; /* Linhas bem juntas conforme solicitado */
+        padding: 6px 2px; /* Linhas bem juntas */
     }
 
     .btn-excluir {
