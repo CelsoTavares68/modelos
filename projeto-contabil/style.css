@@ -212,9 +212,9 @@ th { background-color: #f8f9fa; color: #555; }
     }
 
     /* Distribuição exata para encaixar 100% no visor sem sobras */
-    table th:nth-child(1), table td:nth-child(1) { width: 38%; } /* Descrição */
-    table th:nth-child(2), table td:nth-child(2) { width: 28%; } /* Valor */
-    table th:nth-child(4), table td:nth-child(4) { width: 22%; } /* Saldo */
+    table th:nth-child(1), table td:nth-child(1) { width: 36%; } /* Descrição */
+    table th:nth-child(2), table td:nth-child(2) { width: 26%; } /* Valor */
+    table th:nth-child(4), table td:nth-child(4) { width: 24%; } /* Saldo */
     table th:nth-child(5), table td:nth-child(5) { width: 12%; text-align: center; } /* Botão X */
 
     th, td {
