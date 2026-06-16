@@ -603,19 +603,16 @@ body.dark-mode .btn-dark-toggle {
 }
 
 /* --- MEDIA QUERIES --- */
- @media (max-width: 768px) {
-    /* Força os containers de cartões de investimento e câmbio a ficarem em uma única coluna */
-    .resultado-container, 
-    .grid-destaques,
-    .painel-indicadores {
+  @media (max-width: 768px) {
+    /* Alvo específico: os inputs e labels da calculadora de câmbio */
+    .renda-fixa .card-investimento {
         display: flex !important;
         flex-direction: column !important;
-        gap: 15px; /* Espaçamento entre um cartão e outro */
+        gap: 8px; /* Espaçamento sutil entre cada item */
     }
 
-    /* Garante que os cartões ocupem toda a largura da tela do celular */
-    .card-investimento, 
-    .coluna {
+    .renda-fixa .card-investimento input {
         width: 100% !important;
+        margin-bottom: 10px; /* Separação após cada campo */
     }
 }
