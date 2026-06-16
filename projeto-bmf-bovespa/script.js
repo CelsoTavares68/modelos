@@ -356,7 +356,7 @@ function removerDaCarteira(index) {
     // Agora usa os valores que vieram da API HG Brasil
     const calcCDB = (v) => (v * (CDI_ATUAL / 100 / 12)) * 0.775; // 22.5% IR (curto prazo)
     const calcLCI = (v) => (v * ((CDI_ATUAL * 0.9) / 100 / 12)); // LCI 90% isenta
-    const calcPoup = (v) => (v * 0.0055); // Regra padrão 0.5% + TR
+    const calcPoup = (v) => (v * 0.0066); // Regra padrão 0.66% + TR
 
     container.innerHTML = `
         <div class="card-investimento">
@@ -372,7 +372,7 @@ function removerDaCarteira(index) {
         <div class="card-investimento">
             <h4>Poupança</h4>
             <p>Mensal aprox: <strong>R$ ${calcPoup(valor).toFixed(2)}</strong></p>
-            <small>0.5% + TR</small>
+            <small>0.66% + TR</small>
         </div>`;
 }
 
