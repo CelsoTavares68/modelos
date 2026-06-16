@@ -603,7 +603,19 @@ body.dark-mode .btn-dark-toggle {
 }
 
 /* --- MEDIA QUERIES --- */
-@media (max-width:768px) {
-    .grid-destaques { grid-template-columns: 1fr; }
-    .chart-container { display: none; }
+ @media (max-width: 768px) {
+    /* Força os containers de cartões de investimento e câmbio a ficarem em uma única coluna */
+    .resultado-container, 
+    .grid-destaques,
+    .painel-indicadores {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 15px; /* Espaçamento entre um cartão e outro */
+    }
+
+    /* Garante que os cartões ocupem toda a largura da tela do celular */
+    .card-investimento, 
+    .coluna {
+        width: 100% !important;
+    }
 }
