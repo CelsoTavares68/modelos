@@ -1,4 +1,4 @@
-     * {
+ * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -101,7 +101,7 @@ th {
     border-bottom: 1px solid rgba(0,0,0,0.05);
 }
 
-#corpo-cotacoes td {
+#corpo-cotacoes td, #corpo-fiagros td {
     padding: 12px;
     border-bottom: 1px solid #eee;
 }
@@ -532,7 +532,7 @@ body.dark-mode .input-group-carteira input::placeholder {
 }
 
 /* Ajuste na Tabela da Carteira para Modo Escuro */
-body.dark-mode #corpo-carteira tr {
+body.dark-mode #corpo-carteira tr, body.dark-mode #corpo-fiagros tr {
     border-bottom: 1px solid #3e5871;
 }
 

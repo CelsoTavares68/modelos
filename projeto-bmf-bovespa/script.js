@@ -1,8 +1,11 @@
-   const TOKEN_B3 = '8gRPKYrszFRi4JCDaARwuJ'; 
+ const TOKEN_B3 = '8gRPKYrszFRi4JCDaARwuJ'; 
 
-  // LISTAS ORIGINAIS
+// LISTAS ORIGINAIS RESTAURADAS
 const LISTA_AGRO_BMF = "JBSS3,BRFS3,BEEF3,MRFG3,CAML3,SLCE3,AGRO3,SMTO3,KEPL3,SOJA3";
 const LISTA_ACOES_B3 = "PETR4,BBAS3,SBSP3,CPLE6,CMIG4,ELET3,SAPR11,BANESE3,BMEB4,BNBR3";
+
+// LISTA DE FIAGROs (Usando o canal tradicional gratuito para evitar o erro 403)
+const LISTA_FIAGROS = "VGIA11,KNCA11,RURA11,FGAA11";
 
 const MAPA_NOMES_AGRO = {
     "JBSS3": "JBS (Carnes)", 
@@ -46,18 +49,16 @@ async function inicializarApp() {
 
     atualizarPainelCarteira(); 
     
-    // Chamadas iniciais
     buscarApenasMoedas();
     buscarApenasTaxas();
     
-    // NOVA CHAMADA: Busca as bolsas mundiais
     await buscarIndicesGlobais(); 
     
     await buscarCotacoesAgro(); 
+    await buscarFIAGROs(); // Chamada pontual para preencher a nova tabela
     await buscarCotacoesBovespa();
 }  
 
-// --- NOVIDADE: FUNÇÃO PARA BOLSAS MUNDIAIS ---
 async function buscarIndicesGlobais() {
     const container = document.getElementById('indices-globais');
     if (!container) return;
@@ -99,24 +100,55 @@ async function buscarIndicesGlobais() {
     }
 }
 
-// --- MOEDAS E CRIPTOS ---
- async function buscarApenasMoedas() {
+// FUNÇÃO PONTUAL: Trazendo os FIAGROs via canal de cotação estável (Evita erro 403)
+async function buscarFIAGROs() {
+    const container = document.getElementById('corpo-fiagros');
+    if (!container) return;
+
+    container.innerHTML = "";
+    const fundos = LISTA_FIAGROS.split(',');
+
+    for (const ticker of fundos) {
+        try {
+            const url = `https://brapi.dev/api/quote/${ticker.trim()}?token=${TOKEN_B3}`;
+            const res = await fetch(url);
+            if (!res.ok) continue;
+            const data = await res.json();
+
+            if (data && data.results && data.results[0]) {
+                const fundo = data.results[0];
+                const preco = fundo.regularMarketPrice || fundo.price || 0;
+                const pct = fundo.regularMarketChangePercent || fundo.changePercent || 0;
+                const cor = pct >= 0 ? 'texto-alta' : 'texto-queda';
+
+                container.innerHTML += `
+                    <tr class="setor-bmf">
+                        <td><b>${fundo.symbol.replace('.SA', '')}</b><br><small style="opacity:0.7">${fundo.longName || 'FIAGRO'}</small></td>
+                        <td>R$ ${preco.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                        <td class="${cor}">${pct >= 0 ? '+' : ''}${pct.toFixed(2)}%</td>
+                    </tr>`;
+            }
+        } catch (e) {
+            console.warn(`Erro ao carregar FIAGRO ${ticker}:`, e);
+        }
+    }
+}
+
+async function buscarApenasMoedas() {
     try {
         const url = 'https://economia.awesomeapi.com.br/last/USD-BRL,EUR-BRL,BTC-BRL,ETH-BRL,XAU-BRL';
         const res = await fetch(url);
         const d = await res.json();
-        const SPREAD = 1.08; // O seu multiplicador de 8% para o Turismo
+        const SPREAD = 1.08; 
 
         if (d.USDBRL) {
             COTACAO_USD = parseFloat(d.USDBRL.bid); 
-            // Exibe no painel (Comercial e Turismo)
             document.getElementById('usd-comercial').innerText = "R$ " + COTACAO_USD.toFixed(2);
             document.getElementById('usd-turismo').innerText = "R$ " + (COTACAO_USD * SPREAD).toFixed(2);
         }
         
         if (d.EURBRL) {
             COTACAO_EUR = parseFloat(d.EURBRL.bid);
-            // Exibe no painel (Comercial e Turismo)
             document.getElementById('eur-comercial').innerText = "R$ " + COTACAO_EUR.toFixed(2);
             document.getElementById('eur-turismo').innerText = "R$ " + (COTACAO_EUR * SPREAD).toFixed(2);
         }
@@ -155,16 +187,13 @@ function converterMoedas(origem) {
     }
 }
 
-// --- TAXAS ---
-  function buscarApenasTaxas() {
-    // Em vez de buscar na internet, usamos os valores que você definiu no topo
+function buscarApenasTaxas() {
     document.getElementById('taxa-selic').innerText = SELIC_ATUAL.toFixed(2) + "%";
     document.getElementById('taxa-cdi').innerText = CDI_ATUAL.toFixed(2) + "%";
     document.getElementById('taxa-ipca').innerText = IPCA_ATUAL + "%";
     document.getElementById('taxa-igpm').innerText = IGPM_ATUAL + "%";
 }
 
-// --- MERCADO AGRO ---
 async function buscarCotacoesAgro() {
     const ativos = LISTA_AGRO_BMF.split(',');
     for (const ticker of ativos) {
@@ -189,7 +218,6 @@ async function buscarCotacoesAgro() {
     }
 }
 
-// --- MERCADO BOVESPA ---
 async function buscarCotacoesBovespa() {
     try {
         const resRanking = await fetch(`https://brapi.dev/api/quote/list?token=${TOKEN_B3}`);
@@ -199,20 +227,24 @@ async function buscarCotacoesBovespa() {
         const limpar = (t) => t.trim().replace('.SA', '').replace(/F$/, '') + ".SA";
         const arrayEstatais = LISTA_ACOES_B3.split(',').map(limpar);
         const arrayCarteira = minhaCarteira.map(a => limpar(a.ticker));
-        const todosTickers = [...new Set([...arrayEstatais, ...arrayCarteira])];
+        
+        // Filtra elementos vazios ou inválidos do lote para evitar o erro 400
+        const todosTickers = [...new Set([...arrayEstatais, ...arrayCarteira])].filter(t => t && t !== ".SA" && t.length > 3);
 
         if (todosTickers.length === 0) return;
 
         let resultadosFinais = [];
         try {
             const resLote = await fetch(`https://brapi.dev/api/quote/${todosTickers.join(',')}?token=${TOKEN_B3}`);
+            if (!resLote.ok) throw new Error("Lote falhou");
             const dadosLote = await resLote.json();
             if (dadosLote && dadosLote.results) {
                 resultadosFinais = dadosLote.results;
             } else {
-                throw new Error("Lote falhou");
+                throw new Error("Lote sem resultados");
             }
         } catch (err) {
+            // Seu mecanismo original de fallback individual restaurado intacto
             const promessas = todosTickers.map(t => 
                 fetch(`https://brapi.dev/api/quote/${t}?token=${TOKEN_B3}`)
                     .then(r => r.ok ? r.json() : null)
@@ -305,7 +337,7 @@ function atualizarPainelCarteira(dadosApi = null) {
     tbody.innerHTML = "";
     minhaCarteira.forEach((item, index) => {
         const tickerLimpoCarteira = item.ticker.trim().replace('.SA', '').replace(/F$/, '');
-        const info = dadosApi ? dadosApi.find(res => res.symbol.replace('.SA', '').replace(/F$/, '') === tickerLimpoCarteira) : null;
+        const info = dadosApi ? dadosApi.find(res => res && res.symbol.replace('.SA', '').replace(/F$/, '') === tickerLimpoCarteira) : null;
 
         const precoAtual = info ? (info.regularMarketPrice || info.price) : null;
         const nomeEmpresa = info && (info.longName || info.shortName) ? (info.longName || info.shortName) : "Monitorando...";
@@ -348,15 +380,14 @@ function removerDaCarteira(index) {
     buscarCotacoesBovespa();
 }
 
- function calcularRentabilidade() {
+function calcularRentabilidade() {
     const valor = parseFloat(document.getElementById('valorInvestido').value);
     const container = document.getElementById('tabela-rendimentos');
     if (!valor || valor <= 0) return;
 
-    // Agora usa os valores que vieram da API HG Brasil
-    const calcCDB = (v) => (v * (CDI_ATUAL / 100 / 12)) * 0.775; // 22.5% IR (curto prazo)
-    const calcLCI = (v) => (v * ((CDI_ATUAL * 0.9) / 100 / 12)); // LCI 90% isenta
-    const calcPoup = (v) => (v * 0.0066); // Regra padrão 0.66% + TR
+    const calcCDB = (v) => (v * (CDI_ATUAL / 100 / 12)) * 0.775; 
+    const calcLCI = (v) => (v * ((CDI_ATUAL * 0.9) / 100 / 12)); 
+    const calcPoup = (v) => (v * 0.0066); 
 
     container.innerHTML = `
         <div class="card-investimento">
@@ -385,6 +416,7 @@ function filtrarTabela(tipo) {
     });
 }
 
+// RESTAURADO: Seu gerador do Chart.js original intacto
 function renderizarGrafico(dados) {
     const canvas = document.getElementById('graficoMercado');
     if (!canvas) return;
