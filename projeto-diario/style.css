@@ -183,36 +183,44 @@ body {
 #btn-esquerda { left: 300px; }
 #btn-direita { right: 20px; }
 
-/* =========================================================
+ /* =========================================================
    ADAPTAÇÃO PARA TABLETS E TELEMÓVEIS (Ecrãs até 1024px)
    ========================================================= */
 @media (max-width: 1024px) {
-    /* Exibe o botão do diário em telas móveis */
     .btn-icone-diario {
         display: block;
     }
 
-    /* Esconde o painel para fora do ecrã à esquerda */
     #painel-lateral {
         position: fixed;
         left: 0;
         top: 0;
         transform: translateX(-100%);
-        padding-top: 80px; /* Garante que o conteúdo do sumário fique abaixo do botão flutuante */
+        padding-top: 80px; 
     }
 
-    /* Quando a classe 'aberto' for ativada pelo JS, ele desliza para dentro */
     #painel-lateral.aberto {
         transform: translateX(0);
     }
 
-    /* As páginas passam a ocupar 100% da largura disponível */
     .page-editor {
         flex: 0 0 100vw;
-        padding: 80px 30px 40px 30px; /* Margens internas menores para telas pequenas */
+        padding: 80px 20px 20px 20px; 
+        overflow-y: auto; 
+        height: 100vh;
     }
 
-    /* Ajusta as setas de navegação móvel */
+    .area-conteudo {
+        flex-grow: 0;
+        min-height: 55vh; 
+        margin-bottom: 15px;
+    }
+
+    .btn-sucesso {
+        margin-bottom: 60px; 
+        flex-shrink: 0;
+    }
+
     #btn-esquerda { left: 15px; top: auto; bottom: 20px; transform: none; }
     #btn-direita { right: 15px; top: auto; bottom: 20px; transform: none; }
     
@@ -224,5 +232,32 @@ body {
     
     .input-titulo {
         width: 100%;
+    }
+}
+
+/* =========================================================
+   AJUSTE EXCLUSIVO PARA CELULARES (Ecrãs até 600px)
+   ========================================================= */
+@media (max-width: 600px) {
+    /* Mudamos o cabeçalho para alinhar os elementos e o botão no topo */
+    .cabecalho-pagina {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        position: relative;
+    }
+
+    /* Move o botão de salvar dinamicamente para o topo da folha no celular */
+    .btn-sucesso {
+        align-self: flex-start;
+        width: 100%; /* O botão ocupa a largura total no topo para ficar fácil de clicar */
+        margin-bottom: 5px;
+        padding: 12px;
+        font-size: 1em;
+    }
+
+    /* Ajusta a área de texto para aproveitar o espaço restante do ecrã */
+    .area-conteudo {
+        min-height: 45vh;
     }
 }
