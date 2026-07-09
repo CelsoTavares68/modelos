@@ -159,3 +159,41 @@ body {
 }
 #btn-esquerda { left: 300px; }
 #btn-direita { right: 20px; }
+
+/* =========================================================
+   ADAPTAÇÃO PARA TABLETS E TELEMÓVEIS (Ecrãs até 1024px)
+   ========================================================= */
+@media (max-width: 1024px) {
+    /* Esconde o painel para fora do ecrã à esquerda */
+    #painel-lateral {
+        position: fixed;
+        left: 0;
+        top: 0;
+        transform: translateX(-100%);
+    }
+
+    /* Quando a classe 'aberto' for ativada pelo JS, ele desliza para dentro */
+    #painel-lateral.aberto {
+        transform: translateX(0);
+    }
+
+    /* As páginas passam a ocupar 100% da largura disponível */
+    .page-editor {
+        flex: 0 0 100vw;
+        padding: 80px 30px 40px 30px; /* Margens internas menores para telas pequenas */
+    }
+
+    /* Ajusta as setas de navegação móvel */
+    #btn-esquerda { left: 15px; top: auto; bottom: 20px; transform: none; }
+    #btn-direita { right: 15px; top: auto; bottom: 20px; transform: none; }
+    
+    .cabecalho-pagina {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .input-titulo {
+        width: 100%;
+    }
+}
