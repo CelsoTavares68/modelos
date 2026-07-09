@@ -1,11 +1,11 @@
-  document.addEventListener("DOMContentLoaded", function() {
+ document.addEventListener("DOMContentLoaded", function() {
     const livro = document.getElementById("livro");
     const indiceUl = document.getElementById("indice");
     const btnNovaPagina = document.getElementById("btn-nova-pagina");
     const btnEsquerda = document.getElementById("btn-esquerda");
     const btnDireita = document.getElementById("btn-direita");
     
-    // Captura o novo botão e o painel lateral
+    // Captura o novo botão e o painel lateral para tablet/celular
     const btnMenuToggle = document.getElementById("btn-menu-toggle");
     const painelLateral = document.getElementById("painel-lateral");
 
@@ -20,14 +20,16 @@
     };
 
     // --- CONTROLE DE ABRIR / FECHAR O SUMÁRIO (TABLET E CELULAR) ---
-    btnMenuToggle.addEventListener("click", function(e) {
-        e.stopPropagation(); // Impede o clique de se propagar para o document
-        painelLateral.classList.toggle("aberto");
-    });
+    if (btnMenuToggle) {
+        btnMenuToggle.addEventListener("click", function(e) {
+            e.stopPropagation(); 
+            painelLateral.classList.toggle("aberto");
+        });
+    }
 
     // Fecha o sumário se o usuário clicar em qualquer ponto fora dele
     document.addEventListener("click", function(e) {
-        if (!painelLateral.contains(e.target) && e.target !== btnMenuToggle) {
+        if (painelLateral && !painelLateral.contains(e.target) && e.target !== btnMenuToggle) {
             painelLateral.classList.remove("aberto");
         }
     });
@@ -79,9 +81,13 @@
 
         livro.appendChild(section);
 
+        // Correção direta na captura dos dados do formulário
         section.querySelector(`#salvar-${index}`).addEventListener("click", () => {
-            const txtTitulo = section.querySelector(`#tit-${index}`).value.trim();
-            const txtConteudo = section.querySelector(`#cont-${index}`).value.trim();
+            const inputTitulo = document.getElementById(`tit-${index}`);
+            const textareaConteudo = document.getElementById(`cont-${index}`);
+
+            const txtTitulo = inputTitulo ? inputTitulo.value.trim() : "";
+            const txtConteudo = textareaConteudo ? textareaConteudo.value.trim() : "";
 
             if (!txtTitulo || !txtConteudo) {
                 alert("Por favor, preencha o título e o conteúdo antes de guardar!");
@@ -99,7 +105,7 @@
                 localStorage.setItem("diario_dados", JSON.stringify(relatoriosGuardados));
                 renderizarLivro();
                 alert("Nova página guardada com sucesso!");
-                irParaPagina(relatoriosGuardados.length); 
+                irParaPagina(relatoriosGuardados.length - 1); 
             } else {
                 relatoriosGuardados[index].titulo = txtTitulo;
                 relatoriosGuardados[index].conteudo = txtConteudo;
@@ -119,7 +125,7 @@
         a.addEventListener("click", (e) => {
             e.preventDefault();
             irParaPagina(index);
-            painelLateral.classList.remove("aberto"); // Fecha o painel após selecionar a página
+            if (painelLateral) painelLateral.classList.remove("aberto"); 
         });
         li.appendChild(a);
         indiceUl.appendChild(li);
@@ -149,7 +155,7 @@
     
     btnNovaPagina.addEventListener("click", () => {
         irParaPagina(relatoriosGuardados.length);
-        painelLateral.classList.remove("aberto"); // Fecha o painel ao iniciar página nova
+        if (painelLateral) painelLateral.classList.remove("aberto");
     });
 
     renderizarLivro();
