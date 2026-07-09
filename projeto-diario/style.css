@@ -16,6 +16,28 @@ body {
     display: flex;
 }
 
+/* Estilo do botão clicável do diário */
+.btn-icone-diario {
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    background: #2c3e50;
+    border: none;
+    font-size: 24px;
+    padding: 10px;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    z-index: 2000;
+    transition: transform 0.2s, background-color 0.2s;
+    display: none; /* Escondido por padrão no computador */
+}
+
+.btn-icone-diario:hover {
+    background: #34495e;
+    transform: scale(1.1);
+}
+
 #painel-lateral {
     width: 280px;
     background: #2c3e50;
@@ -26,7 +48,8 @@ body {
     display: flex;
     flex-direction: column;
     box-shadow: 4px 0 10px rgba(0,0,0,0.1);
-    z-index: 10;
+    z-index: 1010;
+    transition: transform 0.3s ease; /* Transição suave de deslize */
 }
 
 #painel-lateral h2 {
@@ -164,12 +187,18 @@ body {
    ADAPTAÇÃO PARA TABLETS E TELEMÓVEIS (Ecrãs até 1024px)
    ========================================================= */
 @media (max-width: 1024px) {
+    /* Exibe o botão do diário em telas móveis */
+    .btn-icone-diario {
+        display: block;
+    }
+
     /* Esconde o painel para fora do ecrã à esquerda */
     #painel-lateral {
         position: fixed;
         left: 0;
         top: 0;
         transform: translateX(-100%);
+        padding-top: 80px; /* Garante que o conteúdo do sumário fique abaixo do botão flutuante */
     }
 
     /* Quando a classe 'aberto' for ativada pelo JS, ele desliza para dentro */

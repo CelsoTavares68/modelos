@@ -1,20 +1,36 @@
- document.addEventListener("DOMContentLoaded", function() {
+  document.addEventListener("DOMContentLoaded", function() {
     const livro = document.getElementById("livro");
     const indiceUl = document.getElementById("indice");
     const btnNovaPagina = document.getElementById("btn-nova-pagina");
     const btnEsquerda = document.getElementById("btn-esquerda");
     const btnDireita = document.getElementById("btn-direita");
+    
+    // Captura o novo botão e o painel lateral
+    const btnMenuToggle = document.getElementById("btn-menu-toggle");
+    const painelLateral = document.getElementById("painel-lateral");
 
     let relatoriosGuardados = JSON.parse(localStorage.getItem("diario_dados")) || [];
     let paginaAtualIndex = 0;
 
-    // Estrutura base para criar uma nova folha limpa temporária na memória
     let novaPaginaTemporaria = {
         titulo: "",
         conteudo: "",
         data: "",
         hora: ""
     };
+
+    // --- CONTROLE DE ABRIR / FECHAR O SUMÁRIO (TABLET E CELULAR) ---
+    btnMenuToggle.addEventListener("click", function(e) {
+        e.stopPropagation(); // Impede o clique de se propagar para o document
+        painelLateral.classList.toggle("aberto");
+    });
+
+    // Fecha o sumário se o usuário clicar em qualquer ponto fora dele
+    document.addEventListener("click", function(e) {
+        if (!painelLateral.contains(e.target) && e.target !== btnMenuToggle) {
+            painelLateral.classList.remove("aberto");
+        }
+    });
 
     function obterDataHoraAtual() {
         const agora = new Date();
@@ -24,18 +40,15 @@
         };
     }
 
-    // Monta o livro inteiro na tela colocando todas as páginas como editáveis
     function renderizarLivro() {
         livro.innerHTML = "";
         indiceUl.innerHTML = "";
 
-        // 1. Renderiza as páginas já existentes (Salvas)
         relatoriosGuardados.forEach((relatorio, idx) => {
             criarElementoPaginaEditor(relatorio, idx, false);
             criarItemInidice(relatorio.titulo, idx);
         });
 
-        // 2. Renderiza a última página (Sempre a em branco para novos temas)
         if (!novaPaginaTemporaria.data) {
             const tempo = obterDataHoraAtual();
             novaPaginaTemporaria.data = tempo.data;
@@ -47,7 +60,6 @@
         atualizarSetas();
     }
 
-    // Cria visualmente a página com inputs editáveis
     function criarElementoPaginaEditor(dados, index, isNova) {
         const section = document.createElement("section");
         section.className = "page-editor";
@@ -67,7 +79,6 @@
 
         livro.appendChild(section);
 
-        // Evento do botão Guardar de cada página específica
         section.querySelector(`#salvar-${index}`).addEventListener("click", () => {
             const txtTitulo = section.querySelector(`#tit-${index}`).value.trim();
             const txtConteudo = section.querySelector(`#cont-${index}`).value.trim();
@@ -78,21 +89,18 @@
             }
 
             if (isNova) {
-                // Adiciona um novo registro ao livro
                 relatoriosGuardados.push({
                     titulo: txtTitulo,
                     conteudo: txtConteudo,
                     data: dados.data,
                     hora: dados.hora
                 });
-                // Reseta a página temporária para a próxima
                 novaPaginaTemporaria = { titulo: "", conteudo: "", data: "", hora: "" };
                 localStorage.setItem("diario_dados", JSON.stringify(relatoriosGuardados));
                 renderizarLivro();
                 alert("Nova página guardada com sucesso!");
-                irParaPagina(relatoriosGuardados.length); // Foca na nova folha em branco criada
+                irParaPagina(relatoriosGuardados.length); 
             } else {
-                // Atualiza uma página antiga existente
                 relatoriosGuardados[index].titulo = txtTitulo;
                 relatoriosGuardados[index].conteudo = txtConteudo;
                 localStorage.setItem("diario_dados", JSON.stringify(relatoriosGuardados));
@@ -111,12 +119,12 @@
         a.addEventListener("click", (e) => {
             e.preventDefault();
             irParaPagina(index);
+            painelLateral.classList.remove("aberto"); // Fecha o painel após selecionar a página
         });
         li.appendChild(a);
         indiceUl.appendChild(li);
     }
 
-    // Controlador de deslize das páginas
     function irParaPagina(index) {
         const paginas = document.querySelectorAll(".page-editor");
         if (index >= 0 && index < paginas.length) {
@@ -141,11 +149,11 @@
     
     btnNovaPagina.addEventListener("click", () => {
         irParaPagina(relatoriosGuardados.length);
+        painelLateral.classList.remove("aberto"); // Fecha o painel ao iniciar página nova
     });
 
-    // Inicialização
     renderizarLivro();
     if(relatoriosGuardados.length > 0){
-        irParaPagina(0); // Abre na página 1 caso já tenha dados
+        irParaPagina(0); 
     }
 });
