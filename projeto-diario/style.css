@@ -184,7 +184,7 @@ body {
 #btn-direita { right: 20px; }
 
  /* =========================================================
-   ADAPTAÇÃO PARA TABLETS E TELEMÓVEIS (Ecrãs até 1024px)
+   ADAPTAÇÃO GERENCIAL PARA TABLETS E MÓVEIS (Geral)
    ========================================================= */
 @media (max-width: 1024px) {
     .btn-icone-diario {
@@ -212,7 +212,7 @@ body {
 
     .area-conteudo {
         flex-grow: 0;
-        min-height: 55vh; 
+        min-height: 50vh; 
         margin-bottom: 15px;
     }
 
@@ -236,28 +236,105 @@ body {
 }
 
 /* =========================================================
-   AJUSTE EXCLUSIVO PARA CELULARES (Ecrãs até 600px)
+   CORREÇÃO CIRÚRGICA: TABLET EM MODO PAISAGEM (Landscape)
    ========================================================= */
-@media (max-width: 600px) {
-    /* Mudamos o cabeçalho para alinhar os elementos e o botão no topo */
-    .cabecalho-pagina {
+@media (max-width: 1024px) and (orientation: landscape) {
+    .page-editor {
+        padding: 75px 25px 20px 25px;
+        display: flex;
         flex-direction: column;
-        align-items: stretch;
-        gap: 12px;
-        position: relative;
     }
 
-    /* Move o botão de salvar dinamicamente para o topo da folha no celular */
+    /* Transforma o cabeçalho em uma linha lado a lado para o Título e o Botão Guardar */
+    .cabecalho-pagina {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 15px;
+        width: 100%;
+    }
+
+    .input-titulo {
+        width: 50%; /* Dá espaço para o botão no topo */
+    }
+
+    /* Move o botão de salvar permanentemente para o topo direito da página */
     .btn-sucesso {
-        align-self: flex-start;
-        width: 100%; /* O botão ocupa a largura total no topo para ficar fácil de clicar */
-        margin-bottom: 5px;
+        position: static;
+        order: unset;
+        margin: 0;
+        padding: 10px 20px;
+        align-self: center;
+        font-size: 0.95em;
+    }
+
+    /* Área de digitação ocupa o resto da tela vertical sem empurrar o botão */
+    .area-conteudo {
+        min-height: 35vh;
+        flex-grow: 1;
+        margin-bottom: 60px; /* Evita colisão com as setas inferiores */
+    }
+}
+
+/* =========================================================
+   ADAPTAÇÃO ADICIONAL: TABLET EM MODO RETRATO (Portrait)
+   ========================================================= */
+@media (max-width: 1024px) and (orientation: portrait) {
+    .page-editor {
+        padding: 85px 25px 20px 25px;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .area-conteudo {
+        min-height: 35vh; 
+        flex-grow: 1; 
+        margin-bottom: 20px;
+    }
+
+    .btn-sucesso {
+        align-self: stretch;
+        text-align: center;
+        padding: 14px;
+        font-size: 1.1em;
+        margin-bottom: 80px; 
+        position: relative;
+        z-index: 10;
+    }
+}
+
+/* =========================================================
+   AJUSTE EXCLUSIVO PARA CELULARES 
+   ========================================================= */
+@media (max-width: 480px) {
+    .page-editor {
+        padding: 75px 15px 15px 15px;
+    }
+
+    .cabecalho-pagina {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+        width: 100%;
+        margin-bottom: 15px;
+    }
+
+    .btn-sucesso {
+        align-self: stretch;
+        text-align: center;
         padding: 12px;
         font-size: 1em;
+        margin-top: 5px;
+        margin-bottom: 5px;
+        order: 3; 
     }
 
-    /* Ajusta a área de texto para aproveitar o espaço restante do ecrã */
     .area-conteudo {
-        min-height: 45vh;
+        min-height: 40vh;
+        flex-grow: 1;
+        margin-bottom: 80px; 
     }
 }
