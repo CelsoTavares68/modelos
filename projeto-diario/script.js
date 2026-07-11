@@ -67,27 +67,27 @@
         section.className = "page-editor";
         section.id = `pag-${index}`;
 
+        // MUDANÇA AQUI: O botão agora está dentro do cabeçalho para ficar sempre no topo!
         section.innerHTML = `
             <div class="cabecalho-pagina">
-                <input type="text" value="${dados.titulo}" placeholder="Digite o Título do Tema..." class="input-titulo" id="tit-${index}">
-                <div class="metadados">
-                    <span>${dados.data}</span>
-                    <span>${dados.hora}</span>
+                <div class="dados-titulo">
+                    <input type="text" value="${dados.titulo}" placeholder="Digite o Título do Tema..." class="input-titulo" id="tit-${index}">
+                    <div class="metadados">
+                        <span>${dados.data}</span>
+                        <span>${dados.hora}</span>
+                    </div>
                 </div>
+                <button class="btn-sucesso" id="salvar-${index}">Guardar Alterações</button>
             </div>
             <textarea placeholder="Continue escrevendo seu relatório extenso aqui..." class="area-conteudo" id="cont-${index}">${dados.conteudo}</textarea>
-            <button class="btn-sucesso" id="salvar-${index}">Guardar Alterações</button>
         `;
 
         livro.appendChild(section);
 
-        // Correção direta na captura dos dados do formulário
+        // Captura e salvamento robustos baseados na section atual
         section.querySelector(`#salvar-${index}`).addEventListener("click", () => {
-            const inputTitulo = document.getElementById(`tit-${index}`);
-            const textareaConteudo = document.getElementById(`cont-${index}`);
-
-            const txtTitulo = inputTitulo ? inputTitulo.value.trim() : "";
-            const txtConteudo = textareaConteudo ? textareaConteudo.value.trim() : "";
+            const txtTitulo = section.querySelector(`#tit-${index}`).value.trim();
+            const txtConteudo = section.querySelector(`#cont-${index}`).value.trim();
 
             if (!txtTitulo || !txtConteudo) {
                 alert("Por favor, preencha o título e o conteúdo antes de guardar!");

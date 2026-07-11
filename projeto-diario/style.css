@@ -30,7 +30,7 @@ body {
     box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     z-index: 2000;
     transition: transform 0.2s, background-color 0.2s;
-    display: none; /* Escondido por padrão no computador */
+    display: none; /* Oculto no PC */
 }
 
 .btn-icone-diario:hover {
@@ -49,7 +49,7 @@ body {
     flex-direction: column;
     box-shadow: 4px 0 10px rgba(0,0,0,0.1);
     z-index: 1010;
-    transition: transform 0.3s ease; /* Transição suave de deslize */
+    transition: transform 0.3s ease;
 }
 
 #painel-lateral h2 {
@@ -107,6 +107,7 @@ body {
     box-shadow: inset 20px 0 20px -20px rgba(0,0,0,0.15); 
 }
 
+/* Alinhamento base do Cabeçalho */
 .cabecalho-pagina {
     display: flex;
     justify-content: space-between;
@@ -114,6 +115,13 @@ body {
     border-bottom: 2px solid var(--border-color);
     padding-bottom: 15px;
     margin-bottom: 20px;
+    gap: 20px;
+}
+
+.dados-titulo {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
 }
 
 .input-titulo {
@@ -122,7 +130,7 @@ body {
     border: none;
     outline: none;
     color: #2c3e50;
-    width: 60%;
+    width: 100%;
     background: transparent;
 }
 
@@ -131,6 +139,7 @@ body {
     color: #7f8c8d;
     display: flex;
     gap: 15px;
+    margin-top: 5px;
 }
 
 .area-conteudo {
@@ -163,7 +172,7 @@ body {
     border-radius: 4px;
     cursor: pointer;
     font-weight: bold;
-    align-self: flex-end;
+    flex-shrink: 0;
 }
 
 .seta-nav {
@@ -183,8 +192,8 @@ body {
 #btn-esquerda { left: 300px; }
 #btn-direita { right: 20px; }
 
-  /* =========================================================
-   ADAPTAÇÃO GERENCIAL PARA TABLETS E MÓVEIS (Geral)
+/* =========================================================
+   ADAPTAÇÃO TOTAL PARA TABLETS E MÓVEIS (Geral)
    ========================================================= */
 @media (max-width: 1024px) {
     .btn-icone-diario {
@@ -206,117 +215,37 @@ body {
     .page-editor {
         flex: 0 0 100vw;
         padding: 80px 20px 20px 20px; 
-        overflow-y: auto; 
         height: 100vh;
-    }
-
-    .area-conteudo {
-        flex-grow: 0;
-        min-height: 50vh; 
-        margin-bottom: 15px;
-    }
-
-    .btn-sucesso {
-        margin-bottom: 60px; 
-        flex-shrink: 0;
     }
 
     #btn-esquerda { left: 15px; top: auto; bottom: 20px; transform: none; }
     #btn-direita { right: 15px; top: auto; bottom: 20px; transform: none; }
     
-    .cabecalho-pagina {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
-    }
-    
-    .input-titulo {
-        width: 100%;
+    .area-conteudo {
+        margin-bottom: 60px; /* Evita colisão com as setas inferiores */
     }
 }
 
 /* =========================================================
-   CORREÇÃO DEFINITIVA: TABLET EM MODO PAISAGEM (Landscape)
+   CORREÇÃO CIRÚRGICA: TABLET EM MODO PAISAGEM (Landscape)
    ========================================================= */
 @media (max-width: 1024px) and (orientation: landscape) {
     .page-editor {
-        padding: 70px 20px 10px 20px; /* Reduz o espaço do topo e fundo para maximizar a tela */
-        height: 100vh;
-        box-sizing: border-box;
-    }
-
-    /* Força uma grade rígida: Título e metadados na esquerda, Botão travado na direita */
-    .cabecalho-pagina {
-        display: grid !important;
-        grid-template-columns: 1fr auto !important; /* Esquerda flexível, direita tamanho exato do botão */
-        align-items: center;
-        gap: 15px;
-        margin-bottom: 10px;
-        width: 100%;
+        padding: 70px 20px 10px 20px; 
     }
 
     .input-titulo {
-        width: 100% !important;
-        font-size: 1.4em; /* Encolhe levemente o tamanho da fonte para caber na altura restrita */
+        font-size: 1.4em; 
     }
 
-    .metadados {
-        grid-column: 1; /* Mantém a data abaixo do título na primeira coluna */
-        font-size: 0.85em;
-    }
-
-    /* Trava o botão no topo direito e impede o navegador de sumir com ele */
     .btn-sucesso {
-        grid-column: 2;
-        grid-row: 1 / span 2; /* Faz o botão ocupar a altura do título + metadados */
-        align-self: center;
-        margin: 0 !important;
-        padding: 10px 18px !important;
-        font-size: 0.95em;
-        flex-shrink: 0 !important;
-        display: block !important;
-        visibility: visible !important;
-    }
-
-    /* Ajusta a área do texto para não empurrar nada e respeitar os limites da tela */
-    .area-conteudo {
-        height: calc(100vh - 180px) !important;
-        min-height: 100px !important;
-        flex-grow: 1;
-        margin-bottom: 40px; 
+        padding: 8px 16px;
+        font-size: 0.9em;
     }
 }
 
 /* =========================================================
-   ADAPTAÇÃO ADICIONAL: TABLET EM MODO RETRATO (Portrait)
-   ========================================================= */
-@media (max-width: 1024px) and (orientation: portrait) {
-    .page-editor {
-        padding: 85px 25px 20px 25px;
-        height: 100vh;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .area-conteudo {
-        min-height: 35vh; 
-        flex-grow: 1; 
-        margin-bottom: 20px;
-    }
-
-    .btn-sucesso {
-        align-self: stretch;
-        text-align: center;
-        padding: 14px;
-        font-size: 1.1em;
-        margin-bottom: 80px; 
-        position: relative;
-        z-index: 10;
-    }
-}
-
-/* =========================================================
-   AJUSTE EXCLUSIVO PARA CELULARES 
+   AJUSTE EXCLUSIVO PARA CELULARES (Telas Pequenas)
    ========================================================= */
 @media (max-width: 480px) {
     .page-editor {
@@ -324,26 +253,13 @@ body {
     }
 
     .cabecalho-pagina {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 8px;
-        width: 100%;
-        margin-bottom: 15px;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
     }
 
     .btn-sucesso {
-        align-self: stretch;
         text-align: center;
         padding: 12px;
-        font-size: 1em;
-        margin-top: 5px;
-        margin-bottom: 5px;
-        order: 3; 
-    }
-
-    .area-conteudo {
-        min-height: 40vh;
-        flex-grow: 1;
-        margin-bottom: 80px; 
     }
 }
