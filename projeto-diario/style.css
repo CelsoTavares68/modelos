@@ -214,7 +214,7 @@ body {
 #btn-esquerda { left: 300px; }
 #btn-direita { right: 20px; }
 
-/* =========================================================
+ /* =========================================================
    ADAPTAÇÃO TOTAL PARA TABLETS E MÓVEIS (Geral)
    ========================================================= */
 @media (max-width: 1024px) {
@@ -240,11 +240,27 @@ body {
         height: 100vh;
     }
 
+    /* CORREÇÃO AQUI: Garante que o cabeçalho mantenha os botões visíveis alinhados */
+    .cabecalho-pagina {
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        gap: 15px;
+    }
+
+    .botoes-acoes {
+        display: flex !important;
+        flex-direction: row !important;
+        gap: 10px;
+        flex-shrink: 0 !important;
+    }
+
     #btn-esquerda { left: 15px; top: auto; bottom: 20px; transform: none; }
     #btn-direita { right: 15px; top: auto; bottom: 20px; transform: none; }
     
     .area-conteudo {
-        margin-bottom: 60px; /* Margem para não bater nas setas inferiores */
+        margin-bottom: 60px; 
     }
 }
 
@@ -257,16 +273,16 @@ body {
     }
 
     .input-titulo {
-        font-size: 1.4em; 
+        font-size: 1.3em; 
     }
 
     .btn-sucesso {
-        padding: 8px 16px;
+        padding: 10px 16px;
         font-size: 0.9em;
     }
     
     .btn-share {
-        padding: 8px 14px;
+        padding: 10px 14px;
         font-size: 0.9em;
     }
 }
@@ -279,20 +295,22 @@ body {
         padding: 75px 15px 15px 15px;
     }
 
+    /* No celular sim, quebramos em coluna para não amassar */
     .cabecalho-pagina {
-        flex-direction: column;
-        align-items: stretch;
+        flex-direction: column !important;
+        align-items: stretch !important;
         gap: 10px;
     }
 
     .botoes-acoes {
-        flex-direction: column;
+        flex-direction: column !important;
         gap: 8px;
+        width: 100%;
     }
 
     .btn-sucesso, .btn-share {
         text-align: center;
         padding: 12px;
-        width: 100%;
+        width: 100% !important;
     }
 }
