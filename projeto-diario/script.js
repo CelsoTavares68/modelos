@@ -119,13 +119,13 @@
             }
         });
 
-        // LÓGICA DE COMPARTILHAMENTO DE PDF (Apenas se a folha já estiver guardada)
+         // LÓGICA DE COMPARTILHAMENTO DE PDF (Ajustada para funcionar em Notebooks e Celulares)
         if (!isNova) {
             section.querySelector(`#share-${index}`).addEventListener("click", () => {
                 const txtTitulo = section.querySelector(`#tit-${index}`).value.trim() || "Diario_Pagina";
                 const txtConteudo = section.querySelector(`#cont-${index}`).value;
 
-                // Cria uma estrutura temporária em memória para renderizar um PDF perfeito
+                // 1. Cria a estrutura em memória para o PDF
                 const templatePdf = document.createElement("div");
                 templatePdf.style.padding = "40px";
                 templatePdf.style.fontFamily = "Segoe UI, Arial, sans-serif";
@@ -147,29 +147,36 @@
                     jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
                 };
 
-                // Transforma em PDF e aciona a API de compartilhamento do aparelho
+                // 2. Transforma em PDF usando a biblioteca html2pdf
                 html2pdf().set(configuracao).from(templatePdf).toPdf().output('blob').then((pdfBlob) => {
                     const nomeDoArquivo = `${txtTitulo.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`;
-                    const arquivoPdf = new File([pdfBlob], nomeDoArquivo, { type: 'application/pdf' });
+                    
+                    // Detecta se é um dispositivo móvel com suporte a compartilhamento nativo de arquivos
+                    const ehDispositivoMovel = /Mobi|Android|iPhone|iPad|Macintosh/i.test(navigator.userAgent) && ('ontouchend' in document);
 
-                    if (navigator.canShare && navigator.canShare({ files: [arquivoPdf] })) {
+                    if (ehDispositivoMovel && navigator.canShare && navigator.canShare({ files: [new File([pdfBlob], nomeDoArquivo)] })) {
+                        // Fluxo para Celular/Tablet: Abre o menu do sistema para enviar ao WhatsApp
+                        const arquivoPdf = new File([pdfBlob], nomeDoArquivo, { type: 'application/pdf' });
                         navigator.share({
                             files: [arquivoPdf],
                             title: txtTitulo,
                             text: `Compartilhando página do Diário: ${txtTitulo}`
                         }).catch((erro) => console.log('Compartilhamento cancelado:', erro));
                     } else {
-                        // Download automático alternativo caso não haja suporte nativo de arquivos no navegador desktop
+                        // Fluxo para Notebook/Desktop: Faz o download direto do arquivo PDF imediatamente
                         const linkDownload = document.createElement('a');
                         linkDownload.href = URL.createObjectURL(pdfBlob);
                         linkDownload.download = nomeDoArquivo;
+                        document.body.appendChild(linkDownload); // Necessário para funcionamento correto em alguns navegadores de PC
                         linkDownload.click();
-                        alert("O arquivo PDF foi gerado e baixado com sucesso!");
+                        document.body.removeChild(linkDownload);
+                        
+                        alert("PDF gerado com sucesso! O arquivo foi baixado para o seu notebook. Agora você pode anexá-lo no WhatsApp Web.");
                     }
                 });
             });
         }
-    }
+    } // <--- ESSA CHAVE ESTAVA FALTANDO AQUI PARA FECHAR A FUNÇÃO "criarElementoPaginaEditor"
 
     function criarItemInidice(titulo, index) {
         const li = document.createElement("li");
