@@ -67,7 +67,7 @@
         section.className = "page-editor";
         section.id = `pag-${index}`;
 
-        // MUDANÇA AQUI: O botão agora está dentro do cabeçalho para ficar sempre no topo!
+        // O botão de partilhar PDF fica integrado dinamicamente nas folhas guardadas
         section.innerHTML = `
             <div class="cabecalho-pagina">
                 <div class="dados-titulo">
@@ -77,14 +77,17 @@
                         <span>${dados.hora}</span>
                     </div>
                 </div>
-                <button class="btn-sucesso" id="salvar-${index}">Guardar Alterações</button>
+                <div class="botoes-acoes">
+                    ${!isNova ? `<button class="btn-share" id="share-${index}">📤 Enviar PDF</button>` : ''}
+                    <button class="btn-sucesso" id="salvar-${index}">Guardar Alterações</button>
+                </div>
             </div>
             <textarea placeholder="Continue escrevendo seu relatório extenso aqui..." class="area-conteudo" id="cont-${index}">${dados.conteudo}</textarea>
         `;
 
         livro.appendChild(section);
 
-        // Captura e salvamento robustos baseados na section atual
+        // Evento para Guardar Alterações
         section.querySelector(`#salvar-${index}`).addEventListener("click", () => {
             const txtTitulo = section.querySelector(`#tit-${index}`).value.trim();
             const txtConteudo = section.querySelector(`#cont-${index}`).value.trim();
@@ -115,6 +118,57 @@
                 irParaPagina(index);
             }
         });
+
+        // LÓGICA DE COMPARTILHAMENTO DE PDF (Apenas se a folha já estiver guardada)
+        if (!isNova) {
+            section.querySelector(`#share-${index}`).addEventListener("click", () => {
+                const txtTitulo = section.querySelector(`#tit-${index}`).value.trim() || "Diario_Pagina";
+                const txtConteudo = section.querySelector(`#cont-${index}`).value;
+
+                // Cria uma estrutura temporária em memória para renderizar um PDF perfeito
+                const templatePdf = document.createElement("div");
+                templatePdf.style.padding = "40px";
+                templatePdf.style.fontFamily = "Segoe UI, Arial, sans-serif";
+                templatePdf.style.color = "#2c3e50";
+                
+                templatePdf.innerHTML = `
+                    <h1 style="font-size: 24px; border-bottom: 2px solid #3498db; padding-bottom: 12px; margin-bottom: 5px;">${txtTitulo}</h1>
+                    <p style="font-size: 12px; color: #7f8c8d; margin-bottom: 30px;">${dados.data} | ${dados.hora}</p>
+                    <div style="font-size: 14px; line-height: 1.8; text-align: justify; white-space: pre-wrap;">
+                        ${txtConteudo}
+                    </div>
+                `;
+
+                const configuracao = {
+                    margin:       15,
+                    filename:     `${txtTitulo.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`,
+                    image:        { type: 'jpeg', quality: 0.98 },
+                    html2canvas:  { scale: 2, useCORS: true },
+                    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                };
+
+                // Transforma em PDF e aciona a API de compartilhamento do aparelho
+                html2pdf().set(configuracao).from(templatePdf).toPdf().output('blob').then((pdfBlob) => {
+                    const nomeDoArquivo = `${txtTitulo.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`;
+                    const arquivoPdf = new File([pdfBlob], nomeDoArquivo, { type: 'application/pdf' });
+
+                    if (navigator.canShare && navigator.canShare({ files: [arquivoPdf] })) {
+                        navigator.share({
+                            files: [arquivoPdf],
+                            title: txtTitulo,
+                            text: `Compartilhando página do Diário: ${txtTitulo}`
+                        }).catch((erro) => console.log('Compartilhamento cancelado:', erro));
+                    } else {
+                        // Download automático alternativo caso não haja suporte nativo de arquivos no navegador desktop
+                        const linkDownload = document.createElement('a');
+                        linkDownload.href = URL.createObjectURL(pdfBlob);
+                        linkDownload.download = nomeDoArquivo;
+                        linkDownload.click();
+                        alert("O arquivo PDF foi gerado e baixado com sucesso!");
+                    }
+                });
+            });
+        }
     }
 
     function criarItemInidice(titulo, index) {
