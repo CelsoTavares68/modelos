@@ -33,12 +33,25 @@
             divEditorVisual.className = "area-conteudo-visual";
             
             // Copia exatamente os mesmos estilos do seu textarea original para não quebrar o layout
-            Object.assign(divEditorVisual.style, {
-                flexGrow: "1", border: "none", outline: "none", resize: "none",
-                fontSize: "1.1em", lineHeight: "1.6", textAlign: "justify",
-                background: "transparent", minHeight: "200px", overflowY: "auto",
-                whiteSpace: "pre-wrap", color: "#2c3e50", fontFamily: "inherit"
-            });
+             Object.assign(divEditorVisual.style, {
+    flexGrow: "1",
+    border: "none",
+    outline: "none",
+    resize: "none",
+    fontSize: "1.1em",
+    lineHeight: "1.6",
+    textAlign: "justify",
+    background: "transparent",
+    minHeight: "200px",
+    overflowY: "auto",
+    whiteSpace: "pre-wrap",
+    color: "#2c3e50",
+    fontFamily: "inherit",
+    
+    /* --- AJUSTES DA BARRA DE ROLAGEM --- */
+    paddingRight: "30px", /* Cria um espaço em branco entre o texto e a barra de rolagem */
+    boxSizing: "border-box" /* Garante que o padding não quebre a largura da área */
+});
 
             // Passa o texto que já estava no textarea para o novo editor visual
             divEditorVisual.innerHTML = textarea.value;
@@ -47,11 +60,10 @@
             textarea.style.display = "none";
             textarea.parentNode.insertBefore(divEditorVisual, textarea);
 
-            // A MÁGICA DO BOTÃO: Quando seleciona e clica, fica em negrito de verdade na tela!
-            btnNegrito.addEventListener("click", function(e) {
-                e.preventDefault();
-                divEditorVisual.focus();
-                document.execCommand("bold", false, null); // Comando oficial do navegador para negrito
+            // A MÁGICA DO BOTÃO: Usamos 'mousedown' para não perder a seleção e não rolar a página
+            btnNegrito.addEventListener("mousedown", function(e) {
+                e.preventDefault(); // Impede o botão de roubar o foco e pular para o topo
+                document.execCommand("bold", false, null); // Aplica o negrito na seleção atual
             });
 
             // SINCRONIZAÇÃO EM TEMPO REAL: Tudo o que você digita vai para o textarea oculto,

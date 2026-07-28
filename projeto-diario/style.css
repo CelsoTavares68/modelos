@@ -13,10 +13,16 @@ body {
     margin: 0;
     padding: 0;
     overflow: hidden;
+    width: 100vw;
+    height: 100vh;
     display: flex;
 }
 
-/* Estilo do botão clicável do diário */
+/* =========================================================
+   ESTRUTURA DO PC (20% SUMÁRIO | 80% PÁGINA)
+   ========================================================= */
+
+/* Botão do Diário (Oculto no PC por padrão) */
 .btn-icone-diario {
     position: fixed;
     top: 15px;
@@ -29,17 +35,12 @@ body {
     cursor: pointer;
     box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     z-index: 2000;
-    transition: transform 0.2s, background-color 0.2s;
-    display: none; /* Oculto no computador por padrão */
+    display: none;
 }
 
-.btn-icone-diario:hover {
-    background: #34495e;
-    transform: scale(1.1);
-}
-
+/* Sumário (20% da tela) */
 #painel-lateral {
-    width: 280px;
+    width: 20vw;
     background: #2c3e50;
     color: white;
     height: 100vh;
@@ -84,22 +85,28 @@ body {
     color: var(--accent-color);
 }
 
+/* Contêiner das Páginas (80% da tela + Corte das páginas extras) */
 .container {
-    flex-grow: 1;
+    width: 80vw;
+    height: 100vh;
     display: flex;
-    overflow-x: auto;
+    overflow-x: hidden;
     scroll-behavior: smooth;
     scroll-snap-type: x mandatory;
-    height: 100vh;
 }
 
-.container::-webkit-scrollbar { display: none; }
+.container::-webkit-scrollbar { 
+    display: none; 
+}
 
+/* Estrutura de cada Página Editora */
 .page-editor {
-    flex: 0 0 calc(100vw - 280px);
+    flex: 0 0 80vw;
+    width: 80vw;
+    min-width: 80vw;
     height: 100vh;
     box-sizing: border-box;
-    padding: 60px 80px;
+    padding: 60px 120px 60px 80px; /* Margem estendida à direita para afastar a rolagem */
     background: var(--card-bg);
     scroll-snap-align: start;
     display: flex;
@@ -107,7 +114,7 @@ body {
     box-shadow: inset 20px 0 20px -20px rgba(0,0,0,0.15); 
 }
 
-/* Alinhamento base do Cabeçalho */
+/* Cabeçalho da Página */
 .cabecalho-pagina {
     display: flex;
     justify-content: space-between;
@@ -154,6 +161,26 @@ body {
     background: transparent;
 }
 
+/* Estilização da Barra de Rolagem Interna do Editor */
+.area-conteudo-visual::-webkit-scrollbar {
+    width: 8px;
+}
+
+.area-conteudo-visual::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: 4px;
+}
+
+.area-conteudo-visual::-webkit-scrollbar-thumb {
+    background: #bdc3c7;
+    border-radius: 4px;
+}
+
+.area-conteudo-visual::-webkit-scrollbar-thumb:hover {
+    background: #95a5a6;
+}
+
+/* Estilos de Botões */
 .btn-principal {
     background: var(--accent-color);
     color: white;
@@ -184,11 +211,6 @@ body {
     cursor: pointer;
     font-weight: bold;
     flex-shrink: 0;
-    transition: background 0.2s;
-}
-
-.btn-share:hover {
-    background: #2980b9;
 }
 
 .botoes-acoes {
@@ -197,11 +219,12 @@ body {
     flex-shrink: 0;
 }
 
+/* Setas de Navegação */
 .seta-nav {
     position: fixed;
     top: 50%;
     transform: translateY(-50%);
-    background-color: rgba(44, 62, 80, 0.7);
+    background-color: rgba(44, 62, 80, 0.46);
     color: white;
     border: none;
     width: 45px;
@@ -211,13 +234,28 @@ body {
     cursor: pointer;
     z-index: 100;
 }
-#btn-esquerda { left: 300px; }
+
+#btn-esquerda { left: calc(20vw + 20px); }
 #btn-direita { right: 20px; }
 
- /* =========================================================
-   ADAPTAÇÃO TOTAL PARA TABLETS E MÓVEIS (Geral)
+
+/* =========================================================
+   ADAPTAÇÃO PARA TABLETS E CELULARES (Telas de até 1024px)
    ========================================================= */
 @media (max-width: 1024px) {
+    .container {
+        width: 100vw !important;
+        overflow-x: hidden;
+    }
+
+    .page-editor {
+        flex: 0 0 100vw !important;
+        width: 100vw !important;
+        min-width: 100vw !important;
+        padding: 80px 20px 20px 20px !important;
+        height: 100vh;
+    }
+
     .btn-icone-diario {
         display: block;
     }
@@ -226,6 +264,7 @@ body {
         position: fixed;
         left: 0;
         top: 0;
+        width: 280px !important;
         transform: translateX(-100%);
         padding-top: 80px; 
     }
@@ -234,13 +273,6 @@ body {
         transform: translateX(0);
     }
 
-    .page-editor {
-        flex: 0 0 100vw;
-        padding: 80px 20px 20px 20px; 
-        height: 100vh;
-    }
-
-    /* CORREÇÃO AQUI: Garante que o cabeçalho mantenha os botões visíveis alinhados */
     .cabecalho-pagina {
         display: flex !important;
         flex-direction: row !important;
@@ -256,46 +288,45 @@ body {
         flex-shrink: 0 !important;
     }
 
-    #btn-esquerda { left: 15px; top: auto; bottom: 20px; transform: none; }
-    #btn-direita { right: 15px; top: auto; bottom: 20px; transform: none; }
+    #btn-esquerda { 
+        left: 15px;
+         top: auto; 
+         bottom: 20px; 
+         transform: none; 
+        }
+    #btn-direita { 
+        right: 15px; 
+        top: auto; bottom: 
+        20px; 
+        transform: none; }
     
     .area-conteudo {
         margin-bottom: 60px; 
     }
 }
 
-/* =========================================================
-   CORREÇÃO CIRÚRGICA: TABLET EM MODO PAISAGEM (Landscape)
-   ========================================================= */
+/* Modo Paisagem para Tablets */
 @media (max-width: 1024px) and (orientation: landscape) {
     .page-editor {
-        padding: 70px 20px 10px 20px; 
+        padding: 70px 20px 10px 20px !important; 
     }
 
     .input-titulo {
         font-size: 1.3em; 
     }
 
-    .btn-sucesso {
-        padding: 10px 16px;
-        font-size: 0.9em;
-    }
-    
-    .btn-share {
+    .btn-sucesso, .btn-share {
         padding: 10px 14px;
         font-size: 0.9em;
     }
 }
 
-/* =========================================================
-   AJUSTE EXCLUSIVO PARA CELULARES (Telas Pequenas)
-   ========================================================= */
+/* Celulares Pequenos (Até 480px) */
 @media (max-width: 480px) {
     .page-editor {
-        padding: 75px 15px 15px 15px;
+        padding: 75px 15px 20px 15px !important;
     }
 
-    /* No celular sim, quebramos em coluna para não amassar */
     .cabecalho-pagina {
         flex-direction: column !important;
         align-items: stretch !important;
@@ -313,4 +344,56 @@ body {
         padding: 12px;
         width: 100% !important;
     }
+}
+
+
+/* =========================================================
+   EFEITOS VISUAIS DE HOVER E CLIQUE NOS BOTÕES
+   ========================================================= */
+
+/* 1. Base para animação suave em todos os botões */
+button,
+.btn-icone-diario,
+.btn-principal,
+.btn-sucesso,
+.btn-share,
+.seta-nav,
+.btn-b-negrito {
+    transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease, background-color 0.2s ease;
+}
+
+/* 2. Efeito HOVER (Exclusivo para computadores com ponteiro/mouse) */
+@media (hover: hover) and (pointer: fine) {
+    .btn-principal:hover,
+    .btn-sucesso:hover,
+    .btn-share:hover,
+    .btn-b-negrito:hover {
+        filter: brightness(1.15) !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+    }
+
+    .seta-nav:hover {
+        background-color: rgba(44, 62, 80, 0.95) !important;
+        transform: scale(1.1) !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    .btn-icone-diario:hover {
+        background: #34495e !important;
+        transform: scale(1.1) !important;
+    }
+}
+
+/* 3. Efeito de CLIQUE / TOQUE (Ativo tanto no PC quanto no Celular) */
+button:active,
+.btn-icone-diario:active,
+.btn-principal:active,
+.btn-sucesso:active,
+.btn-share:active,
+.btn-b-negrito:active,
+.seta-nav:active {
+    transform: scale(0.95) !important;
+    filter: brightness(0.9) !important;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2) !important;
 }
