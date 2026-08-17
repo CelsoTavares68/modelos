@@ -23,10 +23,10 @@ const MAPA_NOMES_AGRO = {
 // =========================================================
 //   PAINEL DE CONTROLE MANUAL (ALTERE AQUI TODO MÊS)
 // =========================================================
-let SELIC_ATUAL = 14.25; 
-let CDI_ATUAL   = 14.15;
-let IPCA_ATUAL  = "4.64"; 
-let IGPM_ATUAL  = "3.16"; 
+let SELIC_ATUAL = 14.00; 
+let CDI_ATUAL   = 14.71;
+let IPCA_ATUAL  = "4.44"; 
+let IGPM_ATUAL  = "2.76"; 
 // =========================================================
 
 let chartMercado = null;
@@ -301,8 +301,8 @@ function processarRanking(dataRanking) {
     const apenasAcoes = dataRanking.stocks.filter(s => s.stock.replace('.SA', '').length <= 6);
     const ordenado = [...apenasAcoes].sort((a, b) => (b.change || 0) - (a.change || 0));
 
-    const topAltas = ordenado.slice(0, 35);
-    const topBaixas = ordenado.slice(-35).reverse();
+    const topAltas = ordenado.slice(0, 30);
+    const topBaixas = ordenado.slice(-30).reverse();
 
     const formatLi = (a, c) => {
         let nome = a.name || a.stock;
