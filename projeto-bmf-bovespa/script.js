@@ -59,23 +59,31 @@ async function inicializarApp() {
     await buscarCotacoesBovespa();
 }  
 
+  // --- FUNÇÃO DE BOLSAS MUNDIAIS SEGURA (COM ÁSIA E MERCOSUL) ---
 async function buscarIndicesGlobais() {
     const container = document.getElementById('indices-globais');
     if (!container) return;
 
+    // Lista de índices globais com Fallback de símbolos comuns na BrAPI
     const listaIndices = [
-        { id: '^BVSP', nome: '🇧🇷 IBOVESPA' },
-        { id: '^GSPC', nome: '🇺🇸 S&P 500' },
-        { id: '^IXIC', nome: '🇺🇸 NASDAQ' },
-        { id: '^FTSE', nome: '🇬🇧 FTSE 100' }
+        { id: '^BVSP', nome: '🇧🇷 IBOVESPA (Brasil)' },
+        { id: '^MERV', nome: '🇦🇷 MERVAL (Argentina)' },
+        { id: '^GSPC', nome: '🇺🇸 S&P 500 (EUA)' },
+        { id: '^IXIC', nome: '🇺🇸 NASDAQ (EUA)' },
+        { id: '^FTSE', nome: '🇬🇧 FTSE 100 (Reino Unido)' },
+        { id: '^N225', nome: '🇯🇵 Nikkei 225 (Japão)' },
+        { id: '^HSI',  nome: '🇭🇰 Hang Seng (Hong Kong)' }
     ];
 
     container.innerHTML = ""; 
 
+    // Consulta individual segura: se um ticker falhar, os outros continuam aparecendo
     for (const item of listaIndices) {
         try {
             const url = `https://brapi.dev/api/quote/${encodeURIComponent(item.id)}?token=${TOKEN_B3}`;
             const res = await fetch(url);
+            if (!res.ok) continue;
+            
             const data = await res.json();
 
             if (data && data.results && data.results[0]) {
@@ -95,7 +103,7 @@ async function buscarIndicesGlobais() {
                     </div>`;
             }
         } catch (e) {
-            console.warn(`Erro ao carregar índice ${item.id}`);
+            console.warn(`Índice ${item.id} indisponível no momento.`);
         }
     }
 }
