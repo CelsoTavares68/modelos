@@ -26,7 +26,7 @@ const MAPA_NOMES_AGRO = {
 let SELIC_ATUAL = 14.00; 
 let CDI_ATUAL   = 14.71;
 let IPCA_ATUAL  = "4.44"; 
-let IGPM_ATUAL  = "2.76"; 
+let IGPM_ATUAL  = "2.16"; 
 // =========================================================
 
 let chartMercado = null;
