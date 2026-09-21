@@ -1,10 +1,10 @@
- const TOKEN_B3 = '8gRPKYrszFRi4JCDaARwuJ'; 
+  const TOKEN_B3 = '8gRPKYrszFRi4JCDaARwuJ'; 
 
 // LISTAS ORIGINAIS RESTAURADAS
 const LISTA_AGRO_BMF = "JBSS3,BRFS3,BEEF3,MRFG3,CAML3,SLCE3,AGRO3,SMTO3,KEPL3,SOJA3";
 const LISTA_ACOES_B3 = "PETR4,BBAS3,SBSP3,CPLE6,CMIG4,ELET3,SAPR11,BANESE3,BMEB4,BNBR3";
 
-// LISTA DE FIAGROs (Usando o canal tradicional gratuito para evitar o erro 403)
+// LISTA DE FIAGROS (Usando o canal tradicional gratuito para evitar o erro 403)
 const LISTA_FIAGROS = "VGIA11,KNCA11,RURA11,FGAA11";
 
 const MAPA_NOMES_AGRO = {
@@ -47,24 +47,22 @@ async function inicializarApp() {
     const tbody = document.getElementById("corpo-cotacoes");
     if (tbody) tbody.innerHTML = "";
 
-    atualizarPainelCarteira(); 
+    await atualizarPainelCarteira(); 
     
     buscarApenasMoedas();
     buscarApenasTaxas();
     
     await buscarIndicesGlobais(); 
-    
     await buscarCotacoesAgro(); 
-    await buscarFIAGROs(); // Chamada pontual para preencher a nova tabela
+    await buscarFIAGROs(); 
     await buscarCotacoesBovespa();
 }  
 
-  // --- FUNÇÃO DE BOLSAS MUNDIAIS SEGURA (COM ÁSIA E MERCOSUL) ---
+// --- FUNÇÃO DE BOLSAS MUNDIAIS SEGURA (COM ÁSIA E MERCOSUL) ---
 async function buscarIndicesGlobais() {
     const container = document.getElementById('indices-globais');
     if (!container) return;
 
-    // Lista de índices globais com Fallback de símbolos comuns na BrAPI
     const listaIndices = [
         { id: '^BVSP', nome: '🇧🇷 IBOVESPA (Brasil)' },
         { id: '^MERV', nome: '🇦🇷 MERVAL (Argentina)' },
@@ -77,7 +75,6 @@ async function buscarIndicesGlobais() {
 
     container.innerHTML = ""; 
 
-    // Consulta individual segura: se um ticker falhar, os outros continuam aparecendo
     for (const item of listaIndices) {
         try {
             const url = `https://brapi.dev/api/quote/${encodeURIComponent(item.id)}?token=${TOKEN_B3}`;
@@ -108,7 +105,7 @@ async function buscarIndicesGlobais() {
     }
 }
 
-// FUNÇÃO PONTUAL: Trazendo os FIAGROs via canal de cotação estável (Evita erro 403)
+// FUNÇÃO PARA FIAGROs
 async function buscarFIAGROs() {
     const container = document.getElementById('corpo-fiagros');
     if (!container) return;
@@ -131,7 +128,7 @@ async function buscarFIAGROs() {
 
                 container.innerHTML += `
                     <tr class="setor-bmf">
-                        <td><b>${fundo.symbol.replace('.SA', '')}</b><br><small style="opacity:0.7">${fundo.longName || 'FIAGRO'}</small></td>
+                        <td><b>${fundo.symbol.replace('.SA', '')}</b><br>${fundo.longName || 'FIAGRO'}</small></td>
                         <td>R$ ${preco.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
                         <td class="${cor}">${pct >= 0 ? '+' : ''}${pct.toFixed(2)}%</td>
                     </tr>`;
@@ -226,48 +223,37 @@ async function buscarCotacoesAgro() {
     }
 }
 
+// BUSCA DA BOVESPA
 async function buscarCotacoesBovespa() {
     try {
         const resRanking = await fetch(`https://brapi.dev/api/quote/list?token=${TOKEN_B3}`);
         const dataRanking = await resRanking.json();
         if (dataRanking && dataRanking.stocks) processarRanking(dataRanking);
 
-        const limpar = (t) => t.trim().replace('.SA', '').replace(/F$/, '') + ".SA";
-        const arrayEstatais = LISTA_ACOES_B3.split(',').map(limpar);
-        const arrayCarteira = minhaCarteira.map(a => limpar(a.ticker));
-        
-        // Filtra elementos vazios ou inválidos do lote para evitar o erro 400
-        const todosTickers = [...new Set([...arrayEstatais, ...arrayCarteira])].filter(t => t && t !== ".SA" && t.length > 3);
+        const formatarTicker = (t) => {
+            let limpo = t.trim().toUpperCase();
+            return limpo.endsWith('.SA') ? limpo : `${limpo}.SA`;
+        };
+
+        const arrayEstatais = LISTA_ACOES_B3.split(',').map(formatarTicker);
+        const todosTickers = [...new Set(arrayEstatais)].filter(t => t && t !== ".SA" && t.length > 3);
 
         if (todosTickers.length === 0) return;
 
-        let resultadosFinais = [];
-        try {
-            const resLote = await fetch(`https://brapi.dev/api/quote/${todosTickers.join(',')}?token=${TOKEN_B3}`);
-            if (!resLote.ok) throw new Error("Lote falhou");
-            const dadosLote = await resLote.json();
-            if (dadosLote && dadosLote.results) {
-                resultadosFinais = dadosLote.results;
-            } else {
-                throw new Error("Lote sem resultados");
-            }
-        } catch (err) {
-            // Seu mecanismo original de fallback individual restaurado intacto
-            const promessas = todosTickers.map(t => 
-                fetch(`https://brapi.dev/api/quote/${t}?token=${TOKEN_B3}`)
-                    .then(r => r.ok ? r.json() : null)
-                    .catch(() => null)
-            );
-            const r = await Promise.all(promessas);
-            resultadosFinais = r.filter(x => x && x.results).map(x => x.results[0]);
-        }
+        const promessas = todosTickers.map(t => 
+            fetch(`https://brapi.dev/api/quote/${t}?token=${TOKEN_B3}`)
+                .then(r => r.ok ? r.json() : null)
+                .catch(() => null)
+        );
+        
+        const resultados = await Promise.all(promessas);
+        const resultadosFinais = resultados.filter(x => x && x.results && x.results[0]).map(x => x.results[0]);
 
         if (resultadosFinais.length > 0) {
             document.querySelectorAll('.setor-b3').forEach(l => l.remove());
             resultadosFinais.forEach(item => {
                 if (item && item.symbol) renderizarLinhaTabela(item, "B3");
             });
-            atualizarPainelCarteira(resultadosFinais);
         }
         
         document.getElementById('status-conexao').innerText = "✅ Sistema Online";
@@ -338,20 +324,50 @@ function processarRanking(dataRanking) {
     }
 }
 
-function atualizarPainelCarteira(dadosApi = null) {
+// CORREÇÃO PONTUAL: FUNÇÃO DE CARTEIRA ISOLADA E INDEPENDENTE
+async function atualizarPainelCarteira() {
     const tbody = document.getElementById('corpo-carteira');
     if (!tbody) return;
     
     tbody.innerHTML = "";
+    if (minhaCarteira.length === 0) return;
+
+    // Consulta individualmente cada ticker cadastrado na carteira sem interferência externa
+    const promessas = minhaCarteira.map(item => {
+        const tickerLimpo = item.ticker.trim().toUpperCase().replace('.SA', '');
+        const tickerFormatado = `${tickerLimpo}.SA`;
+            
+        return fetch(`https://brapi.dev/api/quote/${tickerFormatado}?token=${TOKEN_B3}`)
+            .then(r => r.ok ? r.json() : null)
+            .catch(() => null);
+    });
+
+    const resultados = await Promise.all(promessas);
+    const cotacoesCarteira = resultados
+        .filter(x => x && x.results && x.results[0])
+        .map(x => x.results[0]);
+
     minhaCarteira.forEach((item, index) => {
-        const tickerLimpoCarteira = item.ticker.trim().replace('.SA', '').replace(/F$/, '');
-        const info = dadosApi ? dadosApi.find(res => res && res.symbol.replace('.SA', '').replace(/F$/, '') === tickerLimpoCarteira) : null;
+        const tickerUsuario = item.ticker.trim().toUpperCase().replace('.SA', '');
+        
+        const info = cotacoesCarteira.find(res => {
+            if (!res || !res.symbol) return false;
+            return res.symbol.trim().toUpperCase().replace('.SA', '') === tickerUsuario;
+        });
 
         const precoAtual = info ? (info.regularMarketPrice || info.price) : null;
-        const nomeEmpresa = info && (info.longName || info.shortName) ? (info.longName || info.shortName) : "Monitorando...";
         
-        let cor = ""; let pct = "Carregando...";
-        if (precoAtual) {
+        let nomeEmpresa = "Aguardando cotação...";
+        if (info && (info.longName || info.shortName)) {
+            nomeEmpresa = info.longName || info.shortName;
+        } else if (!info) {
+            nomeEmpresa = "Código Indisponível na B3";
+        }
+
+        let cor = ""; 
+        let pct = "---";
+
+        if (precoAtual && item.precoPago > 0) {
             const varP = ((precoAtual - item.precoPago) / item.precoPago) * 100;
             pct = (varP >= 0 ? '+' : '') + varP.toFixed(2) + "%";
             cor = varP >= 0 ? "texto-alta" : "texto-queda";
@@ -359,33 +375,43 @@ function atualizarPainelCarteira(dadosApi = null) {
 
         tbody.innerHTML += `
             <tr class="${cor}">
-                <td><b>${item.ticker}</b><br><small style="opacity:0.7">${nomeEmpresa}</small></td>
-                <td>R$ ${item.precoPago.toFixed(2)}</td>
-                <td>${precoAtual ? 'R$ ' + precoAtual.toFixed(2) : '---'}</td>
+                <td><b>${tickerUsuario}</b><br><small style="opacity:0.7">${nomeEmpresa}</small></td>
+                <td>R$ ${parseFloat(item.precoPago).toFixed(2)}</td>
+                <td>${precoAtual ? 'R$ ' + parseFloat(precoAtual).toFixed(2) : 'Indisponível'}</td>
                 <td style="font-weight:bold">${pct}</td>
                 <td><button class="btn-remover" onclick="removerDaCarteira(${index})">🗑️</button></td>
             </tr>`;
     });
 }
 
-function adicionarAcaoCarteira() {
-    const t = document.getElementById('tickerCompra').value.toUpperCase().trim();
-    const p = parseFloat(document.getElementById('precoPago').value);
-    if (t && !isNaN(p)) {
+// CORREÇÃO PONTUAL: ADICIONAR ATIVO COM REFRESH INDEPENDENTE
+async function adicionarAcaoCarteira() {
+    const inputTicker = document.getElementById('tickerCompra');
+    const inputPreco = document.getElementById('precoPago');
+
+    if (!inputTicker || !inputPreco) return;
+
+    const t = inputTicker.value.toUpperCase().trim().replace('.SA', '');
+    const p = parseFloat(inputPreco.value.replace(',', '.'));
+
+    if (t !== "" && !isNaN(p) && p > 0) {
         minhaCarteira.push({ ticker: t, precoPago: p });
         localStorage.setItem('minhaCarteira', JSON.stringify(minhaCarteira));
-        document.getElementById('tickerCompra').value = "";
-        document.getElementById('precoPago').value = "";
-        atualizarPainelCarteira(); 
-        buscarCotacoesBovespa();
+        
+        inputTicker.value = "";
+        inputPreco.value = "";
+        
+        // Atualiza estritamente a carteira sem afetar o resto da página
+        await atualizarPainelCarteira();
+    } else {
+        alert("Por favor, preencha um Ticker válido (ex: PETR4) e um Preço correto.");
     }
 }
 
-function removerDaCarteira(index) {
+async function removerDaCarteira(index) {
     minhaCarteira.splice(index, 1);
     localStorage.setItem('minhaCarteira', JSON.stringify(minhaCarteira));
-    atualizarPainelCarteira();
-    buscarCotacoesBovespa();
+    await atualizarPainelCarteira();
 }
 
 function calcularRentabilidade() {
@@ -424,7 +450,6 @@ function filtrarTabela(tipo) {
     });
 }
 
-// RESTAURADO: Seu gerador do Chart.js original intacto
 function renderizarGrafico(dados) {
     const canvas = document.getElementById('graficoMercado');
     if (!canvas) return;
