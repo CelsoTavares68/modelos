@@ -23,10 +23,10 @@ const MAPA_NOMES_AGRO = {
 // =========================================================
 //   PAINEL DE CONTROLE MANUAL (ALTERE AQUI TODO MÊS)
 // =========================================================
-let SELIC_ATUAL = 14.00; 
-let CDI_ATUAL   = 14.71;
-let IPCA_ATUAL  = "4.44"; 
-let IGPM_ATUAL  = "2.16"; 
+let SELIC_ATUAL = 13.75; 
+let CDI_ATUAL   = 13.08;
+let IPCA_ATUAL  = "4.62"; 
+let IGPM_ATUAL  = "5.24"; 
 // =========================================================
 
 let chartMercado = null;
