@@ -1,0 +1,337 @@
+ @charset "UTF-8";
+
+html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+    margin: 0;
+    padding: 0;
+}
+
+body { 
+    font-family: 'Segoe UI', sans-serif; 
+    background-color: #f0f2f5; 
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.container { 
+    max-width: 850px; 
+    margin: auto; 
+    background: white; 
+    padding: 25px; 
+    border-radius: 12px; 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+    box-sizing: border-box;
+}
+
+h2 { 
+    text-align: center; 
+    color: #1a73e8; 
+    margin-bottom: 20px; 
+}
+
+.seletor-mes { 
+    background: #e8f0fe; 
+    padding: 15px; 
+    border-radius: 8px; 
+    margin-bottom: 20px; 
+    display: flex; 
+    align-items: center; 
+    gap: 10px; 
+    justify-content: center; 
+}
+
+.resumo { 
+    text-align: center; 
+    font-size: 1.6em; 
+    margin-bottom: 20px; 
+    padding: 15px; 
+    border-radius: 8px; 
+    background: #fff; 
+    border: 2px solid #ddd; 
+}
+
+.saldo-positivo { color: #2e7d32; font-weight: bold; }
+.saldo-negativo { color: #d32f2f; font-weight: bold; }
+
+.grupo-inputs {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+}
+
+.grupo-inputs input:nth-child(1) {
+    width: 25%;
+}
+
+.grupo-inputs input:nth-child(2) {
+    width: 75%;
+}
+
+input, select, button { 
+    padding: 12px; 
+    margin: 5px 0; 
+    width: 100%; 
+    border: 1px solid #ccc; 
+    border-radius: 6px; 
+    box-sizing: border-box; 
+    font-size: 1em;
+}
+
+.botoes-tipo {
+    display: flex;
+    gap: 10px;
+    margin: 5px 0;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.btn-tipo {
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
+    opacity: 0.4;
+}
+
+.btn-tipo.receita {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    border-color: #2e7d32;
+}
+
+.btn-tipo.receita.ativo {
+    background-color: #2e7d32;
+    color: white;
+    opacity: 1;
+}
+
+.btn-tipo.despesa {
+    background-color: #ffebee;
+    color: #d32f2f;
+    border-color: #d32f2f;
+}
+
+.btn-tipo.despesa.ativo {
+    background-color: #d32f2f;
+    color: white;
+    opacity: 1;
+}
+
+.btn-pdf { 
+    background-color: #f1c40f; 
+    color: #2c3e50; 
+    border: none; 
+    cursor: pointer; 
+    margin-top: 10px; 
+    font-weight: bold;
+}
+
+.btn-pdf:hover {
+    background-color: #f39c12;
+}
+
+.filtros { 
+    display: flex; 
+    gap: 5px; 
+    margin-top: 15px; 
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.btn-filtro { 
+    background-color: #e4e6eb; 
+    border: none; 
+    cursor: pointer; 
+    padding: 8px; 
+    font-size: 0.8em; 
+    flex: 1; 
+}
+
+.btn-filtro.ativo { 
+    background-color: #1a73e8; 
+    color: white; 
+}
+
+table { 
+    width: 100%; 
+    border-collapse: collapse;
+    margin-top: 15px; 
+    font-size: 0.95em; 
+    table-layout: fixed; 
+}
+
+th, td { 
+    border-bottom: 1px solid #eee; 
+    padding: 12px; 
+    text-align: left; 
+    word-wrap: break-word; 
+}
+
+th { background-color: #f8f9fa; color: #555; }
+
+table th:nth-child(1), table td:nth-child(1) { width: 10%; text-align: center; }
+table th:nth-child(2), table td:nth-child(2) { width: 35%; }
+table th:nth-child(3), table td:nth-child(3) { width: 20%; }
+table th:nth-child(4), table td:nth-child(4) { width: 12%; }
+table th:nth-child(5), table td:nth-child(5) { width: 13%; }
+table th:nth-child(6), table td:nth-child(6) { width: 10%; text-align: center; }
+
+.btn-excluir { 
+    background-color: #ff4d4d; 
+    color: white; 
+    border: none; 
+    padding: 6px 10px; 
+    border-radius: 4px; 
+    cursor: pointer; 
+}
+
+/* Seção do Balanço Anual */
+.secao-anual {
+    margin-top: 35px;
+    background: #fafafa;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+}
+
+.secao-anual h3 {
+    text-align: center;
+    color: #1a73e8;
+    margin-top: 0;
+}
+
+#tabela-anual th:nth-child(1), #tabela-anual td:nth-child(1) { width: 18%; }
+#tabela-anual th:nth-child(2), #tabela-anual td:nth-child(2) { width: 27%; }
+#tabela-anual th:nth-child(3), #tabela-anual td:nth-child(3) { width: 27%; }
+#tabela-anual th:nth-child(4), #tabela-anual td:nth-child(4) { width: 28%; }
+
+.linha-total-anual td {
+    background-color: #eef3fc;
+    border-top: 2px solid #1a73e8;
+    border-bottom: none;
+    padding-top: 14px;
+    padding-bottom: 14px;
+}
+
+.badge-status {
+    display: inline-block;
+    color: white;
+    font-size: 0.72em;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-top: 4px;
+    letter-spacing: 0.5px;
+}
+
+.container-grafico {
+    position: relative;
+    height: 280px;
+    width: 100%;
+    margin-top: 20px;
+}
+
+.acoes-anuais {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.btn-pdf-anual {
+    background-color: #1a73e8;
+    color: white;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+    flex: 2;
+}
+
+.btn-pdf-anual:hover {
+    background-color: #1557b0;
+}
+
+.btn-zerar-ano {
+    background-color: #ffebee;
+    color: #d32f2f;
+    border: 1px solid #d32f2f;
+    font-weight: bold;
+    cursor: pointer;
+    flex: 1;
+}
+
+.btn-zerar-ano:hover {
+    background-color: #d32f2f;
+    color: white;
+}
+
+@media screen and (max-width: 600px) {
+    body {
+        padding: 0; 
+        background-color: white; 
+    }
+
+    .container { 
+        width: 100%; 
+        max-width: 100%; 
+        border-radius: 0; 
+        box-shadow: none; 
+        padding: 10px; 
+    }
+
+    h2 {
+        margin-top: 5px;
+        margin-bottom: 10px;
+        font-size: 1.4em;
+    }
+
+    .seletor-mes {
+        padding: 8px;
+        margin-bottom: 10px;
+        flex-direction: column; 
+        gap: 4px;
+    }
+
+    .resumo {
+        font-size: 1.1em;
+        padding: 8px;
+        margin-bottom: 10px;
+    }
+
+    input, select, button, .btn-filtro { 
+        padding: 8px 10px; 
+        margin: 3px 0; 
+        font-size: 0.9em;
+    }
+    
+    .col-tipo, .linha-tipo, .col-saldo, .linha-saldo {
+        display: none !important;
+    }
+
+    table {
+        width: 100%;
+        font-size: 0.85em; 
+        margin-top: 10px;
+    }
+
+    table th:nth-child(1), table td:nth-child(1) { width: 14%; text-align: center; }
+    table th:nth-child(2), table td:nth-child(2) { width: 44%; }
+    table th:nth-child(3), table td:nth-child(3) { width: 30%; }
+    table th:nth-child(6), table td:nth-child(6) { width: 12%; text-align: center; }
+
+    th, td {
+        padding: 6px 2px; 
+    }
+
+    .btn-excluir {
+        padding: 4px 8px;
+        font-size: 0.85em;
+    }
+
+    .container-grafico {
+        height: 230px;
+    }
+
+    .acoes-anuais {
+        flex-direction: column;
+    }
+}
